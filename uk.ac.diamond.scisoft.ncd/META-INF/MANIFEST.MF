@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: Ncd
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Export-Package: uk.ac.diamond.scisoft.ncd
+Require-Bundle: uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0"
+Import-Package: org.python.core,
+ org.slf4j,
+ uk.ac.gda.monitor
