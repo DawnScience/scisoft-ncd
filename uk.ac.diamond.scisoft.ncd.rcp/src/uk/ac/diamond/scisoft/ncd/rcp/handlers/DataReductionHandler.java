@@ -52,18 +52,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdDetectors;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.gda.common.rcp.util.EclipseUtils;
-import uk.ac.gda.server.ncd.data.CalibrationResultsBean;
 
 public class DataReductionHandler extends AbstractHandler {
 

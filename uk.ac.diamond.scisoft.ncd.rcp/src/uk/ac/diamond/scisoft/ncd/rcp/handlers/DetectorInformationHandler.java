@@ -29,7 +29,6 @@ import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 import gda.data.nexus.tree.NexusTreeNodeSelection;
-import gda.device.detector.NXDetectorData;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -43,8 +42,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.xml.sax.InputSource;
 
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
-import uk.ac.gda.server.ncd.detectorsystem.NcdDetectorSystem;
 
 public class DetectorInformationHandler extends AbstractHandler {
 	
@@ -61,7 +60,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 			
 			Object[] selObjects = sel.toArray();
 			HashMap<String, Integer> detNames = new HashMap<String, Integer>();
-			HashMap<String, NXDetectorData> detInfo = new HashMap<String, NXDetectorData>();
+			HashMap<String, INexusTree> detInfo = new HashMap<String, INexusTree>();
 			for (int i = 0; i < selObjects.length; i++) {
 				
 				String tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
@@ -79,8 +78,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 				    	else {
 				    		detNames.put(tmpName, new Integer(1));
 				    		
-				    		NXDetectorData tmpDetInfo = new NXDetectorData(tmpTree);
-				    		detInfo.put(tmpName, tmpDetInfo);
+				    		detInfo.put(tmpName, tmpTree);
 				    	}
 				    }
 					
@@ -105,7 +103,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, NXDetectorData> detectors) {
+	private void updateDetectorInformation(HashMap<String, INexusTree> detectors) {
 		
     	HashMap<String, Integer> detDims = new HashMap<String, Integer>();
     	HashMap<String, Double> pixels = new HashMap<String, Double>();
@@ -114,23 +112,23 @@ public class DetectorInformationHandler extends AbstractHandler {
     	ArrayList<String> detListWaxs = new ArrayList<String>();
     	ArrayList<String> detListSaxs = new ArrayList<String>();
     	
-		Iterator<Entry<String, NXDetectorData>> it = detectors.entrySet().iterator();
+		Iterator<Entry<String, INexusTree>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
-	        Entry<String, NXDetectorData> detector = it.next();
-	        String detName = detector.getValue().getNexusTree().getName();
-	        INexusTree sasTree = detector.getValue().getNexusTree().getChildNode("sas_type", NexusExtractor.SDSClassName);
+	        Entry<String, INexusTree> detector = it.next();
+	        String detName = detector.getValue().getName();
+	        INexusTree sasTree = detector.getValue().getChildNode("sas_type", NexusExtractor.SDSClassName);
 	        if (sasTree != null) {
 				try {
 					String type = new String((byte[]) sasTree.getData().getBuffer(), "UTF-8");
 					
-		        	if (type.equals(NcdDetectorSystem.CALIBRATION_DETECTOR))
+		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR))
 		        			calList.add(detName);
 		        	
-		        	if (type.equals(NcdDetectorSystem.WAXS_DETECTOR)) {
+		        	if (type.equals(DetectorTypes.WAXS_DETECTOR)) {
 		        		detListWaxs.add(detName);
 		        		detDims.put(detName, 1);
 		        	}
-				    if (type.equals(NcdDetectorSystem.SAXS_DETECTOR)) {
+				    if (type.equals(DetectorTypes.SAXS_DETECTOR)) {
 	        			detListSaxs.add(detName);
 		        		detDims.put(detName, 2);
 				    }
@@ -139,13 +137,13 @@ public class DetectorInformationHandler extends AbstractHandler {
 					logger.error("SCISOFT NCD: Error reading sas_type information in " + detName + " detector", e);
 				}
 	        }
-	        INexusTree pixelData = detector.getValue().getNexusTree().getChildNode("x_pixel_size", NexusExtractor.SDSClassName);
+	        INexusTree pixelData = detector.getValue().getChildNode("x_pixel_size", NexusExtractor.SDSClassName);
 	        if (pixelData != null) {
 					double[] pxSize = (double[]) pixelData.getData().getBuffer();
 					pixels.put(detName, pxSize[0]*1000);
 	        }
 	        
-			INexusTree dataNode = detector.getValue().getNexusTree().getChildNode("data", NexusExtractor.SDSClassName);
+			INexusTree dataNode = detector.getValue().getChildNode("data", NexusExtractor.SDSClassName);
 	        if (dataNode != null) {
 				int[] dims = dataNode.getData().dimensions;
 				maxChannel.put(detName, dims[dims.length - 1] - 1);

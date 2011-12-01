@@ -24,10 +24,11 @@ import java.io.StringReader;
 
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusExtractorException;
+import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
+import gda.data.nexus.tree.NexusTreeNode;
 import gda.data.nexus.tree.NexusTreeNodeSelection;
-import gda.device.detector.NXDetectorData;
 import gda.util.TestUtils;
 
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -42,13 +43,14 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazyAverage;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazyBackgroundSubtraction;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazyDetectorResponse;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazyNormalisation;
-import uk.ac.diamond.scisoft.ncd.rcp.reduction.LazySectorIntegration;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyBackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyDetectorResponse;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyInvariant;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyNormalisation;
+import uk.ac.diamond.scisoft.ncd.reduction.LazySectorIntegration;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdLazyDataReductionTest {
 
@@ -100,23 +102,27 @@ public class NcdLazyDataReductionTest {
 							data[idx] = val;
 						}
 					}
-					NXDetectorData nxdata = new NXDetectorData();
-					nxdata.addData(testDatasetName, "data", imageShape, NexusFile.NX_FLOAT32, data, "counts", 1);
-					nxdata.addData(testNormName, "data", new int[] {1}, NexusFile.NX_FLOAT32, norm, "counts", 1);
+					INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+					NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
+					NexusGroupData normgroup = new NexusGroupData(new int[] {1}, NexusFile.NX_FLOAT32, norm);
+					datagroup.isDetectorEntryData = true;
+					normgroup.isDetectorEntryData = true;
+					NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
+					NcdDataUtils.addData(nxdata, testNormName, "data", normgroup, "counts", 1);
 
 					int[] datStartPosition =  new int[] {gridFrame[0], frames};
 					int[] datDimMake =  new int[] {shape[0], shape[1]};
 					if (n == 0 && frames == 0) {
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
 					}
 					else {
 						nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
 						nxsFile.closegroup();
 
 						nxsFile.opengroup(testNormName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
 						nxsFile.closegroup();
 					}
 					nxsFile.flush();
@@ -150,23 +156,27 @@ public class NcdLazyDataReductionTest {
 						else data[idx] = 0.0f;
 					}
 				}
-				NXDetectorData nxdata = new NXDetectorData();
-				nxdata.addData(testDatasetName, "data", imageShape, NexusFile.NX_FLOAT32, data, "counts", 1);
-				nxdata.addData(testNormName, "data", new int[] {1}, NexusFile.NX_FLOAT32, norm, "counts", 1);
+				INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+				NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
+				NexusGroupData normgroup = new NexusGroupData(new int[] {1}, NexusFile.NX_FLOAT32, norm);
+				datagroup.isDetectorEntryData = true;
+				normgroup.isDetectorEntryData = true;
+				NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
+				NcdDataUtils.addData(nxdata, testNormName, "data", normgroup, "counts", 1);
 
 				int[] datStartPosition =  new int[] {frames};
 				int[] datDimMake =  new int[] {bgFrames};
 				if (frames == 0) {
-					NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-					NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
 				}
 				else {
 					nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
 					nxsFile.closegroup();
 
 					nxsFile.opengroup(testNormName, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
 					nxsFile.closegroup();
 				}
 				nxsFile.flush();
@@ -197,13 +207,15 @@ public class NcdLazyDataReductionTest {
 					data[idx] = val;
 				}
 			}
-			NXDetectorData nxdata = new NXDetectorData();
-			nxdata.addData(testDatasetName, "data", imageShape, NexusFile.NX_FLOAT32, data, "counts", 1);
+			INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+			NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
+			datagroup.isDetectorEntryData = true;
+			NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
         
 			int[] datStartPosition =  new int[] {frames};
 			int[] datDimMake =  new int[] {1};
-			NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-			NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
+			NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
+			NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
 			nxsFile.flush();
         
 			nxsFile.closegroup();
@@ -231,17 +243,19 @@ public class NcdLazyDataReductionTest {
 							data[idx] = val;
 						}
 					}
-					NXDetectorData nxdata = new NXDetectorData();
-					nxdata.addData(testDatasetName, "data", imageShape, NexusFile.NX_FLOAT32, data, "counts", 1);
+					INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+					NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
+					datagroup.isDetectorEntryData = true;
+					NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
 					
 					int[] datStartPosition =  new int[] {gridFrame[0], frames};
 					int[] datDimMake =  new int[] {shape[0], shape[1]};
 					if (n == 0 && frames == 0) {
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
 					}
 					else {
 						nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, nxdata.getDetTree(testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
 						nxsFile.closegroup();
 					}
 					nxsFile.flush();
@@ -260,7 +274,7 @@ public class NcdLazyDataReductionTest {
 		LazyNormalisation ncdTestClass = new LazyNormalisation(testDatasetName, shape, 10, nxsFile);
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 		
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setDetector(testDatasetName);
@@ -273,13 +287,13 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 		
 		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyNormalisation.name, false));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
 			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
 				int[] start = new int[] {g, k, 0, 0};
 				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(LazyNormalisation.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(LazyNormalisation.name, "data", NexusExtractor.SDSClassName), false);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyNormalisation.name, null, tmpNXdata, dim, start, stop);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData, LazyNormalisation.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
 						float value = outDataset.getFloat(new int[] {i,j});
@@ -297,7 +311,7 @@ public class NcdLazyDataReductionTest {
 		LazyBackgroundSubtraction ncdTestClass = new LazyBackgroundSubtraction(testDatasetName, shape, 10, nxsFile);
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 		
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setDetector(testDatasetName);
@@ -315,13 +329,13 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 		
 		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyBackgroundSubtraction.name, false));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
 			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
 				int[] start = new int[] {g, k, 0, 0};
 				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(LazyBackgroundSubtraction.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(LazyBackgroundSubtraction.name, "data", NexusExtractor.SDSClassName), false);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyBackgroundSubtraction.name, null, tmpNXdata, dim, start, stop);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyBackgroundSubtraction.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
 						float value = outDataset.getFloat(new int[] {i,j});
@@ -339,7 +353,7 @@ public class NcdLazyDataReductionTest {
 		LazyDetectorResponse ncdTestClass = new LazyDetectorResponse(testDatasetName, shape, 10, nxsFile);
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 		
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setDetector(testDatasetName);
@@ -350,13 +364,13 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 		
 		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyDetectorResponse.name, false));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
 			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
 				int[] start = new int[] {g, k, 0, 0};
 				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(LazyDetectorResponse.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(LazyDetectorResponse.name, "data", NexusExtractor.SDSClassName), false);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyDetectorResponse.name, null, tmpNXdata, dim, start, stop);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyDetectorResponse.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
 						float value = outDataset.getFloat(new int[] {i,j});
@@ -374,7 +388,7 @@ public class NcdLazyDataReductionTest {
 		LazyInvariant ncdTestClass = new LazyInvariant(testDatasetName, shape, 10, nxsFile);
 
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setDetector(testDatasetName);
@@ -384,14 +398,14 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 
 		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyInvariant.name, false));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 
 		for (int g = 0; g < shape[0]; g++)
 			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
 				int[] start = new int[] {g, k};
 				int[] stop = new int[] {g + 1, k + 1};
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(LazyInvariant.name, null, tmpNXdata, 1, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(LazyInvariant.name, "data", NexusExtractor.SDSClassName), false);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyInvariant.name, null, tmpNXdata, 1, start, stop);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyInvariant.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 				float value = outDataset.getFloat(new int[] {0});
 				float expected = 0.0f;
 				for (int i = 0; i < shape[2]; i++)
@@ -408,7 +422,7 @@ public class NcdLazyDataReductionTest {
 		LazySectorIntegration ncdTestClass = new LazySectorIntegration(testDatasetName, shape, 10, nxsFile);
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(secFile, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 		
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setDetector(testDatasetName);
@@ -420,17 +434,17 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 		
 		detectorTree = NexusTreeBuilder.getNexusTree(secFile, getDetectorSelection(LazySectorIntegration.name, false));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
 			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
 				int[] start = new int[] {g, k, 0};
 				int[] stop = new int[] {g + 1, k + 1, shape[3]};
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(LazySectorIntegration.name, null, tmpNXdata, 1, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(LazySectorIntegration.name, "data", NexusExtractor.SDSClassName), false);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazySectorIntegration.name, null, tmpNXdata, 1, start, stop);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazySectorIntegration.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 				int[] startImage = new int[] {g, firstFrame + k, 0, 0};
 				int[] stopImage = new int[] {g + 1, firstFrame + k + 1, shape[2], shape[3]};
-				NXDetectorData tmpInput = NcdDataUtils.selectNAxisFrames(testDatasetName, null, nxdata, 2, startImage, stopImage);
-				AbstractDataset[] intResult = ROIProfile.sector(Nexus.createDataset(tmpInput.getData(testDatasetName, "data", NexusExtractor.SDSClassName), false), null, intSector);
+				INexusTree tmpInput = NcdDataUtils.selectNAxisFrames(testDatasetName, null, nxdata, 2, startImage, stopImage);
+				AbstractDataset[] intResult = ROIProfile.sector(Nexus.createDataset(NcdDataUtils.getDetTree(tmpInput,testDatasetName).getChildNode("data", NexusExtractor.SDSClassName).getData(), false), null, intSector);
 				for (int i = 1; i < shape[3]; i++) {
 						float value = outDataset.getFloat(new int[] {i});
 						float expected = intResult[0].getFloat(new int[] {i});
@@ -447,7 +461,7 @@ public class NcdLazyDataReductionTest {
 		LazyAverage ncdTestClass = new LazyAverage(testDatasetName, shape, 10, nxsFile);
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		NXDetectorData nxdata = new NXDetectorData(detectorTree.getNode("instrument"));
+		INexusTree nxdata = detectorTree.getNode("instrument");
 		
 		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
 		ncdTestClass.setFirstFrame(firstFrame, dim);
@@ -457,8 +471,8 @@ public class NcdLazyDataReductionTest {
 		nxsFile.closegroup();
 		
 		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyAverage.name, true));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("instrument"));
-		AbstractDataset outDataset = Nexus.createDataset(tmpNXdata.getData(LazyAverage.name, "data", NexusExtractor.SDSClassName), false);
+		INexusTree tmpNXdata = detectorTree.getNode("instrument");
+		AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpNXdata,LazyAverage.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
 		for (int i = 0; i < shape[2]; i++)
 			for (int j = 0; j < shape[3]; j++) {
 				float value = outDataset.getFloat(new int[] {0, 0, i, j});

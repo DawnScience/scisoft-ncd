@@ -56,6 +56,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.AverageHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.BackgroundSubtractionHandler;
@@ -66,7 +67,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.handlers.NormalisationHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.SaxsDataReductionHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.SectorIntegrationHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.WaxsDataReductionHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdPreferences;
 
 public class NcdDataReductionParameters extends ViewPart {
 

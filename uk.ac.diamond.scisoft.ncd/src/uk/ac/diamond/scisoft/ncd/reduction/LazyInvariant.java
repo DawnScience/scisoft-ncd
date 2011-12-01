@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
@@ -24,30 +24,29 @@ import java.util.concurrent.CancellationException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
-import uk.ac.gda.server.ncd.subdetector.Normalisation;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Invariant;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.device.detector.NXDetectorData;
+import gda.data.nexus.tree.INexusTree;
 
-public class LazyNormalisation extends LazyDataReduction {
+public class LazyInvariant extends LazyDataReduction {
+
+	public static String name = "Invariant";
 	
-	private Double absScaling;
-	public static String name = "Normalisation";
-
-	public LazyNormalisation(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
+	public LazyInvariant(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
 		super(activeDataset, frames, frameBatch, nxsFile);
 	}
 
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+		HDF5Invariant reductionStep = new HDF5Invariant(name, activeDataset);
 
-		Normalisation reductionStep = new Normalisation(name, activeDataset);
-		
-		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
+		int[] datDimMake = new int[frames.length - dim];
+		datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;
+		
 		int gridIdx = NcdDataUtils.gridPoints(frames, dim);
 		for (int n = 0; n < gridIdx; n++) {
 			if (monitor.isCanceled()) {
@@ -61,45 +60,26 @@ public class LazyNormalisation extends LazyDataReduction {
 				int[] start = new int[gridDim];
 				int[] stop = new int[gridDim];
 				NcdDataUtils.selectGridRange(frames, gridFrame, i, currentBatch, start, stop);
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, calibration, tmpNXdata, dim + 1, start, stop);
-				
-				reductionStep.setCalibName(calibration);
-				reductionStep.setCalibChannel(normChannel);
-				if (absScaling != null)
-					reductionStep.setNormvalue(absScaling);
-			
-				if (dim == 1)
-					reductionStep.setqAxis(qaxis);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
+	
 				reductionStep.writeout(currentBatch, tmpData);
-				
+	
 				int[] datDimStartPrefix = Arrays.copyOf(start, start.length-dim);
 				datDimStartPrefix[datDimStartPrefix.length-1] -= firstFrame;
 				int[] datDimPrefix = new int[gridFrame.length];
 				Arrays.fill(datDimPrefix, 1);
 				
-				if (dim == 1 && qaxis != null) {
-					NexusGroupData qData = tmpData.getData(name, "q", NexusExtractor.SDSClassName);
-					tmpData.addAxis(name, "q", qData, frames.length, 1, "nm^{-1}", false);
-				}
-				
 				if (n==0 && i==firstFrame) {
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getChildNode(name, NexusExtractor.NXDetectorClassName), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 0);
 				}
 				else {
 					nxsFile.opengroup(name, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name).getNode("data"),true, false, null, datDimPrefix,  datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getChildNode(name, NexusExtractor.NXDetectorClassName).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 0);
 					nxsFile.closegroup();
 				}
 				nxsFile.flush();
 			}
 		}
-		activeDataset = name;
-	}
-
-	public void setAbsScaling(Double absScaling) {
-		
-		this.absScaling = absScaling;
-		
 	}
 
 }

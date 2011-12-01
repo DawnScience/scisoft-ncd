@@ -23,6 +23,8 @@ import java.util.ArrayList;
 import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+
 public class NcdDataUtilsTest {
 	
 	String format = "-3,6-33;3-5;1,2-4,5;;,,;7-12";

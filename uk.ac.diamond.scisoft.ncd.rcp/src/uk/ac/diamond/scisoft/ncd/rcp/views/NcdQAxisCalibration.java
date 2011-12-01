@@ -49,23 +49,22 @@ import org.eclipse.ui.progress.UIJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.plotting.actions.InjectPyDevConsoleHandler;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.CalibrationPreferences;
 import uk.ac.gda.common.rcp.util.BundleUtils;
-import uk.ac.gda.server.ncd.data.CalibrationPeak;
-import uk.ac.gda.server.ncd.data.CalibrationResultsBean;
 
 import gda.analysis.functions.APeak;
 import gda.analysis.functions.StraightLine;
 import gda.analysis.functions.Parameter;
-import gda.rcp.ncd.views.QAxisCalibration;
 
-public class NcdQAxisCalibration extends QAxisCalibration {
+public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	private IMemento memento;
 
@@ -311,7 +310,7 @@ public class NcdQAxisCalibration extends QAxisCalibration {
 		try {
 			File pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd.rcp").getAbsolutePath());
 			command.append("sys.path.append(\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
-			pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.gda.server.ncd").getAbsolutePath());
+			pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd").getAbsolutePath());
 			command.append("sys.path.append(\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
 		} catch (IOException e) {
 			String msg = "SCISOFT NCD: Error configuring Jython console";
@@ -320,15 +319,15 @@ public class NcdQAxisCalibration extends QAxisCalibration {
 			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Jython console configuration error", msg, status);
 			return;
 		}
-		command.append("import QaxisCalibration as ca;");
+		command.append("import calibrateDetector as ca;");
 
-		command.append("ca.qaxiscalibrate(");
+		command.append("ca.calibrate(");
 
 		command.append(String.format("\"%s\"", getDetectorName()));
 		command.append(",");
 
 		command.append(String.format("\"%s\"", GUI_PLOT_NAME));
-		command.append(",");
+		command.append(",None,");
 		
 		command.append("[");
 

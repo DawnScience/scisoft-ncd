@@ -18,8 +18,8 @@
                 <pathelement location="${plugins.dir}/uk.ac.gda.common/bin" />
                 <pathelement location="${plugins.dir}/uk.ac.gda.core/classes/main" />
                 <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.analysis/bin" />
+                <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.ncd/bin" />
                 <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.ncd.rcp/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.server.ncd/bin" />
                 <pathelement location="${plugins.dir}/uk.ac.gda.nexus/bin" />
                 <pathelement location="${plugins.dir}/uk.ac.gda.nexus/jars/jnexus-4.3.jar" />
                 <path refid="thirdparty.jars.path" />

@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
@@ -26,7 +26,7 @@ import gda.data.nexus.extractor.NexusExtractorException;
 import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.device.detector.NXDetectorData;
+import gda.data.nexus.tree.NexusTreeNode;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusException;
@@ -35,10 +35,10 @@ import org.nexusformat.NexusFile;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
-import uk.ac.gda.server.ncd.subdetector.BackgroundSubtraction;
-import uk.ac.gda.server.ncd.subdetector.Normalisation;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Normalisation;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyBackgroundSubtraction extends LazyDataReduction {
 
@@ -113,25 +113,25 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 
 		int totalFrames = stop[bgFramesIdx] - start[bgFramesIdx];
 		int bgFrames = bgLastFrame - bgFirstFrame + 1;
-		NXDetectorData tmpBgData = new NXDetectorData();
+		NexusTreeNode tmpBgData = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 
 		start[bgFramesIdx] = (startGrid[startGrid.length - dim - 1] - firstFrame) % bgFrames + bgFirstFrame;
 		stop[bgFramesIdx] = Math.min(start[bgFramesIdx] + totalFrames, bgLastFrame + 1);
 		int firstSlice = stop[bgFramesIdx] - start[bgFramesIdx];
-		NXDetectorData sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, new NXDetectorData(detectorTree.getNode(bgRoot)), dim + 1, start, stop);
-		AbstractDataset data = Nexus.createDataset(sliceBgData.getData(detector, "data", NexusExtractor.SDSClassName), false);
+		INexusTree sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, detectorTree.getNode(bgRoot), dim + 1, start, stop);
+		AbstractDataset data = Nexus.createDataset(NcdDataUtils.getData(sliceBgData, detector, "data", NexusExtractor.SDSClassName), false);
 		AbstractDataset norm = null;
 		if (calibration != null)
-			norm = Nexus.createDataset(sliceBgData.getData(calibration, "data", NexusExtractor.SDSClassName), false);
+			norm = Nexus.createDataset(NcdDataUtils.getData(sliceBgData, calibration, "data", NexusExtractor.SDSClassName), false);
 
 		int i = 0;
 		while (i < (totalFrames - firstSlice) / bgFrames) {
 			start[bgFramesIdx] = bgFirstFrame;
 			stop[bgFramesIdx] = bgLastFrame + 1;
-			sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, new NXDetectorData(detectorTree.getNode(bgRoot)), dim + 1, start, stop);
-			data = DatasetUtils.append(data, Nexus.createDataset(sliceBgData.getData(detector, "data", NexusExtractor.SDSClassName), false), 0);
+			sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, detectorTree.getNode(bgRoot), dim + 1, start, stop);
+			data = DatasetUtils.append(data, Nexus.createDataset(NcdDataUtils.getData(sliceBgData, detector, "data", NexusExtractor.SDSClassName), false), 0);
 			if (norm != null)
-				norm = DatasetUtils.append(norm, Nexus.createDataset(sliceBgData.getData(calibration, "data", NexusExtractor.SDSClassName), false), 0);
+				norm = DatasetUtils.append(norm, Nexus.createDataset(NcdDataUtils.getData(sliceBgData, calibration, "data", NexusExtractor.SDSClassName), false), 0);
 			i++;
 		}
 
@@ -140,19 +140,19 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 			start[bgFramesIdx] = bgFirstFrame;
 			stop[bgFramesIdx] = remFrames + bgFirstFrame;
 			if (stop[bgFramesIdx] > start[bgFramesIdx]) {
-				sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, new NXDetectorData(detectorTree.getNode(bgRoot)), dim + 1, start, stop);
-				data = DatasetUtils.append(data, Nexus.createDataset(sliceBgData.getData(detector, "data", NexusExtractor.SDSClassName), false), 0);
+				sliceBgData = NcdDataUtils.selectNAxisFrames(detector, calibration, detectorTree.getNode(bgRoot), dim + 1, start, stop);
+				data = DatasetUtils.append(data, Nexus.createDataset(NcdDataUtils.getData(sliceBgData, detector, "data", NexusExtractor.SDSClassName), false), 0);
 				if (norm != null)
-					norm = DatasetUtils.append(norm, Nexus.createDataset(sliceBgData.getData(calibration, "data", NexusExtractor.SDSClassName), false), 0);
+					norm = DatasetUtils.append(norm, Nexus.createDataset(NcdDataUtils.getData(sliceBgData, calibration, "data", NexusExtractor.SDSClassName), false), 0);
 			}
 		}
-		tmpBgData.addData(detector, new NexusGroupData(data.getShape(), data.getDtype(), data.getBuffer()), "counts", 1);
+		NcdDataUtils.addData(tmpBgData, detector, "data", new NexusGroupData(data.getShape(), data.getDtype(), data.getBuffer()), "counts", 1);
 		if (norm != null)
-			tmpBgData.addData(calibration, new NexusGroupData(norm.getShape(), norm.getDtype(), norm.getBuffer()), "counts", 1);
+			NcdDataUtils.addData(tmpBgData, calibration, "data", new NexusGroupData(norm.getShape(), norm.getDtype(), norm.getBuffer()), "counts", 1);
 
 		if (calibration != null) {
 			String nrDatasetName = "bgNormalisation";
-			Normalisation reductionStep = new Normalisation(nrDatasetName, detector);
+			HDF5Normalisation reductionStep = new HDF5Normalisation(nrDatasetName, detector);
 			reductionStep.setCalibName(calibration);
 			reductionStep.setCalibChannel(normChannel);
 			if (absScaling != null)
@@ -160,16 +160,16 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 
 			reductionStep.writeout(totalFrames, tmpBgData);
 
-			return Nexus.createDataset(tmpBgData.getData(nrDatasetName, "data", NexusExtractor.SDSClassName), false);
+			return Nexus.createDataset(NcdDataUtils.getData(tmpBgData, nrDatasetName, "data", NexusExtractor.SDSClassName), false);
 		}
 
-		return Nexus.createDataset(tmpBgData.getData(detector, "data", NexusExtractor.SDSClassName), false);
+		return Nexus.createDataset(NcdDataUtils.getData(tmpBgData, detector, "data", NexusExtractor.SDSClassName), false);
 	}
 
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 
-		BackgroundSubtraction reductionStep = new BackgroundSubtraction(name, activeDataset);
+		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction(name, activeDataset);
 
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;
@@ -185,7 +185,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 				int[] start = new int[gridDim];
 				int[] stop = new int[gridDim];
 				NcdDataUtils.selectGridRange(frames, gridFrame, i, currentBatch, start, stop);
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
 
 				if (dim==1)
 					reductionStep.setqAxis(qaxis);
@@ -202,16 +202,16 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 				Arrays.fill(datDimPrefix, 1);
 
 				if (dim == 1 && qaxis != null) {
-					NexusGroupData qData = tmpData.getData(name, "q", NexusExtractor.SDSClassName);
-					tmpData.addAxis(name, "q", qData, frames.length, 1, "nm^{-1}", false);
+					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
+					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length, 1, "nm^{-1}", false);
 				}
 
 				if (n==0 && i==firstFrame) {
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
 				}
 				else {
 					nxsFile.opengroup(name, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
 					nxsFile.closegroup();
 				}
 				nxsFile.flush();

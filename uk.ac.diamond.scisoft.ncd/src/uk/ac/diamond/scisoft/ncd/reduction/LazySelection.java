@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -26,11 +26,11 @@ import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import gda.data.nexus.extractor.NexusExtractor;
-import gda.device.detector.NXDetectorData;
+import gda.data.nexus.tree.INexusTree;
 
 public class LazySelection extends LazyDataReduction {
 
@@ -42,7 +42,7 @@ public class LazySelection extends LazyDataReduction {
 	}
 
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 		
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
@@ -68,7 +68,7 @@ public class LazySelection extends LazyDataReduction {
 					stop[k] = frames[k];
 				}
 				
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, calibration, tmpNXdata, dim + 1, start, stop);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, calibration, tmpNXdata, dim + 1, start, stop);
 				
 				int[] datDimStartPrefix = new int[gridFrame.length];
 				for (int k = 0; k < datDimStartPrefix.length; k++)
@@ -78,17 +78,17 @@ public class LazySelection extends LazyDataReduction {
 				Arrays.fill(datDimPrefix, 1);
 				
 				if (n==0) {
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(activeDataset), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, activeDataset), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
 					if (calibration != null)
-						NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(calibration), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, calibration), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
 				}
 				else {
 					nxsFile.opengroup(activeDataset, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(activeDataset).getNode("data"),true, false, null, datDimPrefix,  datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, activeDataset).getNode("data"),true, false, null, datDimPrefix,  datDimStartPrefix, datDimMake, dim);
 					nxsFile.closegroup();
 					if (calibration != null) {
 						nxsFile.opengroup(calibration, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(calibration).getNode("data"),true, false, null, datDimPrefix,  datDimStartPrefix, datDimMake, 1);
+						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, calibration).getNode("data"),true, false, null, datDimPrefix,  datDimStartPrefix, datDimMake, 1);
 						nxsFile.closegroup();
 					}
 				}

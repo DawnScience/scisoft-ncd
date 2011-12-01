@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
@@ -27,16 +27,15 @@ import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
-import uk.ac.gda.server.ncd.subdetector.DetectorResponse;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5DetectorResponse;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusExtractorException;
 import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.device.detector.NXDetectorData;
 
 public class LazyDetectorResponse extends LazyDataReduction {
 
@@ -59,15 +58,15 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		int[] drDims = detectorTree.getNode("entry1/instrument").getNode(detector).getNode("data").getData().dimensions;
 		int[] start = new int[drDims.length];
 		Arrays.fill(start, 0);
-		NXDetectorData tmpdrData = NcdDataUtils.selectNAxisFrames(detector, null, new NXDetectorData(detectorTree.getNode("entry1/instrument")), dim, start, drDims);
+		INexusTree tmpdrData = NcdDataUtils.selectNAxisFrames(detector, null, detectorTree.getNode("entry1/instrument"), dim, start, drDims);
 		
-		return Nexus.createDataset(tmpdrData.getData(detector, "data", NexusExtractor.SDSClassName), false);
+		return Nexus.createDataset(NcdDataUtils.getData(tmpdrData, detector, "data", NexusExtractor.SDSClassName), false);
 	}
 
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 		
-		DetectorResponse reductionStep = new DetectorResponse(name, activeDataset);
+		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse(name, activeDataset);
 		AbstractDataset responseDataSet = createDetectorResponseInput(detector, dim);
 
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
@@ -84,7 +83,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 				int[] start = new int[gridDim];
 				int[] stop = new int[gridDim];
 				NcdDataUtils.selectGridRange(frames, gridFrame, i, currentBatch, start, stop);
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
 	
 				if (dim == 1)
 					reductionStep.setqAxis(qaxis);
@@ -98,16 +97,16 @@ public class LazyDetectorResponse extends LazyDataReduction {
 				Arrays.fill(datDimPrefix, 1);
 				
 				if (dim == 1 && qaxis != null) {
-					NexusGroupData qData = tmpData.getData(name, "q", NexusExtractor.SDSClassName);
-					tmpData.addAxis(name, "q", qData, frames.length, 1, "nm^{-1}", false);
+					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
+					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length, 1, "nm^{-1}", false);
 				}
 				
 				if (n==0 && i==firstFrame) {
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
 				}
 				else {
 					nxsFile.opengroup(name, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
 					nxsFile.closegroup();
 				}
 				nxsFile.flush();

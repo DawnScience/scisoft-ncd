@@ -16,13 +16,13 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.concurrent.CancellationException;
 
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.device.detector.NXDetectorData;
+//import gda.device.detector.NXDetectorData;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -33,11 +33,11 @@ import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdDetectors;
-import uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.gda.server.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class LazyNcdProcessing {
 
@@ -159,8 +159,8 @@ public class LazyNcdProcessing {
 		nxsFile.opengroup("entry1", "NXentry");
 		
 		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(detector, calibration));
-		NXDetectorData tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/instrument"));
-		int[] frames = tmpNXdata.getDetTree(detector).getNode("data").getData().dimensions;
+		INexusTree tmpNXdata = detectorTree.getNode("entry1/instrument");
+		int[] frames = tmpNXdata.getNode(detector).getNode("data").getData().dimensions;
 		int frameBatch = 5;	//TODO: calculate based on the image size
 		
 		AbstractDataset qaxis = null;
@@ -207,7 +207,7 @@ public class LazyNcdProcessing {
 			activeDataset = lazySelection.getActiveDataset();
 
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_selection"));
+			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_selection");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
 			if (flags.isEnableInvariant()) detInvariant = activeDataset;
 			nxsFile.closegroup();
@@ -218,8 +218,8 @@ public class LazyNcdProcessing {
 			nxsFile.makegroup(selNodeName, "NXinstrument");
 			nxsFile.opengroup(selNodeName, "NXinstrument");
 			INexusTree bgDetectorTree = NexusTreeBuilder.getNexusTree(bgFile, NcdDataUtils.getDetectorSelection(detector, calibration));
-			NXDetectorData bgNXdata = new NXDetectorData(bgDetectorTree.getNode("entry1/instrument"));
-			int[] bgFrames = bgNXdata.getDetTree(detector).getNode("data").getData().dimensions;
+			INexusTree bgNXdata = bgDetectorTree.getNode("entry1/instrument");
+			int[] bgFrames = bgNXdata.getNode(detector).getNode("data").getData().dimensions;
 			
 			monitor.setTaskName(monitorFile + " : Selecting background input frames");
 			LazySelection lazySelection = new LazySelection(detector, bgFrames, frameBatch, nxsFile);
@@ -249,7 +249,7 @@ public class LazyNcdProcessing {
 			activeDataset = lazyNormalisation.getActiveDataset();
 
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
 			if (flags.isEnableInvariant()) detInvariant = activeDataset;
 		}
@@ -284,7 +284,7 @@ public class LazyNcdProcessing {
 			activeDataset = lazyBackgroundSubtraction.getActiveDataset();
 			
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
 			if (flags.isEnableInvariant()) detInvariant = activeDataset;
 		}
@@ -304,7 +304,7 @@ public class LazyNcdProcessing {
 			activeDataset = lazyDetectorResponse.getActiveDataset();
 			
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
 			if (flags.isEnableInvariant()) detInvariant = activeDataset;
 		}
@@ -327,7 +327,7 @@ public class LazyNcdProcessing {
 			activeDataset = lazySectorIntegration.getActiveDataset();
 			
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
 		}
@@ -338,9 +338,9 @@ public class LazyNcdProcessing {
 			monitor.setTaskName(monitorFile + " : Calculating invariant");
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(detInvariant, calibration));
 			if (detInvariant.equals(detector))
-				tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/instrument"));
+				tmpNXdata = detectorTree.getNode("entry1/instrument");
 			else
-				tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+				tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			
 			LazyInvariant lazyInvariant = new LazyInvariant(detInvariant, invFrames, frameBatch, nxsFile);
 			lazyInvariant.setFirstFrame(firstFrame, dim);
@@ -349,9 +349,9 @@ public class LazyNcdProcessing {
 			
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
 			if (activeDataset.equals(detector))
-				tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/instrument"));
+				tmpNXdata = detectorTree.getNode("entry1/instrument");
 			else
-				tmpNXdata = new NXDetectorData(detectorTree.getNode("entry1/"+detector+"_processing"));
+				tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 		}
 		
 		monitor.worked(1);
@@ -390,10 +390,10 @@ public class LazyNcdProcessing {
 		nxsFile.close();
 	}
 	
-	private int[] updateFrameInfo(NXDetectorData tmpNXdata, String activeDataset) {
+	private int[] updateFrameInfo(INexusTree tmpNXdata, String activeDataset) {
 		if (firstFrame != null && lastFrame != null) lastFrame -= firstFrame;
 		if (firstFrame != null) firstFrame = 0;
-		return tmpNXdata.getDetTree(activeDataset).getNode("data").getData().dimensions;
+		return tmpNXdata.getNode(activeDataset).getNode("data").getData().dimensions;
 	}
 
 	public void setFrameSelection(String frameSelection) {

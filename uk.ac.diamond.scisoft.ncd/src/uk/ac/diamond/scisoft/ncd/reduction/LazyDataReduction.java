@@ -16,9 +16,9 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
-import gda.device.detector.NXDetectorData;
+import gda.data.nexus.tree.INexusTree;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
@@ -89,5 +89,5 @@ public abstract class LazyDataReduction {
 			this.lastFrame = lastFrame;
 	}
 
-	public abstract void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception;	
+	public abstract void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception;	
 }

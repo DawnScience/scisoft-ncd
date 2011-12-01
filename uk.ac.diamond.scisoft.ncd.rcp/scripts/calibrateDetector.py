@@ -1,25 +1,26 @@
 from calibrationMethods import performCalibration
 from uk.ac.diamond.scisoft.analysis.plotserver import GuiParameters
-from uk.ac.gda.server.ncd.data import CalibrationResultsBean
+from uk.ac.diamond.scisoft.analysis.plotserver import CalibrationResultsBean
 import scisoftpy as dnp
-import uk.ac.diamond.scisoft.analysis.SDAPlotter as plotter
+from scisoftpy import plot
 
-
-def qaxiscalibrate(saxswaxs, plotName, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None):
+def calibrate(saxswaxs, plotName, redsetup, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None):
     [func, calPeaks, camlength] = performCalibration(peaks, stdspacing, wavelength, pixelSize*1000, n, disttobeamstop)
     if func is None:
         raise "Something went wrong"
     plot_results(plotName, func)
+    if redsetup is not None:
+        redsetup.ncdredconf(saxswaxs, slope=func.func.getParameterValue(0), intercept=func.func.getParameterValue(1), cameralength=(camlength/1000))
     function_to_GUIBean(saxswaxs, plotName, func, calPeaks, camlength)
         
 def function_to_GUIBean(saxswaxs, plotName, fittingReturn, calPeaks, cameraDist):
-    new_bean = plotter.getGuiBean(plotName)
+    new_bean = plot.getbean(plotName)
     ncdbean = new_bean[GuiParameters.CALIBRATIONFUNCTIONNCD]
     if not isinstance(ncdbean, CalibrationResultsBean):
         new_bean[GuiParameters.CALIBRATIONFUNCTIONNCD] = CalibrationResultsBean(saxswaxs,fittingReturn.func,calPeaks,cameraDist)
     else:
         ncdbean.putCalibrationResult(saxswaxs,fittingReturn.func,calPeaks,cameraDist)
-    plotter.setGuiBean(plotName, new_bean)
+    plot.setbean(new_bean, plotName)
     
 def plot_results(plotName, function):
      d = function.coords
@@ -33,4 +34,4 @@ def plot_results(plotName, function):
      data2[1:] = data
      
      func = dnp.fit.fitcore.fitresult(function.func, d2, data2)  
-     plotter.plot(plotName, func.coords[0], dnp.toList(func.makeplotdata()))     
+     func.plot(plotName)

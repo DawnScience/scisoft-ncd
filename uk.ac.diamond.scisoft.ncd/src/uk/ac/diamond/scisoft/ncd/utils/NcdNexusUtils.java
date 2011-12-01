@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.utils;
+package uk.ac.diamond.scisoft.ncd.utils;
 
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusGroupData;

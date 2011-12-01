@@ -16,13 +16,12 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeNode;
-import gda.device.detector.NXDetectorData;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -36,15 +35,15 @@ import org.nexusformat.NexusFile;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
-import uk.ac.gda.server.ncd.detectorsystem.NcdDetectorSystem;
-import uk.ac.gda.server.ncd.subdetector.Average;
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Average;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyAverage extends LazyDataReduction {
 
 	public static String name = "Average";
-	private String sas_type = NcdDetectorSystem.REDUCTION_DETECTOR;
+	private String sas_type = DetectorTypes.REDUCTION_DETECTOR;
 	private int[] averageIndices;
 	
 	public LazyAverage(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
@@ -53,7 +52,7 @@ public class LazyAverage extends LazyDataReduction {
 	}
 	
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 		
 		int[] outputDims = new int[frames.length];
 		if (averageIndices == null)
@@ -83,20 +82,20 @@ public class LazyAverage extends LazyDataReduction {
 				}
 				else totalFrames *= stop[i] - start[i];
 			
-			NXDetectorData tmpData = executeRecursiveAxis(tmpNXdata, 0, dim, start, stop, monitor);
+			INexusTree tmpData = executeRecursiveAxis(tmpNXdata, 0, dim, start, stop, monitor);
 			
-			AbstractDataset outDataset = Nexus.createDataset(tmpData.getData(name, "data", NexusExtractor.SDSClassName), false);
+			AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getData(tmpData, name, "data", NexusExtractor.SDSClassName), false);
 			outDataset.idivide(totalFrames);
 			
-			NXDetectorData nxOut = new NXDetectorData();
-			nxOut.addData(name, "data", outDataset.getShape(), outDataset.getDtype(), outDataset.getBuffer(), "counts", 1);
+			NexusTreeNode nxOut = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+			NcdDataUtils.addData(nxOut, name, "data", outDataset.getShape(), outDataset.getDtype(), outDataset.getBuffer(), "counts", 1);
 			if (qaxis != null) {
-				NexusGroupData qData = tmpData.getData(name, "q", NexusExtractor.SDSClassName);
-				nxOut.addAxis(name, "q", qData, frames.length, 1, "nm^{-1}", false);
+				NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
+				NcdDataUtils.addAxis(nxOut, name, "q", qData, frames.length, 1, "nm^{-1}", false);
 			}
 			
 			//TODO: Should inherit this node from Average class output 
-			INexusTree detTree = nxOut.getDetTree(name);
+			INexusTree detTree = nxOut.getChildNode(name, NexusExtractor.NXDetectorClassName);
 			NexusTreeNode sas_node = new NexusTreeNode("sas_type", NexusExtractor.SDSClassName, null, new NexusGroupData(sas_type));
 			sas_node.setIsPointDependent(false);
 			detTree.addChildNode(sas_node);
@@ -111,17 +110,17 @@ public class LazyAverage extends LazyDataReduction {
 			int[] newGridFrame = Arrays.copyOfRange(gridFrame, 0, gridFrame.length+1);
 			newGridFrame[gridFrame.length] = 0;
 			
-			NcdNexusUtils.writeNcdData(nxsFile, nxOut.getDetTree(name), true, false, null, datDimPrefix, newGridFrame, datDimMake, dim);
+			NcdNexusUtils.writeNcdData(nxsFile, nxOut.getChildNode(name, NexusExtractor.NXDetectorClassName), true, false, null, datDimPrefix, newGridFrame, datDimMake, dim);
 			nxsFile.flush();
 		}
 		activeDataset = name;
 	}
 	
 	
-	private NXDetectorData executeRecursiveFrames(NXDetectorData tmpNXdata, int dim, int[] gridFrame, int[] start, int[] stop, IProgressMonitor monitor) throws Exception {
+	private INexusTree executeRecursiveFrames(INexusTree tmpNXdata, int dim, int[] gridFrame, int[] start, int[] stop, IProgressMonitor monitor) throws Exception {
 		String recursiveKey = "tmpAverage";
 		String recursiveOut = "Average";
-		NXDetectorData recursiveData = new NXDetectorData();
+		INexusTree recursiveData = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 		
 		int sliceStart = start[gridDim-1-dim];
 		int sliceStop = stop[gridDim-1-dim];
@@ -131,7 +130,7 @@ public class LazyAverage extends LazyDataReduction {
 		if ((sliceStart + tmpFrames*sliceSize) < sliceStop) 
 			tmpFrames++;
 		
-		int[] inputDim = tmpNXdata.getData(activeDataset, "data", NexusExtractor.SDSClassName).dimensions;
+		int[] inputDim = NcdDataUtils.getData(tmpNXdata, activeDataset, "data", NexusExtractor.SDSClassName).dimensions;
 		int [] frameDim = new int[dim+1];
 		frameDim[0] = 1;
 		for (int i = dim; i > 0; i--)
@@ -149,14 +148,14 @@ public class LazyAverage extends LazyDataReduction {
 			// Keep slicing data until slice size is small enough to fit into memory to be averaged.
 			if (sliceSize > frameBatch) {
 				recursiveData = executeRecursiveFrames(tmpNXdata, dim, gridFrame, recStart, recStop, monitor);
-				tmpDataset = Nexus.createDataset(recursiveData.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+				tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 			}
 			else {
 				recursiveData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, recStart, recStop);
-				Average reductionStep = new Average(recursiveOut, activeDataset);
+				HDF5Average reductionStep = new HDF5Average(recursiveOut, activeDataset);
 				reductionStep.setqAxis(qaxis);
 				reductionStep.writeout(sliceFinal - i, recursiveData);
-				tmpDataset = Nexus.createDataset(recursiveData.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+				tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				tmpDataset.imultiply(sliceFinal - i);
 				
 				if (monitor.isCanceled()) {
@@ -170,7 +169,7 @@ public class LazyAverage extends LazyDataReduction {
 				totalDataset = DatasetUtils.append(totalDataset, tmpDataset, 0);
 		}
 		
-		NXDetectorData nxOut = new NXDetectorData();
+		NexusTreeNode nxOut = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 		
 		if (totalDataset != null) {
 			int[] outShape;
@@ -179,20 +178,20 @@ public class LazyAverage extends LazyDataReduction {
 			NexusGroupData qData = null;
 			
 			if (tmpFrames > 1) {
-				NXDetectorData nxdata = new NXDetectorData();
-				nxdata.addData(recursiveKey, "data", totalDataset.getShape(), totalDataset.getDtype(), totalDataset.getBuffer(), "counts", 1);
-				Average reductionStep = new Average(recursiveOut, recursiveKey);
+				NexusTreeNode nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+				NcdDataUtils.addData(nxdata, recursiveKey, "data", totalDataset.getShape(), totalDataset.getDtype(), totalDataset.getBuffer(), "counts", 1);
+				HDF5Average reductionStep = new HDF5Average(recursiveOut, recursiveKey);
 				reductionStep.setqAxis(qaxis);
 				reductionStep.writeout(tmpFrames, nxdata);
 				
-				AbstractDataset outDataset = Nexus.createDataset(nxdata.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getData(nxdata, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				outDataset.imultiply(tmpFrames);
 			
 				outShape = outDataset.getShape();
 				outType = outDataset.getDtype();
 				outBuffer = outDataset.getBuffer();
 				if (qaxis != null)
-					qData = nxdata.getData(recursiveOut, "q", NexusExtractor.SDSClassName);
+					qData = NcdDataUtils.getData(nxdata, recursiveOut, "q", NexusExtractor.SDSClassName);
 			}
 			else {
 				int[] fullShape = totalDataset.getShape();
@@ -200,18 +199,18 @@ public class LazyAverage extends LazyDataReduction {
 				outType = totalDataset.getDtype();
 				outBuffer = totalDataset.getBuffer();
 				if (qaxis != null)
-					qData = recursiveData.getData(recursiveOut, "q", NexusExtractor.SDSClassName);
+					qData = NcdDataUtils.getData(recursiveData, recursiveOut, "q", NexusExtractor.SDSClassName);
 			}
 			
-			nxOut.addData(recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
+			NcdDataUtils.addData(nxOut, recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
 			if (qData != null) {
-				nxOut.addAxis(recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
+				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
 			}
 		}
 		return nxOut;
 	}
 	
-	private NXDetectorData executeRecursiveAxis(NXDetectorData tmpNXdata, int idxAxis, int dim, int[] start, int[] stop, IProgressMonitor monitor) throws Exception {
+	private INexusTree executeRecursiveAxis(INexusTree tmpNXdata, int idxAxis, int dim, int[] start, int[] stop, IProgressMonitor monitor) throws Exception {
 		String recursiveKey = "tmpAverage";
 		String recursiveOut = "Average";
 		int aveIndex = averageIndices[idxAxis] - 1;
@@ -223,7 +222,7 @@ public class LazyAverage extends LazyDataReduction {
 		if ((sliceStart + tmpFrames*sliceSize) < sliceStop) 
 			tmpFrames++;
 		
-		int[] inputDim = tmpNXdata.getData(activeDataset, "data", NexusExtractor.SDSClassName).dimensions;
+		int[] inputDim = NcdDataUtils.getData(tmpNXdata, activeDataset, "data", NexusExtractor.SDSClassName).dimensions;
 		int [] frameDim = new int[dim+1];
 		frameDim[0] = 1;
 		for (int i = dim; i > 0; i--)
@@ -238,7 +237,7 @@ public class LazyAverage extends LazyDataReduction {
 			recStart[aveIndex] = i;
 			recStop[aveIndex] = sliceFinal;
 		
-			NXDetectorData recursiveData = new NXDetectorData();
+			INexusTree recursiveData = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 			AbstractDataset tmpDataset;
 			
 			// Keep slicing data in the grid axis until single frames. Then switch slicing to the next grid axis.
@@ -246,29 +245,29 @@ public class LazyAverage extends LazyDataReduction {
 			if (idxAxis < averageIndices.length - 1) {
 				if (sliceSize > 1) {
 					recursiveData = executeRecursiveAxis(tmpNXdata, idxAxis, dim, recStart, recStop, monitor);
-					tmpDataset = Nexus.createDataset(recursiveData.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+					tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				}
 				else {
 					recursiveData = executeRecursiveAxis(tmpNXdata, idxAxis + 1, dim, recStart, recStop, monitor);
-					tmpDataset = Nexus.createDataset(recursiveData.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+					tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				}
 			}
 			else {
 				int[] gridFrame = Arrays.copyOf(start, frames.length - dim - 1);
 				recursiveData = executeRecursiveFrames(tmpNXdata, dim, gridFrame, recStart, recStop, monitor);
-				tmpDataset = Nexus.createDataset(recursiveData.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+				tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 			}
 			tmpDataset.setShape(frameDim);
 			if (totalDataset == null) {
 				totalDataset = tmpDataset.clone();
 				if (qaxis != null)
-					qData = recursiveData.getData(recursiveOut, "q", NexusExtractor.SDSClassName);
+					qData = NcdDataUtils.getData(recursiveData, recursiveOut, "q", NexusExtractor.SDSClassName);
 			}
 			else 
 				totalDataset = DatasetUtils.append(totalDataset, tmpDataset, 0);
 		}
 		
-		NXDetectorData nxOut = new NXDetectorData();
+		NexusTreeNode nxOut = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 		
 		if (totalDataset != null) {
 			int[] outShape;
@@ -276,20 +275,25 @@ public class LazyAverage extends LazyDataReduction {
 			Serializable outBuffer;
 			
 			if (tmpFrames > 1) {
-				NXDetectorData nxdata = new NXDetectorData();
-				nxdata.addData(recursiveKey, "data", totalDataset.getShape(), totalDataset.getDtype(), totalDataset.getBuffer(), "counts", 1);
-				Average reductionStep = new Average(recursiveOut, recursiveKey);
+				NexusTreeNode nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
+				
+				NexusTreeNode tmpDet = new NexusTreeNode(recursiveKey, NexusExtractor.NXDetectorClassName, null);
+				tmpDet.setIsPointDependent(true);
+				NcdDataUtils.addData(tmpDet, "data", totalDataset.getShape(), totalDataset.getDtype(), totalDataset.getBuffer(), "counts", 1);
+				nxdata.addChildNode(tmpDet);
+				
+				HDF5Average reductionStep = new HDF5Average(recursiveOut, recursiveKey);
 				reductionStep.setqAxis(qaxis);
 				reductionStep.writeout(tmpFrames, nxdata);
 				
-				AbstractDataset outDataset = Nexus.createDataset(nxdata.getData(recursiveOut, "data", NexusExtractor.SDSClassName), false);
+				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getData(nxdata, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				outDataset.imultiply(tmpFrames);
 			
 				outShape = outDataset.getShape();
 				outType = outDataset.getDtype();
 				outBuffer = outDataset.getBuffer();
 				if (qaxis != null)
-					qData = nxdata.getData(recursiveOut, "q", NexusExtractor.SDSClassName);
+					qData = NcdDataUtils.getData(nxdata,recursiveOut, "q", NexusExtractor.SDSClassName);
 			}
 			else {
 				int[] fullShape = totalDataset.getShape();
@@ -298,9 +302,9 @@ public class LazyAverage extends LazyDataReduction {
 				outBuffer = totalDataset.getBuffer();
 			}
 			
-			nxOut.addData(recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
+			NcdDataUtils.addData(nxOut, recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
 			if (qData != null) {
-				nxOut.addAxis(recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
+				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
 			}
 		}
 		return nxOut;

@@ -44,14 +44,14 @@ import org.xml.sax.InputSource;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
+import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiPlotMode;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
-import uk.ac.gda.server.ncd.data.CalibrationPeak;
-import uk.ac.gda.server.ncd.data.CalibrationResultsBean;
 
 public class QAxisFileHandler extends AbstractHandler {
 

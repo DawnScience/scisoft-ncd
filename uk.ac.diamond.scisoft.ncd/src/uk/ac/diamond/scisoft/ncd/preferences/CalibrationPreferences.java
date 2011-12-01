@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.preferences;
+package uk.ac.diamond.scisoft.ncd.preferences;
 
 public class CalibrationPreferences {
 

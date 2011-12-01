@@ -16,7 +16,7 @@
  * with GDA. If not, see <http://www.gnu.org/licenses/>.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.reduction;
+package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
@@ -26,13 +26,13 @@ import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtils;
-import uk.ac.gda.server.ncd.subdetector.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.hdf5.HDF5SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusGroupData;
-import gda.device.detector.NXDetectorData;
+import gda.data.nexus.tree.INexusTree;
 
 public class LazySectorIntegration extends LazyDataReduction {
 
@@ -74,8 +74,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 
 	@Override
-	public void execute(NXDetectorData tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
-		SectorIntegration reductionStep = new SectorIntegration(name, activeDataset);
+	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
+		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration(name, activeDataset);
 		
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;
@@ -92,7 +92,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 				int[] start = new int[gridDim];
 				int[] stop = new int[gridDim];
 				NcdDataUtils.selectGridRange(frames, gridFrame, i, currentBatch, start, stop);
-				NXDetectorData tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
+				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
 	
 				reductionStep.setROI(intSector);
 				reductionStep.setqAxis(qaxis);
@@ -105,8 +105,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 				reductionStep.writeout(currentBatch, tmpData);
 	
 				if (qaxis != null) {
-					NexusGroupData qData = tmpData.getData(name, "q", NexusExtractor.SDSClassName);
-					tmpData.addAxis(name, "q", qData, frames.length - 1, 1, "nm^{-1}", false);
+					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
+					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length - 1, 1, "nm^{-1}", false);
 				}
 				
 				int[] datDimStartPrefix = Arrays.copyOf(start, start.length-dim);
@@ -115,12 +115,12 @@ public class LazySectorIntegration extends LazyDataReduction {
 				Arrays.fill(datDimPrefix, 1);
 				
 				if (n==0 && i==firstFrame) {
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
 				}
 				else {
 					nxsFile.opengroup(name, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
-					NcdNexusUtils.writeNcdData(nxsFile, tmpData.getDetTree(name).getNode("azimuth"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
+					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name).getNode("azimuth"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, 1);
 					nxsFile.closegroup();
 				}
 				nxsFile.flush();
