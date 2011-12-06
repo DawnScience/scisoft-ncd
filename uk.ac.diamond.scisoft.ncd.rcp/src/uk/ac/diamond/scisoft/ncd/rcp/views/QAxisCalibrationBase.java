@@ -18,7 +18,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import gda.analysis.functions.APeak;
 import gda.observable.IObserver;
 
 import java.io.Serializable;
@@ -58,6 +57,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.PlotServer;
 import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
 import uk.ac.diamond.scisoft.analysis.plotserver.AxisMapBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
@@ -646,8 +646,8 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			calibrationPeakList.addAll(crb.getPeakList(currentMode));
 			final double dist = crb.getMeanCameraLength(currentMode) / 1000;
 			if (crb.getFuction(currentMode) != null) {
-				final double mVal = crb.getFuction(currentMode).getParameter(0).getValue();
-				final double cVal = crb.getFuction(currentMode).getParameter(1).getValue();
+				final double mVal = crb.getFuction(currentMode).getParameterValue(0);
+				final double cVal = crb.getFuction(currentMode).getParameterValue(1);
 
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 

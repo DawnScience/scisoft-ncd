@@ -49,6 +49,9 @@ import org.eclipse.ui.progress.UIJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
@@ -59,10 +62,6 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.gda.common.rcp.util.BundleUtils;
-
-import gda.analysis.functions.APeak;
-import gda.analysis.functions.StraightLine;
-import gda.analysis.functions.Parameter;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
@@ -152,9 +151,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 								IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
 
 								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT,
-										(float) crb.getFuction(key).getParameter(0).getValue());
+										(float) crb.getFuction(key).getParameterValue(0));
 								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT,
-										(float) crb.getFuction(key).getParameter(1).getValue());
+										(float) crb.getFuction(key).getParameterValue(1));
 
 								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH,
 										(float) crb.getMeanCameraLength(key));

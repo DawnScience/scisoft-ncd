@@ -18,14 +18,12 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import java.io.StringReader;
-import java.util.ArrayList;
-
-import gda.analysis.functions.Parameter;
-import gda.analysis.functions.StraightLine;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 import gda.data.nexus.tree.NexusTreeNodeSelection;
+
+import java.io.StringReader;
+import java.util.ArrayList;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -44,6 +42,8 @@ import org.xml.sax.InputSource;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;

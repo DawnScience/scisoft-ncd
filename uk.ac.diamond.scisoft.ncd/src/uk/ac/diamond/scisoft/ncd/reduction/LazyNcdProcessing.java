@@ -167,8 +167,8 @@ public class LazyNcdProcessing {
 		
 		if (crb != null) {
 			if (crb.containsKey(detector)) {
-				if (slope == null) slope = crb.getFuction(detector).getParameter(0).getValue();
-				if (intercept == null) intercept = crb.getFuction(detector).getParameter(1).getValue();
+				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
+				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
 				cameraLength = crb.getMeanCameraLength(detector);
 			}
 		}
