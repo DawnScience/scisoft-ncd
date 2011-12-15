@@ -270,9 +270,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 			}
 			try {
-				IWorkbenchPage page = this.getViewSite().getWorkbenchWindow().getActivePage();
+				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				IViewPart activePlot = page.findView(ACTIVE_PLOT);
-				if (activePlot != null) {
+				if (activePlot instanceof PlotView) {
 					if (roiData != null)
 						((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
 					if (crb != null) {

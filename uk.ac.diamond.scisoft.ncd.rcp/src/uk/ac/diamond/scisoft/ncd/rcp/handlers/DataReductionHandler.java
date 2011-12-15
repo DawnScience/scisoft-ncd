@@ -18,7 +18,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 import java.text.SimpleDateFormat;
@@ -30,6 +29,7 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.State;
 import org.eclipse.core.filesystem.EFS;
+import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -133,10 +133,12 @@ public class DataReductionHandler extends AbstractHandler {
 							IFileStore outputFile = fileSystem.getStore(URI.create(filename));
 							inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
 							
-							//Check that result file is writable
-							File writableFile = new File(outputFile.toURI());
-							if (!writableFile.canWrite())
-								writableFile.setWritable(true);
+							// Check that results file is writable
+							IFileInfo info = outputFile.fetchInfo();
+							if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
+								info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
+								outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
+							}
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
