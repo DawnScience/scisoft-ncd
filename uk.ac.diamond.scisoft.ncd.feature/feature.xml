@@ -41,19 +41,19 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          id="uk.ac.diamond.scisoft.ncd.rcp"
          download-size="0"
          install-size="0"
-         version="1.0.0.qualifier"/>
+         version="1.1.0.qualifier"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd"
          download-size="0"
          install-size="0"
-         version="1.0.0.qualifier"/>
+         version="1.1.0.qualifier"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd.rcp.contributions"
          download-size="0"
          install-size="0"
-         version="1.0.0.qualifier"
+         version="1.1.0.qualifier"
          fragment="true"
          unpack="false"/>
 
