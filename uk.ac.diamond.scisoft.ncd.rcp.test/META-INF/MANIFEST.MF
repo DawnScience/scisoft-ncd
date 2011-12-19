@@ -7,4 +7,4 @@ Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit4;bundle-version="4.8.1"
 Import-Package: org.apache.commons.io
-Bundle-Vendor: Diamond Light Source
+Bundle-Vendor: Diamond Light Souce Ltd.
