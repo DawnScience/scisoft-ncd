@@ -5,35 +5,55 @@
       version="1.0.0.qualifier"
       provider-name="Diamond Light Source">
 
-   <description url="http://www.example.com/description">
-      [Enter Feature Description here.]
+   <description>
+      Includes software for the analysis of Non Crystaline Diffraction
+data collected in NXS format.
    </description>
 
-   <copyright url="http://www.example.com/copyright">
-      [Enter Copyright Description here.]
+   <copyright>
+      Copyright © 2011 Diamond Light Source Ltd.
+Contact :  ScientificSoftware@diamond.ac.uk
+This is free software: you can redistribute it and/or modify
+it under the
+terms of the GNU General Public License version 3 as published
+by the Free
+Software Foundation.
+This software is distributed in the hope that it will be useful,
+but 
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General
+Public License for more details.
+You should have received a copy of the GNU General Public License
+along
+with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
    </copyright>
 
-   <license url="http://www.example.com/license">
-      [Enter License Description here.]
+   <license url="">
+      GPL V3
    </license>
+
+   <url>
+      <discovery label="Diamond Light Source" url="http://www.diamond.ac.uk"/>
+   </url>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd.rcp"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="1.0.0"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="1.0.0"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd.rcp.contributions"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="1.0.0"
          fragment="true"
          unpack="false"/>
 
