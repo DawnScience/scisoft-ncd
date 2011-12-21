@@ -57,4 +57,18 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          fragment="true"
          unpack="false"/>
 
+   <plugin
+         id="uk.ac.diamond.scisoft.deprecated"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="uk.ac.diamond.scisoft.deprecated.rcp"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
