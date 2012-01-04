@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Importing data into SDA workbench">
+   <intro>
+      <description>
+         This tutorial explains how to import data files to start NCD data reduction
+      </description>
+   </intro>
+   <item
+      title="Open Data Project wizard">
+      <description>
+       	 We need to open &quot;Data Project&quot; wizard to import data into SDA.
+      </description>
+      <subitem
+            label="Locate &quot;Project Explorer&quot; view on the active perspective.">
+      </subitem>
+      <subitem
+            label="Select the view and right-click on it to open pop-up menu.">
+      </subitem>
+      <subitem
+            label="Select New &gt; Projects... menu and open Data &gt; Data Project to start the wizard.">
+      </subitem> 
+   </item>
+  
+   <item
+         title="Create new Data Project">
+      <description>
+         Data project creates in Eclipse 
+      </description>
+      <subitem
+            label="Specify project name in Project field.">
+      </subitem>
+      <subitem
+            label="Give the folder name in Folder field.">
+      </subitem>
+      <subitem
+            label="Specify location of the top-level directory with the data in the Directory field or select it from directory dialog using Browse.. button.">
+      </subitem>
+      <subitem
+            label="Press Finish button to create a Data Project.">
+      </subitem>
+   </item>
+   <item
+         title="Browse data in Project Explorer">
+      <description>
+         New project is added into Project Explorer view. It contains folder that links to the top-level directory specified in the wizard.
+      </description>
+   </item> 
+</cheatsheet>
