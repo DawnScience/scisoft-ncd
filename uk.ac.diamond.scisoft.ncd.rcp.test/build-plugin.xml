@@ -1,7 +1,16 @@
 <project name="plugin-uk.ac.diamond.scisoft.ncd.rcp.test" basedir=".">
 
     <dirname property="GDA-plugin.basedir" file="${ant.file.${ant.project.name}}" />
-    <import file="../../builder/build-common.xml" />
+    <pathconvert property="workspace.loc" setonempty="false">
+        <regexpmapper from="(.*)/plugins/.+" to="\1"/>
+        <path><pathelement location="${GDA-plugin.basedir}" /></path>
+    </pathconvert>
+    <pathconvert property="workspace.loc" setonempty="false">
+        <regexpmapper from="(.*)_git/.+" to="\1"/>
+        <path><pathelement location="${GDA-plugin.basedir}" /></path>
+    </pathconvert>
+    <property name="workspace.git.loc" value="${workspace.loc}_git" />
+    <import file="${workspace.loc}/builder/build-common.xml" />
 
     <!-- ====================================================================
            Invoke the tests
@@ -13,15 +22,14 @@
             <classpath>
                 <pathelement location="${junitjar.loc}" />
                 <path refid="libs.jars.path" />
-                <pathelement location="${GDA-plugin.basedir}/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.api/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.common/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.core/classes/main" />
-                <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.analysis/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.ncd/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.diamond.scisoft.ncd.rcp/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.nexus/bin" />
-                <pathelement location="${plugins.dir}/uk.ac.gda.nexus/jars/jnexus-4.3.jar" />
+                <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.test/bin" />
+                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.common/bin" />
+                <pathelement location="${workspace.git.loc}/scisoft/scisoft-core.git/uk.ac.diamond.scisoft.analysis/bin" />
+                <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd/bin" />
+                <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.rcp/bin" />
+                <pathelement location="${workspace.git.loc}/scisoft/scisoft-core.git/uk.ac.diamond.scisoft.deprecated/bin" />
+                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.nexus/bin" />
+                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.nexus/jars/jnexus-4.3.jar" />
                 <path refid="thirdparty.jars.path" />
             </classpath>
             <batchtest todir="@{report.dir}">
