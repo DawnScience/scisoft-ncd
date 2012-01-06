@@ -1,0 +1,120 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compositeCheatsheet name="NCD Data Reduction Tutorials">
+	<taskGroup kind="choice" name="NCD Data Reduction Tutorial"
+		skip="false">
+	<intro>
+		This is compilation of tutorials on various tasks related to NCD data
+		reduction in SDA.
+	</intro>
+		<taskGroup kind="choice" name="Setup for NCD Data Reduction"
+			skip="true">
+			<intro>
+				This group of tasks we import data into NCD perspective and
+				configure detector settings.
+			</intro>
+			<task kind="cheatsheet" name="Importing data into SDA workbench"
+				skip="true">
+				<intro>
+					In this section We need to create a data project pointing to
+					<b>/dls/sci-scratch/ExampleData/NCDExamples</b>
+					directory.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.importdata" />
+			</task>
+			<task kind="cheatsheet" name="Loading Detector Information"
+				skip="true">
+				<intro>
+					In this section we set
+					<b>Pilatus2M</b>
+					as SAXS detector
+					and
+					<b>Scaler</b>
+					as detector for data normalisation.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.detectorinfo" />
+			</task>
+		</taskGroup>
+		<taskGroup kind="choice" name="Running NCD Data Reduction"
+			skip="true">
+			<intro>
+				This group of tasks describes procedures for calibrating SAXS
+				detector, creating detector mask and running data reduction process
+			</intro>
+			<task kind="cheatsheet" name="Calibrating SAXS detector" skip="true">
+				<intro>
+					These tutorials present SAXS detector calibration procedure.
+					Following files will be needed to complete these task:
+					<br />
+					<b>i22-34820.nxs</b>
+					- Ag Behenate calibration file. It has four circles that correspond
+					to first four calibration peaks.
+					<br />
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.saxscalibration" />
+			</task>
+			<task kind="cheatsheet" name="Setting Detector Mask" skip="true">
+				<intro>
+					Pilatus2M has inactive grid area where pixels are assigned
+					value of -1. Masking tool allows us to disregard such pixels for 1D
+					profile calculations.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.masking" />
+			</task>
+			<task kind="cheatsheet" name="Basic NCD Data Reduction" skip="true">
+				<intro>
+					These tutorials present basic NCD data reduction workflow.
+					Following files will be needed to complete these task:
+					<br />
+					<b>i22-34770.nxs</b>
+					- File with background data.
+					<br />
+					<b>i22-34639.nxs</b>
+					- File to be used as a detector response data.
+					<br />
+					<b>i22-34774.nxs</b>
+					- File with sample data that we want to process. It is recommended
+					to select only part of dataset frames as processing the whole
+					dataset can take 10-15min.
+					<br />
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction" />
+			</task>
+		</taskGroup>
+		<taskGroup kind="choice" name="Other Features" skip="true">
+			<intro>
+				These tutorials present some other features that could be
+				useful for NCD data processing.
+			</intro>
+			<task kind="cheatsheet" name="Restoring Data from Processing Results"
+				skip="true">
+				<intro>
+					Results file that has q-axis calibration and/or mask information
+					can be used to load this data back into NCD perspective for
+					processing data.
+					<br />
+					<b>results_Pilatus2M_050112_154741_i22-34774.nxs</b>
+					- Example of processing results file for frames 50-60 with q-axis
+					calibration and detector mask data.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.restoredata" />
+			</task>
+			<task kind="cheatsheet" name="Advanced Slicing and Averaging Techniques"
+				skip="true">
+				<intro>
+					Some data files contain multidimensional datasets obtained
+					using e.g. grid scans. This tutorial explains how user can process
+					only a subset of available data and average it over multiple
+					dimensions.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.sliceaverage" />
+			</task>
+		</taskGroup>
+	</taskGroup>
+</compositeCheatsheet>

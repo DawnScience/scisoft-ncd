@@ -473,5 +473,68 @@
             name="(Pre-release) NCD Data Reduction">
       </introPageRegister>
    </extension>
+   <extension
+         point="org.eclipse.ui.cheatsheets.cheatSheetContent">
+      <category
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            name="NCD Data Reduction Tutorials">
+      </category>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/ImportData.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.importdata"
+            name="Importing data">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/DetectorInformation.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.detectorinfo"
+            name="Loading detector information">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/DataReduction.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction"
+            name="Running NCD data reduction">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/Masking.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.masking"
+            name="Using detector mask">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/SAXScalibration.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.saxscalibration"
+            name="Calibrating SAXS detector">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/RestoringData.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.restoredata"
+            name="Restoring Detector Mask and Q-axis Calibration Data">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/SliceAverage.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.sliceaverage"
+            name="Advanced Slicing and Averaging Techniques">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="true"
+            contentFile="cheatsheets/NCDTutorial.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.ncdtutorial"
+            name="NCD Data Reduction Tutorials">
+      </cheatsheet>
+   </extension>
 
 </fragment>

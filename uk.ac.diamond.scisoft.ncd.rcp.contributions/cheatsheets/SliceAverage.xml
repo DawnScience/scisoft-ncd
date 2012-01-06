@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Advanced Slicing and Averaging Techniques">
+   <intro>
+      <description>
+         Following sections provide in-depth look at the options for slicing input and background data and averaging data in multidimensional datasets.
+      </description>
+   </intro>
+   <item
+         title="Selecting subset of data for data reduction">
+      <description>
+         There are two approaches to select subset of data from input and background files. "First" and "Last" fields select range of frames that will be used in data processing for every grid point. If "Advanced" checkbox is activated user can input selection pattern into adjacent text filed for more complicated selection criteria. Users can specify list of frame numbers to select separated by comma (,) or range of frames using dash (-). List of selected frames for different dimensions should be separated by semicolon (;). If selection pattern is empty all data will be selected for the corresponding dimension. Frame indices start from 0. When dataset is plotted, frame ranges are visible in Dataset Inspector view that controls plotted frame selection. <br/>
+         <b>Example:</b> Let us consider that we have a SAXS dataset with dimensions [3,3,10,512,512]. This dataset contains results of 3x3 grid scan with 10 frames per grid point. Every frame is a 2D image with 512x512 pixels. If we use selection pattern <b>;1-2;3,6</b> we will select all frames from the first dimension (corresponding filed is empty), frames 1 and 2 from the second dimension and frames 3 and 6 from the third. The selected dataset will have dimensions [3,2,2,512,512] and contain frames 3 and 6 collected at the grid points (0,1), (0,2), (1,1), (1,2), (2,1) and (2,2).
+      </description>
+   </item>
+   <item
+         title="Averaging grid scan data">
+      <description>
+         The default behaviour for averaging in data reduction is to average frames at each grid point independently. It is possible to extend averaging also to grid dimensions selecting "Average dimensions" checkbox in "Grid data averaging" panel and specifying list of grid dimensions to average in the adjacent text field. Indices should be separated either with commas (,) to select single axis or with dash (-) to select axes range. Dimension indices start from 1. If list of axis is empty and "Average dimensions" checkbox is enabled, all grid dimensions will be averaged. When dataset is plotted, available dimensions are listed in Dataset Inspector view where plotted frame is selected. <br/>
+         <b>Example:</b> Let us consider that we have a SAXS dataset with dimensions [3,3,10,512,512]. This dataset contains results of 3x3 grid scan with 10 frames per grid point. Every frame is a 2D image with 512x512 pixels. Using <b>1,2</b> selection axis will average both grid dimensions together with all frames. The output will have single frame (e.g. [1,1,1,512,512] dimension) with the average of all data. Using <b>1</b> selection will average frames along the first grid dimension. The output will have [1,3,1,512,512] dimension with 3 averaged frames for 3 positions on the second axis.       </description>
+   </item>
+</cheatsheet>

@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Calibrating SAXS detector">
+   <intro>
+      <description>
+         This tutorial describes procedure for calibrating SAXS detector pixel positions in terms of scattering vector values.
+      </description>
+   </intro>
+   <item
+         title="Specifying integration region">
+      <description>
+         We need to open image with scattering data from a calibration sample.
+      </description>
+      <subitem
+         label="Select &quot;4. Sector Integration&quot; stage in &quot;Data reduction pipeline&quot; panel.">
+      </subitem>   
+      <subitem
+         label="Select file with calibration image in the &quot;Project explorer&quot; view.">
+      </subitem>   
+      <subitem
+         label="Right-click on the file and select &quot;NCD &gt; Load Calibration Image&quot; menu option. This option is only active if &quot;4. Sector Integration&quot; stage is selected. Calibration image should appear in the &quot;Dataset plot&quot; view.">
+      </subitem>   
+      <subitem
+         label="Select &quot;Switch sideplot to sector profile mode&quot; button from the toolbar in &quot;Dataset plot&quot; view.">
+      </subitem>   
+      <subitem
+         label="Click on the image to position the centre of the integration sector.">
+      </subitem>   
+      <subitem
+         label="Move corners of the sector to adjust size and move centre to adjust the position.">
+      </subitem>   
+      <subitem
+         label="Controls in &quot;Side: Dataset Plot&quot; view provide setting for more accurate positioning of the sector.">
+      </subitem>   
+      <subitem
+         label="Select &quot;Lock centre&quot; checkbox in the &quot;Side: Dataset Plot&quot; view to prevent accidental shift of the sector position before proceeding further. Calibration procedure needs to be repeated if integration sector position is changed. Integration sector dimensions can be changed without recalibration.">
+      </subitem>   
+   </item>
+   <item
+         title="Fitting calibration peaks">
+      <description>
+         We need to integrate data in specified sector to fit calibration peak positions.
+      </description>
+      <subitem
+         label="Press &quot;1D Fitting&quot; button in &quot;SAXS Q-axis calibration&quot; view. &quot;Dataset plot&quot; should present 1D plot of integrated intensity profile.">
+      </subitem>   
+      <subitem
+         label="Click on the intensity profile image in &quot;Dataset plot&quot; and drag mouse over the region with calibration peaks.">
+      </subitem>   
+      <subitem
+         label="Select number of peaks to fit from the popup dialog.">
+      </subitem>   
+      <subitem
+         label="Fitted peaks will be highlighted in the &quot;Dataset plot&quot; view. &quot;Side: Dataset plot&quot; view will have list of the fitted peaks in the table.">
+      </subitem>   
+      <subitem
+         label="To remove misfitted peaks select corresponding entry in the list of peaks, right-click and select &quot;Delete&quot; from the popup menu.">
+      </subitem>   
+      <subitem
+         label="Repeat peak fitting procedure on different region if necessary.">
+      </subitem>   
+   </item>
+   <item
+         title="Running q-axis calibration procedure">
+      <description>
+         Calibration procedure tries to index selected peaks and identify gradient and intercept parameters for linear calibration function.
+      </description>
+      <subitem
+         label="Make sure that correct detector is selected in &quot;NCD Data reduction parameters&quot; view and correct values for pixel size and energy are specified.">
+      </subitem>   
+      <subitem
+         label="Select appropriate calibration standard in the &quot;Standard&quot; drop-down list in &quot;SAXS Q-axis calibration&quot; view.">
+      </subitem>   
+      <subitem
+         label="Select maximal value for reflection index in &quot;Maximum reflection index&quot; spinner control. Reflections with hkl index values exceeding the spinner setting will not be used in the calibration process.">
+      </subitem>   
+      <subitem
+         label="Press &quot;Calibrate&quot; button. If no Jython console is active, popup dialog appears with the available console options. Select &quot;Jython console&quot;.">
+      </subitem>   
+      <subitem
+         label="Calibration script is executed in the console window. Results of calibration are output in &quot;SAXS Q-axis calibration&quot; view. Fitting curve is plotted in &quot;Dataset plot&quot; view.">
+      </subitem>   
+      <subitem
+         label="To close console press &quot;Terminate current console&quot; button in console toolbar.">
+      </subitem>   
+   </item>
+   <item
+         title="Inspect calibration results (recommended)">
+      <description>
+         Running data reduction on the calibration dataset is a good reference of success of calibration procedures.
+      </description>
+      <subitem
+         label="Check that &quot;4. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
+      </subitem>   
+      <subitem
+         label="Select file with the calibration image in the &quot;Project Explorer&quot; and right-click on it. Select &quot;NCD &gt; Run Data Reduction&quot; from the popup menu.">
+      </subitem>   
+      <subitem
+         label="Plot and inspect data from the results file opened in the editor area after data reduction completes.">
+      </subitem>   
+      <subitem
+         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into SDA workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
+      </subitem>   
+   </item>
+</cheatsheet>

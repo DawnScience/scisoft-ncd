@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Setup experiment information">
+   <intro>
+      <description>
+         This tutorial explains how to read detector data from data files
+      </description>
+   </intro>
+   <item
+      title="Selecting data files">
+      <description>
+         Select single file or multiple files by holding SHIFT or CTRL keys in the project explorer view. Detectors present in all the selected files will only be loaded into NCD data reduction panel.
+      </description>
+   </item>
+   <item
+      title="Read detector information">
+      <description>
+         Data reduction process utilises three types of detectors: Calibration, WAXS and SAXS.
+      </description>
+      <subitem
+         label="Right-click on the selected files to open pop-up menu.">
+      </subitem>   
+      <subitem
+         label="Select NCD &gt; Read Detector Information option from the pop-up menu.">
+      </subitem>   
+      <subitem
+         label="Inspect detector names added into Normalisation Data, WAXS and SAXS combo boxes in NCD data reduction parameters view.">
+      </subitem>   
+   </item>
+</cheatsheet>
