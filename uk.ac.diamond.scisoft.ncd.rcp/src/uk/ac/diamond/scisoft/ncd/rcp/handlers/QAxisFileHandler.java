@@ -20,6 +20,7 @@ import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 import gda.data.nexus.tree.NexusTreeNodeSelection;
 
+import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
 
@@ -61,19 +62,27 @@ public class QAxisFileHandler extends AbstractHandler {
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
 		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1 && (((IStructuredSelection)selection).getFirstElement() instanceof IFile)) {
-
+			if (((IStructuredSelection)selection).toList().size() == 1) {
+				
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
+				
+				String qaxisFilename;
+				if (sel instanceof IFile)
+					qaxisFilename = ((IFile)sel).getLocation().toString();
+				else
+					qaxisFilename = ((File)sel).getAbsolutePath();
+				
 				try {
-
 					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
 					if (idxSaxs >= 0) {
 						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(((IFile)sel).getLocation().toString(), getDetectorSelection(detectorSaxs));
+						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(qaxisFilename, getDetectorSelection(detectorSaxs));
 						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration");
 						AbstractDataset qaxis = Nexus.createDataset(node.getData(), false);
 						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
-						double cameraLength = Nexus.createDataset(node.getData(), false).getDouble(new int[] {0});
+						double cameraLength = Double.NaN;
+						if (node != null)
+							cameraLength = Nexus.createDataset(node.getData(), false).getDouble(new int[] {0});
 						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/beam centre");
 						AbstractDataset beam = Nexus.createDataset(node.getData(), false);
 						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles");
@@ -117,7 +126,7 @@ public class QAxisFileHandler extends AbstractHandler {
 					return Status.CANCEL_STATUS;
 
 				} catch (Exception e) {
-					logger.error("SCISOFT NCD: Failed to read qaxis values from "+((IFile)sel).getLocation().toString(), e);
+					logger.error("SCISOFT NCD: Failed to read qaxis values from " + qaxisFilename, e);
 					return Status.CANCEL_STATUS;
 				}
 			}

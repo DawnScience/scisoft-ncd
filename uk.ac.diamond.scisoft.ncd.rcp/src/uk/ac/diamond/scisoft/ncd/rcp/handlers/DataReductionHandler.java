@@ -16,11 +16,13 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -115,11 +117,20 @@ public class DataReductionHandler extends AbstractHandler {
 					monitor.beginTask("Running NCD data reduction",idxMonitor*selObjects.length);
 					
 					for (int i = 0; i < selObjects.length; i++) {
-						String inputfileExtension = ((IFile)selObjects[i]).getFileExtension();
+						String inputfileExtension;
+						String tmpfilePath;
+						String inputfileName;
+						if (selObjects[i] instanceof IFile) {
+							inputfileExtension = ((IFile)selObjects[i]).getFileExtension();
+							tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
+							inputfileName = ((IFile)selObjects[i]).getName().toString();
+						} else {
+							tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
+							inputfileExtension = FilenameUtils.getExtension(tmpfilePath);
+							inputfileName = FilenameUtils.getName(tmpfilePath);
+						}
 						if (!inputfileExtension.equals("nxs"))
 							continue;
-						String tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
-						String inputfileName = ((IFile)selObjects[i]).getName().toString();
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
 							String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";

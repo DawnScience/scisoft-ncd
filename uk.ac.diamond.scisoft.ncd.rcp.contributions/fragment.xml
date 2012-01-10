@@ -170,6 +170,61 @@
             </command>
          </menu>
       </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="popup:uk.ac.diamond.sda.navigator.views.FileView">
+         <menu
+               label="NCD">
+            <visibleWhen
+                  checkEnabled="false">
+               <with
+                     variable="activeWorkbenchWindow.activePerspective">
+                  <equals
+                        value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                  </equals>
+               </with>
+            </visibleWhen>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo"
+                  label="Read Detector Information"
+                  style="push">
+            </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.setBackgroundSubtractionFile"
+                  label="Set as Background Subtraction File"
+                  style="push">
+            </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.setDetectorResponseFile"
+                  label="Set as Detector Response File"
+                  style="push">
+            </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.setSectorIntegration"
+                  label="Load Calibration Image"
+                  style="push">
+            </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.setDetectorMask"
+                  label="Load Detector Mask"
+                  style="push">
+            </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.readQAxisCalibration"
+                  label="Load QAxis Calibration"
+                  style="push">
+            </command>
+            <separator
+                  name="uk.ac.diamond.scisoft.ncd.rcp.separator1"
+                  visible="true">
+            </separator>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.process"
+                  label="Run Data Reduction"
+                  style="push">
+            </command>
+         </menu>
+      </menuContribution>
    </extension>
    <extension
          point="org.eclipse.ui.services">
@@ -195,16 +250,28 @@
             class="uk.ac.diamond.scisoft.ncd.rcp.handlers.DataReductionHandler"
             commandId="uk.ac.diamond.scisoft.ncd.rcp.process">
          <enabledWhen>
-            <with
+               <or>
+               <with
                   variable="activeMenuSelection">
-               <iterate>
-                  <and>
-                     <instanceof
-                           value="org.eclipse.core.resources.IFile">
-                     </instanceof>
-                  </and>
-               </iterate>
-            </with>
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="org.eclipse.core.resources.IFile">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
          </enabledWhen>
       </handler>
       <handler
@@ -260,6 +327,7 @@
                      value="1">
                </count>
                </with>
+               <or>
                <with
                   variable="activeMenuSelection">
                   <iterate>
@@ -270,6 +338,17 @@
                      </and>
                   </iterate>
                </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
             </and>
          </enabledWhen>
       </handler>
@@ -284,6 +363,7 @@
                      value="1">
                </count>
                </with>
+               <or>
                <with
                   variable="activeMenuSelection">
                   <iterate>
@@ -294,6 +374,17 @@
                      </and>
                   </iterate>
                </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
             </and>
          </enabledWhen>
       </handler>
@@ -314,6 +405,7 @@
                      value="1">
                </count>
                </with>
+               <or>
                <with
                   variable="activeMenuSelection">
                   <iterate>
@@ -324,6 +416,17 @@
                      </and>
                   </iterate>
                </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
             </and>
          </enabledWhen>
       </handler>
@@ -344,6 +447,7 @@
                      value="1">
                </count>
                </with>
+               <or>
                <with
                   variable="activeMenuSelection">
                   <iterate>
@@ -354,6 +458,17 @@
                      </and>
                   </iterate>
                </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
             </and>
          </enabledWhen>
       </handler>
@@ -361,16 +476,28 @@
             class="uk.ac.diamond.scisoft.ncd.rcp.handlers.DetectorInformationHandler"
             commandId="uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo">
          <enabledWhen>
-            <with
+               <or>
+               <with
                   variable="activeMenuSelection">
-               <iterate>
-                  <and>
-                     <instanceof
-                           value="org.eclipse.core.resources.IFile">
-                     </instanceof>
-                  </and>
-               </iterate>
-            </with>
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="org.eclipse.core.resources.IFile">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
          </enabledWhen>
       </handler>
       <handler
@@ -384,6 +511,7 @@
                      value="1">
                </count>
                </with>
+               <or>
                <with
                   variable="activeMenuSelection">
                   <iterate>
@@ -394,6 +522,17 @@
                      </and>
                   </iterate>
                </with>
+               <with
+                  variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               </or>
             </and>
          </enabledWhen>
       </handler>

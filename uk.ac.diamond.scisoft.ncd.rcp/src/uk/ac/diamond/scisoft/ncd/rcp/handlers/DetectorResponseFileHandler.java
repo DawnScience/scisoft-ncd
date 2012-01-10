@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import java.io.File;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -39,8 +41,12 @@ public class DetectorResponseFileHandler extends AbstractHandler {
 		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1 && (((IStructuredSelection)selection).getFirstElement() instanceof IFile)) {
-				String fileName = ((IFile)((IStructuredSelection)selection).getFirstElement()).getLocation().toString();
+			if (((IStructuredSelection)selection).toList().size() == 1) {
+				String fileName;
+				if (((IStructuredSelection)selection).getFirstElement() instanceof IFile)
+					fileName = ((IFile)((IStructuredSelection)selection).getFirstElement()).getLocation().toString();
+				else 
+					fileName = ((File)((IStructuredSelection)selection).getFirstElement()).getAbsolutePath();
 				NcdDataReductionParameters.setDrFile(fileName);
 			} else {
 				Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, "Only single file can be used as a reference for detector response procedure.");
