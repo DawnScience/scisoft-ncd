@@ -20,6 +20,7 @@ import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 import gda.data.nexus.tree.NexusTreeNodeSelection;
 
+import java.io.File;
 import java.io.StringReader;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -63,7 +64,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
 		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1 && (((IStructuredSelection)selection).getFirstElement() instanceof IFile)) {
+			if (((IStructuredSelection)selection).toList().size() == 1) {
 
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
 				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -73,10 +74,15 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
 					if (idxSaxs >= 0) {
 						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(((IFile)sel).getLocation().toString(), getDetectorSelection(detectorSaxs));
+						String maskFilename;
+						if (sel instanceof IFile)
+							maskFilename = ((IFile)sel).getLocation().toString();
+						else 
+							maskFilename = ((File)sel).getAbsolutePath();
+						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(maskFilename, getDetectorSelection(detectorSaxs));
 						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/mask");
 						if (node == null) {
-							String msg = "No mask data found in "+((IFile)sel).getLocation().toString();
+							String msg = "No mask data found in "+ maskFilename;
 							return DetectorMaskErrorDialog(shell, msg, null);
 						}
 						

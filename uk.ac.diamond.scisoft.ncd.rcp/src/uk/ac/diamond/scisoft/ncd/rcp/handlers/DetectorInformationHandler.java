@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import java.io.File;
 import java.io.StringReader;
 import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
@@ -61,7 +62,11 @@ public class DetectorInformationHandler extends AbstractHandler {
 			HashMap<String, INexusTree> detInfo = new HashMap<String, INexusTree>();
 			for (int i = 0; i < selObjects.length; i++) {
 				
-				String tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
+				String tmpfilePath;
+				if (selObjects[i] instanceof IFile)
+					tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
+				else
+					tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
 				
 				try {
 					INexusTree detectorTree = NexusTreeBuilder.getNexusTree(tmpfilePath, getDetectorSelection());
