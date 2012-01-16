@@ -23,7 +23,7 @@
                 <pathelement location="${junitjar.loc}" />
                 <path refid="libs.jars.path" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.test/bin" />
-                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.common/bin" />
+                <pathelement location="${workspace.git.loc}/gda-common.git/uk.ac.gda.common/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-core.git/uk.ac.diamond.scisoft.analysis/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.rcp/bin" />
