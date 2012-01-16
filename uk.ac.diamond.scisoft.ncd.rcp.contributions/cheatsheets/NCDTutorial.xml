@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compositeCheatsheet name="NCD Data Reduction Tutorials">
-	<taskGroup kind="choice" name="NCD Data Reduction Tutorial"
+	<taskGroup kind="set" name="NCD Data Reduction Tutorial"
 		skip="false">
 	<intro>
 		This is compilation of tutorials on various tasks related to NCD data
 		reduction in SDA.
 	</intro>
-		<taskGroup kind="choice" name="Setup for NCD Data Reduction"
+		<taskGroup kind="set" name="Setup for NCD Data Reduction"
 			skip="true">
 			<intro>
 				This group of tasks we import data into NCD perspective and
@@ -36,7 +36,7 @@
 					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.detectorinfo" />
 			</task>
 		</taskGroup>
-		<taskGroup kind="choice" name="Running NCD Data Reduction"
+		<taskGroup kind="set" name="Running NCD Data Reduction"
 			skip="true">
 			<intro>
 				This group of tasks describes procedures for calibrating SAXS
@@ -85,7 +85,7 @@
 					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction" />
 			</task>
 		</taskGroup>
-		<taskGroup kind="choice" name="Other Features" skip="true">
+		<taskGroup kind="set" name="Other Features" skip="true">
 			<intro>
 				These tutorials present some other features that could be
 				useful for NCD data processing.
