@@ -105,6 +105,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			memento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, cameralength.getText());
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
+			
+			for (int i = 0; i < unitSel.length; i++)
+				if (unitSel[i].getSelection()) {
+					memento.putInteger(CalibrationPreferences.QAXIS_UNITS, i);
+					break;
+				}
+			
 			memento.putInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER, braggOrder.getSelection());
 			
 			if (!(calibrationPeakList.isEmpty())) {
@@ -201,6 +208,16 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_STANDARD);
 			if (val != null) standard.select(val);
 			
+			val = this.memento.getInteger(CalibrationPreferences.QAXIS_UNITS);
+			if (val == null) val = 0;
+			
+			String units = unitChoices[val];
+			for (int i = 0; i < unitSel.length; i++)
+				if (i == val) {
+					unitSel[i].setSelection(true);
+				} else
+					unitSel[i].setSelection(false);
+			
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
 			if (val != null) braggOrder.setSelection(val);
 			
@@ -251,7 +268,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						}
 					}
 					
-					crb.putCalibrationResult(key, new StraightLine(new Parameter[]{gradient, intercept}), dataPeakList, meanCameraLength);
+					crb.putCalibrationResult(key, new StraightLine(new Parameter[]{gradient, intercept}), dataPeakList, meanCameraLength, units);
 				}
 
 			}
@@ -291,9 +308,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		currentMode = getDetectorName();
 
 		final int n = braggOrder.getSelection();
-		final String lambdanm, mmpp;
+		final String lambda, mmpp;
 		try {
-			lambdanm = "(1e-3 * 1e9 * 4.13566733e-15 * 299792458) / " + NcdDataReductionParameters.getEnergy().toString();
+			lambda = Double.toString(1e-3 * 1e9 * 4.13566733e-15 * 299792458 * unitScale / NcdDataReductionParameters.getEnergy());
 			mmpp = getPixel(true).toString();
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
@@ -341,12 +358,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		command.append("[");
 
 		for (Map.Entry<String, Double>  peak : cal2peaks.get(standard.getText()).entrySet()) {
-			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue()));
+			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue() * unitScale));
 		}
 
 		command.append("],");
 
-		command.append(lambdanm);
+		command.append(lambda);
 		command.append(",");
 
 		command.append(mmpp);
@@ -359,7 +376,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			command.append(disttobeamstop);
 		else 
 			command.append("None");
-
+		command.append(",");
+		
+		command.append(String.format("\"%s\"", unitSel[0].getSelection() ? unitChoices[0] : unitChoices[1]));
 		command.append(")\n");
 		
 		UIJob job = new UIJob("Calibration") {

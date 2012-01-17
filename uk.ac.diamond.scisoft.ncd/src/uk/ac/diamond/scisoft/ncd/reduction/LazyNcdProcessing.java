@@ -47,6 +47,7 @@ public class LazyNcdProcessing {
 	private Double slope;
 	private Double intercept;
 	private Double cameraLength;
+	private String qaxisUnit;
 	private BooleanDataset mask;
 
 	private CalibrationResultsBean crb;
@@ -74,6 +75,7 @@ public class LazyNcdProcessing {
 		slope = null;
 		intercept = null;
 		cameraLength = null;
+		qaxisUnit = null;
 		mask = null;
 		crb = null;
 		firstFrame = null;
@@ -168,6 +170,7 @@ public class LazyNcdProcessing {
 				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
 				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
 				cameraLength = crb.getMeanCameraLength(detector);
+				if (qaxisUnit == null) qaxisUnit = crb.getUnit(detector);
 			}
 		}
 		
@@ -241,7 +244,7 @@ public class LazyNcdProcessing {
 			lazyNormalisation.setCalibration(calibration);
 			lazyNormalisation.setNormChannel(normChannel);
 			lazyNormalisation.setAbsScaling(absScaling);
-			lazyNormalisation.setQaxis(qaxis);
+			lazyNormalisation.setQaxis(qaxis, qaxisUnit);
 			
 			lazyNormalisation.execute(tmpNXdata, dim, monitor);
 			activeDataset = lazyNormalisation.getActiveDataset();
@@ -274,7 +277,7 @@ public class LazyNcdProcessing {
 			lazyBackgroundSubtraction.setBgScale(bgScaling);
 			lazyBackgroundSubtraction.setCalibration(calibration);
 			lazyBackgroundSubtraction.setNormChannel(normChannel);
-			lazyBackgroundSubtraction.setQaxis(qaxis);
+			lazyBackgroundSubtraction.setQaxis(qaxis, qaxisUnit);
 			if (flags.isEnableNormalisation())
 				lazyBackgroundSubtraction.setAbsScaling(absScaling);
 			
@@ -296,7 +299,7 @@ public class LazyNcdProcessing {
 			lazyDetectorResponse.setFirstFrame(firstFrame, dim);
 			lazyDetectorResponse.setLastFrame(lastFrame, dim);
 			lazyDetectorResponse.setDrFile(drFile);
-			lazyDetectorResponse.setQaxis(qaxis);
+			lazyDetectorResponse.setQaxis(qaxis,qaxisUnit);
 			
 			lazyDetectorResponse.execute(tmpNXdata, dim, monitor);
 			activeDataset = lazyDetectorResponse.getActiveDataset();
@@ -314,7 +317,7 @@ public class LazyNcdProcessing {
 			LazySectorIntegration lazySectorIntegration = new LazySectorIntegration(activeDataset, frames, frameBatch, nxsFile);
 			lazySectorIntegration.setFirstFrame(firstFrame, dim);
 			lazySectorIntegration.setLastFrame(lastFrame, dim);
-			lazySectorIntegration.setQaxis(qaxis);
+			lazySectorIntegration.setQaxis(qaxis,qaxisUnit);
 			lazySectorIntegration.setIntSector(intSector);
 			if (enableMask) 
 				lazySectorIntegration.setMask(mask);
@@ -365,7 +368,7 @@ public class LazyNcdProcessing {
 			}
 			lazyAverage.setFirstFrame(firstFrame, aveDim);
 			lazyAverage.setLastFrame(lastFrame, aveDim);
-			lazyAverage.setQaxis(qaxis);
+			lazyAverage.setQaxis(qaxis, qaxisUnit);
 			
 			lazyAverage.execute(tmpNXdata, aveDim, monitor);
 		}
@@ -416,6 +419,10 @@ public class LazyNcdProcessing {
 
 	public void setCameraLength(Double cameraLength) {
 		this.cameraLength = cameraLength;
+	}
+
+	public void setUnit(String unit) {
+		this.qaxisUnit = unit;
 	}
 
 }

@@ -97,6 +97,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	private StoredPlottingObject twoDData;
 
 	protected ArrayList<APeak> peaks = new ArrayList<APeak>();
+	protected double unitScale = 1.0;
 
 	private Button calibrateButton;
 	protected Text gradient;
@@ -106,9 +107,10 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	protected Double disttobeamstop;
 
-	protected Button[] detTypes;
+	protected Button[] detTypes, unitSel;
 
 	private String[] detChoices = new String[] { "SAXS", "WAXS" };
+	protected String[] unitChoices = new String[] { "Å^-1", "nm^-1" };
 
 	protected String currentMode = detChoices[0];
 	
@@ -317,7 +319,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		disLab.setText("m");
 
 		Group calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
-		calibrationControls.setLayout(new GridLayout(2, false));
+		calibrationControls.setLayout(new GridLayout(3, false));
 		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		calibrationControls.setText("Calibration Controls");
 
@@ -328,9 +330,38 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		standard = new Combo(calibrationControls, SWT.NONE);
 		standard.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 
+		Group unitGrp = new Group(calibrationControls, SWT.NONE);
+		unitGrp.setLayout(new GridLayout(2, false));
+		unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+		unitGrp.setToolTipText("Select q-axis calibration units");
+		unitSel = new Button[2];
+		unitSel[0] = new Button(unitGrp, SWT.RADIO);
+		unitSel[0].setText(unitChoices[0]);
+		unitSel[0].setToolTipText("calibrate q-axis in Ångstroms");
+		unitSel[0].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+		unitSel[0].addSelectionListener(new SelectionAdapter() {
+				
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (unitSel[0].getSelection()) unitScale = 10.0;
+			}
+		});
+		
+		unitSel[1] = new Button(unitGrp, SWT.RADIO);
+		unitSel[1].setText(unitChoices[1]);
+		unitSel[1].setToolTipText("calibrate q-axis in nanometers");
+		unitSel[1].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+		unitSel[1].addSelectionListener(new SelectionAdapter() {
+				
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (unitSel[1].getSelection()) unitScale = 1.0;
+			}
+		});
+		
 		Label lblN = new Label(calibrationControls, SWT.NONE);
 		lblN.setToolTipText("n in Braggs law");
-		lblN.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, true));
+		lblN.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, true, 2, 1));
 		lblN.setText("Maximum reflection index");
 
 		braggOrder = new Spinner(calibrationControls, SWT.BORDER);
@@ -643,6 +674,8 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		if (crb.containsKey(currentMode)) {
 			calibrationPeakList.addAll(crb.getPeakList(currentMode));
 			final double dist = crb.getMeanCameraLength(currentMode) / 1000;
+			final String units = crb.getUnit(currentMode);
+			final int idxUnitChoice = units.equals(unitChoices[0]) ? 0 : 1;
 			if (crb.getFuction(currentMode) != null) {
 				final double mVal = crb.getFuction(currentMode).getParameterValue(0);
 				final double cVal = crb.getFuction(currentMode).getParameterValue(1);
@@ -654,6 +687,9 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 						gradient.setText(String.format("%5.5g",mVal));
 						intercept.setText(String.format("%3.5f",cVal));
 						cameralength.setText(String.format("%3.2f",dist));
+						for (int i = 0; i < unitSel.length; i++)
+							if (i == idxUnitChoice) unitSel[i].setSelection(true);
+							else unitSel[i].setSelection(false);
 						calTable.refresh();
 					}
 				});

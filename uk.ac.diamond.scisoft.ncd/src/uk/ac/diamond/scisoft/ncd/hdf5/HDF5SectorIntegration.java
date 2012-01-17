@@ -126,7 +126,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				double[] calibrationValues =  new double[] {gradient.doubleValue(), intercept.doubleValue()};
 				NexusGroupData calibrationData = new NexusGroupData(new int[] { 2 }, NexusFile.NX_FLOAT64, calibrationValues);
 				calibrationData.isDetectorEntryData = false;
-				NcdDataUtils.addData(nxdata, getName(), "qaxis calibration", calibrationData, null, 0);
+				NcdDataUtils.addData(nxdata, getName(), "qaxis calibration", calibrationData, qAxisUnit, 0);
 			}
 			if (cameraLength != null) {
 				NexusGroupData cameraData = new NexusGroupData(new int[] { 1 }, NexusFile.NX_FLOAT64, new double[] {cameraLength.doubleValue()});

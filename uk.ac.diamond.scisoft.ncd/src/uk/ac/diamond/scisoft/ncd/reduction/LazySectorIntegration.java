@@ -93,7 +93,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
 	
 				reductionStep.setROI(intSector);
-				reductionStep.setqAxis(qaxis);
+				reductionStep.setqAxis(qaxis, qaxisUnit);
 				if (mask != null)
 					reductionStep.setMask(mask.cast(AbstractDataset.INT8));
 				if (gradient != null && intercept != null)
@@ -104,7 +104,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	
 				if (qaxis != null) {
 					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
-					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length - 1, 1, "nm^{-1}", false);
+					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length - 1, 1, qaxisUnit, false);
 				}
 				
 				int[] datDimStartPrefix = Arrays.copyOf(start, start.length-dim);

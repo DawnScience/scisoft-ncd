@@ -32,6 +32,7 @@ public abstract class LazyDataReduction {
 	protected int gridDim;
 	protected NexusFile nxsFile;
 	protected AbstractDataset qaxis;
+	protected String qaxisUnit;
 	protected int frameBatch;
 	protected String detector;
 	protected String calibration;
@@ -57,8 +58,9 @@ public abstract class LazyDataReduction {
 		this.normChannel = normChannel;
 	}
 
-	public void setQaxis(AbstractDataset qaxis) {
+	public void setQaxis(AbstractDataset qaxis, String unit) {
 		this.qaxis = qaxis;
+		this.qaxisUnit = unit;
 	}
 
 	public String getActiveDataset() {

@@ -89,7 +89,7 @@ public class LazyAverage extends LazyDataReduction {
 			NcdDataUtils.addData(nxOut, name, "data", outDataset.getShape(), outDataset.getDtype(), outDataset.getBuffer(), "counts", 1);
 			if (qaxis != null) {
 				NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
-				NcdDataUtils.addAxis(nxOut, name, "q", qData, frames.length, 1, "nm^{-1}", false);
+				NcdDataUtils.addAxis(nxOut, name, "q", qData, frames.length, 1, qaxisUnit, false);
 			}
 			
 			//TODO: Should inherit this node from Average class output 
@@ -151,7 +151,7 @@ public class LazyAverage extends LazyDataReduction {
 			else {
 				recursiveData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, recStart, recStop);
 				HDF5Average reductionStep = new HDF5Average(recursiveOut, activeDataset);
-				reductionStep.setqAxis(qaxis);
+				reductionStep.setqAxis(qaxis, qaxisUnit);
 				reductionStep.writeout(sliceFinal - i, recursiveData);
 				tmpDataset = Nexus.createDataset(NcdDataUtils.getData(recursiveData, recursiveOut, "data", NexusExtractor.SDSClassName), false);
 				tmpDataset.imultiply(sliceFinal - i);
@@ -179,7 +179,7 @@ public class LazyAverage extends LazyDataReduction {
 				NexusTreeNode nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
 				NcdDataUtils.addData(nxdata, recursiveKey, "data", totalDataset.getShape(), totalDataset.getDtype(), totalDataset.getBuffer(), "counts", 1);
 				HDF5Average reductionStep = new HDF5Average(recursiveOut, recursiveKey);
-				reductionStep.setqAxis(qaxis);
+				reductionStep.setqAxis(qaxis, qaxisUnit);
 				reductionStep.writeout(tmpFrames, nxdata);
 				
 				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getData(nxdata, recursiveOut, "data", NexusExtractor.SDSClassName), false);
@@ -202,7 +202,7 @@ public class LazyAverage extends LazyDataReduction {
 			
 			NcdDataUtils.addData(nxOut, recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
 			if (qData != null) {
-				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
+				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, qaxisUnit, false);
 			}
 		}
 		return nxOut;
@@ -281,7 +281,7 @@ public class LazyAverage extends LazyDataReduction {
 				nxdata.addChildNode(tmpDet);
 				
 				HDF5Average reductionStep = new HDF5Average(recursiveOut, recursiveKey);
-				reductionStep.setqAxis(qaxis);
+				reductionStep.setqAxis(qaxis, qaxisUnit);
 				reductionStep.writeout(tmpFrames, nxdata);
 				
 				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getData(nxdata, recursiveOut, "data", NexusExtractor.SDSClassName), false);
@@ -302,7 +302,7 @@ public class LazyAverage extends LazyDataReduction {
 			
 			NcdDataUtils.addData(nxOut, recursiveOut, "data", outShape, outType, outBuffer, "counts", 1);
 			if (qData != null) {
-				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, "nm^{-1}", false);
+				NcdDataUtils.addAxis(nxOut, recursiveOut, "q", qData, outShape.length, 1, qaxisUnit, false);
 			}
 		}
 		return nxOut;

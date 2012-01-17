@@ -339,6 +339,7 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		Double qGradient = NcdDataReductionParameters.getQGradient();
 		Double qIntercept = NcdDataReductionParameters.getQIntercept();
+		String qUnit = NcdDataReductionParameters.getQUnit();
 		
 		String bgFile = null;
 		Double bgScaling = null;
@@ -419,6 +420,7 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setEnableMask(enableMask);
 		processing.setSlope(qGradient);
 		processing.setIntercept(qIntercept);
+		processing.setUnit(qUnit);
 		
 	}
 

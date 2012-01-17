@@ -67,7 +67,7 @@ public class LazyNormalisation extends LazyDataReduction {
 					reductionStep.setNormvalue(absScaling);
 			
 				if (dim == 1)
-					reductionStep.setqAxis(qaxis);
+					reductionStep.setqAxis(qaxis, qaxisUnit);
 				reductionStep.writeout(currentBatch, tmpData);
 				
 				int[] datDimStartPrefix = Arrays.copyOf(start, start.length-dim);
@@ -77,7 +77,7 @@ public class LazyNormalisation extends LazyDataReduction {
 				
 				if (dim == 1 && qaxis != null) {
 					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
-					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length, 1, "nm^{-1}", false);
+					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length, 1, qaxisUnit, false);
 				}
 				
 				if (n==0 && i==firstFrame) {

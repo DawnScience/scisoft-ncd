@@ -41,9 +41,10 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 	}
 	
 	@Override
-	public void setqAxis(IDataset qAxis) {
+	public void setqAxis(IDataset qAxis, String unit) {
 		// Ignore qAxis setting for Invariant subdetector
 		this.qAxis = null;
+		this.qAxisUnit = null;
 	}
 
 	@Override

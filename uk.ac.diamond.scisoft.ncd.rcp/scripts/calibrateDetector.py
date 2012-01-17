@@ -20,22 +20,22 @@ from uk.ac.diamond.scisoft.analysis.plotserver import CalibrationResultsBean
 import scisoftpy as dnp
 from scisoftpy import plot
 
-def calibrate(saxswaxs, plotName, redsetup, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None):
+def calibrate(saxswaxs, plotName, redsetup, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None, unit="nm^{-1}"):
     [func, calPeaks, camlength] = performCalibration(peaks, stdspacing, wavelength, pixelSize*1000, n, disttobeamstop)
     if func is None:
         raise "Something went wrong"
     plot_results(plotName, func)
     if redsetup is not None:
         redsetup.ncdredconf(saxswaxs, slope=func.func.getParameterValue(0), intercept=func.func.getParameterValue(1), cameralength=(camlength/1000))
-    function_to_GUIBean(saxswaxs, plotName, func, calPeaks, camlength)
+    function_to_GUIBean(saxswaxs, plotName, func, calPeaks, camlength, unit)
         
-def function_to_GUIBean(saxswaxs, plotName, fittingReturn, calPeaks, cameraDist):
+def function_to_GUIBean(saxswaxs, plotName, fittingReturn, calPeaks, cameraDist, unit):
     new_bean = plot.getbean(plotName)
     ncdbean = new_bean[GuiParameters.CALIBRATIONFUNCTIONNCD]
     if not isinstance(ncdbean, CalibrationResultsBean):
-        new_bean[GuiParameters.CALIBRATIONFUNCTIONNCD] = CalibrationResultsBean(saxswaxs,fittingReturn.func,calPeaks,cameraDist)
+        new_bean[GuiParameters.CALIBRATIONFUNCTIONNCD] = CalibrationResultsBean(saxswaxs,fittingReturn.func,calPeaks,cameraDist, unit)
     else:
-        ncdbean.putCalibrationResult(saxswaxs,fittingReturn.func,calPeaks,cameraDist)
+        ncdbean.putCalibrationResult(saxswaxs,fittingReturn.func,calPeaks,cameraDist, unit)
     plot.setbean(new_bean, plotName)
     
 def plot_results(plotName, function):

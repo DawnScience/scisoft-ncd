@@ -80,7 +80,8 @@ public class NcdDataReductionParameters extends ViewPart {
 	private static Text location, energy, pxWaxs, pxSaxs, qGradient, qIntercept;
 	
 	private static String[] dimChoices = new String[] { "1D", "2D" };
-	private static Button[] dimWaxs, dimSaxs;
+	protected static String[] unitChoices = new String[] { "Å^-1", "nm^-1" };
+	private static Button[] dimWaxs, dimSaxs, unitSel;
 
 	private static Button browse;
 	private static String inputDirectory = "/tmp";
@@ -300,6 +301,15 @@ public class NcdDataReductionParameters extends ViewPart {
 				String msg = "SCISOFT NCD: Error reading q-axis calibration intercept";
 				logger.error(msg);
 			}
+		}
+		return null;
+	}
+	
+	public static String getQUnit() {
+		if (inputQAxis.getSelection()) {
+			for (int i = 0; i < unitSel.length; i++)
+				if (unitSel[i].getSelection())
+					return unitChoices[i];
 		}
 		return null;
 	}
@@ -957,7 +967,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 			detTypeWaxs = new Button(gpSelectMode, SWT.CHECK);
 			detTypeWaxs.setText("WAXS");
-			detTypeWaxs.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+			detTypeWaxs.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 			detTypeWaxs.addSelectionListener(modeSelectionListenerWaxs);
 			detTypeWaxs.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -1084,7 +1094,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			
 			detTypeSaxs = new Button(gpSelectMode, SWT.CHECK);
 			detTypeSaxs.setText("SAXS");
-			detTypeSaxs.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+			detTypeSaxs.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 			detTypeSaxs.addSelectionListener(modeSelectionListenerSaxs);
 			detTypeSaxs.addSelectionListener(new SelectionAdapter() {
 				@Override
@@ -1185,19 +1195,34 @@ public class NcdDataReductionParameters extends ViewPart {
 			updateSectorIntegrationInvariant(sel);
 
 			inputQAxis = new Button(gpSelectMode, SWT.CHECK);
-			inputQAxis.setText("Override qaxis calibration");
-			inputQAxis.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false, 2,1));
+			inputQAxis.setText("q-calibration");
+			inputQAxis.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
 			inputQAxis.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 
 					boolean enabled = inputQAxis.getSelection();
+					for (Button unitButton : unitSel)
+						unitButton.setEnabled(enabled);
 					qGradient.setEnabled(enabled);
 					qGradientLabel.setEnabled(enabled);
 					qIntercept.setEnabled(enabled);
 					qInterceptLabel.setEnabled(enabled);
 				}
 			});
+			Group unitGrp = new Group(gpSelectMode, SWT.NONE);
+			unitGrp.setLayout(new GridLayout(2, false));
+			unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
+			unitGrp.setToolTipText("Select q-axis calibration units");
+			unitSel = new Button[2];
+			unitSel[0] = new Button(unitGrp, SWT.RADIO);
+			unitSel[0].setText(unitChoices[0]);
+			unitSel[0].setToolTipText("calibrate q-axis in Ångstroms");
+			unitSel[0].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			unitSel[1] = new Button(unitGrp, SWT.RADIO);
+			unitSel[1].setText(unitChoices[1]);
+			unitSel[1].setToolTipText("calibrate q-axis in nanometers");
+			unitSel[1].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
 			qGradientLabel = new Label(gpSelectMode, SWT.NONE);
 			qGradientLabel.setText("Gradient");
 			qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
@@ -1210,6 +1235,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			qIntercept = new Text(gpSelectMode, SWT.BORDER);
 			qIntercept.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			qIntercept.setToolTipText("Input q-axis calibration line fit intercept");
+			
 			inputQAxis.setSelection(false);
 			inputQAxis.notifyListeners(SWT.Selection, null);
 			

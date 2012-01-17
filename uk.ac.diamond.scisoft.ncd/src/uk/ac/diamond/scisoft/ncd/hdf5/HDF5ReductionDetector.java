@@ -42,6 +42,7 @@ public class HDF5ReductionDetector {
 	private String name;
 	protected String key;
 	protected AbstractDataset qAxis;
+	protected String qAxisUnit;
 	
 	protected String detectorType = "REDUCTION";
 	protected double pixelSize = 0.0;
@@ -191,8 +192,9 @@ public class HDF5ReductionDetector {
 		return "Reduction Detector "+getName()+" of class "+getClass()+" working on "+key;
 	}
 	
-	public void setqAxis(IDataset qAxis) {
+	public void setqAxis(IDataset qAxis, String unit) {
 		this.qAxis = DatasetUtils.convertToAbstractDataset(qAxis);
+		this.qAxisUnit = unit;
 	}
 
 	public AbstractDataset getqAxis() {
@@ -201,7 +203,7 @@ public class HDF5ReductionDetector {
 	
 	protected void addQAxis(INexusTree nxdata, int axisValue) {
 		if (qAxis != null) {
-			NcdDataUtils.addAxis(nxdata, getName(), "q", Nexus.createNexusGroupData(qAxis), axisValue, 1, "nm^{-1}", false);
+			NcdDataUtils.addAxis(nxdata, getName(), "q", Nexus.createNexusGroupData(qAxis), axisValue, 1, qAxisUnit, false);
 		}
 	}
 }

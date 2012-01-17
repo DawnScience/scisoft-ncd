@@ -79,6 +79,9 @@ public class QAxisFileHandler extends AbstractHandler {
 						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(qaxisFilename, getDetectorSelection(detectorSaxs));
 						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration");
 						AbstractDataset qaxis = Nexus.createDataset(node.getData(), false);
+						String units = (String)node.getAttribute("unit");
+						if (units == null)
+							units = "nm^-1";
 						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
 						double cameraLength = Double.NaN;
 						if (node != null)
@@ -95,7 +98,7 @@ public class QAxisFileHandler extends AbstractHandler {
 
 						Parameter gradient = new Parameter(qaxis.getDouble(new int[] {0}));
 						Parameter intercept = new Parameter(qaxis.getDouble(new int[] {1}));
-						CalibrationResultsBean crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength);
+						CalibrationResultsBean crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
 
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
