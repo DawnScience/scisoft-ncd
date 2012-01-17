@@ -401,7 +401,14 @@ public class NcdDataReductionParameters extends ViewPart {
 			
 			memento.putString(NcdPreferences.NCD_QGRADIENT, qGradient.getText());
 			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
+			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
 			memento.putBoolean(NcdPreferences.NCD_QOVERRIDE, inputQAxis.getSelection());
+			for (int i = 0; i < unitSel.length; i++)
+				if (unitSel[i].getSelection()) {
+					memento.putInteger(NcdPreferences.NCD_QUNIT, i);
+					break;
+				}
+			
 			
 			memento.putInteger(NcdPreferences.NCD_WAXS_INDEX, detListWaxs.getSelectionIndex());
 			memento.putInteger(NcdPreferences.NCD_SAXS_INDEX, detListSaxs.getSelectionIndex());
@@ -590,6 +597,13 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (tmp != null) qGradient.setText(tmp);
 			tmp = memento.getString(NcdPreferences.NCD_QINTERCEPT);
 			if (tmp != null) qIntercept.setText(tmp);
+			idx = this.memento.getInteger(NcdPreferences.NCD_QUNIT);
+			if (idx == null) idx = 0;
+			for (int i = 0; i < unitSel.length; i++)
+				if (i == idx) {
+					unitSel[i].setSelection(true);
+				} else
+					unitSel[i].setSelection(false);
 			val = memento.getBoolean(NcdPreferences.NCD_QOVERRIDE);
 			if (val!=null) {
 				inputQAxis.setSelection(val);
