@@ -20,7 +20,9 @@ import gda.observable.IObserver;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.Map.Entry;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -73,6 +75,7 @@ import uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfile;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.rcp.views.SidePlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 
 public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
@@ -97,7 +100,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	private StoredPlottingObject twoDData;
 
 	protected ArrayList<APeak> peaks = new ArrayList<APeak>();
-	protected double unitScale = 1.0;
 
 	private Button calibrateButton;
 	protected Text gradient;
@@ -107,12 +109,12 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	protected Double disttobeamstop;
 
-	protected Button[] detTypes, unitSel;
+	protected Button[] detTypes;
 
-	private String[] detChoices = new String[] { "SAXS", "WAXS" };
-	protected String[] unitChoices = new String[] { "Å^-1", "nm^-1" };
+	protected HashMap<String, Double> unitScale;
+	protected HashMap<String, Button> unitSel;
 
-	protected String currentMode = detChoices[0];
+	protected String currentMode = NcdConstants.detChoices[0];
 	
 	protected boolean originalData2D = true;
 
@@ -271,6 +273,10 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		hkl2peaks.put("(6, 4, 2)", 0.07257);		
 		cal2peaks.put("Silicon", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // WAXS
 		hkl2peaks.clear();
+		
+		unitScale = new HashMap<String, Double>(2);
+		unitScale.put(NcdConstants.unitChoices[0], 10.0);
+		unitScale.put(NcdConstants.unitChoices[1], 1.0);
 	}
 
 	@Override
@@ -334,30 +340,17 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		unitGrp.setLayout(new GridLayout(2, false));
 		unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
 		unitGrp.setToolTipText("Select q-axis calibration units");
-		unitSel = new Button[2];
-		unitSel[0] = new Button(unitGrp, SWT.RADIO);
-		unitSel[0].setText(unitChoices[0]);
-		unitSel[0].setToolTipText("calibrate q-axis in Ångstroms");
-		unitSel[0].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		unitSel[0].addSelectionListener(new SelectionAdapter() {
-				
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (unitSel[0].getSelection()) unitScale = 10.0;
-			}
-		});
 		
-		unitSel[1] = new Button(unitGrp, SWT.RADIO);
-		unitSel[1].setText(unitChoices[1]);
-		unitSel[1].setToolTipText("calibrate q-axis in nanometers");
-		unitSel[1].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		unitSel[1].addSelectionListener(new SelectionAdapter() {
-				
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				if (unitSel[1].getSelection()) unitScale = 1.0;
-			}
-		});
+		unitSel = new HashMap<String, Button>(2);
+		unitSel.put(NcdConstants.unitChoices[0], new Button(unitGrp, SWT.RADIO));
+		unitSel.get(NcdConstants.unitChoices[0]).setText(NcdConstants.unitChoices[0]);
+		unitSel.get(NcdConstants.unitChoices[0]).setToolTipText("calibrate q-axis in Ångstroms");
+		unitSel.get(NcdConstants.unitChoices[0]).setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+		
+		unitSel.put(NcdConstants.unitChoices[1], new Button(unitGrp, SWT.RADIO));
+		unitSel.get(NcdConstants.unitChoices[1]).setText(NcdConstants.unitChoices[1]);
+		unitSel.get(NcdConstants.unitChoices[1]).setToolTipText("calibrate q-axis in nanometers");
+		unitSel.get(NcdConstants.unitChoices[1]).setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
 		
 		Label lblN = new Label(calibrationControls, SWT.NONE);
 		lblN.setToolTipText("n in Braggs law");
@@ -421,9 +414,9 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		gpSelectMode.setLayout(new GridLayout(2, true));
 		gpSelectMode.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1));
 
-		detTypes = new Button[detChoices.length];
+		detTypes = new Button[NcdConstants.detChoices.length];
 		int i = 0;
-		for (String det : detChoices) {
+		for (String det : NcdConstants.detChoices) {
 			detTypes[i] = new Button(gpSelectMode, SWT.RADIO);
 			detTypes[i].setText(det);
 			detTypes[i].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
@@ -675,7 +668,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			calibrationPeakList.addAll(crb.getPeakList(currentMode));
 			final double dist = crb.getMeanCameraLength(currentMode) / 1000;
 			final String units = crb.getUnit(currentMode);
-			final int idxUnitChoice = units.equals(unitChoices[0]) ? 0 : 1;
 			if (crb.getFuction(currentMode) != null) {
 				final double mVal = crb.getFuction(currentMode).getParameterValue(0);
 				final double cVal = crb.getFuction(currentMode).getParameterValue(1);
@@ -687,9 +679,12 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 						gradient.setText(String.format("%5.5g",mVal));
 						intercept.setText(String.format("%3.5f",cVal));
 						cameralength.setText(String.format("%3.2f",dist));
-						for (int i = 0; i < unitSel.length; i++)
-							if (i == idxUnitChoice) unitSel[i].setSelection(true);
-							else unitSel[i].setSelection(false);
+						for (Button unitBtn : unitSel.values())
+							unitBtn.setSelection(false);
+						if (units == null) 
+							unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
+						else
+							unitSel.get(units).setSelection(true);
 						calTable.refresh();
 					}
 				});
@@ -817,5 +812,18 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	protected void setCalTable(ArrayList<CalibrationPeak> cpl) {
 		calTable.setInput(cpl);
 	}
+	
+	protected String getUnitName() {
+		for (Entry<String,Button> unitBtn : unitSel.entrySet())
+			if (unitBtn.getValue().getSelection())
+				return unitBtn.getKey();
+		return null;
+	}
 
+	protected Double getUnitScale() {
+		for (Entry<String,Button> unitBtn : unitSel.entrySet())
+			if (unitBtn.getValue().getSelection())
+				return unitScale.get(unitBtn.getKey());
+		return null;
+	}
 }

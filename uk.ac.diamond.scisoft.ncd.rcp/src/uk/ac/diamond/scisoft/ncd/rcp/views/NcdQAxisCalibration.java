@@ -22,6 +22,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
@@ -34,6 +35,7 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewPart;
@@ -58,6 +60,7 @@ import uk.ac.diamond.scisoft.analysis.rcp.plotting.actions.InjectPyDevConsoleHan
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.gda.common.rcp.util.BundleUtils;
 
@@ -106,9 +109,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
-			for (int i = 0; i < unitSel.length; i++)
-				if (unitSel[i].getSelection()) {
-					memento.putInteger(CalibrationPreferences.QAXIS_UNITS, i);
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getValue().getSelection()) {
+					memento.putString(CalibrationPreferences.QAXIS_UNITS, unitBtn.getKey());
 					break;
 				}
 			
@@ -208,15 +211,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_STANDARD);
 			if (val != null) standard.select(val);
 			
-			val = this.memento.getInteger(CalibrationPreferences.QAXIS_UNITS);
-			if (val == null) val = 0;
+			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
+			if (units == null) units = NcdConstants.DEFAULT_UNIT;
 			
-			String units = unitChoices[val];
-			for (int i = 0; i < unitSel.length; i++)
-				if (i == val) {
-					unitSel[i].setSelection(true);
-				} else
-					unitSel[i].setSelection(false);
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getKey().equals(units)) unitBtn.getValue().setSelection(true);
+				else unitBtn.getValue().setSelection(false);
 			
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
 			if (val != null) braggOrder.setSelection(val);
@@ -308,6 +308,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		currentMode = getDetectorName();
 
 		final int n = braggOrder.getSelection();
+		final Double unitScale = getUnitScale();
 		final String lambda, mmpp;
 		try {
 			lambda = Double.toString(1e-3 * 1e9 * 4.13566733e-15 * 299792458 * unitScale / NcdDataReductionParameters.getEnergy());
@@ -378,7 +379,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			command.append("None");
 		command.append(",");
 		
-		command.append(String.format("\"%s\"", unitSel[0].getSelection() ? unitChoices[0] : unitChoices[1]));
+		command.append(String.format("\"%s\"", getUnitName()));
 		command.append(")\n");
 		
 		UIJob job = new UIJob("Calibration") {

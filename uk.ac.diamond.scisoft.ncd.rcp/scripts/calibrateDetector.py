@@ -17,10 +17,11 @@
 from calibrationMethods import performCalibration
 from uk.ac.diamond.scisoft.analysis.plotserver import GuiParameters
 from uk.ac.diamond.scisoft.analysis.plotserver import CalibrationResultsBean
+from uk.ac.diamond.scisoft.ncd.preferences.NcdConstants import DEFAULT_UNIT
 import scisoftpy as dnp
 from scisoftpy import plot
 
-def calibrate(saxswaxs, plotName, redsetup, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None, unit="nm^{-1}"):
+def calibrate(saxswaxs, plotName, redsetup, peaks=[], stdspacing=[67.0], wavelength=None, pixelSize=None, n=10, disttobeamstop=None, unit=DEFAULT_UNIT):
     [func, calPeaks, camlength] = performCalibration(peaks, stdspacing, wavelength, pixelSize*1000, n, disttobeamstop)
     if func is None:
         raise "Something went wrong"

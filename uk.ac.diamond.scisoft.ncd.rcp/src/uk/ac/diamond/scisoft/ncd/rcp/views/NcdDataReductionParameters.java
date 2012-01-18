@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011 Diaunond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map.Entry;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -54,6 +55,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.AverageHandler;
@@ -79,9 +81,8 @@ public class NcdDataReductionParameters extends ViewPart {
 
 	private static Text location, energy, pxWaxs, pxSaxs, qGradient, qIntercept;
 	
-	private static String[] dimChoices = new String[] { "1D", "2D" };
-	protected static String[] unitChoices = new String[] { "Å^-1", "nm^-1" };
-	private static Button[] dimWaxs, dimSaxs, unitSel;
+	private static Button[] dimWaxs, dimSaxs;
+	protected static HashMap<String, Button> unitSel;
 
 	private static Button browse;
 	private static String inputDirectory = "/tmp";
@@ -307,9 +308,9 @@ public class NcdDataReductionParameters extends ViewPart {
 	
 	public static String getQUnit() {
 		if (inputQAxis.getSelection()) {
-			for (int i = 0; i < unitSel.length; i++)
-				if (unitSel[i].getSelection())
-					return unitChoices[i];
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getValue().getSelection())
+					return unitBtn.getKey();
 		}
 		return null;
 	}
@@ -403,12 +404,11 @@ public class NcdDataReductionParameters extends ViewPart {
 			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
 			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
 			memento.putBoolean(NcdPreferences.NCD_QOVERRIDE, inputQAxis.getSelection());
-			for (int i = 0; i < unitSel.length; i++)
-				if (unitSel[i].getSelection()) {
-					memento.putInteger(NcdPreferences.NCD_QUNIT, i);
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getValue().getSelection()) {
+					memento.putString(NcdPreferences.NCD_QUNIT, unitBtn.getKey());
 					break;
 				}
-			
 			
 			memento.putInteger(NcdPreferences.NCD_WAXS_INDEX, detListWaxs.getSelectionIndex());
 			memento.putInteger(NcdPreferences.NCD_SAXS_INDEX, detListSaxs.getSelectionIndex());
@@ -597,13 +597,13 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (tmp != null) qGradient.setText(tmp);
 			tmp = memento.getString(NcdPreferences.NCD_QINTERCEPT);
 			if (tmp != null) qIntercept.setText(tmp);
-			idx = this.memento.getInteger(NcdPreferences.NCD_QUNIT);
-			if (idx == null) idx = 0;
-			for (int i = 0; i < unitSel.length; i++)
-				if (i == idx) {
-					unitSel[i].setSelection(true);
-				} else
-					unitSel[i].setSelection(false);
+			tmp = this.memento.getString(NcdPreferences.NCD_QUNIT);
+			if (tmp == null) tmp = NcdConstants.DEFAULT_UNIT;
+			
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getKey().equals(tmp)) unitBtn.getValue().setSelection(true);
+				else unitBtn.getValue().setSelection(false);
+			
 			val = memento.getBoolean(NcdPreferences.NCD_QOVERRIDE);
 			if (val!=null) {
 				inputQAxis.setSelection(val);
@@ -1040,10 +1040,10 @@ public class NcdDataReductionParameters extends ViewPart {
 			gpDimWaxs.setLayout(new GridLayout(2, false));
 			gpDimWaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			gpDimWaxs.setToolTipText("Select the WAXS detector dimensionality");
-			dimWaxs = new Button[dimChoices.length];
-			for (int i = 0; i < dimChoices.length; i++) {
+			dimWaxs = new Button[NcdConstants.dimChoices.length];
+			for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
 				dimWaxs[i] = new Button(gpDimWaxs, SWT.RADIO);
-				dimWaxs[i].setText(dimChoices[i]);
+				dimWaxs[i].setText(NcdConstants.dimChoices[i]);
 				dimWaxs[i].setToolTipText("Select the WAXS detector dimensionality");
 				dimWaxs[i].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 				dimWaxs[i].addSelectionListener(new SelectionAdapter() {
@@ -1169,10 +1169,10 @@ public class NcdDataReductionParameters extends ViewPart {
 			gpDimSaxs.setLayout(new GridLayout(2, false));
 			gpDimSaxs.setToolTipText("Select the SAXS detector dimensionality");
 			gpDimSaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			dimSaxs = new Button[dimChoices.length];
-			for (int i = 0; i < dimChoices.length; i++) {
+			dimSaxs = new Button[NcdConstants.dimChoices.length];
+			for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
 				dimSaxs[i] = new Button(gpDimSaxs, SWT.RADIO);
-				dimSaxs[i].setText(dimChoices[i]);
+				dimSaxs[i].setText(NcdConstants.dimChoices[i]);
 				dimSaxs[i].setToolTipText("Select the SAXS detector dimensionality");
 				dimSaxs[i].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
 				dimSaxs[i].addSelectionListener(new SelectionAdapter() {
@@ -1216,7 +1216,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				public void widgetSelected(SelectionEvent e) {
 
 					boolean enabled = inputQAxis.getSelection();
-					for (Button unitButton : unitSel)
+					for (Button unitButton : unitSel.values())
 						unitButton.setEnabled(enabled);
 					qGradient.setEnabled(enabled);
 					qGradientLabel.setEnabled(enabled);
@@ -1228,15 +1228,17 @@ public class NcdDataReductionParameters extends ViewPart {
 			unitGrp.setLayout(new GridLayout(2, false));
 			unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
 			unitGrp.setToolTipText("Select q-axis calibration units");
-			unitSel = new Button[2];
-			unitSel[0] = new Button(unitGrp, SWT.RADIO);
-			unitSel[0].setText(unitChoices[0]);
-			unitSel[0].setToolTipText("calibrate q-axis in Ångstroms");
-			unitSel[0].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-			unitSel[1] = new Button(unitGrp, SWT.RADIO);
-			unitSel[1].setText(unitChoices[1]);
-			unitSel[1].setToolTipText("calibrate q-axis in nanometers");
-			unitSel[1].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			unitSel = new HashMap<String, Button>(2);
+			Button tmpUnitSel = new Button(unitGrp, SWT.RADIO);
+			tmpUnitSel.setText(NcdConstants.unitChoices[0]);
+			tmpUnitSel.setToolTipText("calibrate q-axis in Ångstroms");
+			tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			unitSel.put(NcdConstants.unitChoices[0], tmpUnitSel);
+			tmpUnitSel = new Button(unitGrp, SWT.RADIO);
+			tmpUnitSel.setText(NcdConstants.unitChoices[1]);
+			tmpUnitSel.setToolTipText("calibrate q-axis in nanometers");
+			tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			unitSel.put(NcdConstants.unitChoices[1], tmpUnitSel);
 			qGradientLabel = new Label(gpSelectMode, SWT.NONE);
 			qGradientLabel.setText("Gradient");
 			qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
@@ -1461,7 +1463,7 @@ public class NcdDataReductionParameters extends ViewPart {
 	public static void setDimData(HashMap<String, Integer> detDimData) {
 		detDims = new HashMap<String, Integer>();
 		detDims.putAll(detDimData);
-		for (int i = 0; i < dimChoices.length; i++) {
+		for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
 			dimWaxs[i].notifyListeners(SWT.Selection, null);
 			dimSaxs[i].notifyListeners(SWT.Selection, null);
 		}
