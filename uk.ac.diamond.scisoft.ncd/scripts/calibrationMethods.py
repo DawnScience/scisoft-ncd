@@ -91,7 +91,7 @@ def indexPeaks(peaksOnDetector, braggAngle):
     return probablematch
 
     
-def fitFunctionToData(probablematch):
+def fitFunctionToData(probablematch, unit):
     #plot q vs pixel
     q = []
     calPeaks = []
@@ -99,7 +99,7 @@ def fitFunctionToData(probablematch):
         qVal = 2 * math.pi / d
         print "Peak " + str(i+1) + " has a d spacing of " + str(d) + " and an 'n' value of " + str(n) + " with a q value of " + str(qVal)
         q.append(qVal)
-        calPeaks.append(CalibrationPeak(peak,ttheta,d, n))
+        calPeaks.append(CalibrationPeak(peak, ttheta, d, unit,  n))
 
     XData = dnp.asDataset([p[0] for p in probablematch])
     YData = dnp.asDataset(q)
@@ -128,7 +128,7 @@ def cameraLength(match, pixelSize):
     return meanCameraLength
 
 
-def performCalibration(peaks, spacing, wavelength, pixelSize, n, disttobeamstop): 
+def performCalibration(peaks, spacing, wavelength, pixelSize, n, disttobeamstop, unit): 
     braggAngle = twoThetaAngles(n, wavelength, spacing)
     braggAngle.sort()
     
@@ -142,7 +142,7 @@ def performCalibration(peaks, spacing, wavelength, pixelSize, n, disttobeamstop)
         peaksOnDetector = peaks
 
     match = indexPeaks(peaksOnDetector, braggAngle)
-    function, calPeaks = fitFunctionToData(match)
+    function, calPeaks = fitFunctionToData(match, unit)
     camlength = cameraLength(match, None if (disttobeamstop != None) else pixelSize)
     
     print "Linear fit results"

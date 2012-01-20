@@ -24,6 +24,10 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
 import org.eclipse.core.commands.Parameterization;
@@ -46,6 +50,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.progress.UIJob;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -123,7 +128,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
+					calibrationPeakMemento.putString(CalibrationPreferences.QAXIS_DSPACING, peak.getDSpacing().to(SI.NANO(SI.METER)).toString());
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -171,7 +176,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
+									calibrationPeakMemento.putString(CalibrationPreferences.QAXIS_DSPACING, peak.getDSpacing().to(SI.NANO(SI.METER)).toString());
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -228,11 +233,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				for (IMemento peak: peaks) {
 					Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 					Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
-					Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
+					String dSpacing = peak.getString(CalibrationPreferences.QAXIS_DSPACING);
 					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 					Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing).to(SI.NANO(SI.METER)), new int[] {h,k,l}));
 				}
 			}
 			setCalTable(calibrationPeakList);
@@ -260,11 +265,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						for (IMemento peak: peaks) {
 							Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 							Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
-							Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
+							String dSpacing = peak.getString(CalibrationPreferences.QAXIS_DSPACING);
 							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 							Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing).to(SI.NANO(SI.METER)), new int[] {h,k,l}));
 						}
 					}
 					
@@ -308,10 +313,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		currentMode = getDetectorName();
 
 		final int n = braggOrder.getSelection();
-		final Double unitScale = getUnitScale();
+		final Unit<Length> unitScale = getUnitScale();
 		final String lambda, mmpp;
 		try {
-			lambda = Double.toString(1e-3 * 1e9 * 4.13566733e-15 * 299792458 * unitScale / NcdDataReductionParameters.getEnergy());
+			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458 / NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER)); 
+			lambda = Double.toString(lambdaDim.doubleValue(getUnitScale()));
 			mmpp = getPixel(true).toString();
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
@@ -358,8 +364,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 		command.append("[");
 
-		for (Map.Entry<String, Double>  peak : cal2peaks.get(standard.getText()).entrySet()) {
-			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue() * unitScale));
+		for (Entry<String, Amount<Length>>  peak : cal2peaks.get(standard.getText()).entrySet()) {
+			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue().doubleValue(unitScale)));
 		}
 
 		command.append("],");
@@ -379,7 +385,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			command.append("None");
 		command.append(",");
 		
-		command.append(String.format("\"%s\"", getUnitName()));
+		command.append(String.format("\"%s\"", unitScale.toString()));
 		command.append(")\n");
 		
 		UIJob job = new UIJob("Calibration") {

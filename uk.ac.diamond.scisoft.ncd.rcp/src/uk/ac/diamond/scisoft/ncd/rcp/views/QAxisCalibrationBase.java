@@ -24,6 +24,11 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -51,6 +56,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.progress.UIJob;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -81,10 +87,12 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
+	private Unit<Length> NANOMETER = SI.NANO(SI.METER);
+	
 	private CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
 
-	protected LinkedHashMap<String, LinkedHashMap<String, Double> > cal2peaks;
+	protected LinkedHashMap<String, LinkedHashMap<String, Amount<Length>> > cal2peaks;
 	
 
 	protected Combo standard;
@@ -111,7 +119,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	protected Button[] detTypes;
 
-	protected HashMap<String, Double> unitScale;
+	protected HashMap<String, Unit<Length>> unitScale;
 	protected HashMap<String, Button> unitSel;
 
 	protected String currentMode = NcdConstants.detChoices[0];
@@ -184,99 +192,99 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	@SuppressWarnings("unchecked")
 	public QAxisCalibrationBase() {
-		cal2peaks = new LinkedHashMap<String, LinkedHashMap<String, Double> >();
-		LinkedHashMap<String, Double> hkl2peaks = new LinkedHashMap<String, Double>();
+		cal2peaks = new LinkedHashMap<String, LinkedHashMap<String, Amount<Length>> >();
+		LinkedHashMap<String, Amount<Length>> hkl2peaks = new LinkedHashMap<String, Amount<Length>>();
 		
-		hkl2peaks.put("(0, 0, 1)", 67.0);
-		hkl2peaks.put("(0, 0, 2)", 33.5);
-		hkl2peaks.put("(0, 0, 3)", 22.3);
-		hkl2peaks.put("(0, 0, 4)", 16.75);
-		hkl2peaks.put("(0, 0, 5)", 13.4);
-		hkl2peaks.put("(0, 0, 6)", 11.6);
-		hkl2peaks.put("(0, 0, 7)", 9.6);
-		hkl2peaks.put("(0, 0, 8)", 8.4);
-		hkl2peaks.put("(0, 0, 9)", 7.4);
-		hkl2peaks.put("(0, 0, 10)", 6.7);
-		hkl2peaks.put("(0, 0, 11)", 6.1);
-		hkl2peaks.put("(0, 0, 12)", 5.6);
-		hkl2peaks.put("(0, 0, 13)", 5.15);
-		hkl2peaks.put("(0, 0, 15)", 4.46);
-		hkl2peaks.put("(0, 0, 20)", 3.35);
-		hkl2peaks.put("(0, 0, 21)", 3.2);
-		hkl2peaks.put("(0, 0, 22)", 3.05);
-		hkl2peaks.put("(0, 0, 30)", 2.2);
-		hkl2peaks.put("(0, 0, 35)", 1.9);
-		hkl2peaks.put("(0, 0, 41)", 1.6);
-		hkl2peaks.put("(0, 0, 52)", 1.3);
-		hkl2peaks.put("(0, 0, 71)", 0.95);
-		cal2peaks.put("Collagen Wet", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // SAXS
+		hkl2peaks.put("(0, 0, 1)", Amount.valueOf(67.0, NANOMETER));
+		hkl2peaks.put("(0, 0, 2)", Amount.valueOf(33.5, NANOMETER));
+		hkl2peaks.put("(0, 0, 3)", Amount.valueOf(22.3, NANOMETER));
+		hkl2peaks.put("(0, 0, 4)", Amount.valueOf(16.75, NANOMETER));
+		hkl2peaks.put("(0, 0, 5)", Amount.valueOf(13.4, NANOMETER));
+		hkl2peaks.put("(0, 0, 6)", Amount.valueOf(11.6, NANOMETER));
+		hkl2peaks.put("(0, 0, 7)", Amount.valueOf(9.6, NANOMETER));
+		hkl2peaks.put("(0, 0, 8)", Amount.valueOf(8.4, NANOMETER));
+		hkl2peaks.put("(0, 0, 9)", Amount.valueOf(7.4, NANOMETER));
+		hkl2peaks.put("(0, 0, 10)", Amount.valueOf(6.7, NANOMETER));
+		hkl2peaks.put("(0, 0, 11)", Amount.valueOf(6.1, NANOMETER));
+		hkl2peaks.put("(0, 0, 12)", Amount.valueOf(5.6, NANOMETER));
+		hkl2peaks.put("(0, 0, 13)", Amount.valueOf(5.15, NANOMETER));
+		hkl2peaks.put("(0, 0, 15)", Amount.valueOf(4.46, NANOMETER));
+		hkl2peaks.put("(0, 0, 20)", Amount.valueOf(3.35, NANOMETER));
+		hkl2peaks.put("(0, 0, 21)", Amount.valueOf(3.2, NANOMETER));
+		hkl2peaks.put("(0, 0, 22)", Amount.valueOf(3.05, NANOMETER));
+		hkl2peaks.put("(0, 0, 30)", Amount.valueOf(2.2, NANOMETER));
+		hkl2peaks.put("(0, 0, 35)", Amount.valueOf(1.9, NANOMETER));
+		hkl2peaks.put("(0, 0, 41)", Amount.valueOf(1.6, NANOMETER));
+		hkl2peaks.put("(0, 0, 52)", Amount.valueOf(1.3, NANOMETER));
+		hkl2peaks.put("(0, 0, 71)", Amount.valueOf(0.95, NANOMETER));
+		cal2peaks.put("Collagen Wet", (LinkedHashMap<String, Amount<Length>>) hkl2peaks.clone()); // SAXS
 		hkl2peaks.clear();
 		
-		hkl2peaks.put("(0, 0, 1)", 65.3);
-		hkl2peaks.put("(0, 0, 2)", 32.7);
-		hkl2peaks.put("(0, 0, 3)", 21.8);
-		hkl2peaks.put("(0, 0, 4)", 16.3);
-		hkl2peaks.put("(0, 0, 5)", 13.1);
-		hkl2peaks.put("(0, 0, 6)", 10.9);
-		hkl2peaks.put("(0, 0, 7)", 9.33);
-		hkl2peaks.put("(0, 0, 8)", 8.16);
-		hkl2peaks.put("(0, 0, 9)", 7.26);
-		hkl2peaks.put("(0, 0, 10)", 6.53);
-		hkl2peaks.put("(0, 0, 11)", 5.94);
-		hkl2peaks.put("(0, 0, 12)", 5.44);
-		hkl2peaks.put("(0, 0, 13)", 5.02);
-		hkl2peaks.put("(0, 0, 15)", 4.35);
-		cal2peaks.put("Collagen Dry", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // SAXS
+		hkl2peaks.put("(0, 0, 1)",  Amount.valueOf(65.3, NANOMETER));
+		hkl2peaks.put("(0, 0, 2)",  Amount.valueOf(32.7, NANOMETER));
+		hkl2peaks.put("(0, 0, 3)",  Amount.valueOf(21.8, NANOMETER));
+		hkl2peaks.put("(0, 0, 4)",  Amount.valueOf(16.3, NANOMETER));
+		hkl2peaks.put("(0, 0, 5)",  Amount.valueOf(13.1, NANOMETER));
+		hkl2peaks.put("(0, 0, 6)",  Amount.valueOf(10.9, NANOMETER));
+		hkl2peaks.put("(0, 0, 7)",  Amount.valueOf(9.33, NANOMETER));
+		hkl2peaks.put("(0, 0, 8)",  Amount.valueOf(8.16, NANOMETER));
+		hkl2peaks.put("(0, 0, 9)",  Amount.valueOf(7.26, NANOMETER));
+		hkl2peaks.put("(0, 0, 10)", Amount.valueOf(6.53, NANOMETER));
+		hkl2peaks.put("(0, 0, 11)", Amount.valueOf(5.94, NANOMETER));
+		hkl2peaks.put("(0, 0, 12)", Amount.valueOf(5.44, NANOMETER));
+		hkl2peaks.put("(0, 0, 13)", Amount.valueOf(5.02, NANOMETER));
+		hkl2peaks.put("(0, 0, 15)", Amount.valueOf(4.35, NANOMETER));
+		cal2peaks.put("Collagen Dry", (LinkedHashMap<String, Amount<Length>>) hkl2peaks.clone()); // SAXS
 		hkl2peaks.clear();
 		
-		hkl2peaks.put("(0, 0, 1)",  5.838     ); 
-		hkl2peaks.put("(0, 0, 2)",  2.919     );
-		hkl2peaks.put("(0, 0, 3)",  1.946     );
-		hkl2peaks.put("(0, 0, 4)",  1.4595    );
-		hkl2peaks.put("(0, 0, 5)",  1.1676    );
-		hkl2peaks.put("(0, 0, 6)",  0.973     );
-		hkl2peaks.put("(0, 0, 7)",  0.834     );
-		hkl2peaks.put("(0, 0, 8)",  0.72975   );
-		hkl2peaks.put("(0, 0, 9)",  0.64866667);
-		hkl2peaks.put("(0, 0, 10)", 0.5838    );
-		hkl2peaks.put("(0, 0, 11)", 0.53072727);
-		hkl2peaks.put("(0, 0, 12)", 0.4865    );
-		hkl2peaks.put("(0, 0, 13)", 0.44907692);
-		cal2peaks.put("Ag Behenate", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // SAXS
+		hkl2peaks.put("(0, 0, 1)",  Amount.valueOf(5.838     , NANOMETER)); 
+		hkl2peaks.put("(0, 0, 2)",  Amount.valueOf(2.919     , NANOMETER));
+		hkl2peaks.put("(0, 0, 3)",  Amount.valueOf(1.946     , NANOMETER));
+		hkl2peaks.put("(0, 0, 4)",  Amount.valueOf(1.4595    , NANOMETER));
+		hkl2peaks.put("(0, 0, 5)",  Amount.valueOf(1.1676    , NANOMETER));
+		hkl2peaks.put("(0, 0, 6)",  Amount.valueOf(0.973     , NANOMETER));
+		hkl2peaks.put("(0, 0, 7)",  Amount.valueOf(0.834     , NANOMETER));
+		hkl2peaks.put("(0, 0, 8)",  Amount.valueOf(0.72975   , NANOMETER));
+		hkl2peaks.put("(0, 0, 9)",  Amount.valueOf(0.64866667, NANOMETER));
+		hkl2peaks.put("(0, 0, 10)", Amount.valueOf(0.5838    , NANOMETER));
+		hkl2peaks.put("(0, 0, 11)", Amount.valueOf(0.53072727, NANOMETER));
+		hkl2peaks.put("(0, 0, 12)", Amount.valueOf(0.4865    , NANOMETER));
+		hkl2peaks.put("(0, 0, 13)", Amount.valueOf(0.44907692, NANOMETER));
+		cal2peaks.put("Ag Behenate", (LinkedHashMap<String, Amount<Length>>) hkl2peaks.clone()); // SAXS
 		hkl2peaks.clear();
 		        
-		hkl2peaks.put("(1, 1, 0)", 0.4166);
-		hkl2peaks.put("(2, 0, 0)", 0.378);
-		hkl2peaks.put("(2, 1, 0)", 0.3014);
-		hkl2peaks.put("(0, 2, 0)", 0.249);
-		cal2peaks.put("HDPE", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // WAXS
+		hkl2peaks.put("(1, 1, 0)", Amount.valueOf(0.4166, NANOMETER));
+		hkl2peaks.put("(2, 0, 0)", Amount.valueOf(0.378 , NANOMETER));
+		hkl2peaks.put("(2, 1, 0)", Amount.valueOf(0.3014, NANOMETER));
+		hkl2peaks.put("(0, 2, 0)", Amount.valueOf(0.249 , NANOMETER));
+		cal2peaks.put("HDPE", (LinkedHashMap<String, Amount<Length>>) hkl2peaks.clone()); // WAXS
 		hkl2peaks.clear();
 		
-		hkl2peaks.put("(1, 1, 1)", 0.31355);
-		hkl2peaks.put("(2, 2, 0)", 0.19201);
-		hkl2peaks.put("(3, 1, 1)", 0.16374);
-		hkl2peaks.put("(2, 2, 2)", 0.15677);
-		hkl2peaks.put("(4, 0, 0)", 0.13577);
-		hkl2peaks.put("(3, 3, 1)", 0.12459);
-		hkl2peaks.put("(4, 2, 2)", 0.11085);
-		hkl2peaks.put("(3, 3, 3)", 0.10451);
-		hkl2peaks.put("(5, 1, 1)", 0.10451);
-		hkl2peaks.put("(4, 4, 0)", 0.09600);
-		hkl2peaks.put("(5, 3, 1)", 0.09179);
-		hkl2peaks.put("(4, 4, 2)", 0.09051);
-		hkl2peaks.put("(6, 2, 0)", 0.08586);
-		hkl2peaks.put("(5, 3, 3)", 0.08281);
-		hkl2peaks.put("(6, 2, 2)", 0.08187);
-		hkl2peaks.put("(4, 4, 4)", 0.07838);
-		hkl2peaks.put("(7, 1, 1)", 0.07604);
-		hkl2peaks.put("(5, 5, 1)", 0.07604);
-		hkl2peaks.put("(6, 4, 2)", 0.07257);		
-		cal2peaks.put("Silicon", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // WAXS
+		hkl2peaks.put("(1, 1, 1)", Amount.valueOf(0.31355, NANOMETER));
+		hkl2peaks.put("(2, 2, 0)", Amount.valueOf(0.19201, NANOMETER));
+		hkl2peaks.put("(3, 1, 1)", Amount.valueOf(0.16374, NANOMETER));
+		hkl2peaks.put("(2, 2, 2)", Amount.valueOf(0.15677, NANOMETER));
+		hkl2peaks.put("(4, 0, 0)", Amount.valueOf(0.13577, NANOMETER));
+		hkl2peaks.put("(3, 3, 1)", Amount.valueOf(0.12459, NANOMETER));
+		hkl2peaks.put("(4, 2, 2)", Amount.valueOf(0.11085, NANOMETER));
+		hkl2peaks.put("(3, 3, 3)", Amount.valueOf(0.10451, NANOMETER));
+		hkl2peaks.put("(5, 1, 1)", Amount.valueOf(0.10451, NANOMETER));
+		hkl2peaks.put("(4, 4, 0)", Amount.valueOf(0.09600, NANOMETER));
+		hkl2peaks.put("(5, 3, 1)", Amount.valueOf(0.09179, NANOMETER));
+		hkl2peaks.put("(4, 4, 2)", Amount.valueOf(0.09051, NANOMETER));
+		hkl2peaks.put("(6, 2, 0)", Amount.valueOf(0.08586, NANOMETER));
+		hkl2peaks.put("(5, 3, 3)", Amount.valueOf(0.08281, NANOMETER));
+		hkl2peaks.put("(6, 2, 2)", Amount.valueOf(0.08187, NANOMETER));
+		hkl2peaks.put("(4, 4, 4)", Amount.valueOf(0.07838, NANOMETER));
+		hkl2peaks.put("(7, 1, 1)", Amount.valueOf(0.07604, NANOMETER));
+		hkl2peaks.put("(5, 5, 1)", Amount.valueOf(0.07604, NANOMETER));
+		hkl2peaks.put("(6, 4, 2)", Amount.valueOf(0.07257, NANOMETER));		
+		cal2peaks.put("Silicon", (LinkedHashMap<String, Amount<Length>>) hkl2peaks.clone()); // WAXS
 		hkl2peaks.clear();
 		
-		unitScale = new HashMap<String, Double>(2);
-		unitScale.put(NcdConstants.unitChoices[0], 10.0);
-		unitScale.put(NcdConstants.unitChoices[1], 1.0);
+		unitScale = new HashMap<String, Unit<Length>>(2);
+		unitScale.put(NcdConstants.unitChoices[0], NonSI.ANGSTROM);
+		unitScale.put(NcdConstants.unitChoices[1], NANOMETER);
 	}
 
 	@Override
@@ -820,7 +828,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		return null;
 	}
 
-	protected Double getUnitScale() {
+	protected Unit<Length> getUnitScale() {
 		for (Entry<String,Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
 				return unitScale.get(unitBtn.getKey());
