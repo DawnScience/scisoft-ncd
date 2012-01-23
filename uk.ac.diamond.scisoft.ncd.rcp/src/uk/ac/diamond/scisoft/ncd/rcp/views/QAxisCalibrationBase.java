@@ -693,6 +693,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 							unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
 						else
 							unitSel.get(units).setSelection(true);
+						calTable.setInput(calibrationPeakList);
 						calTable.refresh();
 					}
 				});

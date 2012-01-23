@@ -16,10 +16,12 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  uk.ac.diamond.scisoft.deprecated;bundle-version="1.0.0",
  uk.ac.gda.common.rcp;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.analysis.rcp;bundle-version="1.0.0",
- uk.ac.diamond.scisoft.ncd;bundle-version="1.0.0",
- uk.ac.diamond.sda.jscience;bundle-version="1.0.0"
+ uk.ac.diamond.scisoft.ncd;bundle-version="1.0.0"
 Bundle-ClassPath: .
-Import-Package: org.apache.commons.io,
+Import-Package: javax.measure.quantity,
+ javax.measure.unit,
+ org.apache.commons.io,
+ org.jscience.physics.amount,
  org.slf4j
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views

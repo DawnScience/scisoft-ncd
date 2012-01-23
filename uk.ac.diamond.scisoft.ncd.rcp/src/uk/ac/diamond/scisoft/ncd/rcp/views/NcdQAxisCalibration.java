@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
@@ -114,9 +113,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
+			Unit<Length> selUnit = SI.NANO(SI.METER);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
 					memento.putString(CalibrationPreferences.QAXIS_UNITS, unitBtn.getKey());
+					selUnit = (Unit<Length>) Unit.valueOf(unitBtn.getKey());
 					break;
 				}
 			
@@ -128,7 +129,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-					calibrationPeakMemento.putString(CalibrationPreferences.QAXIS_DSPACING, peak.getDSpacing().to(SI.NANO(SI.METER)).toString());
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -176,7 +177,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-									calibrationPeakMemento.putString(CalibrationPreferences.QAXIS_DSPACING, peak.getDSpacing().to(SI.NANO(SI.METER)).toString());
+									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -219,8 +220,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units == null) units = NcdConstants.DEFAULT_UNIT;
 			
+			Unit<Length> selUnit = (Unit<Length>) Unit.valueOf(units);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(units)) unitBtn.getValue().setSelection(true);
+				if (unitBtn.getKey().equals(units)) {
+					unitBtn.getValue().setSelection(true);
+					
+				}
 				else unitBtn.getValue().setSelection(false);
 			
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
@@ -233,11 +238,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				for (IMemento peak: peaks) {
 					Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 					Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
-					String dSpacing = peak.getString(CalibrationPreferences.QAXIS_DSPACING);
+					Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 					Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing).to(SI.NANO(SI.METER)), new int[] {h,k,l}));
+					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 				}
 			}
 			setCalTable(calibrationPeakList);
@@ -265,11 +270,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						for (IMemento peak: peaks) {
 							Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 							Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
-							String dSpacing = peak.getString(CalibrationPreferences.QAXIS_DSPACING);
+							Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 							Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing).to(SI.NANO(SI.METER)), new int[] {h,k,l}));
+							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 						}
 					}
 					

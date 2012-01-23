@@ -18,6 +18,8 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.concurrent.CancellationException;
 
+import javax.measure.unit.Unit;
+
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 //import gda.device.detector.NXDetectorData;
@@ -170,7 +172,7 @@ public class LazyNcdProcessing {
 				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
 				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
 				cameraLength = crb.getMeanCameraLength(detector);
-				if (qaxisUnit == null) qaxisUnit = crb.getUnit(detector);
+				if (qaxisUnit == null) setUnit(crb.getUnit(detector));
 			}
 		}
 		
@@ -422,7 +424,8 @@ public class LazyNcdProcessing {
 	}
 
 	public void setUnit(String unit) {
-		this.qaxisUnit = unit;
+		// q-axis units need to be inverse of the linear dimension units
+		this.qaxisUnit = (unit != null ? Unit.valueOf(unit).inverse().toString() : null);
 	}
 
 }
