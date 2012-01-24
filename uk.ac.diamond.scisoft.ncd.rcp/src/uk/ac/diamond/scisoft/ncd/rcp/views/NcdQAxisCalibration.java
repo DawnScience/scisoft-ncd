@@ -53,6 +53,7 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -295,16 +296,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 			}
 			try {
-				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-				IViewPart activePlot = page.findView(ACTIVE_PLOT);
-				if (activePlot instanceof PlotView) {
-					if (roiData != null)
-						((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
-					if (crb != null) {
-						((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
-						updateCalibrationResults(crb);
-					}
-				}
+				GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+				if (newBean == null)
+					newBean = new GuiBean();
+				newBean.put(GuiParameters.ROIDATA, roiData);
+				newBean.put(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
+				PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
 			} catch (Exception e) {
 				logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
 			}
