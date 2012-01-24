@@ -975,7 +975,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 		{
 			Group gpSelectMode = new Group(g, SWT.NONE);
-			gpSelectMode.setLayout(new GridLayout(6, false));
+			gpSelectMode.setLayout(new GridLayout(7, false));
 			gpSelectMode.setText("Detectors");
 			gpSelectMode.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 4, 1));
 
@@ -1002,7 +1002,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 			
 			detListWaxs = new Combo(gpSelectMode, SWT.NONE);
-			GridData gridData = new GridData(GridData.FILL, SWT.CENTER, true, false);
+			GridData gridData = new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1);
 			detListWaxs.setLayoutData(gridData);
 			detListWaxs.setToolTipText("Select the WAXS detector used in data collection");
 			detListWaxs.addSelectionListener(new SelectionAdapter() {
@@ -1038,7 +1038,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			
 			Group gpDimWaxs = new Group(gpSelectMode, SWT.NONE);
 			gpDimWaxs.setLayout(new GridLayout(2, false));
-			gpDimWaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			gpDimWaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			gpDimWaxs.setToolTipText("Select the WAXS detector dimensionality");
 			dimWaxs = new Button[NcdConstants.dimChoices.length];
 			for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
@@ -1128,7 +1128,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			});
 			
 			detListSaxs = new Combo(gpSelectMode, SWT.NONE);
-			gridData = new GridData(GridData.FILL, SWT.CENTER, true, false);
+			gridData = new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1);
 			detListSaxs.setLayoutData(gridData);
 			detListSaxs.setToolTipText("Select the SAXS detector used in data collection");
 			detListSaxs.addSelectionListener(new SelectionAdapter() {
@@ -1168,7 +1168,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			Group gpDimSaxs = new Group(gpSelectMode, SWT.NONE);
 			gpDimSaxs.setLayout(new GridLayout(2, false));
 			gpDimSaxs.setToolTipText("Select the SAXS detector dimensionality");
-			gpDimSaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			gpDimSaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			dimSaxs = new Button[NcdConstants.dimChoices.length];
 			for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
 				dimSaxs[i] = new Button(gpDimSaxs, SWT.RADIO);
@@ -1210,7 +1210,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 			inputQAxis = new Button(gpSelectMode, SWT.CHECK);
 			inputQAxis.setText("q-calibration");
-			inputQAxis.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			inputQAxis.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 			inputQAxis.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -1241,7 +1241,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			unitSel.put(NcdConstants.unitChoices[1], tmpUnitSel);
 			qGradientLabel = new Label(gpSelectMode, SWT.NONE);
 			qGradientLabel.setText("Gradient");
-			qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
+			qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, false, false));
 			qGradient = new Text(gpSelectMode, SWT.BORDER);
 			qGradient.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			qGradient.setToolTipText("Input q-axis calibration line fit gradient");
@@ -1249,7 +1249,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			qInterceptLabel.setText("Intercept");
 			qInterceptLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
 			qIntercept = new Text(gpSelectMode, SWT.BORDER);
-			qIntercept.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			qIntercept.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 			qIntercept.setToolTipText("Input q-axis calibration line fit intercept");
 			
 			inputQAxis.setSelection(false);
