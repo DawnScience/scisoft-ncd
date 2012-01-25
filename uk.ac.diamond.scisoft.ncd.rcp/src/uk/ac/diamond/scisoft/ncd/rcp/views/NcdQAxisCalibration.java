@@ -390,36 +390,22 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		command.append(String.format("\"%s\"", unitScale.toString()));
 		command.append(")\n");
 		
-		UIJob job = new UIJob("Calibration") {
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				try {
-					ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+		try {
+			ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
+			IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
 
-					Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
+			Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
 
-					IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
-					Parameterization parm = new Parameterization(script, command.toString());
-					ParameterizedCommand command = new ParameterizedCommand(inject, new Parameterization[] {parm});
-					handlerService.executeCommand(command, null);
-
-					if (NcdDataReductionParameters.getDetListSaxs().isEnabled())
-						NcdDataReductionParameters.getDetListSaxs().notifyListeners(SWT.Selection, null);
-					//if (NcdDataReductionParameters.getDetListWaxs().isEnabled())
-					//	NcdDataReductionParameters.getDetListWaxs().notifyListeners(SWT.Selection, null);
-				} catch (Exception err) {
-					String msg = "SCISOFT NCD: Error running q-axis calibration script";
-					logger.error(msg, err);
-					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
-					ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
-					return Status.CANCEL_STATUS;
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setUser(true);
-		job.schedule();
+			IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
+			Parameterization parm = new Parameterization(script, command.toString());
+			ParameterizedCommand param_command = new ParameterizedCommand(inject, new Parameterization[] {parm});
+			handlerService.executeCommand(param_command, null);
+		} catch (Exception err) {
+			String msg = "SCISOFT NCD: Error running q-axis calibration script";
+			logger.error(msg, err);
+			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
+			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
+		}
 	}
 
 	protected String getDetectorName() {
