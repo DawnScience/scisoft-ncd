@@ -29,9 +29,6 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
@@ -55,7 +52,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
-import org.eclipse.ui.progress.UIJob;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -100,7 +96,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	private Button sectorButton;
 	private Button fittingButton;
 	private PlotServer plotServer;
-	private GuiBean bean;
 	protected Group gpSelectMode;
 
 
@@ -497,14 +492,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				UIJob uiJob = new UIJob("Calibration") {
-					@Override
-					public IStatus runInUIThread(IProgressMonitor monitor) {
-						runCalibration();
-						return Status.OK_STATUS;
-					}
-				};
-				uiJob.schedule();
+				runCalibration();
 			}
 		});
 	}
@@ -513,7 +501,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		if (pv == null) {
 			return;
 		}
-		bean = pv.getGUIInfo();
+		GuiBean bean = pv.getGUIInfo();
 		if (bean == null) {
 			return;
 		}
@@ -646,7 +634,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		if (arg instanceof GuiUpdate) {
 			GuiUpdate guiUpdate = (GuiUpdate) arg;
 			if (guiUpdate.getGuiName().contains(GUI_PLOT_NAME)) {
-				bean = guiUpdate.getGuiData();
+				GuiBean bean = guiUpdate.getGuiData();
 				if (bean.containsKey(GuiParameters.ROIDATA)) {
 					Object obj = bean.get(GuiParameters.ROIDATA);
 					if (obj instanceof SectorROI) {
@@ -668,6 +656,8 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 				}
 			}
 		}
+		
+		findViewAndDetermineMode(currentMode);
 	}
 
 	protected void updateCalibrationResults(CalibrationResultsBean crb) {
