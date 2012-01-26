@@ -24,6 +24,10 @@ import java.io.File;
 import java.io.StringReader;
 import java.util.ArrayList;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -80,8 +84,13 @@ public class QAxisFileHandler extends AbstractHandler {
 						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration");
 						AbstractDataset qaxis = Nexus.createDataset(node.getData(), false);
 						String units = (String)node.getAttribute("unit");
-						if (units == null)
-							units = "nm^-1";
+						if (units != null) {
+							Unit<Length> inv_units = (Unit<Length>) Unit.valueOf(units).inverse();
+							units = inv_units.toString();
+						} else {
+							// The default value that was used when unit setting was fixed.
+							units = SI.NANO(SI.METER).toString(); 
+						}
 						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
 						double cameraLength = Double.NaN;
 						if (node != null)
@@ -102,7 +111,7 @@ public class QAxisFileHandler extends AbstractHandler {
 
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
-						roiData.setAngles(angles.getDouble(new int[] {0}), angles.getDouble(new int[] {1}));
+						roiData.setAnglesDegrees(angles.getDouble(new int[] {0}), angles.getDouble(new int[] {1}));
 						roiData.setRadii(radii.getDouble(new int[] {0}), radii.getDouble(new int[] {1}));
 						roiData.setPoint(beam.getDouble(new int[] {0}),	beam.getDouble(new int[] {1}));
 						roiData.setClippingCompensation(true);
