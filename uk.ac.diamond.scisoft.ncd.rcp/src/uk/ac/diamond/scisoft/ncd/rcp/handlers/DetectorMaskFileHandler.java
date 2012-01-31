@@ -16,12 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.data.nexus.tree.NexusTreeNodeSelection;
-
 import java.io.File;
-import java.io.StringReader;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -41,12 +36,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
@@ -79,14 +76,14 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 							maskFilename = ((IFile)sel).getLocation().toString();
 						else 
 							maskFilename = ((File)sel).getAbsolutePath();
-						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(maskFilename, getDetectorSelection(detectorSaxs));
-						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/mask");
+						HDF5File qaxisFile = new HDF5Loader(maskFilename).loadTree();
+						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/mask").getDestination();
 						if (node == null) {
 							String msg = "No mask data found in "+ maskFilename;
 							return DetectorMaskErrorDialog(shell, msg, null);
 						}
 						
-						mask = Nexus.createDataset(node.getData(), false);
+						mask = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
 						try {
 							IWorkbenchPage page = window.getActivePage();
 							IViewPart activePlot = page.findView(PlotView.ID + "DP");
@@ -115,21 +112,6 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		return null;
 	}
 
-	private NexusTreeNodeSelection getDetectorSelection(String detName) throws Exception {
-		String xml = "<?xml version='1.0' encoding='UTF-8'?>" +
-		"<nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>NXentry</nxClass><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXinstrument</nxClass><name>"+ detName + "_processing</name><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXdetector</nxClass><name>SectorIntegration</name><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>mask</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>";
-		return NexusTreeNodeSelection.createFromXML(new InputSource(new StringReader(xml)));
-	}
-	
 	private IStatus DetectorMaskErrorDialog(Shell shell, String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);

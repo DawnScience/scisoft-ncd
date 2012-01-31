@@ -16,12 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.data.nexus.tree.NexusTreeNodeSelection;
-
 import java.io.File;
-import java.io.StringReader;
 import java.util.ArrayList;
 
 import org.eclipse.core.commands.AbstractHandler;
@@ -37,12 +32,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
@@ -76,35 +73,35 @@ public class QAxisFileHandler extends AbstractHandler {
 					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
 					if (idxSaxs >= 0) {
 						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-						INexusTree detectorTree = NexusTreeBuilder.getNexusTree(qaxisFilename, getDetectorSelection(detectorSaxs));
-						INexusTree node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration");
-						AbstractDataset qaxis = Nexus.createDataset(node.getData(), false);
-						String units = (String)node.getAttribute("unit");
-						if (units == null)
-							units = "nm^-1";
-						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
+						HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
+						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration").getDestination();
+						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+						String units = "nm^-1";
+						if (node.getAttribute("unit") != null)
+							units = node.getAttribute("unit").getFirstElement();
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length").getDestination();
 						double cameraLength = Double.NaN;
-						if (node != null)
-							cameraLength = Nexus.createDataset(node.getData(), false).getDouble(new int[] {0});
-						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/beam centre");
-						AbstractDataset beam = Nexus.createDataset(node.getData(), false);
-						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles");
-						AbstractDataset angles = Nexus.createDataset(node.getData(), false);
-						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/integration radii");
-						AbstractDataset radii = Nexus.createDataset(node.getData(), false);
-						node = detectorTree.getNode("entry1/"+detectorSaxs+"_processing/SectorIntegration/integration symmetry");
-						String symmetryText = new String((byte[]) node.getData().getBuffer(), "UTF-8");
+						if (node instanceof HDF5Dataset)
+							cameraLength = ((HDF5Dataset)node).getDataset().getSlice().getDouble(0);
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam centre").getDestination();
+						AbstractDataset beam = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles").getDestination();
+						AbstractDataset angles = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration radii").getDestination();
+						AbstractDataset radii = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration symmetry").getDestination();
+						String symmetryText =  ((AbstractDataset)((HDF5Dataset)node).getDataset()).getString(0);
 						int symmetry = SectorROI.getSymmetry(symmetryText);
 
-						Parameter gradient = new Parameter(qaxis.getDouble(new int[] {0}));
-						Parameter intercept = new Parameter(qaxis.getDouble(new int[] {1}));
+						Parameter gradient = new Parameter(qaxis.getDouble(0));
+						Parameter intercept = new Parameter(qaxis.getDouble(1));
 						CalibrationResultsBean crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
 
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
-						roiData.setAngles(angles.getDouble(new int[] {0}), angles.getDouble(new int[] {1}));
-						roiData.setRadii(radii.getDouble(new int[] {0}), radii.getDouble(new int[] {1}));
-						roiData.setPoint(beam.getDouble(new int[] {0}),	beam.getDouble(new int[] {1}));
+						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
+						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
+						roiData.setPoint(beam.getDouble(0),	beam.getDouble(1));
 						roiData.setClippingCompensation(true);
 						if (roiData.checkSymmetry(symmetry))
 							roiData.setSymmetry(symmetry);
@@ -139,28 +136,4 @@ public class QAxisFileHandler extends AbstractHandler {
 		return null;
 	}
 
-	private NexusTreeNodeSelection getDetectorSelection(String detName) throws Exception {
-		String xml = "<?xml version='1.0' encoding='UTF-8'?>" +
-		"<nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>NXentry</nxClass><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXinstrument</nxClass><name>"+ detName + "_processing</name><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXdetector</nxClass><name>SectorIntegration</name><wanted>1</wanted><dataType>1</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>qaxis calibration</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>camera length</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>beam centre</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>integration angles</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>integration radii</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>integration symmetry</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>";
-		return NexusTreeNodeSelection.createFromXML(new InputSource(new StringReader(xml)));
-	}
 }
