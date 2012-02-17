@@ -21,6 +21,7 @@ import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeNode;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +44,7 @@ public class HDF5ReductionDetector {
 	protected String key;
 	protected AbstractDataset qAxis;
 	protected String qAxisUnit;
+	protected DataSliceIdentifiers ids;
 	
 	protected String detectorType = "REDUCTION";
 	protected double pixelSize = 0.0;
@@ -50,14 +52,28 @@ public class HDF5ReductionDetector {
 	public static final String descriptionLabel = "description";
 	protected String description;
 	protected DoubleDataset mask = null;
+	
+	protected class DataSliceIdentifiers {
+		public int dataset_id;
+		public long[] start, stride, count, block;
+	}
 
 	public HDF5ReductionDetector(String name, String key) {
 		this.key = key;
 		this.name = name;
+		ids = new DataSliceIdentifiers();
 	}
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public void setIDs(int dataset_id, long[] start, long[] stride, long[] count, long[] block) {
+		ids.dataset_id = dataset_id;
+		ids.start = start;
+		ids.stride = stride;
+		ids.count = count;
+		ids.block = block;
 	}
 	
 	public String getName() {
@@ -205,5 +221,21 @@ public class HDF5ReductionDetector {
 		if (qAxis != null) {
 			NcdDataUtils.addAxis(nxdata, getName(), "q", Nexus.createNexusGroupData(qAxis), axisValue, 1, qAxisUnit, false);
 		}
+	}
+	
+	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+		
+		int dataRank = data.getRank();
+		int[] dataShape = data.getShape();
+		if (dataRank > (dimension + 1)) {
+			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
+			int totalFrames = 1;
+			for (int val : frameArray)
+				totalFrames *= val;
+			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
+			newShape[0] = totalFrames;
+			return data.reshape(newShape);
+		}
+		return data;
 	}
 }

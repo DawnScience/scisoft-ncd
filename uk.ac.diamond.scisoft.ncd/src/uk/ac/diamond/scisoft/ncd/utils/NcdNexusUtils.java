@@ -23,6 +23,11 @@ import gda.data.nexus.tree.INexusTree;
 import java.util.Arrays;
 import java.util.List;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
 import org.nexusformat.NXlink;
 import org.nexusformat.NeXusFileInterface;
 import org.nexusformat.NexusException;
@@ -184,4 +189,179 @@ public class NcdNexusUtils {
 		return dataDim;
 	}
 
+	public static int makegroup(int parent_id, String name, String nxclass) throws HDF5Exception {
+		
+		if (parent_id < 0)
+			throw new HDF5Exception("Illegal parent group id");
+		
+		int open_group_id = -1;
+		int dataspace_id = -1;
+		int datatype_id = -1;
+		int attribute_id = -1;
+		
+		open_group_id = H5.H5Gcreate(parent_id, name, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
+				HDF5Constants.H5P_DEFAULT);
+		if (open_group_id < 0)
+			throw new HDF5Exception("H5 makegroup error: can't create a group");
+
+		byte[] nxdata = nxclass.getBytes();
+		dataspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+		datatype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		H5.H5Tset_size(datatype_id, nxdata.length);
+		
+		attribute_id = H5.H5Acreate(open_group_id, "NX_class", datatype_id, dataspace_id, HDF5Constants.H5P_DEFAULT,
+				HDF5Constants.H5P_DEFAULT);
+		if (attribute_id < 0)
+			throw new HDF5Exception("H5 putattr write error: can't create attribute");
+		
+		int write_id = H5.H5Awrite(attribute_id, datatype_id, nxdata);
+		if (write_id < 0)
+			throw new HDF5Exception("H5 makegroup attribute write error: can't create NXclass attribute");
+		
+		H5.H5Aclose(attribute_id);
+		H5.H5Sclose(dataspace_id);
+		H5.H5Tclose(datatype_id);
+		
+		return open_group_id;
+	}
+	
+	public static int makedata(int parent_id, String name, int type, int rank, long[] dim, boolean signal, String units) throws HDF5Exception {
+		if (parent_id < 0)
+			throw new HDF5Exception("Illegal parent group id");
+
+		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
+		if (dataspace_id < 0)
+			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
+
+		int dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
+		//if (dcpl_id >= 0)
+		//	H5.H5Pset_chunk(dcpl_id, rank, dim);
+
+		int dataset_id = H5.H5Dcreate(parent_id, name, type, dataspace_id, HDF5Constants.H5P_DEFAULT, dcpl_id,
+				HDF5Constants.H5P_DEFAULT);
+		if (dataset_id < 0)
+			throw new HDF5Exception("H5 makedata error: failed to create dataset");
+
+		H5.H5Sclose(dataspace_id);
+		H5.H5Pclose(dcpl_id);
+		
+		// add signal attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
+			
+			int attr_id = H5.H5Acreate(dataset_id, "signal", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, signal ? new int[] {1} : new int[] {0});
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		
+		// add units attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attrtype_id, units.length());
+			
+			int attr_id = H5.H5Acreate(dataset_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, units.getBytes());
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		return dataset_id;
+	}
+	
+	public static int makeaxis(int parent_id, String name, int type, int rank, long[] dim, int[] axis, int primary, String units) throws HDF5Exception {
+		if (parent_id < 0)
+			throw new HDF5Exception("Illegal parent group id");
+
+		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
+		if (dataspace_id < 0)
+			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
+
+		int dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
+		//if (dcpl_id >= 0)
+		//	H5.H5Pset_chunk(dcpl_id, rank, dim);
+
+		int dataset_id = H5.H5Dcreate(parent_id, name, type, dataspace_id, HDF5Constants.H5P_DEFAULT, dcpl_id,
+				HDF5Constants.H5P_DEFAULT);
+		if (dataset_id < 0)
+			throw new HDF5Exception("H5 makedata error: failed to create dataset");
+
+		H5.H5Sclose(dataspace_id);
+		H5.H5Pclose(dcpl_id);
+		
+		// add axis attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { axis.length }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
+			
+			int attr_id = H5.H5Acreate(dataset_id, "axis", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, axis);
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		
+		// add primary attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
+			
+			int attr_id = H5.H5Acreate(dataset_id, "primary", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, new int[] {primary});
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		
+		// add units attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attrtype_id, units.length());
+			
+			int attr_id = H5.H5Acreate(dataset_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, units.getBytes());
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		return dataset_id;
+	}
+	
 }

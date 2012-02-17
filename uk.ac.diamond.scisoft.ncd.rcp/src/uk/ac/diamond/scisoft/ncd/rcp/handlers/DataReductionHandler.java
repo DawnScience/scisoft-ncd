@@ -163,7 +163,7 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (enableSaxs)
-								processing.execute(detectorSaxs, dimSaxs, filename, monitor);
+								processing.executeHDF5(detectorSaxs, dimSaxs, filename, monitor);
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());

@@ -47,6 +47,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;
 		int gridIdx = NcdDataUtils.gridPoints(frames, dim);
+		System.out.print("Flat index: " + gridIdx + " Shape : " + Arrays.toString(frames));
 		for (int n = 0; n < gridIdx; n++) {
 			if (monitor.isCanceled()) {
 				throw new CancellationException("Data reduction cancelled");
