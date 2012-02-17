@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="com.isencia.passerelle.engine.actors">
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.actors.NcdNexusTreeTransformer"
+            group="org.dawb.passerelle.actors.actorgroup.io"
+            icon="icons/ncd_icon.png"
+            id="uk.ac.diamond.scisoft.ncd.actors.export"
+            name="I22 Tiff converter">
+      </actor>
+   </extension>
+
+</plugin>
