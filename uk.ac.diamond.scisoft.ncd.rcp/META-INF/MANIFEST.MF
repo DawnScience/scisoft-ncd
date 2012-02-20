@@ -22,4 +22,4 @@ Import-Package: org.apache.commons.io,
  org.slf4j
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
-Bundle-Vendor: Diamond Light Souce Ltd.
+Bundle-Vendor: Diamond Light Source

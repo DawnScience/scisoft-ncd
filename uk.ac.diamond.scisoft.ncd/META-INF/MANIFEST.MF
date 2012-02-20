@@ -19,4 +19,4 @@ Require-Bundle: org.apache.commons.lang,
  uk.ac.diamond.scisoft.deprecated;bundle-version="1.0.0"
 Import-Package: org.slf4j,
  uk.ac.gda.monitor
-Bundle-Vendor: Diamond Light Souce Ltd.
+Bundle-Vendor: Diamond Light Source
