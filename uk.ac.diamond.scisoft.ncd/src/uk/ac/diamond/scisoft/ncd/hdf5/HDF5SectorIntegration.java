@@ -38,6 +38,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5SectorIntegration extends HDF5ReductionDetector {
@@ -69,12 +70,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		this.intercept =  new Double(intercept);
 	}
 
-	public void setAzimuthalIDs(int dataset_id, long[] start, long[] stride, long[] count, long[] block) {
-		azimuthalIds.dataset_id = dataset_id;
-		azimuthalIds.start = start;
-		azimuthalIds.stride = stride;
-		azimuthalIds.count = count;
-		azimuthalIds.block = block;
+	public void setAzimuthalIDs(DataSliceIdentifiers input_id) {
+		azimuthalIds = new DataSliceIdentifiers(input_id);
 	}
 	
 	@SuppressWarnings("hiding")

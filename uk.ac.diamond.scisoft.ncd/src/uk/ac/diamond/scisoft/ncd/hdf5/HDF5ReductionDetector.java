@@ -34,6 +34,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5ReductionDetector {
@@ -53,11 +54,6 @@ public class HDF5ReductionDetector {
 	protected String description;
 	protected DoubleDataset mask = null;
 	
-	protected class DataSliceIdentifiers {
-		public int dataset_id;
-		public long[] start, stride, count, block;
-	}
-
 	public HDF5ReductionDetector(String name, String key) {
 		this.key = key;
 		this.name = name;
@@ -68,12 +64,8 @@ public class HDF5ReductionDetector {
 		this.name = name;
 	}
 	
-	public void setIDs(int dataset_id, long[] start, long[] stride, long[] count, long[] block) {
-		ids.dataset_id = dataset_id;
-		ids.start = start;
-		ids.stride = stride;
-		ids.count = count;
-		ids.block = block;
+	public void setIDs(DataSliceIdentifiers input_id) {
+		ids = new DataSliceIdentifiers(input_id);
 	}
 	
 	public String getName() {
