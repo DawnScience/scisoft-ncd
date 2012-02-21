@@ -161,7 +161,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		}
 	}
 
-	public AbstractDataset writeoutHDF5(int dim) {
+	public AbstractDataset writeout(int dim) {
 		if (roi == null) {
 			return null;
 		}

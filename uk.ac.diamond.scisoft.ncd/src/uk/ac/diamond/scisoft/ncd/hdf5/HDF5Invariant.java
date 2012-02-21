@@ -16,18 +16,16 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
 
-import org.nexusformat.NexusFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.ncd.Invariant;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 /**
  * calculates the total intensity in each frame
@@ -36,6 +34,8 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5Invariant.class);
 
+	public AbstractDataset parentngd;
+	
 	public HDF5Invariant(String name, String key) {
 		super(name, key);
 	}
@@ -52,21 +52,31 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 		return null;
 	}
 
-
-	@Override
-	public void writeout(int frames, INexusTree nxdata) {
+	public AbstractDataset writeout(int dim) {
 		try {
-			NexusGroupData parentngd = NcdDataUtils.getData(nxdata, key, "data", NexusExtractor.SDSClassName);
-			if (parentngd == null) return;
+			if (parentngd == null) return null;
 			Invariant inv = new Invariant();
-			float[] mydata = inv.process(parentngd.getBuffer(), parentngd.dimensions);
-			NexusGroupData myngd = new NexusGroupData(new int[] {parentngd.dimensions[0]}, NexusFile.NX_FLOAT32, mydata);
-			myngd.isDetectorEntryData = true;
-			NcdDataUtils.addData(nxdata, getName(), "data", myngd, "1", 1);
-			addMetadata(nxdata);
+			
+			int[] dataShape = parentngd.getShape();
+			parentngd = flattenGridData(parentngd, dim);
+			
+			float[] mydata = inv.process(parentngd.getBuffer(), parentngd.getShape());
+			
+			int filespace_id = H5.H5Dget_space(ids.dataset_id);
+			int type_id = H5.H5Dget_type(ids.dataset_id);
+			int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+					ids.start, ids.stride, ids.count, ids.block);
+			H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
+					HDF5Constants.H5P_DEFAULT, mydata);
+			
+			return new FloatDataset(mydata);
+			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);
 		}
+		
+		return null;
 	}
 	
 }
