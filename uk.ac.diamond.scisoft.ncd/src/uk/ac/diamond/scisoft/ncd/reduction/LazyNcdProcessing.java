@@ -503,10 +503,6 @@ public class LazyNcdProcessing {
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
 		}
 		
-	    int ave_group_id;
-		if(flags.isEnableAverage())
-		    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
-		
 	    int norm_group_id = -1;
 	    int norm_data_id = -1;
 	    int norm_axis_id = -1;
@@ -565,7 +561,7 @@ public class LazyNcdProcessing {
 		int sliceSize = (int) frames[0];
 		int lastSliceSize = 0;
 
-		// We will slice only 2D data. 1D data is loaded into memory completly
+		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
 			// Find dimension that needs to be sliced
 			int dimCounter = 1;
@@ -658,6 +654,7 @@ public class LazyNcdProcessing {
 			input_ids.setIDs(sec_data_id, sec_dataspace_id, sec_dataclass_id, sec_datatype_id, sec_datasize_id);
 		}
 
+		AbstractDataset data;
 		while (iter.hasNext()) {
 			long[] start_pos = (long[]) ConvertUtils.convert(iter.getPos(), long[].class);
 			long[] start_data = Arrays.copyOf(start_pos, frames.length);
@@ -670,7 +667,7 @@ public class LazyNcdProcessing {
 			Arrays.fill(count_data, 1);
 
 			input_ids.setSlice(start_data, block_data, count_data, block_data);
-			AbstractDataset data = sliceInputData(input_ids);
+			data = sliceInputData(input_ids);
 
 			if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
 				monitor.setTaskName(monitorFile + " : Correct for detector response");
@@ -724,6 +721,99 @@ public class LazyNcdProcessing {
 
 		}
 
+		if(flags.isEnableAverage()) {
+		    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
+		    
+			monitor.setTaskName(monitorFile + " : Averaging  datasets");
+			
+			int[] averageIndices = new int[] {};    //Dimension indexes that need to be averaged
+			if (gridAverage != null)
+				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
+			
+			// Calculate shape of the averaged dataset based on the dimensions selected for averaging
+			long[] framesAve = new long[data.getRank() - averageIndices.length];
+			{
+				int tmpIdx = 0;
+				for (int i = 0; i < data.getRank(); i++) {
+					if (ArrayUtils.contains(averageIndices, i + 1))
+						continue;
+					framesAve[tmpIdx] = data.getShape()[i];
+					tmpIdx++;
+				}
+			}
+			
+			int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
+		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
+			
+			// Loop over dimensions that aren't averaged
+			iter_array = Arrays.copyOfRange(framesAve_int, 0, framesAve_int.length - dim);
+			start = new int[iter_array.length];
+			step =  new int[iter_array.length];
+			Arrays.fill(start, 0);
+			Arrays.fill(step, 1);
+			idx_dataset = new IntegerDataset(iter_array);
+			iter = idx_dataset.getSliceIterator(start, iter_array, step);
+			
+			while (iter.hasNext()) {
+				
+				sliceDim = 0;
+				sliceSize = data.getShape()[0];
+				lastSliceSize = 0;
+
+				// We will slice only 2D data. 1D data is loaded into memory completely
+				if (averageIndices.length > 0 || dim == 2) {
+					// Find dimension that needs to be sliced
+					int dimCounter = 1;
+					for (int idx = (data.getRank() - 1 - dim); idx >= 0; idx--) {
+						if (ArrayUtils.contains(averageIndices, idx + 1)) {
+							dimCounter *= data.getShape()[idx];
+							if (dimCounter >= frameBatch) {
+								sliceDim = idx;
+								sliceSize = frameBatch * data.getShape()[idx] / dimCounter;
+								lastSliceSize = data.getShape()[idx] % sliceSize;
+								break;
+							}
+						}
+					}
+				}
+				
+				int[] currentFrame = iter.getPos();
+				int[] data_iter_array = Arrays.copyOfRange(data.getShape(), 0, data.getRank() - dim);
+				int [] data_start = Arrays.copyOfRange(data.getShape(), 0, data.getRank() - dim);
+				int[] data_step =  new int[iter_array.length];
+				int tmpIdx = 0;
+				for (int idx = 0; idx < (data.getRank() - dim); idx++) {
+					if (ArrayUtils.contains(averageIndices, idx + 1)) {
+						data_start[idx] = 0;
+						if (idx < sliceDim)
+							data_step[idx] = 1;
+						if (idx > sliceDim)
+							data_step[idx] = data.getShape()[idx];
+						if (idx == sliceDim)
+							data_step[idx] = sliceSize;
+					} else {
+						data_start[idx] = currentFrame[tmpIdx];
+						data_step[idx] = 1;
+						tmpIdx++;
+					}
+						
+				}
+				IntegerDataset data_idx_dataset = new IntegerDataset(data_iter_array);
+				IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_iter_array, data_step);
+				
+				while (iter.hasNext()) {
+					
+					lazyAverage.setFirstFrame(firstFrame, aveDim);
+					lazyAverage.setLastFrame(lastFrame, aveDim);
+					lazyAverage.setQaxis(qaxis, qaxisUnit);
+					
+					lazyAverage.execute(tmpNXdata, aveDim, monitor);
+				}
+			}
+			
+		}
+		
 		AbstractDataset qaxis = null;
 		
 		if (crb != null) {
