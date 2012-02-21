@@ -21,16 +21,16 @@
             <formatter type="xml" />
             <classpath>
                 <pathelement location="${junitjar.loc}" />
-                <path refid="libs.jars.path" />
-                <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.test/bin" />
+                <pathelement location="${GDA-plugin.basedir}/bin" />
                 <pathelement location="${workspace.git.loc}/gda-common.git/uk.ac.gda.common/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-core.git/uk.ac.diamond.scisoft.analysis/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.rcp/bin" />
                 <pathelement location="${workspace.git.loc}/scisoft/scisoft-core.git/uk.ac.diamond.scisoft.deprecated/bin" />
-                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.nexus/bin" />
-                <pathelement location="${workspace.loc}/plugins/uk.ac.gda.nexus/jars/jnexus-4.3.jar" />
-                <path refid="thirdparty.jars.path" />
+                <pathelement location="${workspace.git.loc}/gda-nexus.git/uk.ac.gda.nexus/bin" />
+                <pathelement location="${workspace.git.loc}/gda-nexus.git/uk.ac.gda.nexus/jars/*" />
+                <pathelement location="${workspace.loc}/tp/plugins/*" />
+                <path refid="libs.jars.path" />
             </classpath>
             <batchtest todir="@{report.dir}">
                 <fileset dir="${GDA-plugin.basedir}/src">
