@@ -4,11 +4,18 @@ Bundle-Name: Actors
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.actors;singleton:=true
 Bundle-Version: 1.0.0.qualifier
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.actors.Activator
-Bundle-Vendor: Diamond Liaght Source
-Require-Bundle: org.eclipse.ui,
+Bundle-Vendor: Diamond Liaght Source Ltd.
+Eclipse-RegisterBuddy: com.isencia.passerelle.engine, ptolemy.core, com.isencia.passerelle.actor
+Require-Bundle: org.eclipse.core.resources,
+ org.eclipse.ui,
  org.eclipse.core.runtime,
  org.dawb.passerelle.common;bundle-version="1.0.0",
  com.isencia.passerelle.engine;bundle-version="7.0.0",
- ptolemy.core
+ ptolemy.core,
+ org.dawb.hdf5;bundle-version="1.0.0",
+ uk.ac.diamond.scisoft.analysis;bundle-version="1.1.0",
+ org.dawb.common.util;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
+Import-Package: org.apache.commons.io,
+ org.apache.commons.lang
