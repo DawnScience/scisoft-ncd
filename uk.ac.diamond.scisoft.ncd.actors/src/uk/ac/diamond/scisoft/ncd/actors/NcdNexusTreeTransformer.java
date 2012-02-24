@@ -125,7 +125,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		AbstractDataset data = (AbstractDataset) sets.get(0);
 		
 		// add frame dimension
-		int[] newShape = ArrayUtils.addAll(new int[] {1}, data.getShape());
+		int[] newShape = ArrayUtils.addAll(new int[] {1, 1}, data.getShape());
 		data = data.reshape(newShape);
 		
 		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
@@ -147,10 +147,10 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		
 		int instrument_group_id = makegroup(entry_group_id, "instrument", "NXinstrument");
 		int detector_group_id = makegroup(instrument_group_id, detector, "NXdetector");
-		putattr(detector_group_id, "sas_type", "SAXS");
 		int input_data_id = makedata(detector_group_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, data);
 		putattr(input_data_id, "signal", 1);
 		putattr(input_data_id, "units", "counts");
+		make_sas_type(detector_group_id);
 		
 		int link_group_id = makegroup(entry_group_id, detector, "NXdata");
 		H5.H5Lcreate_hard(detector_group_id, "./data", link_group_id, "./data", HDF5Constants.H5P_DEFAULT,  HDF5Constants.H5P_DEFAULT);
@@ -220,6 +220,20 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		H5.H5Pclose(dcpl_id);
 
 		return dataset_id;
+	}
+	
+	private void make_sas_type(int dataset_id) throws NullPointerException, HDF5Exception {
+		int sas_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		byte[] saxs = "SAXS".getBytes();
+		H5.H5Tset_size(sas_type, saxs.length);
+		int dataspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		int saxs_id = H5.H5Dcreate(dataset_id, "sas_type", sas_type, dataspace_id,
+				HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+
+		H5.H5Dwrite(saxs_id, sas_type, HDF5Constants.H5S_ALL,
+				HDF5Constants.H5S_ALL, HDF5Constants.H5P_DEFAULT,
+				saxs);
+		
 	}
 	
 	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
