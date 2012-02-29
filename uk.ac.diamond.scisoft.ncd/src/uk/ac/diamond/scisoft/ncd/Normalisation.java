@@ -18,6 +18,8 @@ package uk.ac.diamond.scisoft.ncd;
 
 import java.io.Serializable;
 
+import org.apache.commons.beanutils.ConvertUtils;
+
 public class Normalisation {
 
 
@@ -42,17 +44,8 @@ public class Normalisation {
 
 	
 	public float[] process(Serializable buffer, Serializable cbuffer, int frames, final int[] dimensions, final int[] cdimensions) {
-		float[] parentdata;
 
-		if (buffer instanceof float[]) {
-			parentdata = (float[]) buffer;
-		} else {
-			double[] farr = (double[]) buffer;
-			parentdata = new float[farr.length];
-			for (int i = 0; i < farr.length; i++) {
-				parentdata[i] = new Float(farr[i]);
-			}
-		}			
+		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
 		
 		float[] calibdata = (float[]) cbuffer;
 		float[] mydata = new float[parentdata.length];

@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 
@@ -30,11 +31,12 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.apache.commons.collections.iterators.ArrayIterator;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.derby.iapi.services.io.NewByteArrayInputStream;
-import org.apache.derby.impl.store.raw.data.SetReservedSpaceOperation;
+import org.apache.commons.math.util.MultidimensionalCounter;
+import org.apache.commons.math.util.MultidimensionalCounter.Iterator;
 
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -52,6 +54,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.Stats;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.Average;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Invariant;
@@ -88,6 +91,8 @@ public class LazyNcdProcessing {
 	private String bgFrameSelection;
 	private String gridAverage;
 	
+	int frameBatch;
+	
 	public LazyNcdProcessing() {
 		enableMask = false;
 		normChannel = -1;
@@ -108,6 +113,9 @@ public class LazyNcdProcessing {
 		
 		flags = new NcdReductionFlags();
 		ncdDetectors = new NcdDetectors();
+		
+		frameBatch = 150;	//TODO: calculate based on the image size
+		
 	}
 
 	public void setAbsScaling(Double absScaling) {
@@ -497,11 +505,11 @@ public class LazyNcdProcessing {
 		
 	    int inv_group_id = -1;
 	    int inv_data_id = -1;
+		int invRank = flags.isEnableSector() ? secRank - 1: rank - dim;
 		if(flags.isEnableInvariant()) {
 		    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			int invRank = rank - dim;
-			long[] invFrames = Arrays.copyOf(frames, invRank);
+			long[] invFrames = Arrays.copyOf(flags.isEnableSector() ? secFrames : frames, invRank);
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
 		}
 		
@@ -543,8 +551,25 @@ public class LazyNcdProcessing {
 		}
 		
 	    int bkg_group_id;
-		if(flags.isEnableBackground())
+	    DataSliceIdentifiers bgIds, bgSelection_ids;
+		if(flags.isEnableBackground()) {
 		    bkg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
+		    bgIds = readBackgroundSubtractionData(detector);
+		    
+			int bgRank = H5.H5Sget_simple_extent_ndims(bgIds.dataspace_id);
+			long[] bgFrames = new long[bgRank];
+			H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgFrames, null);
+			int[] bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
+			
+			MultidimensionalCounter countBgFrames = new MultidimensionalCounter(Arrays.copyOfRange(bgFrames_int, 0, bgFrames_int.length - dim));
+			int totalLength = countBgFrames.getSize();
+		
+			if (bgFrameSelection != null) {
+			    int sel_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_background", "NXinstrument");
+			    int bkgsel_group_id = NcdNexusUtils.makegroup(sel_group_id, "BackgroundSelection", "NXdetector");
+			    bgSelection_ids = executeSelection(dim, bgFrames_int, bgIds, bkgsel_group_id);
+			}
+		}
 	    
 	    int dr_group_id;
 	    int dr_data_id = -1;
@@ -557,8 +582,6 @@ public class LazyNcdProcessing {
 			drData = readDetectorResponseData(drFile, detector);
 		}
 	    
-		int frameBatch = 150;	//TODO: calculate based on the image size
-		
 		int sliceDim = 0;
 		int sliceSize = (int) frames[0];
 		int lastSliceSize = 0;
@@ -566,15 +589,14 @@ public class LazyNcdProcessing {
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
 			// Find dimension that needs to be sliced
-			int dimCounter = 1;
-			for (int idx = (frames.length - 1 - dim); idx >= 0; idx--) {
-				dimCounter *= frames[idx];
-				if (dimCounter >= frameBatch) {
-					sliceDim = idx;
-					sliceSize = (int) (frameBatch * frames[idx] / dimCounter);
-					lastSliceSize = (int) (frames[idx] % sliceSize);
-					break;
-				}
+			MultidimensionalCounter dimCounter = new MultidimensionalCounter(Arrays.copyOfRange(frames_int, 0, rank - dim));
+			if (dimCounter.getSize() > frameBatch) {
+				//TOD0: dimCounter.getCounts(frameBatch) is broken in Apache Math v2.2
+				//		Use getCounts(int index) after update to v3.0
+				int[] sliceIdx = NcdDataUtils.getCounts(dimCounter, frameBatch);
+				sliceDim = ArrayUtils.lastIndexOf(sliceIdx, 0) + 1;
+				sliceSize = sliceIdx[sliceDim];
+				lastSliceSize = frames_int[sliceDim] % sliceSize;
 			}
 		}
 		
@@ -609,25 +631,6 @@ public class LazyNcdProcessing {
 							count_data, block_data);
 
 					data = executeDetectorResponse(dim, data, drData, dr_id);
-				}
-
-				if (flags.isEnableInvariant()) {
-					monitor.setTaskName(monitorFile + " : Calculating invariant");
-					
-					int invRank = rank - dim;
-					long[] inv_start_data = Arrays.copyOf(start_pos, invRank);
-					long[] inv_block_data = Arrays.copyOf(frames, invRank);
-					Arrays.fill(inv_block_data, 0, sliceDim, 1);
-					inv_block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize
-							: sliceSize;
-
-					long[] inv_count_data = new long[invRank];
-					Arrays.fill(inv_count_data, 1);
-
-					DataSliceIdentifiers inv_id = new DataSliceIdentifiers(inv_data_id, inv_start_data, inv_block_data,
-							inv_count_data, inv_block_data);
-
-					executeInvariant(dim, data, inv_id);
 				}
 
 				monitor.setTaskName(monitorFile + " : Performing sector integration");
@@ -678,6 +681,12 @@ public class LazyNcdProcessing {
 						count_data, block_data);
 
 				data = executeDetectorResponse(dim, data, drData, dr_id);
+				
+				int dr_dataspace_id = H5.H5Dget_space(dr_data_id);
+				int dr_datatype_id = H5.H5Dget_type(dr_data_id);
+				int dr_dataclass_id = H5.H5Tget_class(dr_datatype_id);
+				int dr_datasize_id = H5.H5Tget_size(dr_datatype_id);
+				input_ids.setIDs(dr_data_id, dr_dataspace_id, dr_dataclass_id, dr_datatype_id, dr_datasize_id);
 			}
 
 			if (flags.isEnableNormalisation()) {
@@ -700,132 +709,37 @@ public class LazyNcdProcessing {
 				AbstractDataset dataCal = sliceInputData(calibration_ids);
 
 				data = executeNormalisation(dim, data, dataCal, norm_id);
+				
+				int norm_dataspace_id = H5.H5Dget_space(norm_data_id);
+				int norm_datatype_id = H5.H5Dget_type(norm_data_id);
+				int norm_dataclass_id = H5.H5Tget_class(norm_datatype_id);
+				int norm_datasize_id = H5.H5Tget_size(norm_datatype_id);
+				input_ids.setIDs(norm_data_id, norm_dataspace_id, norm_dataclass_id, norm_datatype_id, norm_datasize_id);
 			}
 
-			if (flags.isEnableInvariant() && !flags.isEnableSector()) {
+			if (flags.isEnableInvariant()) {
 				monitor.setTaskName(monitorFile + " : Calculating invariant");
 				
-				int invRank = rank - dim;
 				long[] inv_start_data = Arrays.copyOf(start_pos, invRank);
 				long[] inv_block_data = Arrays.copyOf(frames, invRank);
 				Arrays.fill(inv_block_data, 0, sliceDim, 1);
 				inv_block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize
 						: sliceSize;
-
+            
 				long[] inv_count_data = new long[invRank];
 				Arrays.fill(inv_count_data, 1);
-
+            
 				DataSliceIdentifiers inv_id = new DataSliceIdentifiers(inv_data_id, inv_start_data, inv_block_data,
 						inv_count_data, inv_block_data);
-
+            
 				executeInvariant(dim, data, inv_id);
 			}
 		}
 
 		if(flags.isEnableAverage()) {
-		    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
-		    
 			monitor.setTaskName(monitorFile + " : Averaging  datasets");
 			
-			int[] averageIndices = new int[] {};    //Dimension indexes that need to be averaged
-			if (gridAverage != null)
-				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
-			
-			// Calculate shape of the averaged dataset based on the dimensions selected for averaging
-			long[] framesAve = Arrays.copyOf(frames, frames.length);
-			for (int idx : averageIndices)
-				framesAve[idx - 1] = 1;
-			
-			int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
-		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
-			
-			// Loop over dimensions that aren't averaged
-			iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
-			start = new int[iter_array.length];
-			step =  Arrays.copyOf(framesAve_int, framesAve_int.length);
-			Arrays.fill(start, 0);
-			Arrays.fill(step, 0, framesAve_int.length - dim - 1, 1);
-			idx_dataset = new IntegerDataset(iter_array);
-			iter = idx_dataset.getSliceIterator(start, iter_array, step);
-			
-			sliceDim = 0;
-			sliceSize = frames_int[0];
-			lastSliceSize = 0;
-
-			// We will slice only 2D data. 1D data is loaded into memory completely
-			if (averageIndices.length > 0 || dim == 2) {
-				// Find dimension that needs to be sliced
-				int dimCounter = 1;
-				for (int idx = (frames.length - 1 - dim); idx >= 0; idx--) {
-					if (ArrayUtils.contains(averageIndices, idx + 1)) {
-						dimCounter *= frames[idx];
-						if (dimCounter >= frameBatch) {
-							sliceDim = idx;
-							sliceSize = frameBatch * frames_int[idx] / dimCounter;
-							lastSliceSize = frames_int[idx] % sliceSize;
-							break;
-						}
-					}
-				}
-			}
-			
-			while (iter.hasNext()) {
-				
-				int[] currentFrame = iter.getPos();
-				int[] data_iter_array = Arrays.copyOf(currentFrame, currentFrame.length);
-				for (int i = 0; i < currentFrame.length; i++)
-					data_iter_array[i]++;
-				
-				int[] data_start = Arrays.copyOf(currentFrame, currentFrame.length);
-				int[] data_step = Arrays.copyOf(step, currentFrame.length);
-				for (int idx : averageIndices) {
-					int i = idx - 1;
-					data_start[i] = 0;
-					data_iter_array[i] = frames_int[i];
-					if (i > sliceDim)
-						data_step[i] = frames_int[i];
-					else if (i == sliceDim)
-						data_step[i] = sliceSize;
-				}
-				
-				IntegerDataset data_idx_dataset = new IntegerDataset(data_iter_array);
-				IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_iter_array, data_step);
-				
-				int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
-				AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
-				
-				long[] ave_count_data = new long[frames.length];
-				Arrays.fill(ave_count_data, 1);
-				long[] ave_block_data = (long[]) ConvertUtils.convert(data_step, long[].class);
-				
-				while (data_iter.hasNext()) {
-					
-					long[] ave_start_pos = (long[]) ConvertUtils.convert(data_iter.getPos(), long[].class);
-					long[] ave_start_data = Arrays.copyOf(ave_start_pos, frames.length);
-
-					ave_block_data[sliceDim] = (ave_start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-					input_ids.setSlice(ave_start_data, ave_block_data, ave_count_data, ave_block_data);
-					AbstractDataset data_slice = sliceInputData(input_ids);
-					int data_slice_rank = data_slice.getRank();
-					
-					for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--)
-						if (ArrayUtils.contains(averageIndices, idx + 1))
-							data_slice = data_slice.sum(idx);
-					ave_frame.iadd(data_slice);
-				}
-				
-				int filespace_id = H5.H5Dget_space(ave_data_id);
-				int type_id = H5.H5Dget_type(ave_data_id);
-				int memspace_id = H5.H5Screate_simple(step.length, step, null);
-				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
-						start, step, count, step);
-				H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id,
-						HDF5Constants.H5P_DEFAULT, ave_frame.getBuffer());
-				
-			}
-			
+			executeAverage(dim, data, processing_group_id, frameBatch, input_ids);
 		}
 		
 		AbstractDataset qaxis = null;
@@ -950,6 +864,23 @@ public class LazyNcdProcessing {
 		return data;
 	}
 	
+	private DataSliceIdentifiers readBackgroundSubtractionData(String detector) throws HDF5Exception {
+		int bgfile_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int bgentry_group_id = H5.H5Gopen(bgfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int bginstrument_group_id = H5.H5Gopen(bgentry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		int bgdetector_group_id = H5.H5Gopen(bginstrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int bginput_data_id = H5.H5Dopen(bgdetector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		int bginput_dataspace_id = H5.H5Dget_space(bginput_data_id);
+		int bginput_datatype_id = H5.H5Dget_type(bginput_data_id);
+		int bginput_dataclass_id = H5.H5Tget_class(bginput_datatype_id);
+		int bginput_datasize_id = H5.H5Tget_size(bginput_datatype_id);
+		
+		DataSliceIdentifiers ids = new DataSliceIdentifiers();
+		ids.setIDs(bginput_data_id, bginput_dataspace_id, bginput_dataclass_id, bginput_datatype_id, bginput_datasize_id);
+
+		
+		return ids;
+	}
 	
 	private AbstractDataset sliceInputData(DataSliceIdentifiers ids) throws HDF5Exception {
 
@@ -1010,5 +941,179 @@ public class LazyNcdProcessing {
 		reductionStep.setAzimuthalIDs(azimuth_id);
 		
 		return reductionStep.writeout(dim);
+	}
+	
+	private void executeAverage(int dim, AbstractDataset data, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids) throws NullPointerException, HDF5Exception {
+		
+		int[] frames_int = data.getShape();
+		long[] frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
+		int[] averageIndices = new int[] {};    //Dimension indexes that need to be averaged
+		if (gridAverage != null)
+			averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
+		
+		// Calculate shape of the averaged dataset based on the dimensions selected for averaging
+		long[] framesAve = Arrays.copyOf(frames, frames.length);
+		for (int idx : averageIndices)
+			framesAve[idx - 1] = 1;
+		
+		int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
+		
+	    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
+	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
+		
+		// Loop over dimensions that aren't averaged
+		int[] iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
+		int[] start = new int[iter_array.length];
+		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
+		Arrays.fill(start, 0);
+		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
+		IntegerDataset idx_dataset = new IntegerDataset(iter_array);
+		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
+		
+		int sliceDim = 0;
+		int sliceSize = frames_int[0];
+		int lastSliceSize = 0;
+
+		// We will slice only 2D data. 1D data is loaded into memory completely
+		if (averageIndices.length > 0 || dim == 2) {
+			// Find dimension that needs to be sliced
+			int dimCounter = 1;
+			for (int idx = (frames.length - 1 - dim); idx >= 0; idx--) {
+				if (ArrayUtils.contains(averageIndices, idx + 1)) {
+					dimCounter *= frames[idx];
+					if (dimCounter >= frameBatch) {
+						sliceDim = idx;
+						sliceSize = frameBatch * frames_int[idx] / dimCounter;
+						lastSliceSize = frames_int[idx] % sliceSize;
+						break;
+					}
+				}
+			}
+		}
+		
+		// This look iterates over the output averaged dataset image by image
+		while (iter.hasNext()) {
+			
+			int[] currentFrame = iter.getPos();
+			int[] data_iter_array = Arrays.copyOf(currentFrame, currentFrame.length);
+			for (int i = 0; i < currentFrame.length; i++)
+				data_iter_array[i]++;
+			
+			int[] data_start = Arrays.copyOf(currentFrame, currentFrame.length);
+			int[] data_step = Arrays.copyOf(step, currentFrame.length);
+			Arrays.fill(data_step, 0, currentFrame.length - dim, 1);
+			for (int idx : averageIndices) {
+				int i = idx - 1;
+				data_start[i] = 0;
+				data_iter_array[i] = frames_int[i];
+				if (i > sliceDim)
+					data_step[i] = frames_int[i];
+				else if (i == sliceDim)
+					data_step[i] = sliceSize;
+			}
+			
+			IntegerDataset data_idx_dataset = new IntegerDataset(data_iter_array);
+			IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_iter_array, data_step);
+			
+			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
+			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
+			
+			long[] ave_count_data = new long[frames.length];
+			Arrays.fill(ave_count_data, 1);
+			long[] ave_block_data = (long[]) ConvertUtils.convert(data_step, long[].class);
+			
+			// This loop iterates over chunks of data that need to be averaged for the current output image
+			int totalFrames = 0;
+			while (data_iter.hasNext()) {
+				
+				long[] ave_start_pos = (long[]) ConvertUtils.convert(data_iter.getPos(), long[].class);
+				long[] ave_start_data = Arrays.copyOf(ave_start_pos, frames.length);
+
+				ave_block_data[sliceDim] = (ave_start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
+
+				input_ids.setSlice(ave_start_data, ave_block_data, ave_count_data, ave_block_data);
+				AbstractDataset data_slice = sliceInputData(input_ids);
+				int data_slice_rank = data_slice.getRank();
+				
+				int totalFramesBatch = 1;
+				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--)
+					if (ArrayUtils.contains(averageIndices, idx + 1)) {
+						totalFramesBatch *= data_slice.getShape()[idx];
+						data_slice = data_slice.sum(idx);
+					}
+				totalFrames += totalFramesBatch;
+				ave_frame.iadd(data_slice);
+			}
+			ave_frame.idivide(totalFrames);
+			
+			int filespace_id = H5.H5Dget_space(ave_data_id);
+			int type_id = H5.H5Dget_type(ave_data_id);
+			long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
+			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
+			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+					ave_start, ave_step, ave_count_data, ave_step);
+			H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id,
+					HDF5Constants.H5P_DEFAULT, ave_frame.getBuffer());
+		}
+	}
+
+	private DataSliceIdentifiers executeSelection(int dim, int[] frames, DataSliceIdentifiers bgIds, int output_group_id) throws HDF5Exception {
+		
+		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
+		int[] imageSize = Arrays.copyOfRange(frames, frames.length - dim, frames.length);
+		ArrayList<int[]> list = NcdDataUtils.createSliceList(bgFrameSelection, datDimMake);
+		for (int i = 0; i < datDimMake.length; i++)
+			datDimMake[i] = list.get(i).length;
+		long[] bgFramesTotal = (long[]) ConvertUtils.convert(ArrayUtils.addAll(datDimMake, imageSize), long[].class);
+
+		
+		long[] block = new long[frames.length];
+		block = Arrays.copyOf((long[]) ConvertUtils.convert(frames, long[].class), block.length);
+		Arrays.fill(block, 0, block.length - dim, 1);
+		int[] block_int = (int[]) ConvertUtils.convert(block, int[].class);
+		
+		long[] count = new long[frames.length];
+		Arrays.fill(count, 1);
+		
+		int dtype = HDF5Loader.getDtype(bgIds.dataclass_id, bgIds.datasize_id);
+		AbstractDataset data = AbstractDataset.zeros(block_int, dtype);
+		int output_data_id = NcdNexusUtils.makedata(output_group_id, "data", bgIds.datatype_id, frames.length, bgFramesTotal, true, "counts");
+		int output_dataspace_id = H5.H5Dget_space(output_data_id);
+		
+		MultidimensionalCounter bgFrameCounter = new MultidimensionalCounter(datDimMake);
+		Iterator iter = bgFrameCounter.iterator();
+		while (iter.hasNext()) {
+			iter.next();
+			long[] bgFrame = (long[]) ConvertUtils.convert(iter.getCounts(), long[].class);
+			long[] gridFrame = new long[datDimMake.length];
+			for (int i = 0; i < datDimMake.length; i++)
+				gridFrame[i] = list.get(i)[(int) bgFrame[i]];
+			
+				long[] start = new long[frames.length];
+				start = Arrays.copyOf(gridFrame, frames.length);
+				long[] writePosition = new long[frames.length];
+				writePosition = Arrays.copyOf(bgFrame, frames.length);
+				
+				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				H5.H5Sselect_hyperslab(bgIds.dataspace_id, HDF5Constants.H5S_SELECT_SET,
+						start, block, count, block);
+				H5.H5Dread(bgIds.dataset_id, bgIds.datatype_id, memspace_id, bgIds.dataspace_id,
+						HDF5Constants.H5P_DEFAULT, data.getBuffer());
+				
+				H5.H5Sselect_hyperslab(output_dataspace_id, HDF5Constants.H5S_SELECT_SET,
+						writePosition, block, count, block);
+				H5.H5Dwrite(output_data_id, bgIds.datatype_id, memspace_id, output_dataspace_id,
+						HDF5Constants.H5P_DEFAULT, data.getBuffer());
+		}
+		
+		DataSliceIdentifiers outputIds = new DataSliceIdentifiers();
+		int output_datatype_id = H5.H5Dget_type(output_data_id);
+		int output_dataclass_id = H5.H5Tget_class(output_datatype_id);
+		int output_datasize_id = H5.H5Tget_size(output_datatype_id);
+		
+		outputIds.setIDs(output_data_id, output_dataspace_id, output_dataclass_id, output_datatype_id, output_datasize_id);
+		return outputIds;
 	}
 }

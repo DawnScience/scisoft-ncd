@@ -20,6 +20,8 @@ Require-Bundle: org.apache.commons.lang,
 Import-Package: ncsa.hdf.hdf5lib,
  ncsa.hdf.hdf5lib.exceptions,
  ncsa.hdf.object.h5,
+ org.apache.commons.math.exception;version="2.2.0",
+ org.apache.commons.math.util;version="2.2.0",
  org.slf4j;version="[1.5.0,2.0.0)",
  uk.ac.gda.monitor
 Bundle-Vendor: Diamond Light Souce Ltd.

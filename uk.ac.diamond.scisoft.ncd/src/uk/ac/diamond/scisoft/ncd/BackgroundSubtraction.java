@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import org.apache.commons.beanutils.ConvertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -40,16 +41,9 @@ public class BackgroundSubtraction {
 	}
 
 	public float[] process(Serializable buffer, final int[] dimensions) {
-		float[] mydata;
-		if (buffer instanceof float[]) {
-			mydata = Arrays.copyOf((float[]) buffer, ((float[]) buffer).length);
-		} else {
-			double[] farr = (double[]) buffer;
-			mydata = new float[farr.length];
-			for (int i = 0; i < farr.length; i++) {
-				mydata[i] = new Float(farr[i]);
-			}
-		}
+		
+		float[] mydata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		
 		// first dim is timeframe
 		int[] imagedim = Arrays.copyOfRange(dimensions, 1, dimensions.length);
 
