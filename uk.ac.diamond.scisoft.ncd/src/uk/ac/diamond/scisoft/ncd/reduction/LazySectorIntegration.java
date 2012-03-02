@@ -24,6 +24,7 @@ import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -127,5 +128,17 @@ public class LazySectorIntegration extends LazyDataReduction {
 		activeDataset = name;
 	}
 
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id) {
+		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
+		reductionStep.parentdata = data;
+		reductionStep.setROI(intSector);
+		if (mask != null) 
+			reductionStep.setMask(mask);
+		reductionStep.setIDs(sector_id);
+		reductionStep.setAzimuthalIDs(azimuth_id);
+		
+		return reductionStep.writeout(dim);
+	}
+	
 
 }

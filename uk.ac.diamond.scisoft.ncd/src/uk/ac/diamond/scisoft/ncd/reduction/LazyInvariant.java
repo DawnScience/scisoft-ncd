@@ -22,6 +22,8 @@ import java.util.concurrent.CancellationException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Invariant;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -80,4 +82,13 @@ public class LazyInvariant extends LazyDataReduction {
 		}
 	}
 
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers inv_id) {
+		HDF5Invariant reductionStep = new HDF5Invariant("inv", "data");
+		reductionStep.parentngd = data;
+		reductionStep.setIDs(inv_id);
+		
+		return reductionStep.writeout(dim);
+	}
+	
+	
 }

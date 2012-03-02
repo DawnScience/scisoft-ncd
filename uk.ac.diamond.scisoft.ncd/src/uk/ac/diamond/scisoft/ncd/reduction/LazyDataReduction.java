@@ -38,6 +38,9 @@ public abstract class LazyDataReduction {
 	protected String calibration;
 	protected int normChannel;
 
+	public LazyDataReduction() {
+	}
+	
 	public LazyDataReduction(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
 		this.activeDataset = activeDataset;
 		this.frames = frames;

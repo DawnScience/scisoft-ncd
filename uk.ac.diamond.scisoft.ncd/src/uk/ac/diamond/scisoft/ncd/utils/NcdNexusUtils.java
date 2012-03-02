@@ -28,9 +28,14 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
+import org.apache.commons.beanutils.ConvertUtils;
 import org.nexusformat.NXlink;
 import org.nexusformat.NeXusFileInterface;
 import org.nexusformat.NexusException;
+
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 
 public class NcdNexusUtils {
 
@@ -362,6 +367,35 @@ public class NcdNexusUtils {
 			H5.H5Tclose(attrtype_id);
 		}
 		return dataset_id;
+	}
+	
+	public static DataSliceIdentifiers readDataId(String dataFile, String detector) throws HDF5Exception {
+		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		
+		DataSliceIdentifiers ids = new DataSliceIdentifiers();
+		ids.setIDs(input_data_id);
+		return ids;
+	}
+	
+	public static AbstractDataset sliceInputData(DataSliceIdentifiers ids) throws HDF5Exception {
+
+		H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
+				ids.block);
+		int rank = H5.H5Sget_simple_extent_ndims(ids.dataspace_id);
+		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
+		int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
+		AbstractDataset data = AbstractDataset.zeros(block_data_int, dtype);
+		int memspace_id = H5.H5Screate_simple(rank, ids.block, null);
+		// Read the data using the previously defined hyperslab.
+		if ((ids.dataset_id >= 0) && (ids.dataspace_id >= 0) && (memspace_id >= 0))
+			H5.H5Dread(ids.dataset_id, ids.datatype_id, memspace_id, ids.dataspace_id, HDF5Constants.H5P_DEFAULT,
+					data.getBuffer());
+
+		return data;
 	}
 	
 }

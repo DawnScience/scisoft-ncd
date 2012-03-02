@@ -19,12 +19,19 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+
+import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusException;
 import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -38,29 +45,36 @@ import gda.data.nexus.tree.NexusTreeBuilder;
 public class LazyDetectorResponse extends LazyDataReduction {
 
 	private String drFile;
+	private AbstractDataset drData;
 	
 	public static String name = "DetectorResponse";
+
+	public String getDrFile() {
+		return this.drFile;
+	}
 
 	public void setDrFile(String drFile) {
 		this.drFile = drFile;
 	}
 
+	public AbstractDataset getDrData() {
+		return this.drData;
+	}
+	
+	public void setDrData(AbstractDataset drData) {
+		this.drData = drData.clone();
+	}
+	
 	public LazyDetectorResponse(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
 		super(activeDataset, frames, frameBatch, nxsFile);
 	}
 
-	private AbstractDataset createDetectorResponseInput(String detector, int dim) throws NexusException, NexusExtractorException, Exception {
-
-
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(drFile, NcdDataUtils.getDetectorSelection(detector, null));
-		int[] drDims = detectorTree.getNode("entry1/instrument").getNode(detector).getNode("data").getData().dimensions;
-		int[] start = new int[drDims.length];
-		Arrays.fill(start, 0);
-		INexusTree tmpdrData = NcdDataUtils.selectNAxisFrames(detector, null, detectorTree.getNode("entry1/instrument"), dim, start, drDims);
-		
-		return Nexus.createDataset(NcdDataUtils.getData(tmpdrData, detector, "data", NexusExtractor.SDSClassName), false);
+	public LazyDetectorResponse(String drFile, String detector) {
+		if(drFile != null)
+			this.drFile = new String(drFile);
+		this.detector = new String(detector);
 	}
-
+	
 	@Override
 	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 		
@@ -113,4 +127,43 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		activeDataset = name;
 	}
 
+	public AbstractDataset createDetectorResponseInput() throws HDF5Exception {
+		
+		int nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		
+		int entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		int input_dataspace_id = H5.H5Dget_space(input_data_id);
+		int input_datatype_id = H5.H5Dget_type(input_data_id);
+		int input_dataclass_id = H5.H5Tget_class(input_datatype_id);
+		int input_datasize_id = H5.H5Tget_size(input_datatype_id);
+		
+		int rank = H5.H5Sget_simple_extent_ndims(input_dataspace_id);
+		int dtype = HDF5Loader.getDtype(input_dataclass_id, input_datasize_id);
+		
+		long[] frames = new long[rank];
+		H5.H5Sget_simple_extent_dims(input_dataspace_id, frames, null);
+		int memspace_id = H5.H5Screate_simple(rank, frames, null);
+		
+		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
+		drData = AbstractDataset.zeros(frames_int, dtype);
+		
+		if ((input_data_id >= 0) && (input_dataspace_id >= 0) && (memspace_id >= 0))
+			H5.H5Dread(input_data_id, input_datatype_id, memspace_id, input_dataspace_id, HDF5Constants.H5P_DEFAULT,
+					drData.getBuffer());
+		
+		return drData;
+	}
+	
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id) {
+		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse("det", "data");
+		reductionStep.setResponse(drData);
+		reductionStep.parentngd = data;
+		reductionStep.setIDs(det_id);
+		
+		return reductionStep.writeout(dim);
+	}
 }

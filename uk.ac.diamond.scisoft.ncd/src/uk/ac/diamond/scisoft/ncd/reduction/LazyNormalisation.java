@@ -22,6 +22,8 @@ import java.util.concurrent.CancellationException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Normalisation;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -101,4 +103,17 @@ public class LazyNormalisation extends LazyDataReduction {
 		
 	}
 
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset dataCal, DataSliceIdentifiers norm_id) {
+		HDF5Normalisation reductionStep = new HDF5Normalisation("norm", "data");
+		reductionStep.setCalibChannel(normChannel);
+		if(absScaling != null)
+			reductionStep.setNormvalue(absScaling);
+		reductionStep.parentngd = data;
+		reductionStep.calibngd = dataCal;
+		reductionStep.setIDs(norm_id);
+		
+		return reductionStep.writeout(dim);
+	}
+	
+	
 }

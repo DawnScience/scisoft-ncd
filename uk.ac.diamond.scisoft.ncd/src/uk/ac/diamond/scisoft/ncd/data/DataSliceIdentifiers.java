@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.data;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
 public class DataSliceIdentifiers {
 	
 	public int dataset_id, dataspace_id, dataclass_id, datatype_id, datasize_id;
@@ -50,12 +53,12 @@ public class DataSliceIdentifiers {
 		this.block = block;
 	}
 	
-	public void setIDs(int dataset_id, int dataspace_id, int dataclass_id, int datatype_id, int datasize_id) {
+	public void setIDs(int dataset_id) throws HDF5LibraryException {
 		this.dataset_id = dataset_id;
-		this.dataspace_id = dataspace_id;
-		this.dataclass_id = dataclass_id;
-		this.datatype_id = datatype_id;
-		this.datasize_id = datasize_id;
+		dataspace_id = H5.H5Dget_space(dataset_id);
+		datatype_id = H5.H5Dget_type(dataset_id);
+		dataclass_id = H5.H5Tget_class(datatype_id);
+		datasize_id = H5.H5Tget_size(datatype_id);
 	}
 	
 	public void setSlice (long[] start, long[] stride, long[] count, long[] block) {
