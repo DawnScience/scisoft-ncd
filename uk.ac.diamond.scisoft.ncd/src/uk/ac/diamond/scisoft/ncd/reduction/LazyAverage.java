@@ -42,6 +42,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Average;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -401,21 +402,12 @@ public class LazyAverage extends LazyDataReduction {
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
 			
-			long[] ave_count_data = new long[frames.length];
-			Arrays.fill(ave_count_data, 1);
-			long[] ave_block_data = (long[]) ConvertUtils.convert(data_step, long[].class);
-			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;
+	    	SliceSettings sliceSettings = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
 			while (data_iter.hasNext()) {
-				
-				long[] ave_start_pos = (long[]) ConvertUtils.convert(data_iter.getPos(), long[].class);
-				long[] ave_start_data = Arrays.copyOf(ave_start_pos, frames.length);
-
-				ave_block_data[sliceDim] = (ave_start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-				input_ids.setSlice(ave_start_data, ave_block_data, ave_count_data, ave_block_data);
-				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(input_ids);
+				sliceSettings.setStart(data_iter.getPos());
+				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
 				int data_slice_rank = data_slice.getRank();
 				
 				int totalFramesBatch = 1;
@@ -433,6 +425,9 @@ public class LazyAverage extends LazyDataReduction {
 			int type_id = H5.H5Dget_type(ave_data_id);
 			long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
+			long[] ave_count_data = new long[frames.length];
+			Arrays.fill(ave_count_data, 1);
+			
 			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
 					ave_start, ave_step, ave_count_data, ave_step);

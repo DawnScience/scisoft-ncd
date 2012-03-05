@@ -26,8 +26,6 @@ import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeBuilder;
 import gda.data.nexus.tree.NexusTreeNode;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusException;
 import org.nexusformat.NexusFile;
@@ -232,12 +230,11 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 
 	}
 
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers bg_input_id, DataSliceIdentifiers bg_id) throws HDF5Exception {
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id) {
 		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
 		reductionStep.parentngd = data;
-		AbstractDataset ds = NcdNexusUtils.sliceInputData(bg_input_id);
 		
-		reductionStep.setBackground(ds);
+		reductionStep.setBackground(bgData);
 		reductionStep.setIDs(bg_id);
 		
 		return reductionStep.writeout(dim);

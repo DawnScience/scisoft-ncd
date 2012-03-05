@@ -19,10 +19,19 @@ package uk.ac.diamond.scisoft.ncd.data;
 public class SliceSettings {
 	
 	long[] frames;
+	int[] start;
 	int sliceDim;
 	int sliceSize;
 	int lastSliceSize;
 	
+	public SliceSettings(SliceSettings slice) {
+		this.frames = slice.getFrames();
+		this.start = slice.getStart();
+		this.sliceDim = slice.getSliceDim();
+		this.sliceSize = slice.getSliceSize();
+		this.lastSliceSize = slice.getLastSliceSize();
+	}
+
 	public SliceSettings(long[] frames, int sliceDim, int sliceSize, int lastSliceSize) {
 		this.frames = frames;
 		this.sliceDim = sliceDim;
@@ -33,9 +42,17 @@ public class SliceSettings {
 	public long[] getFrames() {
 		return frames;
 	}
-
+	
 	public void setFrames(long[] frames) {
 		this.frames = frames;
+	}
+
+	public int[] getStart() {
+		return start;
+	}
+
+	public void setStart(int[] start) {
+		this.start = start;
 	}
 
 	public int getSliceDim() {

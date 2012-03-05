@@ -657,38 +657,24 @@ public class LazyNcdProcessing {
 						bgNormalisation.setNormChannel(normChannel);
 					}
 						
+					
 					if (flags.isEnableSector()) {
 						while (iter.hasNext()) {
-							int sliceDim = bgSliceSettings.getSliceDim();
-							int sliceSize = bgSliceSettings.getSliceSize();
-							int lastSliceSize = bgSliceSettings.getLastSliceSize();
-							
-							long[] start_pos = (long[]) ConvertUtils.convert(iter.getPos(), long[].class);
-							long[] start_data = Arrays.copyOf(start_pos, bgFrames.length);
-
-							long[] block_data = Arrays.copyOf(bgFrames, bgFrames.length);
-							Arrays.fill(block_data, 0, sliceDim, 1);
-							block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-							long[] count_data = new long[bgFrames.length];
-							Arrays.fill(count_data, 1);
-
-							bgIds.setSlice(start_data, block_data, count_data, block_data);
-							AbstractDataset bgdata = NcdNexusUtils.sliceInputData(bgIds);
+							bgSliceSettings.setStart(iter.getPos());
+							AbstractDataset bgdata = NcdNexusUtils.sliceInputData(bgSliceSettings, bgIds);
 
 							if (flags.isEnableDetectorResponse()) {
 								monitor.setTaskName(monitorFile + " : Correct for detector response");
-								DataSliceIdentifiers bgdr_id = new DataSliceIdentifiers(bgdr_data_id, start_data, block_data,
-										count_data, block_data);
-
-								bgdata = bgDetectorResponse.execute(dim, bgdata, bgdr_id);
+								
+								bgIds.setIDs(bgdr_data_id);
+								bgdata = bgDetectorResponse.execute(dim, bgdata, bgIds);
 							}
 
 							monitor.setTaskName(bgFile + " : Performing sector integration");
-							DataSliceIdentifiers bgSector_id = new DataSliceIdentifiers(bgsec_data_id, start_data, block_data,
-									count_data, block_data);
-							DataSliceIdentifiers bgAzimuth_id = new DataSliceIdentifiers(bgaz_data_id, start_data, block_data,
-									count_data, block_data);
+							DataSliceIdentifiers bgSector_id = new DataSliceIdentifiers(bgIds);
+							bgSector_id.setIDs(bgsec_data_id);
+							DataSliceIdentifiers bgAzimuth_id = new DataSliceIdentifiers(bgIds);
+							bgAzimuth_id.setIDs(bgaz_data_id);
 							
 							bgSectorIntegration.execute(dim, bgdata, bgSector_id, bgAzimuth_id);
 						}
@@ -701,6 +687,7 @@ public class LazyNcdProcessing {
 						
 						bgFrames = bgSecFrames;
 						bgFrames_int = (int[]) ConvertUtils.convert(bgSecFrames, int[].class);
+						bgSliceSettings.setFrames(bgFrames);
 						bgSliceSettings.setSliceDim(sliceDim);
 						bgSliceSettings.setSliceSize(sliceSize);
 						bgSliceSettings.setLastSliceSize(lastSliceSize);
@@ -710,54 +697,25 @@ public class LazyNcdProcessing {
 					}
 					
 					while (iter.hasNext()) {
-						int sliceDim = bgSliceSettings.getSliceDim();
-						int sliceSize = bgSliceSettings.getSliceSize();
-						int lastSliceSize = bgSliceSettings.getLastSliceSize();
-						
-						long[] start_pos = (long[]) ConvertUtils.convert(iter.getPos(), long[].class);
-						long[] start_data = Arrays.copyOf(start_pos, bgFrames.length);
-
-						long[] block_data = Arrays.copyOf(bgFrames, bgFrames.length);
-						Arrays.fill(block_data, 0, sliceDim, 1);
-						block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-						long[] count_data = new long[bgFrames.length];
-						Arrays.fill(count_data, 1);
-
-						bgIds.setSlice(start_data, block_data, count_data, block_data);
-						AbstractDataset bgdata = NcdNexusUtils.sliceInputData(bgIds);
+						bgSliceSettings.setStart(iter.getPos());
+						AbstractDataset bgdata = NcdNexusUtils.sliceInputData(bgSliceSettings, bgIds);
 
 						if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
 							monitor.setTaskName(bgFile + " : Correct for detector response");
-
-							DataSliceIdentifiers bgdr_id = new DataSliceIdentifiers(bgdr_data_id, start_data, block_data,
-									count_data, block_data);
-
-							bgdata = bgDetectorResponse.execute(dim, bgdata, bgdr_id);
 							bgIds.setIDs(bgdr_data_id);
+							bgdata = bgDetectorResponse.execute(dim, bgdata, bgIds);
 						}
 						
 						if (flags.isEnableNormalisation()) {
 							monitor.setTaskName(monitorFile + " : Normalising data");
 
-							DataSliceIdentifiers bgnorm_id = new DataSliceIdentifiers(bgnorm_data_id, start_data, block_data,
-									count_data, block_data);
+							SliceSettings bgnormSlice = new SliceSettings(bgSliceSettings);
+							bgnormSlice.setFrames(bgframesCal);
 
-							long[] bgcal_start_data = Arrays.copyOf(start_pos, bgframesCal.length);
+							AbstractDataset bgdataCal = NcdNexusUtils.sliceInputData(bgnormSlice, bgcalibration_ids);
 
-							long[] bgcal_block_data = Arrays.copyOf(bgframesCal, bgframesCal.length);
-							Arrays.fill(bgcal_block_data, 0, sliceDim, 1);
-							bgcal_block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > framesCal[sliceDim]) ? lastSliceSize
-									: sliceSize;
-
-							long[] bgcal_count_data = new long[framesCal.length];
-							Arrays.fill(bgcal_count_data, 1);
-
-							bgcalibration_ids.setSlice(bgcal_start_data, bgcal_block_data, bgcal_count_data, bgcal_block_data);
-							AbstractDataset bgdataCal = NcdNexusUtils.sliceInputData(bgcalibration_ids);
-
-							bgdata = bgNormalisation.execute(dim, bgdata, bgdataCal, bgnorm_id);
 							bgIds.setIDs(bgnorm_data_id);
+							bgdata = bgNormalisation.execute(dim, bgdata, bgdataCal, bgIds);
 						}
 
 					}
@@ -792,6 +750,8 @@ public class LazyNcdProcessing {
 			}
 		}
 		
+		SliceSettings sliceParams = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
+		
 		int[] iter_array = Arrays.copyOfRange(frames_int, 0, sliceDim + 1);
 		int [] start = new int[iter_array.length];
 		int[] step =  new int[iter_array.length];
@@ -803,33 +763,21 @@ public class LazyNcdProcessing {
 		
 		if (flags.isEnableSector()) {
 			while (iter.hasNext()) {
-				long[] start_pos = (long[]) ConvertUtils.convert(iter.getPos(), long[].class);
-				long[] start_data = Arrays.copyOf(start_pos, frames.length);
-
-				long[] block_data = Arrays.copyOf(frames, frames.length);
-				Arrays.fill(block_data, 0, sliceDim, 1);
-				block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-				long[] count_data = new long[frames.length];
-				Arrays.fill(count_data, 1);
-
-				input_ids.setSlice(start_data, block_data, count_data, block_data);
-				AbstractDataset data = NcdNexusUtils.sliceInputData(input_ids);
+				sliceParams.setStart(iter.getPos());
+				AbstractDataset data = NcdNexusUtils.sliceInputData(sliceParams, input_ids);
 
 				if (flags.isEnableDetectorResponse()) {
 					monitor.setTaskName(monitorFile + " : Correct for detector response");
 
-					DataSliceIdentifiers dr_id = new DataSliceIdentifiers(dr_data_id, start_data, block_data,
-							count_data, block_data);
-
-					data = lazyDetectorResponse.execute(dim, data, dr_id);
+					input_ids.setIDs(dr_data_id);
+					data = lazyDetectorResponse.execute(dim, data, input_ids);
 				}
 
 				monitor.setTaskName(monitorFile + " : Performing sector integration");
-				DataSliceIdentifiers sector_id = new DataSliceIdentifiers(sec_data_id, start_data, block_data,
-						count_data, block_data);
-				DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(az_data_id, start_data, block_data,
-						count_data, block_data);
+				DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
+				sector_id.setIDs(sec_data_id);
+				DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
+				azimuth_id.setIDs(az_data_id);
 				
 				data = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id);
 			}
@@ -842,6 +790,7 @@ public class LazyNcdProcessing {
 			frames = secFrames;
 			frames_int = (int[]) ConvertUtils.convert(secFrames, int[].class);
 
+			sliceParams = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
 			
 			input_ids.setIDs(sec_data_id);
@@ -849,86 +798,52 @@ public class LazyNcdProcessing {
 
 		AbstractDataset data = null;
 		while (iter.hasNext()) {
-			long[] start_pos = (long[]) ConvertUtils.convert(iter.getPos(), long[].class);
-			long[] start_data = Arrays.copyOf(start_pos, frames.length);
-
-			long[] block_data = Arrays.copyOf(frames, frames.length);
-			Arrays.fill(block_data, 0, sliceDim, 1);
-			block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize : sliceSize;
-
-			long[] count_data = new long[frames.length];
-			Arrays.fill(count_data, 1);
-
-			input_ids.setSlice(start_data, block_data, count_data, block_data);
-			data = NcdNexusUtils.sliceInputData(input_ids);
+			sliceParams.setStart(iter.getPos());
+			data = NcdNexusUtils.sliceInputData(sliceParams, input_ids);
 
 			if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
 				monitor.setTaskName(monitorFile + " : Correct for detector response");
 
-				DataSliceIdentifiers dr_id = new DataSliceIdentifiers(dr_data_id, start_data, block_data,
-						count_data, block_data);
-
-				data = lazyDetectorResponse.execute(dim, data, dr_id);
 				input_ids.setIDs(dr_data_id);
+				data = lazyDetectorResponse.execute(dim, data, input_ids);
 			}
 
 			if (flags.isEnableNormalisation()) {
 				monitor.setTaskName(monitorFile + " : Normalising data");
 
-				DataSliceIdentifiers norm_id = new DataSliceIdentifiers(norm_data_id, start_data, block_data,
-						count_data, block_data);
+				SliceSettings calibrationSliceParams = new SliceSettings(sliceParams);
+				calibrationSliceParams.setFrames(framesCal);
+				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
 
-				long[] cal_start_data = Arrays.copyOf(start_pos, framesCal.length);
-
-				long[] cal_block_data = Arrays.copyOf(framesCal, framesCal.length);
-				Arrays.fill(cal_block_data, 0, sliceDim, 1);
-				cal_block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > framesCal[sliceDim]) ? lastSliceSize
-						: sliceSize;
-
-				long[] cal_count_data = new long[framesCal.length];
-				Arrays.fill(cal_count_data, 1);
-
-				calibration_ids.setSlice(cal_start_data, cal_block_data, cal_count_data, cal_block_data);
-				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibration_ids);
-
-				data = lazyNormalisation.execute(dim, data, dataCal, norm_id);
 				input_ids.setIDs(norm_data_id);
+				data = lazyNormalisation.execute(dim, data, dataCal, input_ids);
 			}
 
 			if (flags.isEnableBackground()) {
 				monitor.setTaskName(monitorFile + " : Correct for detector response");
 
-				DataSliceIdentifiers bg_id = new DataSliceIdentifiers(bg_data_id, start_data, block_data,
-						count_data, block_data);
+				int bgSliceSize = Math.min(sliceSize, bgFrames_int[sliceDim]);
+				int bgLastSliceSize = bgFrames_int[sliceDim] % bgSliceSize;  
+				int[] bgStart = new int[sliceDim + 1]; 
+				for (int i = 0; i <= sliceDim; i++)
+					bgStart[i] = Math.min(sliceParams.getStart()[i], bgFrames_int[i] - 1);
+				SliceSettings bgSliceParams = new SliceSettings(bgFrames, sliceDim, bgSliceSize, bgLastSliceSize);
+				bgSliceParams.setStart(bgStart);
+				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
 				
-				long[] bgstart = new long[bgFrames.length]; 
-				long[] bgblock = new long[bgFrames.length]; 
-				long[] bgcount = new long[bgFrames.length];
-				for (int i = 0; i < bgFrames.length; i++) {
-					bgstart[i] = Math.min(start_data[i], bgFrames[i] - 1);
-					bgblock[i] = Math.min(block_data[i], bgFrames[i]);
-					bgcount[i] = Math.min(count_data[i], bgFrames[i]);
-				}
-				
-				bgIds.setSlice(bgstart, bgblock, bgcount, bgblock);
-				data = lazyBackgroundSubtraction.execute(dim, data, bgIds, bg_id);
 				input_ids.setIDs(bg_data_id);
+				data = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
 			}
 
 			if (flags.isEnableInvariant()) {
 				monitor.setTaskName(monitorFile + " : Calculating invariant");
 				
-				long[] inv_start_data = Arrays.copyOf(start_pos, invRank);
-				long[] inv_block_data = Arrays.copyOf(frames, invRank);
-				Arrays.fill(inv_block_data, 0, sliceDim, 1);
-				inv_block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize
-						: sliceSize;
-            
-				long[] inv_count_data = new long[invRank];
-				Arrays.fill(inv_count_data, 1);
-            
-				DataSliceIdentifiers inv_id = new DataSliceIdentifiers(inv_data_id, inv_start_data, inv_block_data,
-						inv_count_data, inv_block_data);
+				DataSliceIdentifiers inv_id = new DataSliceIdentifiers(input_ids);
+				inv_id.setIDs(inv_data_id);
+				inv_id.start = Arrays.copyOf(input_ids.start, invRank);
+				inv_id.stride = Arrays.copyOf(input_ids.stride, invRank);
+				inv_id.count = Arrays.copyOf(input_ids.count, invRank);
+				inv_id.block = Arrays.copyOf(input_ids.block, invRank);
             
 				lazyInvariant.execute(dim, data, inv_id);
 			}

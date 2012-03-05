@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
+import java.util.Arrays;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
@@ -57,7 +59,7 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 			if (parentngd == null) return null;
 			Invariant inv = new Invariant();
 			
-			int[] dataShape = parentngd.getShape();
+			int[] dataShape = Arrays.copyOf(parentngd.getShape(), parentngd.getRank() - dim);
 			parentngd = flattenGridData(parentngd, dim);
 			
 			float[] mydata = inv.process(parentngd.getBuffer(), parentngd.getShape());
@@ -70,7 +72,7 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 			H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
 					HDF5Constants.H5P_DEFAULT, mydata);
 			
-			return new FloatDataset(mydata);
+			return new FloatDataset(mydata, dataShape);
 			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);

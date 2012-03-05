@@ -36,6 +36,7 @@ import org.nexusformat.NexusException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 
 public class NcdNexusUtils {
 
@@ -381,7 +382,24 @@ public class NcdNexusUtils {
 		return ids;
 	}
 	
-	public static AbstractDataset sliceInputData(DataSliceIdentifiers ids) throws HDF5Exception {
+	public static AbstractDataset sliceInputData(SliceSettings sliceData, DataSliceIdentifiers ids) throws HDF5Exception {
+		long[] frames = sliceData.getFrames();
+		long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
+		int sliceDim = sliceData.getSliceDim();
+		int sliceSize = sliceData.getSliceSize();
+		int lastSliceSize = sliceData.getLastSliceSize();
+		
+		long[] start_data = Arrays.copyOf(start_pos, frames.length);
+
+		long[] block_data = Arrays.copyOf(frames, frames.length);
+		Arrays.fill(block_data, 0, sliceData.getSliceDim(), 1);
+		block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize
+				: sliceSize;
+
+		long[] count_data = new long[frames.length];
+		Arrays.fill(count_data, 1);
+
+		ids.setSlice(start_data, block_data, count_data, block_data);
 
 		H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 				ids.block);
