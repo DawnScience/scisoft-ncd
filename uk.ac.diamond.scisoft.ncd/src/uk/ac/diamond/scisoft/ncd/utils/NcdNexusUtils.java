@@ -387,14 +387,12 @@ public class NcdNexusUtils {
 		long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
 		int sliceDim = sliceData.getSliceDim();
 		int sliceSize = sliceData.getSliceSize();
-		int lastSliceSize = sliceData.getLastSliceSize();
 		
 		long[] start_data = Arrays.copyOf(start_pos, frames.length);
 
 		long[] block_data = Arrays.copyOf(frames, frames.length);
 		Arrays.fill(block_data, 0, sliceData.getSliceDim(), 1);
-		block_data[sliceDim] = (start_pos[sliceDim] + sliceSize > frames[sliceDim]) ? lastSliceSize
-				: sliceSize;
+		block_data[sliceDim] = Math.min(frames[sliceDim] - start_pos[sliceDim], sliceSize);
 
 		long[] count_data = new long[frames.length];
 		Arrays.fill(count_data, 1);

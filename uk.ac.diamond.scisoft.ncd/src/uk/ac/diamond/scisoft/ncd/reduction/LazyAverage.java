@@ -356,7 +356,6 @@ public class LazyAverage extends LazyDataReduction {
 		
 		int sliceDim = 0;
 		int sliceSize = frames_int[0];
-		int lastSliceSize = 0;
 
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (averageIndices.length > 0 || dim == 2) {
@@ -368,7 +367,6 @@ public class LazyAverage extends LazyDataReduction {
 					if (dimCounter >= frameBatch) {
 						sliceDim = idx;
 						sliceSize = frameBatch * frames_int[idx] / dimCounter;
-						lastSliceSize = frames_int[idx] % sliceSize;
 						break;
 					}
 				}
@@ -404,7 +402,7 @@ public class LazyAverage extends LazyDataReduction {
 			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;
-	    	SliceSettings sliceSettings = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
+	    	SliceSettings sliceSettings = new SliceSettings(frames, sliceDim, sliceSize);
 			while (data_iter.hasNext()) {
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);

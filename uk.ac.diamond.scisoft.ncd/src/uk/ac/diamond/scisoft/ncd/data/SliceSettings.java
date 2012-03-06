@@ -22,21 +22,18 @@ public class SliceSettings {
 	int[] start;
 	int sliceDim;
 	int sliceSize;
-	int lastSliceSize;
 	
 	public SliceSettings(SliceSettings slice) {
 		this.frames = slice.getFrames();
 		this.start = slice.getStart();
 		this.sliceDim = slice.getSliceDim();
 		this.sliceSize = slice.getSliceSize();
-		this.lastSliceSize = slice.getLastSliceSize();
 	}
 
-	public SliceSettings(long[] frames, int sliceDim, int sliceSize, int lastSliceSize) {
+	public SliceSettings(long[] frames, int sliceDim, int sliceSize) {
 		this.frames = frames;
 		this.sliceDim = sliceDim;
 		this.sliceSize = sliceSize;
-		this.lastSliceSize = lastSliceSize;
 	}
 
 	public long[] getFrames() {
@@ -69,13 +66,5 @@ public class SliceSettings {
 
 	public void setSliceSize(int sliceSize) {
 		this.sliceSize = sliceSize;
-	}
-
-	public int getLastSliceSize() {
-		return lastSliceSize;
-	}
-
-	public void setLastSliceSize(int lastSliceSize) {
-		this.lastSliceSize = lastSliceSize;
 	}
 }

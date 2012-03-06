@@ -580,7 +580,7 @@ public class LazyNcdProcessing {
 				H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgFrames, null);
 				bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 			    {
-			    	SliceSettings bgSliceSettings = new SliceSettings(bgFrames, 0, bgFrames_int[0], 0);
+			    	SliceSettings bgSliceSettings = new SliceSettings(bgFrames, 0, bgFrames_int[0]);
 
 					// We will slice only 2D data. 1D data is loaded into memory completely
 					if (dim == 2) {
@@ -592,10 +592,8 @@ public class LazyNcdProcessing {
 							int[] sliceIdx = NcdDataUtils.getCounts(dimCounter, frameBatch);
 							int sliceDim = ArrayUtils.lastIndexOf(sliceIdx, 0) + 1;
 							int sliceSize = sliceIdx[sliceDim];
-							int lastSliceSize = bgFrames_int[sliceDim] % sliceSize;
 							bgSliceSettings.setSliceDim(sliceDim);
 							bgSliceSettings.setSliceSize(sliceSize);
-							bgSliceSettings.setLastSliceSize(lastSliceSize);
 						}
 					}
 					
@@ -683,14 +681,12 @@ public class LazyNcdProcessing {
 						bgRank = 1;
 						int sliceDim = 0;
 						int sliceSize = (int) secFrames[0];
-						int lastSliceSize = 0;
 						
 						bgFrames = bgSecFrames;
 						bgFrames_int = (int[]) ConvertUtils.convert(bgSecFrames, int[].class);
 						bgSliceSettings.setFrames(bgFrames);
 						bgSliceSettings.setSliceDim(sliceDim);
 						bgSliceSettings.setSliceSize(sliceSize);
-						bgSliceSettings.setLastSliceSize(lastSliceSize);
                         
 						iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
 						bgIds.setIDs(bgsec_data_id);
@@ -734,7 +730,6 @@ public class LazyNcdProcessing {
 	    
 		int sliceDim = 0;
 		int sliceSize = (int) frames[0];
-		int lastSliceSize = 0;
 
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
@@ -746,11 +741,10 @@ public class LazyNcdProcessing {
 				int[] sliceIdx = NcdDataUtils.getCounts(dimCounter, frameBatch);
 				sliceDim = ArrayUtils.lastIndexOf(sliceIdx, 0) + 1;
 				sliceSize = sliceIdx[sliceDim];
-				lastSliceSize = frames_int[sliceDim] % sliceSize;
 			}
 		}
 		
-		SliceSettings sliceParams = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
+		SliceSettings sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
 		
 		int[] iter_array = Arrays.copyOfRange(frames_int, 0, sliceDim + 1);
 		int [] start = new int[iter_array.length];
@@ -785,12 +779,11 @@ public class LazyNcdProcessing {
 			dim = 1;
 			sliceDim = 0;
 			sliceSize = (int) secFrames[0];
-			lastSliceSize = 0;
 			
 			frames = secFrames;
 			frames_int = (int[]) ConvertUtils.convert(secFrames, int[].class);
 
-			sliceParams = new SliceSettings(frames, sliceDim, sliceSize, lastSliceSize);
+			sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
 			
 			input_ids.setIDs(sec_data_id);
@@ -823,11 +816,10 @@ public class LazyNcdProcessing {
 				monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 				int bgSliceSize = Math.min(sliceSize, bgFrames_int[sliceDim]);
-				int bgLastSliceSize = bgFrames_int[sliceDim] % bgSliceSize;  
 				int[] bgStart = new int[sliceDim + 1]; 
 				for (int i = 0; i <= sliceDim; i++)
 					bgStart[i] = Math.min(sliceParams.getStart()[i], bgFrames_int[i] - 1);
-				SliceSettings bgSliceParams = new SliceSettings(bgFrames, sliceDim, bgSliceSize, bgLastSliceSize);
+				SliceSettings bgSliceParams = new SliceSettings(bgFrames, sliceDim, bgSliceSize);
 				bgSliceParams.setStart(bgStart);
 				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
 				
@@ -851,7 +843,7 @@ public class LazyNcdProcessing {
 
 		if(flags.isEnableAverage()) {
 			monitor.setTaskName(monitorFile + " : Averaging  datasets");
-			int[] averageIndices = new int[] {frames.length - 1 - dim};
+			int[] averageIndices = new int[] {frames.length - dim};
 			if (gridAverage != null)
 				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
 			
