@@ -22,6 +22,8 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.Command;
@@ -38,6 +40,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
@@ -78,6 +81,7 @@ public class DataReductionHandler extends AbstractHandler {
 		if (sel != null) {
 			
 			final LazyNcdProcessing processing = new LazyNcdProcessing();
+			final LazyNcdProcessing bgProcessing = new LazyNcdProcessing();
 
 			NcdReductionFlags flags = new NcdReductionFlags();
 			NcdDetectors ncdDetectors = new NcdDetectors();
@@ -96,6 +100,35 @@ public class DataReductionHandler extends AbstractHandler {
 				return Boolean.FALSE;
 			}
 
+			if (flags.isEnableBackground()) {
+				try {
+					NcdReductionFlags bgFlags = new NcdReductionFlags();
+					NcdDetectors bgDetectors = new NcdDetectors();
+					
+					readDataReductionStages(bgFlags);
+					readDetectorInformation(bgFlags, bgDetectors);
+					readDataReductionOptions(bgFlags, bgProcessing);
+					
+					bgFlags.setEnableInvariant(false);
+					bgFlags.setEnableBackground(false);
+					bgProcessing.setFlags(bgFlags);
+					bgProcessing.setNcdDetectors(ncdDetectors);
+					
+					Integer bgFirstFrame = NcdDataReductionParameters.getBgFirstFrame();
+					Integer bgLastFrame = NcdDataReductionParameters.getBgLastFrame();
+					String bgFrameSelection = NcdDataReductionParameters.getBgAdvancedSelection();
+					
+					bgProcessing.setFirstFrame(bgFirstFrame);
+					bgProcessing.setLastFrame(bgLastFrame);
+					bgProcessing.setFrameSelection(bgFrameSelection);
+				} catch (Exception e) {
+					logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
+					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
+					ErrorDialog.openError(window.getShell(), "Data reduction error", "Error reading data reduction parameters", status);
+					return Boolean.FALSE;
+				}
+			}
+			
 			final String detectorWaxs = ncdDetectors.getDetectorWaxs();
 			final String detectorSaxs = ncdDetectors.getDetectorSaxs();
 			final Integer dimWaxs = ncdDetectors.getDimWaxs();
@@ -103,6 +136,8 @@ public class DataReductionHandler extends AbstractHandler {
 			final boolean enableWaxs = flags.isEnableWaxs();
 			final boolean enableSaxs = flags.isEnableSaxs();
 			final String workingDir = NcdDataReductionParameters.getWorkingDirectory();
+			final String bgPath = NcdDataReductionParameters.getBgFile();
+			final String bgName = FilenameUtils.getName(bgPath);
 			
 			Job ncdJob = new Job("Running NCD data reduction") {
 
@@ -115,6 +150,40 @@ public class DataReductionHandler extends AbstractHandler {
 					if (enableWaxs) idxMonitor += 6;
 					if (enableSaxs) idxMonitor += 6;
 					monitor.beginTask("Running NCD data reduction",idxMonitor*selObjects.length);
+					
+					String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
+					final String bgFilename = workingDir + "/background" + detNames + generateDateTimeStamp() + bgName;
+					
+					IFileSystem fileSystem = EFS.getLocalFileSystem();
+					try {
+					IFileStore inputFile = fileSystem.getStore(URI.create(bgPath));
+					IFileStore outputFile = fileSystem.getStore(URI.create(bgFilename));
+					inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
+					// Check that results file is writable
+					IFileInfo info = outputFile.fetchInfo();
+					if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
+						info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
+						outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
+					}
+					
+					} catch (final Exception e) {
+						logger.error("SCISOFT NCD: Error creating background file", e);
+						return Status.CANCEL_STATUS;
+					}
+					
+					try {
+						if (enableSaxs) {
+							bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
+							processing.setBgFile(bgFilename);
+							processing.setBgDetector(detectorSaxs+"_result");
+							processing.setBgFirstFrame(null);
+							processing.setLastFrame(null);
+							processing.setBgFrameSelection(null);
+						}
+					} catch (Exception e) {
+						logger.error("SCISOFT NCD: Error processing background file", e);
+						return Status.CANCEL_STATUS;
+					}
 					
 					for (int i = 0; i < selObjects.length; i++) {
 						String inputfileExtension;
@@ -133,11 +202,9 @@ public class DataReductionHandler extends AbstractHandler {
 							continue;
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
-							String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
 							String datetime = generateDateTimeStamp();
 							final String filename = workingDir + "/results" + detNames + datetime + inputfileName;
 							
-							IFileSystem fileSystem = EFS.getLocalFileSystem();
 							IFileStore inputFile = fileSystem.getStore(URI.create(tmpfilePath));
 							IFileStore outputFile = fileSystem.getStore(URI.create(filename));
 							inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());

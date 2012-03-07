@@ -158,7 +158,7 @@ public class LazySelection extends LazyDataReduction {
 		}
 		
 		DataSliceIdentifiers outputIds = new DataSliceIdentifiers();
-		outputIds.setIDs(output_data_id);
+		outputIds.setIDs(output_group_id, output_data_id);
 		return outputIds;
 	}
 }

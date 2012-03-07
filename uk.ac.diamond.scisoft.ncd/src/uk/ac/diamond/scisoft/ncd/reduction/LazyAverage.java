@@ -415,9 +415,9 @@ public class LazyAverage extends LazyDataReduction {
 						data_slice = data_slice.sum(idx);
 					}
 				totalFrames += totalFramesBatch;
-				ave_frame.iadd(data_slice);
+				ave_frame = ave_frame.iadd(data_slice);
 			}
-			ave_frame.idivide(totalFrames);
+			ave_frame =  ave_frame.idivide(totalFrames);
 			
 			int filespace_id = H5.H5Dget_space(ave_data_id);
 			int type_id = H5.H5Dget_type(ave_data_id);
@@ -432,6 +432,8 @@ public class LazyAverage extends LazyDataReduction {
 			H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id,
 					HDF5Constants.H5P_DEFAULT, ave_frame.getBuffer());
 		}
+		
+		input_ids.setIDs(ave_group_id, ave_data_id);
 	}
 
 }

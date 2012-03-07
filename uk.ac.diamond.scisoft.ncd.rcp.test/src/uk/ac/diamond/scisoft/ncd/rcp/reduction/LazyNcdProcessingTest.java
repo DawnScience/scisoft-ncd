@@ -29,6 +29,10 @@ import java.io.FileOutputStream;
 
 import junit.framework.Assert;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -43,6 +47,8 @@ import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
@@ -53,13 +59,14 @@ import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNormalisation;
 import uk.ac.diamond.scisoft.ncd.reduction.LazySectorIntegration;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyNcdProcessingTest {
 
 	static LazyNcdProcessing testClass;
 	private static String bgFile;
 	private static Double bgScaling = 0.1;
-	private static Double absScaling = 3.5;
+	private static Double absScaling = 1.0;
 	private static int normChannel = 1;
 	private static CalibrationResultsBean crb = null;
 	private static String drFile;
@@ -71,6 +78,8 @@ public class LazyNcdProcessingTest {
 	private static NcdDetectors ncdDetectors;
 
 	private static String detector = "Rapid2D";
+	private static String detectorOut = "Rapid2D_processing";
+	private static String detectorBg = "Rapid2D_background";
 	private static String calibration = "Scalers";
 	private static Double pxSaxs = 0.1;
 	private static int dim = 2;
@@ -78,11 +87,21 @@ public class LazyNcdProcessingTest {
 	private static String testScratchDirectoryName;
 	private static Integer firstFrame = 60;
 	private static Integer lastFrame = 70;
-	private static Integer bgFirstFrame = 1;
-	private static Integer bgLastFrame = 7;
+	private static Integer bgFirstFrame = 5;
+	private static Integer bgLastFrame = 5;
 	//private static String frameSelection = "0;60-70";
-	private static String bgFrameSelection = "0;1-7";
-
+	private static String bgFrameSelection = "0;" + bgFirstFrame.toString() + "-" + bgLastFrame.toString();
+	
+	private static AbstractDataset dr;
+	
+	private static long[] frames = new long[] {1, 120, 512, 512};
+	private static long[] drFrames = new long[] {1, 1, 512, 512};
+	private static long[] bgSelFrames = new long[] {1, bgLastFrame - bgFirstFrame + 1, 512, 512};
+	private static long[] framesCal = new long[] {1, 120, 9};
+	private static long[] framesResult = frames;  // TODO: Change after data slicing is supported
+	//private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
+	private static long[] framesSec, framesAve, framesBgSec;
+	
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
 
@@ -125,6 +144,9 @@ public class LazyNcdProcessingTest {
 
 		intSector = new SectorROI(262.0, 11.0, 20.0, 500.0, 60.0, 120.0);
 		intPoints = intSector.getIntRadius(1) - intSector.getIntRadius(0);
+		framesSec = new long[] {1, frames[1], intPoints}; //TODO: update when data slicing is supported
+		framesAve = new long[] {1, 1, intPoints}; //TODO: update when data slicing is supported
+		framesBgSec = new long[] {1, bgSelFrames[1], intPoints}; //TODO: update when data slicing is supported
 
 		testClass = new LazyNcdProcessing();
 		testClass.setBgFile(bgFile);
@@ -148,58 +170,234 @@ public class LazyNcdProcessingTest {
 		testClass.setFirstFrame(firstFrame);
 		testClass.setLastFrame(lastFrame);
 
-		testClass.execute(detector, dim, filename, new NullProgressMonitor());
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector);
+	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);
+	    int[] start = new int[] {0, 0, 0, 0};
+	    drSlice.setStart(start);
+		dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
+		
+		testClass.executeHDF5(detector, dim, filename, new NullProgressMonitor());
 	}
 
 	@Test
-	public void checkNormalisation() throws NexusException, NexusExtractorException, Exception {
+	public void checkDetectorResponse() throws HDF5Exception {
 
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(detector, calibration));
-		INexusTree tmpNXdata = detectorTree.getNode("entry1/instrument");
-
-		int[] startData = new int[] {0, firstFrame, 0, 0};
-		int[] stopData = new int[] {1, lastFrame +1, 512, 512};
-		INexusTree tmpData = NcdDataUtils.selectNAxisFrames(detector, calibration, tmpNXdata, dim + 1, startData, stopData);
-		AbstractDataset data = Nexus.createDataset(NcdDataUtils.getData(tmpData, detector, "data", NexusExtractor.SDSClassName), false);
-		AbstractDataset norm = Nexus.createDataset(NcdDataUtils.getData(tmpData, calibration, "data", NexusExtractor.SDSClassName), false);
-
-		int[] start = new int[] {0, 0, 0, 0};
-		int[] stop = new int[] {1, lastFrame - firstFrame + 1, 512, 512};
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyNormalisation.name, calibration));
-		tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-		INexusTree tmpResult = NcdDataUtils.selectNAxisFrames(LazyNormalisation.name, null, tmpNXdata, dim + 1, start, stop);
-		AbstractDataset result = Nexus.createDataset(NcdDataUtils.getData(tmpResult, LazyNormalisation.name, "data", NexusExtractor.SDSClassName), false);
+	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector);
+	    SliceSettings dataSlice = new SliceSettings(frames, 1, lastFrame - firstFrame + 1);
+	    int[] start = new int[] {0, firstFrame, 0, 0};
+	    dataSlice.setStart(start);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		
+	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
+	    SliceSettings resultSlice = new SliceSettings(framesResult, 1, lastFrame - firstFrame + 1);
+	    start = new int[] {0, firstFrame, 0, 0};  //TODO: should be starting from 0 one data slicing is supported
+	    resultSlice.setStart(start);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			float valNorm = norm.getFloat(new int[] {frame, normChannel}); 
 			for (int i = 0; i < 512; i++)
 				for (int j = 0; j < 512; j++) {
-					float valResult = result.getFloat(new int[] {frame, i, j});
-					float valData = data.getFloat(new int[] {frame, i, j});
-					float testData = (float) (valResult*valNorm/absScaling);
-
-					assertEquals(String.format("Test normalisation for pixel (%d, %d, %d)", frame, i, j), testData, valData, 1e-6*valData);
+					float valResult = result.getFloat(new int[] {0, frame, i, j});
+					float valData = data.getFloat(new int[] {0, frame, i, j});
+					float valDr = dr.getFloat(new int[] {0, 0, i, j}); 
+					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+					
+					assertEquals(String.format("Test detector response for pixel (%d, %d, %d)", frame, i, j), valData*valDr, valResult, acc);
 				}
+		}
+	}
+	
+	@Test
+	public void checkSectorIntegration() throws HDF5Exception {
+
+		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
+		    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
+		    SliceSettings dataSlice = new SliceSettings(frames, 1, 1);
+		    int[] start = new int[] {0, frame, 0, 0};
+		    dataSlice.setStart(start);
+			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+			
+		    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazySectorIntegration.name);
+		    SliceSettings resultSlice = new SliceSettings(framesSec, 1, 1);
+		    start = new int[] {0, frame, 0};
+		    resultSlice.setStart(start);
+			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+
+			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
+
+			for (int j = 0; j < intPoints; j++) {
+				float valResult = result.getFloat(new int[] {0, 0, j});
+				float valData = intResult[0].getFloat(new int[] {j});
+				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+
+				assertEquals(String.format("Test sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
+			}
+		}
+	}
+	
+	@Test
+	public void checkNormalisation() throws HDF5Exception {
+
+	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazySectorIntegration.name);
+	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
+	    int[] start = new int[] {0, firstFrame, 0};
+	    dataSlice.setStart(start);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+	    
+	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration);
+	    SliceSettings normSlice = new SliceSettings(framesCal, 1, lastFrame - firstFrame + 1);
+	    normSlice.setStart(start);
+		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
+		
+	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyNormalisation.name);
+	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
+	    resultSlice.setStart(start);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+
+		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
+			float valNorm = norm.getFloat(new int[] {0, frame, normChannel}); 
+			for (int i = 0; i < intPoints; i++) {
+				float valResult = result.getFloat(new int[] {0, frame, i});
+				float valData = data.getFloat(new int[] {0, frame, i});
+				float testResult = (float) (valData * absScaling / valNorm);
+
+				assertEquals(String.format("Test normalisation for pixel (%d, %d)", frame, i), testResult, valResult, 1e-6*valResult);
+			}
 		}
 	}
 
 	@Test
-	public void checkBackgroundSubtraction() throws NexusException, NexusExtractorException, Exception {
+	public void checkBackgroundSubtractionData() throws HDF5Exception {
 
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyNormalisation.name, null));
-		INexusTree tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
+	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFile, detector);
+	    SliceSettings bgSlice = new SliceSettings(frames, 1, bgLastFrame - bgFirstFrame + 1);
+	    int[] start = new int[] {0, bgFirstFrame, 0, 0};
+	    bgSlice.setStart(start);
+		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_id);
 
-		int[] start = new int[] {0, 0, 0, 0};
-		int[] stop = new int[] {1, lastFrame - firstFrame + 1, 512, 512};
-		INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyNormalisation.name, null, tmpNXdata, dim + 1, start, stop);
-		AbstractDataset data = Nexus.createDataset(NcdDataUtils.getData(tmpData, LazyNormalisation.name, "data", NexusExtractor.SDSClassName), false);
+	    DataSliceIdentifiers bgdr_id = readResultsId(filename, detectorBg, LazyDetectorResponse.name);
+	    bgSlice = new SliceSettings(bgSelFrames, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, 0, 0, 0};
+	    bgSlice.setStart(start);
+		AbstractDataset bgDrData = NcdNexusUtils.sliceInputData(bgSlice, bgdr_id);
+		
+		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
+			for (int i = 0; i < 512; i++)
+				for (int j = 0; j < 512; j++) {
+					float valResult = bgDrData.getFloat(new int[] {0, frame, i, j});
+					float valData = bgData.getFloat(new int[] {0, frame, i, j});
+					float valDr = dr.getFloat(new int[] {0, 0, i, j}); 
+					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+					
+					assertEquals(String.format("Test bakground detector response for pixel (%d, %d, %d)", frame, i, j), valData*valDr, valResult, acc);
+				}
+		}
+		
+		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
+		    bg_id = readResultsId(filename, detectorBg, LazyDetectorResponse.name);
+		    SliceSettings dataSlice = new SliceSettings(bgSelFrames, 1, 1);
+		    start = new int[] {0, frame, 0, 0};
+		    dataSlice.setStart(start);
+			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
+			
+		    DataSliceIdentifiers result_id = readResultsId(filename, detectorBg, LazySectorIntegration.name);
+		    SliceSettings resultSlice = new SliceSettings(framesBgSec, 1, 1);
+		    start = new int[] {0, frame, 0};
+		    resultSlice.setStart(start);
+			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyBackgroundSubtraction.name, null));
-		tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-		INexusTree tmpResult = NcdDataUtils.selectNAxisFrames(LazyBackgroundSubtraction.name, null, tmpNXdata, dim + 1, start, stop);
-		AbstractDataset result = Nexus.createDataset(NcdDataUtils.getData(tmpResult, LazyBackgroundSubtraction.name, "data", NexusExtractor.SDSClassName), false);
+			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
 
-		detectorTree = NexusTreeBuilder.getNexusTree(bgFile, NcdDataUtils.getDetectorSelection(detector, calibration));
+			for (int j = 0; j < intPoints; j++) {
+				float valResult = result.getFloat(new int[] {0, 0, j});
+				float valData = intResult[0].getFloat(new int[] {j});
+				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+
+				assertEquals(String.format("Test background sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
+			}
+		}
+		
+	    bg_id = readResultsId(filename, detectorBg, LazySectorIntegration.name);
+	    SliceSettings dataSlice = new SliceSettings(framesBgSec, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, 0, 0};
+	    dataSlice.setStart(start);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
+		
+	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(bgFile, calibration);
+	    SliceSettings normSlice = new SliceSettings(framesCal, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, bgFirstFrame, 0};
+	    normSlice.setStart(start);
+		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
+		
+	    DataSliceIdentifiers result_id = readResultsId(filename, detectorBg, LazyNormalisation.name);
+	    SliceSettings resultSlice = new SliceSettings(framesBgSec, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, 0, 0};
+	    resultSlice.setStart(start);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+
+		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
+			float valNorm = norm.getFloat(new int[] {0, frame, normChannel}); 
+			for (int i = 0; i < intPoints; i++) {
+				float valResult = result.getFloat(new int[] {0, frame, i});
+				float valData = data.getFloat(new int[] {0, frame, i});
+				float testResult = (float) (valData * absScaling / valNorm);
+
+				assertEquals(String.format("Test background normalisation for pixel (%d, %d)", frame, i), testResult, valResult, 1e-6*valResult);
+			}
+		}
+		
+	    bg_id = readResultsId(filename, detectorBg, LazyNormalisation.name);
+		data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
+		
+	    result_id = readResultsId(filename, detectorBg, LazyAverage.name);
+	    dataSlice = new SliceSettings(framesAve, 1, 1);
+	    dataSlice.setStart(start);
+		result = NcdNexusUtils.sliceInputData(dataSlice, result_id);
+
+		for (int i = 0; i < intPoints; i++) {
+			float valData = 0.0f;
+			for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
+				valData += data.getFloat(new int[] { 0, frame, i }) / (bgLastFrame - bgFirstFrame + 1);
+			}
+			float valResult = result.getFloat(new int[] { 0, 0, i });
+			double acc = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
+
+			assertEquals(String.format("Test bakground detector response for pixel (%d)", i),
+					valData, valResult, acc);
+		}
+
+	}
+	
+	//@Test
+	public void checkBackgroundSubtraction() throws HDF5Exception {
+
+	    DataSliceIdentifiers data_id = readResultsId(filename, detector, LazyNormalisation.name);
+	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
+	    int[] start = new int[] {0, firstFrame, 0};
+	    dataSlice.setStart(start);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+	    
+	    DataSliceIdentifiers result_id = readResultsId(filename, detector, LazyBackgroundSubtraction.name);
+	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
+	    resultSlice.setStart(start);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+
+	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFile, detector);
+	    SliceSettings bgSlice = new SliceSettings(frames, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, bgFirstFrame, 0};
+	    bgSlice.setStart(start);
+		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_id);
+
+	    DataSliceIdentifiers bgdr_id = readResultsId(filename, detectorBg, LazyDetectorResponse.name);
+		AbstractDataset bgDrData = NcdNexusUtils.sliceInputData(bgSlice, bgdr_id);
+		
+	    DataSliceIdentifiers bgsec_id = readResultsId(filename, detectorBg, LazySectorIntegration.name);
+	    bgSlice = new SliceSettings(frames, 1, bgLastFrame - bgFirstFrame + 1);
+	    start = new int[] {0, bgFirstFrame, 0};
+	    bgSlice.setStart(start);
+		AbstractDataset bgSecData = NcdNexusUtils.sliceInputData(bgSlice, bgsec_id);
+
+/*		detectorTree = NexusTreeBuilder.getNexusTree(bgFile, NcdDataUtils.getDetectorSelection(detector, calibration));
 		tmpNXdata = detectorTree.getNode("entry1/instrument");
 
 		int[] startData = new int[] {0, bgFirstFrame, 0, 0};
@@ -222,46 +420,9 @@ public class LazyNcdProcessingTest {
 					assertEquals(String.format("Test background subtraction for pixel (%d, %d, %d)", frame, i, j), testData, valData, acc);
 				}
 		}
-	}
+*/	}
 	
-	@Test
-	public void checkDetectorResponse() throws NexusException, NexusExtractorException, Exception {
-
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyBackgroundSubtraction.name, null));
-		INexusTree tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-
-		int[] start = new int[] {0, 0, 0, 0};
-		int[] stop = new int[] {1, lastFrame - firstFrame + 1, 512, 512};
-		INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyBackgroundSubtraction.name, null, tmpNXdata, dim + 1, start, stop);
-		AbstractDataset data = Nexus.createDataset(NcdDataUtils.getData(tmpData, LazyBackgroundSubtraction.name, "data", NexusExtractor.SDSClassName), false);
-
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyDetectorResponse.name, null));
-		tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-		INexusTree tmpResult = NcdDataUtils.selectNAxisFrames(LazyDetectorResponse.name, null, tmpNXdata, dim + 1, start, stop);
-		AbstractDataset result = Nexus.createDataset(NcdDataUtils.getData(tmpResult, LazyDetectorResponse.name, "data", NexusExtractor.SDSClassName), false);
-
-		detectorTree = NexusTreeBuilder.getNexusTree(drFile, NcdDataUtils.getDetectorSelection(detector, null));
-		tmpNXdata = detectorTree.getNode("entry1/instrument");
-
-		int[] startData = new int[] {0, 0, 0, 0};
-		int[] stopData = new int[] {1, 1, 512, 512};
-		tmpData = NcdDataUtils.selectNAxisFrames(detector, null, tmpNXdata, dim, startData, stopData);
-		AbstractDataset dr = Nexus.createDataset(NcdDataUtils.getData(tmpData, detector, "data", NexusExtractor.SDSClassName), false);
-
-		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			for (int i = 0; i < 512; i++)
-				for (int j = 0; j < 512; j++) {
-					float valResult = result.getFloat(new int[] {frame, i, j});
-					float valData = data.getFloat(new int[] {frame, i, j});
-					float valDr = dr.getFloat(new int[] {i, j}); 
-					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
-					
-					assertEquals(String.format("Test detector response for pixel (%d, %d, %d)", frame, i, j), valResult, valData*valDr, acc);
-				}
-		}
-	}
-	
-	@Test
+	//@Test
 	public void checkInvariant() throws NexusException, NexusExtractorException, Exception {
 
 		int[] start = new int[] {0, 0, 0, 0};
@@ -291,38 +452,7 @@ public class LazyNcdProcessingTest {
 			}
 	}
 	
-	@Test
-	public void checkSectorIntegration() throws NexusException, NexusExtractorException, Exception {
-
-		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			int[] start = new int[] {0, frame, 0, 0};
-			int[] stop = new int[] {1, frame + 1, 512, 512};
-			INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazyDetectorResponse.name, null));
-			INexusTree tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-
-			INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyDetectorResponse.name, null, tmpNXdata, dim, start, stop);
-			AbstractDataset data = Nexus.createDataset(NcdDataUtils.getData(tmpData, LazyDetectorResponse.name, "data", NexusExtractor.SDSClassName), false);
-
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(LazySectorIntegration.name, null));
-			tmpNXdata = detectorTree.getNode("entry1/Rapid2D_processing");
-			int[] startData = new int[] {0, frame, 0};
-			int[] stopData = new int[] {1, frame + 1, intPoints};
-			INexusTree tmpResult = NcdDataUtils.selectNAxisFrames(LazySectorIntegration.name, null, tmpNXdata, dim-1, startData, stopData);
-			AbstractDataset result = Nexus.createDataset(NcdDataUtils.getData(tmpResult, LazySectorIntegration.name, "data", NexusExtractor.SDSClassName), false);
-
-			AbstractDataset[] intResult = ROIProfile.sector(data, null, intSector);
-
-			for (int j = 0; j < intPoints; j++) {
-				float valResult = result.getFloat(new int[] {j});
-				float valData = intResult[0].getFloat(new int[] {j});
-				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
-
-				assertEquals(String.format("Test sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
-			}
-		}
-	}
-	
-	@Test
+	//@Test
 	public void checkAverage() throws NexusException, NexusExtractorException, Exception {
 
 		int[] start = new int[] {0, 0, 0};
@@ -354,6 +484,19 @@ public class LazyNcdProcessingTest {
 	@AfterClass
 	public static void removeTmpFiles() throws Exception {
 		//Clear scratch directory 
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		//TestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
+	
+	private static DataSliceIdentifiers readResultsId(String dataFile, String detector, String result) throws HDF5Exception {
+		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		
+		DataSliceIdentifiers ids = new DataSliceIdentifiers();
+		ids.setIDs(detector_group_id, input_data_id);
+		return ids;
+	}
+	
 }

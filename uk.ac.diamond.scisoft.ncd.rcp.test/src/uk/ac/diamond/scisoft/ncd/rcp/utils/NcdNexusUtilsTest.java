@@ -18,7 +18,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.utils;
 
 import static org.junit.Assert.*;
 
-import java.lang.reflect.Array;
+import java.util.ArrayList;
 import java.util.Arrays;
 
 import gda.util.TestUtils;
@@ -26,6 +26,8 @@ import gda.util.TestUtils;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.math.util.MultidimensionalCounter;
+import org.apache.commons.math.util.MultidimensionalCounter.Iterator;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,6 +40,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdNexusUtilsTest {
@@ -46,7 +49,10 @@ public class NcdNexusUtilsTest {
 	private static String inputPath;
 	private static String detector = "Rapid2D";
 	private static int totalFrames = 120;
+	private static int dim = 2;
 	private static int[] frames = new int[] {1, totalFrames, 512, 512};
+	
+	private static String format = "0;1,3,15-30,55";
 	
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
@@ -107,5 +113,38 @@ public class NcdNexusUtilsTest {
 						assertEquals(String.format("Data slicing test for pixel (%d, %d, %d) has failed.", frame, i, j),
 								valData, valResult, acc);
 					}
+	}
+	
+	@Test
+	public void testSliceString() throws HDF5Exception {
+		
+		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
+		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
+		for (int i = 0; i < datDimMake.length; i++)
+			datDimMake[i] = list.get(i).length;
+		
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector);
+	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
+	    
+	    SliceSettings drSlice = new SliceSettings(frames_long, 0, 1);
+		int[] start = new int[] {0, 0, 0, 0};
+	    drSlice.setStart(start);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(drSlice, dr_id);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(dim, frames, format, dr_id);
+		
+		MultidimensionalCounter resultCounter = new MultidimensionalCounter(result.getShape());
+		Iterator resIter = resultCounter.iterator();
+		while (resIter.hasNext()) {
+			resIter.next();
+			int[] gridFrame = Arrays.copyOf(resIter.getCounts(), frames.length);
+			for (int i = 0; i < datDimMake.length; i++)
+				gridFrame[i] = list.get(i)[gridFrame[i]];
+			float valResult = result.getFloat(resIter.getCounts());
+			float valData = data.getFloat(gridFrame);
+			double acc = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
+
+			assertEquals(String.format("Data slicing test for pixel %s has failed.", Arrays.toString(resIter.getCounts())),
+								valData, valResult, acc);
+		}
 	}
 }
