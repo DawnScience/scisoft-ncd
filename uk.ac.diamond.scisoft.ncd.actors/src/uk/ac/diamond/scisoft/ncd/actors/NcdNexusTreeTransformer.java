@@ -39,6 +39,7 @@ import org.dawb.passerelle.common.message.MessageUtils;
 import org.eclipse.core.resources.IResource;
 
 import ptolemy.data.expr.Parameter;
+import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.Attribute;
 import ptolemy.kernel.util.IllegalActionException;
@@ -65,6 +66,10 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		filePathParam.setResourceType(IResource.FOLDER);
 		filePathParam.setExpression("/${project_name}/output/");
 		registerConfigurableParameter(filePathParam);
+		
+		detectorName = new StringParameter(this,"Detector");
+		detectorName.setExpression("Pilatus2M");
+		registerConfigurableParameter(detectorName);
 	}
 
 	@Override
@@ -86,12 +91,12 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	@Override
 	protected DataMessageComponent getTransformedMessage(List<DataMessageComponent> cache) throws ProcessingException {
 		
-		String filePath = null;
+		String fileFullPath = null;
 		try {
 			final Map<String,String> scalar = MessageUtils.getScalar(cache);
 			final String fileName = scalar!=null ? scalar.get("file_name") : null;
-			final File  output = new File(scalar.get("file_path"));
-			filePath = FilenameUtils.getFullPath(output.toString()) + FilenameUtils.getBaseName(fileName) + "_test.nxs";
+			//final File  output = new File(scalar.get("file_path"));
+			fileFullPath = filePath + "/" + FilenameUtils.getBaseName(fileName) + ".nxs";
 			
 			final DataMessageComponent comp = new DataMessageComponent();
 			comp.addScalar(scalar);
@@ -102,7 +107,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			comp.putScalar("file_name", targetFile.getName());
 			comp.putScalar("file_basename", FilenameUtils.getBaseName(targetFile.getName()));
 
-			writeNxsFile(filePath, cache, comp);
+			writeNxsFile(fileFullPath, cache, comp);
 
 			//AbstractPassModeTransformer.refreshResource(output);
 			
