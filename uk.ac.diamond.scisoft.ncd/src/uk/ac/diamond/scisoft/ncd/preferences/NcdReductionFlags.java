@@ -38,6 +38,17 @@ public class NcdReductionFlags {
 		enableSaxs = false;
 	}
 	
+	public NcdReductionFlags(NcdReductionFlags flags) {
+		enableAverage = flags.enableAverage;
+		enableBackground = flags.enableBackground;
+		enableDetectorResponse = flags.enableDetectorResponse;
+		enableInvariant = flags.enableInvariant;
+		enableNormalisation = flags.enableNormalisation;
+		enableSector = flags.enableSector;
+		enableWaxs = flags.enableWaxs;
+		enableSaxs = flags.enableSaxs;
+	}
+	
 	public boolean isEnableAverage() {
 		return enableAverage;
 	}

@@ -166,11 +166,11 @@ public class LazyNcdProcessing {
 	}
 
 	public void setFlags(NcdReductionFlags flags) {
-		this.flags = flags;
+		this.flags = new NcdReductionFlags(flags);
 	}
 
 	public void setNcdDetectors(NcdDetectors ncdDetectors) {
-		this.ncdDetectors = ncdDetectors;
+		this.ncdDetectors = new NcdDetectors(ncdDetectors);
 	}
 
 	public void setFirstFrame(Integer firstFrame) {
@@ -502,14 +502,16 @@ public class LazyNcdProcessing {
 		if(flags.isEnableSector()) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			int[] radii = intSector.getIntRadii();
+			int[] intRadii = intSector.getIntRadii();
+			double[] radii = intSector.getRadii();
+			double dpp = intSector.getDpp();
 			secFrames = Arrays.copyOf(frames, secRank);
-			secFrames[secRank - 1] = radii[1] - radii[0] + 1;
+			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
 			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secRank, secFrames, true, "counts");
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
-			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * intSector.getDpp());
+			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
 			
 			lazySectorIntegration.setMask(mask);

@@ -135,6 +135,7 @@ public class DataReductionHandler extends AbstractHandler {
 			final Integer dimSaxs = ncdDetectors.getDimSaxs();
 			final boolean enableWaxs = flags.isEnableWaxs();
 			final boolean enableSaxs = flags.isEnableSaxs();
+			final boolean enableBackground = flags.isEnableBackground();
 			final String workingDir = NcdDataReductionParameters.getWorkingDirectory();
 			final String bgPath = NcdDataReductionParameters.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
@@ -152,33 +153,28 @@ public class DataReductionHandler extends AbstractHandler {
 					monitor.beginTask("Running NCD data reduction",idxMonitor*selObjects.length);
 					
 					String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
-					final String bgFilename = workingDir + "/background" + detNames + generateDateTimeStamp() + bgName;
 					
 					IFileSystem fileSystem = EFS.getLocalFileSystem();
 					try {
-					IFileStore inputFile = fileSystem.getStore(URI.create(bgPath));
-					IFileStore outputFile = fileSystem.getStore(URI.create(bgFilename));
-					inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
-					// Check that results file is writable
-					IFileInfo info = outputFile.fetchInfo();
-					if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
-						info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
-						outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
-					}
-					
-					} catch (final Exception e) {
-						logger.error("SCISOFT NCD: Error creating background file", e);
-						return Status.CANCEL_STATUS;
-					}
-					
-					try {
-						if (enableSaxs) {
+						if (enableBackground) {
+							final String bgFilename = workingDir + "/background" + detNames + generateDateTimeStamp() + bgName;
+							IFileStore inputFile = fileSystem.getStore(URI.create(bgPath));
+							IFileStore outputFile = fileSystem.getStore(URI.create(bgFilename));
+							inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
+							// Check that results file is writable
+							IFileInfo info = outputFile.fetchInfo();
+							if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
+								info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
+								outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
+							}	
+							if (enableSaxs) {
 							bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
 							processing.setBgFile(bgFilename);
 							processing.setBgDetector(detectorSaxs+"_result");
 							processing.setBgFirstFrame(null);
 							processing.setLastFrame(null);
 							processing.setBgFrameSelection(null);
+							}
 						}
 					} catch (Exception e) {
 						logger.error("SCISOFT NCD: Error processing background file", e);
