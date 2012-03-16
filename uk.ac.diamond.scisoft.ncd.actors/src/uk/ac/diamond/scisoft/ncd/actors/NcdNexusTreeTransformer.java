@@ -45,7 +45,12 @@ import ptolemy.kernel.util.Attribute;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.LongDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.ShortDataset;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
@@ -56,7 +61,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 
 	private Parameter         detectorName;
 	private ResourceParameter filePathParam;
-	private String            detector = "PerkinElmer";
+	private String            detector;
 	private String            filePath;
 	
 	public NcdNexusTreeTransformer(CompositeEntity container, String name) throws NameDuplicationException, IllegalActionException {
@@ -152,7 +157,20 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		
 		int instrument_group_id = makegroup(entry_group_id, "instrument", "NXinstrument");
 		int detector_group_id = makegroup(instrument_group_id, detector, "NXdetector");
-		int input_data_id = makedata(detector_group_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, data);
+		
+		int datatype = -1;
+		if (data instanceof ShortDataset)
+			datatype = HDF5Constants.H5T_NATIVE_SHORT;
+		if (data instanceof IntegerDataset)
+			datatype = HDF5Constants.H5T_NATIVE_INT;
+		if (data instanceof LongDataset)
+			datatype = HDF5Constants.H5T_NATIVE_LONG;
+		if (data instanceof FloatDataset)
+			datatype = HDF5Constants.H5T_NATIVE_FLOAT;
+		if (data instanceof DoubleDataset)
+			datatype = HDF5Constants.H5T_NATIVE_DOUBLE;
+		
+		int input_data_id = makedata(detector_group_id, "data", datatype, data);
 		putattr(input_data_id, "signal", 1);
 		putattr(input_data_id, "units", "counts");
 		make_sas_type(detector_group_id);

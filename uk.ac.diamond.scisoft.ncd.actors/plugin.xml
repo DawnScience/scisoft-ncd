@@ -8,7 +8,7 @@
             group="org.dawb.passerelle.actors.actorgroup.io"
             icon="icons/ncd_icon.png"
             id="uk.ac.diamond.scisoft.ncd.actors.export"
-            name="I22 Tiff converter">
+            name="I22 Nexus Writer">
       </actor>
    </extension>
 
