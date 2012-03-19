@@ -517,12 +517,16 @@ public class LazyNcdProcessing {
 			
 			lazySectorIntegration.setMask(mask);
 			lazySectorIntegration.setIntSector(intSector);
+			lazySectorIntegration.setCalibrationData(slope, intercept);
+			lazySectorIntegration.setCameraLength(cameraLength);
 			
 			qaxis = calculateQaxisDataset(detector, dim, secFrames);
 			if (qaxis != null) {
 				lazySectorIntegration.setQaxis(qaxis, qaxisUnit);
 				lazySectorIntegration.writeQaxisData(sec_group_id);
 			}
+			
+			lazySectorIntegration.writeNcdMetadata(sec_group_id);
 		}
 		
 	    int inv_group_id = -1;
@@ -534,6 +538,8 @@ public class LazyNcdProcessing {
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			long[] invFrames = Arrays.copyOf(flags.isEnableSector() ? secFrames : frames, invRank);
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
+			
+			lazyInvariant.writeNcdMetadata(inv_group_id);
 		}
 		
 		
@@ -551,6 +557,7 @@ public class LazyNcdProcessing {
 			dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, rank, frames, true, "counts");
 			
 			lazyDetectorResponse.createDetectorResponseInput();
+			lazyDetectorResponse.writeNcdMetadata(dr_group_id);
 		}
 	    
 	    int norm_group_id = -1;
@@ -576,6 +583,7 @@ public class LazyNcdProcessing {
 				lazyNormalisation.setQaxis(qaxis, qaxisUnit);
 				lazyNormalisation.writeQaxisData(norm_group_id);
 			}
+			lazyNormalisation.writeNcdMetadata(norm_group_id);
 		}
 		
 	    int bg_group_id = -1; 
@@ -602,6 +610,7 @@ public class LazyNcdProcessing {
 				lazyNormalisation.setQaxis(qaxis, qaxisUnit);
 				lazyNormalisation.writeQaxisData(bg_group_id);
 			}
+			lazyBackgroundSubtraction.writeNcdMetadata(bg_group_id);
 		}
 	    
 		int sliceDim = 0;
@@ -755,6 +764,7 @@ public class LazyNcdProcessing {
 				lazyAverage.setQaxis(qaxis, qaxisUnit);
 				lazyAverage.writeQaxisData(input_ids.datagroup_id);
 			}
+			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
 		}
 		
 	    int result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");

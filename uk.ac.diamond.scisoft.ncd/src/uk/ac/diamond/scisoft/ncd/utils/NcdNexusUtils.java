@@ -236,7 +236,7 @@ public class NcdNexusUtils {
 		return open_group_id;
 	}
 	
-	public static int makedata(int parent_id, String name, int type, int rank, long[] dim, boolean signal, String units) throws HDF5Exception {
+	public static int makedata(int parent_id, String name, int type, int rank, long[] dim) throws HDF5Exception {
 		if (parent_id < 0)
 			throw new HDF5Exception("Illegal parent group id");
 
@@ -256,6 +256,17 @@ public class NcdNexusUtils {
 		H5.H5Sclose(dataspace_id);
 		H5.H5Pclose(dcpl_id);
 		
+		return dataset_id;
+	}
+		
+	public static int makedata(int parent_id, String name, int type, int rank, long[] dim, boolean signal, String units) throws HDF5Exception {
+		if (parent_id < 0)
+			throw new HDF5Exception("Illegal parent group id");
+
+		int dataset_id = makedata(parent_id, name, type, rank, dim);
+		if (dataset_id < 0)
+			throw new HDF5Exception("H5 makedata error: failed to create dataset");
+
 		// add signal attribute
 		{
 			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);

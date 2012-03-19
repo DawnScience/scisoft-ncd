@@ -19,6 +19,12 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
+import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
@@ -140,5 +146,123 @@ public class LazySectorIntegration extends LazyDataReduction {
 		return reductionStep.writeout(dim);
 	}
 	
+	@Override
+	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		super.writeNcdMetadata(datagroup_id);
 
+		if (intSector != null) {
+			writeBeamCenterMetadata(datagroup_id);
+			writeIntegrationAnglesMetadata(datagroup_id);
+			writeIntegrationRadiiMetadata(datagroup_id);
+			writeIntegrationSymmetryMetadata(datagroup_id);
+		}
+		if (cameraLength != null)
+			writeCameraLengthMetadata(datagroup_id);
+		if (mask != null)
+			writeMaskMetadata(datagroup_id);
+		if (gradient != null && intercept != null)
+			writeQcalibrationMetadata(datagroup_id);
+	}
+
+	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam center", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2}, false, "pixels");
+		int filespace_id = H5.H5Dget_space(beamcenter_id);
+		int type = H5.H5Dget_type(beamcenter_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(beamcenter_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getPoint());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(beamcenter_id);
+	}
+	
+	private void writeCameraLengthMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int cameralength_id = NcdNexusUtils.makedata(datagroup_id, "camera length", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {1}, false, "mm");
+		int filespace_id = H5.H5Dget_space(cameralength_id);
+		int type = H5.H5Dget_type(cameralength_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(cameralength_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.doubleValue()});
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(cameralength_id);
+	}
+	
+	private void writeIntegrationAnglesMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2}, false, "Deg");
+		int filespace_id = H5.H5Dget_space(angles_id);
+		int type = H5.H5Dget_type(angles_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(angles_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getAnglesDegrees());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(angles_id);
+	}
+	
+	private void writeIntegrationRadiiMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2}, false, "pixels");
+		int filespace_id = H5.H5Dget_space(radii_id);
+		int type = H5.H5Dget_type(radii_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(radii_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getRadii());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(radii_id);
+	}
+	
+	private void writeIntegrationSymmetryMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		String sym = intSector.getSymmetryText();
+		H5.H5Tset_size(symmetry_type, sym.length());
+		int symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, 1, new long[] {1});
+		int filespace_id = H5.H5Dget_space(symmetry_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(symmetry_id, symmetry_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, sym.getBytes());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(symmetry_type);
+		H5.H5Dclose(symmetry_id);
+	}
+	
+	private void writeMaskMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long[] maskShape = (long []) ConvertUtils.convert(mask.getShape(), long[].class);
+		int mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, mask.getRank(), maskShape, false, "pixels");
+		int filespace_id = H5.H5Dget_space(mask_id);
+		int type = H5.H5Dget_type(mask_id);
+		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mask.getBuffer());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(mask_id);
+	}
+	
+	private void writeQcalibrationMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int qcalibration_id = NcdNexusUtils.makedata(datagroup_id, "qaxis calibration", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2});
+		int filespace_id = H5.H5Dget_space(qcalibration_id);
+		int type = H5.H5Dget_type(qcalibration_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		double[] qCalibration = new double[] {gradient.doubleValue(), intercept.doubleValue()};
+		H5.H5Dwrite(qcalibration_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qCalibration);
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(qcalibration_id);
+	}
 }
