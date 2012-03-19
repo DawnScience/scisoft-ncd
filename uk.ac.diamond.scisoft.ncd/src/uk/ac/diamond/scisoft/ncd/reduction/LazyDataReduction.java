@@ -18,10 +18,17 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 
 import gda.data.nexus.tree.INexusTree;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
+import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 
@@ -92,5 +99,17 @@ public abstract class LazyDataReduction {
 			this.lastFrame = lastFrame;
 	}
 
-	public abstract void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception;	
+	public abstract void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception;
+	
+	public void writeQaxisData(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
+		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape, new int[] { 1 },
+				1, qaxisUnit);
+
+		int filespace_id = H5.H5Dget_space(qaxis_id);
+		int type_id = H5.H5Dget_type(qaxis_id);
+		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
+	}
 }
