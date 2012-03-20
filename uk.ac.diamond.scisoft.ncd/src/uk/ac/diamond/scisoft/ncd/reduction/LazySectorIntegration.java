@@ -29,6 +29,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5SectorIntegration;
@@ -243,7 +244,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		int type = H5.H5Dget_type(mask_id);
 		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mask.getBuffer());
+		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, AbstractDataset.INT8)).getBuffer());
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
