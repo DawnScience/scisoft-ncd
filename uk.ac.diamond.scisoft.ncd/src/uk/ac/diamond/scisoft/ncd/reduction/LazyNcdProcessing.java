@@ -16,7 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.concurrent.CancellationException;
@@ -28,15 +27,12 @@ import gda.data.nexus.tree.NexusTreeBuilder;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.collections.CollectionUtils;
-import org.apache.commons.collections.iterators.ArrayIterator;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math.util.MultidimensionalCounter;
-import org.apache.commons.math.util.MultidimensionalCounter.Iterator;
 
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -45,23 +41,12 @@ import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Maths;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
-import uk.ac.diamond.scisoft.analysis.dataset.Stats;
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.Average;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5DetectorResponse;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Invariant;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Normalisation;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
@@ -483,6 +468,16 @@ public class LazyNcdProcessing {
 		
 		int processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", "NXinstrument");
 		
+		if (firstFrame != null || lastFrame != null) {
+			frameSelection = StringUtils.leftPad("", rank - dim - 1, ";");
+			if (firstFrame != null)
+				frameSelection += Integer.toString(firstFrame);
+			frameSelection += "-";
+			if (lastFrame != null)
+				frameSelection += Integer.toString(lastFrame);
+			frameSelection += ";";
+		}
+		
 		if (frameSelection != null) {
 		    int sel_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySelection.name, "NXdetector");
 		    
@@ -492,7 +487,7 @@ public class LazyNcdProcessing {
 			H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		}
-			
+		
 	    int sec_group_id = -1;
 	    int sec_data_id = -1;
 	    int az_data_id = -1;
