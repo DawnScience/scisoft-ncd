@@ -18,36 +18,31 @@ package uk.ac.diamond.scisoft.ncd.rcp.reduction;
 
 import static org.junit.Assert.assertEquals;
 
-import java.io.StringReader;
+import java.util.Arrays;
 
 import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusExtractorException;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.data.nexus.tree.NexusTreeNode;
-import gda.data.nexus.tree.NexusTreeNodeSelection;
 import gda.util.TestUtils;
 
-import org.eclipse.core.runtime.NullProgressMonitor;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+
+import org.apache.commons.beanutils.ConvertUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-import org.nexusformat.NexusException;
-import org.nexusformat.NexusFile;
-import org.xml.sax.InputSource;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyBackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyDetectorResponse;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyInvariant;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNormalisation;
 import uk.ac.diamond.scisoft.ncd.reduction.LazySectorIntegration;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdLazyDataReductionTest {
@@ -56,16 +51,16 @@ public class NcdLazyDataReductionTest {
 	private static String filename, bgFile, drFile, secFile;
 	private static String testDatasetName = "testInput"; 
 	private static String testNormName = "testNorm"; 
-	private Integer firstFrame = 33;
-	private Integer lastFrame = 52;
-	private static Integer bgFirstFrame = 1;
-	private static Integer bgLastFrame = 7;
 	
-	static int [] shape = new int[] {3, 91, 128, 64};
-	static int [] imageShape = new int[] {shape[2], shape[3]};
-	static int bgFrames = shape[1] / 9;
-	private static float scale = 10.0f; 
-	private static float scaleBg = 0.1f;
+	private static AbstractDataset data;
+	static long [] shape = new long[] {3, 91, 128, 64};
+	static long [] normShape = new long[] {shape[0], shape[1], 1};
+	static long [] invShape = new long[] {shape[0], shape[1]};
+	static long [] imageShape = new long[] {shape[2], shape[3]};
+	static int bgFrames = (int) (shape[1] / 9);
+	static long [] bgShape = new long[] {bgFrames, imageShape[0], imageShape[1]};
+	private static float scale = 1.0f; 
+	private static float scaleBg = 0.46246f;
 	private static float absScale = 100.0f;
 	static int dim = 2;
 	static int points = 1;
@@ -77,267 +72,263 @@ public class NcdLazyDataReductionTest {
 		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(NcdLazyDataReductionTest.class.getCanonicalName());
 		TestUtils.makeScratchDirectory(testScratchDirectoryName);
 		
-		for (int n: imageShape) points *= n;
+		for (long n: imageShape) points *= n;
 		
 		{
 			filename = testScratchDirectoryName + "ncd_sda_test.nxs"; 
 
-			NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_CREATE5);
-			nxsFile.makegroup("instrument", NexusExtractor.NXInstrumentClassName);
-			nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
+			int nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
+			NcdNexusUtils.makegroup(entry_id, "results", NexusExtractor.NXInstrumentClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
+			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NexusExtractor.NXDataClassName);
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
+			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape.length, normShape, true, "counts");
 
-			int[] datDimPrefix = new int[] {1, 1};
 			for (int n = 0; n < shape[0]; n++) {
-				int[] gridFrame = NcdDataUtils.convertFlatIndex(n, shape, 3);
-
 				for (int frames = 0; frames < shape[1]; frames++) {
 					float[] norm = new float[] {scale*(n+1)};
 					float[] data = new float[points];
 					for (int i = 0; i < shape[2]; i++) {
 						for (int j = 0; j < shape[3]; j++) {
-							int idx = i*shape[3] + j; 
+							int idx = (int) (i*shape[3] + j); 
 							float val = n*shape[1] + frames + i*shape[3] + j;
 							data[idx] = val;
 						}
 					}
-					INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
-					NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
-					NexusGroupData normgroup = new NexusGroupData(new int[] {1}, NexusFile.NX_FLOAT32, norm);
-					datagroup.isDetectorEntryData = true;
-					normgroup.isDetectorEntryData = true;
-					NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
-					NcdDataUtils.addData(nxdata, testNormName, "data", normgroup, "counts", 1);
-
-					int[] datStartPosition =  new int[] {gridFrame[0], frames};
-					int[] datDimMake =  new int[] {shape[0], shape[1]};
-					if (n == 0 && frames == 0) {
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
+					{
+						long[] start = new long[] { n, frames, 0, 0 };
+						long[] count = new long[] { 1, 1, 1, 1 };
+						long[] block = new long[] { 1, 1, shape[2], shape[3] };
+						int filespace_id = H5.H5Dget_space(data_id);
+						int type_id = H5.H5Dget_type(data_id);
+						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+						H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
+						H5.H5Sclose(memspace_id);
+						H5.H5Sclose(filespace_id);
+						H5.H5Tclose(type_id);
 					}
-					else {
-						nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
-						nxsFile.closegroup();
-
-						nxsFile.opengroup(testNormName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
-						nxsFile.closegroup();
+					{
+						long[] start = new long[] { n, frames, 0 };
+						long[] count = new long[] { 1, 1, 1 };
+						long[] block = new long[] { 1, 1, 1 };
+						int filespace_id = H5.H5Dget_space(norm_id);
+						int type_id = H5.H5Dget_type(norm_id);
+						int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+						H5.H5Dwrite(norm_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, norm);
+						H5.H5Sclose(memspace_id);
+						H5.H5Sclose(filespace_id);
+						H5.H5Tclose(type_id);
 					}
-					nxsFile.flush();
 				}
 			}
-			nxsFile.closegroup();
-			nxsFile.close();
+			H5.H5Dclose(data_id);
+			H5.H5Gclose(datagroup_id);
+			H5.H5Dclose(norm_id);
+			H5.H5Gclose(normgroup_id);
+			H5.H5Gclose(entry_id);
+			H5.H5Fclose(nxsFile);
 		}
 		
 
 		{
 			bgFile = testScratchDirectoryName + "bgfile_ncd_sda_test.nxs"; 
 
-			NexusFile nxsFile = new NexusFile(bgFile, NexusFile.NXACC_CREATE5);
-			nxsFile.makegroup("entry1", NexusExtractor.NXEntryClassName);
-			nxsFile.opengroup("entry1", NexusExtractor.NXEntryClassName);
-			nxsFile.makegroup("instrument", NexusExtractor.NXInstrumentClassName);
-			nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-
-			int[] datDimPrefix = new int[] {1};
+			int nxsFile = H5.H5Fcreate(bgFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape.length, bgShape, true, "counts");
 
 			for (int frames = 0; frames < bgFrames; frames++) {
 				float[] data = new float[points];
-				float[] norm = new float[] {scale};
 				for (int i = 0; i < shape[2]; i++) {
 					for (int j = 0; j < shape[3]; j++) {
-						int idx = i*shape[3] + j;
-						float val = scale*(i*shape[3] + j) / absScale;
-						if (frames >= bgFirstFrame && frames <= bgLastFrame)
-							data[idx] = val;
-						else data[idx] = 0.0f;
+						int idx = (int) (i*shape[3] + j);
+						data[idx] = i*shape[3] + j;
 					}
 				}
-				INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
-				NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
-				NexusGroupData normgroup = new NexusGroupData(new int[] {1}, NexusFile.NX_FLOAT32, norm);
-				datagroup.isDetectorEntryData = true;
-				normgroup.isDetectorEntryData = true;
-				NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
-				NcdDataUtils.addData(nxdata, testNormName, "data", normgroup, "counts", 1);
-
-				int[] datStartPosition =  new int[] {frames};
-				int[] datDimMake =  new int[] {bgFrames};
-				if (frames == 0) {
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
+				{
+					long[] start = new long[] { frames, 0, 0 };
+					long[] count = new long[] { 1, 1, 1 };
+					long[] block = new long[] { 1, bgShape[1], bgShape[2] };
+					int filespace_id = H5.H5Dget_space(data_id);
+					int type_id = H5.H5Dget_type(data_id);
+					int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+					H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+					H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
+					H5.H5Sclose(memspace_id);
+					H5.H5Sclose(filespace_id);
+					H5.H5Tclose(type_id);
 				}
-				else {
-					nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
-					nxsFile.closegroup();
-
-					nxsFile.opengroup(testNormName, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 1);
-					nxsFile.closegroup();
-				}
-				nxsFile.flush();
 			}
-
-			nxsFile.closegroup();
-			nxsFile.closegroup();
-			nxsFile.close();
+			H5.H5Dclose(data_id);
+			H5.H5Gclose(datagroup_id);
+			H5.H5Gclose(entry_id);
+			H5.H5Fclose(nxsFile);
 		}
 		
 		{
 			drFile = testScratchDirectoryName + "drfile_ncd_sda_test.nxs"; 
         
-			NexusFile nxsFile = new NexusFile(drFile, NexusFile.NXACC_CREATE5);
-			nxsFile.makegroup("entry1", NexusExtractor.NXEntryClassName);
-			nxsFile.opengroup("entry1", NexusExtractor.NXEntryClassName);
-			nxsFile.makegroup("instrument", NexusExtractor.NXInstrumentClassName);
-			nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-        
-			int[] datDimPrefix = new int[] {1};
+			int nxsFile = H5.H5Fcreate(drFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
+			int processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NexusExtractor.NXInstrumentClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NexusExtractor.NXDetectorClassName);
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape.length, imageShape, true, "counts");
+
 			float[] data = new float[points];
-        
-			int frames = 0;
 			for (int i = 0; i < shape[2]; i++) {
 				for (int j = 0; j < shape[3]; j++) {
-					int idx = i*shape[3] + j; 
+					int idx = (int) (i*shape[3] + j); 
 					float val = scaleBg;
 					data[idx] = val;
 				}
 			}
-			INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
-			NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
-			datagroup.isDetectorEntryData = true;
-			NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
-        
-			int[] datStartPosition =  new int[] {frames};
-			int[] datDimMake =  new int[] {1};
-			NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
-			NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testNormName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 1);
-			nxsFile.flush();
-        
-			nxsFile.closegroup();
-			nxsFile.closegroup();
-			nxsFile.close();
+
+			int filespace_id = H5.H5Dget_space(data_id);
+			int type_id = H5.H5Dget_type(data_id);
+			int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+			H5.H5Sselect_all(filespace_id);
+			H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
+			H5.H5Sclose(memspace_id);
+			H5.H5Sclose(filespace_id);
+			H5.H5Tclose(type_id);
+
+			H5.H5Dclose(data_id);
+			H5.H5Gclose(datagroup_id);
+			H5.H5Gclose(processing_group_id);
+			H5.H5Gclose(entry_id);
+			H5.H5Fclose(nxsFile);
 		}
 		
 		{
 			secFile = testScratchDirectoryName + "secfile_ncd_sda_test.nxs"; 
 			
-			NexusFile nxsFile = new NexusFile(secFile, NexusFile.NXACC_CREATE5);
-			nxsFile.makegroup("instrument", NexusExtractor.NXInstrumentClassName);
-			nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-			
-			int[] datDimPrefix = new int[] {1, 1};
+			int nxsFile = H5.H5Fcreate(secFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
+
 			for (int n = 0; n < shape[0]; n++) {
-				int[] gridFrame = NcdDataUtils.convertFlatIndex(n, shape, 3);
-				
 				for (int frames = 0; frames < shape[1]; frames++) {
 					float[] data = new float[points];
 					for (int i = 0; i < shape[2]; i++) {
 						for (int j = 0; j < shape[3]; j++) {
-							int idx = i*shape[3] + j; 
+							int idx = (int) (i*shape[3] + j); 
 							float val = n*shape[1] + frames + (float)Math.sqrt((i*i+j*j)/(1.0f*shape[3]*shape[3]));
 							data[idx] = val;
 						}
 					}
-					INexusTree nxdata = new NexusTreeNode("", NexusExtractor.NXInstrumentClassName, null);
-					NexusGroupData datagroup = new NexusGroupData(imageShape, NexusFile.NX_FLOAT32, data);
-					datagroup.isDetectorEntryData = true;
-					NcdDataUtils.addData(nxdata, testDatasetName, "data", datagroup, "counts", 1);
-					
-					int[] datStartPosition =  new int[] {gridFrame[0], frames};
-					int[] datDimMake =  new int[] {shape[0], shape[1]};
-					if (n == 0 && frames == 0) {
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName), true, false, null, datDimPrefix, datStartPosition, datDimMake, 2);
+					{
+						long[] start = new long[] { n, frames, 0, 0 };
+						long[] count = new long[] { 1, 1, 1, 1 };
+						long[] block = new long[] { 1, 1, shape[2], shape[3] };
+						int filespace_id = H5.H5Dget_space(data_id);
+						int type_id = H5.H5Dget_type(data_id);
+						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+						H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
+						H5.H5Sclose(memspace_id);
+						H5.H5Sclose(filespace_id);
+						H5.H5Tclose(type_id);
 					}
-					else {
-						nxsFile.opengroup(testDatasetName, NexusExtractor.NXDetectorClassName);
-						NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(nxdata, testDatasetName).getNode("data"), true, false, null, datDimPrefix,  datStartPosition, datDimMake, 2);
-						nxsFile.closegroup();
-					}
-					nxsFile.flush();
 				}
 			}
-			nxsFile.closegroup();
-			nxsFile.close();
-
+			H5.H5Dclose(data_id);
+			H5.H5Gclose(datagroup_id);
+			H5.H5Gclose(entry_id);
+			H5.H5Fclose(nxsFile);
 		}
+		
+	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, testDatasetName);
+	    SliceSettings dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
+	    int[] start = new int[] {0, 0, 0, 0};
+	    dataSlice.setStart(start);
+		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		
 	}
 	
 	@Test
-	public void testLazyNormalisation() throws Exception {
+	public void testLazyNormalisation() throws HDF5Exception {
 		
-		NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		LazyNormalisation ncdTestClass = new LazyNormalisation(testDatasetName, shape, 10, nxsFile);
+		LazyNormalisation lazyNormalisation = new LazyNormalisation();
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		int norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, "NXdetector");
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape.length, shape, true, "counts");
+
+		DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, testNormName);
+
+		int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
+		long[] framesCal = new long[rankCal];
+		H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, framesCal, null);
+
+		lazyNormalisation.setAbsScaling((double) absScale);
+		lazyNormalisation.setNormChannel(0);
+
+		SliceSettings calibrationSliceParams = new SliceSettings(framesCal, 0, (int) framesCal[0]);
+	    int[] start = new int[] {0, 0, 0};
+	    calibrationSliceParams.setStart(start);
+		AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
+
+		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		input_ids.setIDs(norm_group_id, norm_data_id);
+	    long[] lstart = new long[] {0, 0, 0, 0};
+		long[] count = new long[] {1, 1, 1, 1};
+		input_ids.setSlice(lstart, shape, count, shape);
+		AbstractDataset outDataset = lazyNormalisation.execute(dim, data, dataCal, input_ids);
 		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
-		
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setDetector(testDatasetName);
-		ncdTestClass.setCalibration(testNormName);
-		ncdTestClass.setAbsScaling((double) absScale);
-		ncdTestClass.setNormChannel(0);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
-		
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyNormalisation.name, false));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
-				int[] start = new int[] {g, k, 0, 0};
-				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyNormalisation.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData, LazyNormalisation.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
+			for (int k = 0; k < shape[1]; k++) {
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {i,j});
-						float expected = absScale*(g*shape[1] + k + firstFrame + i*shape[3] + j) / (scale*(g+1));
+						float value = outDataset.getFloat(new int[] {g, k, i, j});
+						float expected = absScale*(g*shape[1] + k + i*shape[3] + j) / (scale*(g+1));
 
 						assertEquals(String.format("Test normalisation frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
 					}
 			}
 	}
 	
-	@Test
-	public void testLazyBackgroundSubtraction() throws Exception {
+	//@Test
+	public void testLazyBackgroundSubtraction() throws HDF5Exception {
 		
-		NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		LazyBackgroundSubtraction ncdTestClass = new LazyBackgroundSubtraction(testDatasetName, shape, 10, nxsFile);
-		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
-		
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setDetector(testDatasetName);
-		ncdTestClass.setBgFile(bgFile);
-		ncdTestClass.setBgRoot("entry1/instrument");
-		ncdTestClass.setBgScale((double) scaleBg);
-		ncdTestClass.setAbsScaling((double) absScale);
-		ncdTestClass.setCalibration(testNormName);
-		ncdTestClass.setNormChannel(0);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.setBgFirstFrame(bgFirstFrame);
-		ncdTestClass.setBgLastFrame(bgLastFrame);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
-		
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyBackgroundSubtraction.name, false));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
+		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		int bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, shape.length, shape, true, "counts");
+			
+		DataSliceIdentifiers bgIds = NcdNexusUtils.readDataId(bgFile, testDatasetName);
+		H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgShape, null);
+		int[] bgShape_int = (int[]) ConvertUtils.convert(bgShape, int[].class);
+		lazyBackgroundSubtraction.setBgScale((double) scaleBg);
+
+		SliceSettings bgSliceParams = new SliceSettings(bgShape, 0, bgShape_int[0]);
+		int[] start = new int[] { 0, 0, 0 };
+		bgSliceParams.setStart(start);
+		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
+
+		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		input_ids.setIDs(bg_group_id, bg_data_id);
+		long[] lstart = new long[] { 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1 };
+		input_ids.setSlice(lstart, shape, count, shape);
+		input_ids.setIDs(bg_group_id, bg_data_id);
+		AbstractDataset outDataset = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
+			
 		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
-				int[] start = new int[] {g, k, 0, 0};
-				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyBackgroundSubtraction.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyBackgroundSubtraction.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
+			for (int k = 0; k < shape[1]; k++) {
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {i,j});
-						float expected = g*shape[1] + k + firstFrame + (1.0f - scaleBg)*(i*shape[3] + j);
+						float value = outDataset.getFloat(new int[] {g, k, i, j});
+						float expected = g*shape[1] + k + (1.0f - scaleBg)*(i*shape[3] + j);
 
 						assertEquals(String.format("Test background subtraction frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
 					}
@@ -345,34 +336,31 @@ public class NcdLazyDataReductionTest {
 	}
 	
 	@Test
-	public void testLazyDetectorResponse() throws Exception {
+	public void testLazyDetectorResponse() throws HDF5Exception {
 		
-		NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		LazyDetectorResponse ncdTestClass = new LazyDetectorResponse(testDatasetName, shape, 10, nxsFile);
+		LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, testDatasetName);
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+	    int dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, shape.length, shape, true, "counts");
+			
+		lazyDetectorResponse.createDetectorResponseInput();
 		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
+		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		input_ids.setIDs(dr_group_id, dr_data_id);
+		long[] lstart = new long[] { 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1 };
+		input_ids.setSlice(lstart, shape, count, shape);
+		AbstractDataset outDataset = lazyDetectorResponse.execute(dim, data, input_ids);
 		
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setDetector(testDatasetName);
-		ncdTestClass.setDrFile(drFile);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
-		
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyDetectorResponse.name, false));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
 		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
-				int[] start = new int[] {g, k, 0, 0};
-				int[] stop = new int[] {g + 1, k + 1, shape[2], shape[3]};
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyDetectorResponse.name, null, tmpNXdata, dim, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyDetectorResponse.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
+			for (int k = 0; k < shape[1]; k++) {
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {i,j});
-						float expected = (g*shape[1] + k + firstFrame + i*shape[3] + j)*scaleBg;
+						float value = outDataset.getFloat(new int[] {g, k, i, j});
+						float expected = (g*shape[1] + k + i*shape[3] + j)*scaleBg;
 
 						assertEquals(String.format("Test detector response frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
 					}
@@ -380,35 +368,30 @@ public class NcdLazyDataReductionTest {
 	}
 	
 	@Test
-	public void testLazyInvariant() throws NexusException, NexusExtractorException, Exception {
+	public void testLazyInvariant() throws HDF5Exception {
 
-		NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		LazyInvariant ncdTestClass = new LazyInvariant(testDatasetName, shape, 10, nxsFile);
-
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
-
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setDetector(testDatasetName);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
-
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyInvariant.name, false));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
-
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
-				int[] start = new int[] {g, k};
-				int[] stop = new int[] {g + 1, k + 1};
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazyInvariant.name, null, tmpNXdata, 1, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazyInvariant.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
-				float value = outDataset.getFloat(new int[] {0});
+		LazyInvariant lazyInvariant = new LazyInvariant();
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+	    int inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invShape.length, invShape, true, "counts");
+		
+		DataSliceIdentifiers inv_id = new DataSliceIdentifiers();
+		inv_id.setIDs(inv_group_id, inv_data_id);
+		long[] lstart = new long[] { 0, 0 };
+		long[] count = new long[] { 1, 1 };
+		inv_id.setSlice(lstart, invShape, count, invShape);
+    
+		AbstractDataset outDataset = lazyInvariant.execute(dim, data, inv_id);
+		for (int g = 0; g < invShape[0]; g++)
+			for (int k = 0; k < invShape[1]; k++) {
+				float value = outDataset.getFloat(new int[] {g, k});
 				float expected = 0.0f;
 				for (int i = 0; i < shape[2]; i++)
 					for (int j = 0; j < shape[3]; j++) 
-						expected += g*shape[1] + k + firstFrame + i*shape[3] + j;
+						expected += g*shape[1] + k + i*shape[3] + j;
 				assertEquals(String.format("Test invariant result for (%d, %d)", g, k), expected, value, 1e-6*expected);
 			}
 	}
@@ -416,38 +399,56 @@ public class NcdLazyDataReductionTest {
 	@Test
 	public void testLazySectorIntegration() throws Exception {
 		
-		NexusFile nxsFile = new NexusFile(secFile, NexusFile.NXACC_RDWR);
-		LazySectorIntegration ncdTestClass = new LazySectorIntegration(testDatasetName, shape, 10, nxsFile);
-		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(secFile, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
-		
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setDetector(testDatasetName);
+		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		int sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
 		SectorROI intSector = new SectorROI(0, 0, 0, shape[3], 0, 90);
-		ncdTestClass.setIntSector(intSector);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
-		
-		detectorTree = NexusTreeBuilder.getNexusTree(secFile, getDetectorSelection(LazySectorIntegration.name, false));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < (lastFrame - firstFrame + 1); k++) {
-				int[] start = new int[] {g, k, 0};
-				int[] stop = new int[] {g + 1, k + 1, shape[3]};
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(LazySectorIntegration.name, null, tmpNXdata, 1, start, stop);
-				AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpData,LazySectorIntegration.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
-				int[] startImage = new int[] {g, firstFrame + k, 0, 0};
-				int[] stopImage = new int[] {g + 1, firstFrame + k + 1, shape[2], shape[3]};
-				INexusTree tmpInput = NcdDataUtils.selectNAxisFrames(testDatasetName, null, nxdata, 2, startImage, stopImage);
-				AbstractDataset[] intResult = ROIProfile.sector(Nexus.createDataset(NcdDataUtils.getDetTree(tmpInput,testDatasetName).getChildNode("data", NexusExtractor.SDSClassName).getData(), false), null, intSector);
-				for (int i = 1; i < shape[3]; i++) {
-						float value = outDataset.getFloat(new int[] {i});
-						float expected = intResult[0].getFloat(new int[] {i});
+		int[] intRadii = intSector.getIntRadii();
+		double[] radii = intSector.getRadii();
+		double dpp = intSector.getDpp();
+		long[] secFrames = Arrays.copyOf(shape, shape.length - dim + 1);
+		secFrames[secFrames.length - 1] = intRadii[1] - intRadii[0] + 1;
+		int sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secFrames.length, secFrames, true,
+				"counts");
 
-						assertEquals(String.format("Test sector integration frame for (%d, %d, %d)", g, k, i), expected, value, 1e-6*expected);
+		double[] angles = intSector.getAngles();
+		long[] azFrames = Arrays.copyOf(secFrames, secFrames.length);
+		azFrames[azFrames.length - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
+		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames.length, azFrames, false,
+				"counts");
+
+		lazySectorIntegration.setIntSector(intSector);
+
+		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		long[] lstart = new long[] { 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1 };
+		input_ids.setSlice(lstart, shape, count, shape);
+
+		DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
+		sector_id.setIDs(sec_group_id, sec_data_id);
+		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
+		azimuth_id.setIDs(sec_group_id, az_data_id);
+
+		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id);
+			
+		for (int g = 0; g < shape[0]; g++)
+			for (int k = 0; k < shape[1]; k++) {
+				int[] startImage = new int[] {g, k, 0, 0};
+				int[] stopImage = new int[] {g + 1, k + 1, (int) shape[2], (int) shape[3]};
+				AbstractDataset image = data.getSlice(startImage, stopImage, null);
+				AbstractDataset[] intResult = ROIProfile.sector(image.squeeze(), null, intSector);
+				for (int i = 0; i < outDataset[1].getShape()[2]; i++) {
+						float value = outDataset[1].getFloat(new int[] {g, k, i});
+						float expected = intResult[0].getFloat(new int[] {i});
+						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d)", g, k, i), expected, value, 1e-6*expected);
+				}
+				for (int i = 0; i < outDataset[0].getShape()[2]; i++) {
+					float value = outDataset[0].getFloat(new int[] {g, k, i});
+					float expected = intResult[1].getFloat(new int[] {i});
+					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d)", g, k, i), expected, value, 1e-6*expected);
 				}
 			}
 	}
@@ -455,50 +456,33 @@ public class NcdLazyDataReductionTest {
 	@Test
 	public void testLazyAverage() throws Exception {
 		
-		NexusFile nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		LazyAverage ncdTestClass = new LazyAverage(testDatasetName, shape, 10, nxsFile);
+		LazyAverage lazyAverage = new LazyAverage();
+		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(testDatasetName, false));
-		INexusTree nxdata = detectorTree.getNode("instrument");
+	    DataSliceIdentifiers input_ids = NcdNexusUtils.readDataId(filename, testDatasetName);
+		long[] lstart = new long[] { 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1 };
+		input_ids.setSlice(lstart, shape, count, shape);
 		
-		nxsFile.opengroup("instrument", NexusExtractor.NXInstrumentClassName);
-		ncdTestClass.setFirstFrame(firstFrame, dim);
-		ncdTestClass.setLastFrame(lastFrame, dim);
-		ncdTestClass.setAverageIndices(new int[] {1,2}, dim);
-		ncdTestClass.execute(nxdata, dim, new NullProgressMonitor());
-		nxsFile.closegroup();
+		lazyAverage.setAverageIndices(new int[] {1,2});
+		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 1000, input_ids);
 		
-		detectorTree = NexusTreeBuilder.getNexusTree(filename, getDetectorSelection(LazyAverage.name, true));
-		INexusTree tmpNXdata = detectorTree.getNode("instrument");
-		AbstractDataset outDataset = Nexus.createDataset(NcdDataUtils.getDetTree(tmpNXdata,LazyAverage.name).getChildNode("data", NexusExtractor.SDSClassName).getData(), false);
+	    long[] shapeRes = new long[] {1, 1, shape[2], shape[3]}; 
+		SliceSettings resultsSlice = new SliceSettings(shapeRes, 0, (int) shapeRes[0]);
+	    int[] start = new int[] {0, 0, 0, 0};
+	    resultsSlice.setStart(start);
+		AbstractDataset outDataset = NcdNexusUtils.sliceInputData(resultsSlice, input_ids);
+		
 		for (int i = 0; i < shape[2]; i++)
 			for (int j = 0; j < shape[3]; j++) {
 				float value = outDataset.getFloat(new int[] {0, 0, i, j});
-				float expected = ((shape[0]-1)*shape[1]/2 + (lastFrame - firstFrame)/2.0f + firstFrame + i*shape[3] + j);
+				float expected = ((shape[0]-1)*shape[1]/2 + (shape[1] - 1)/2.0f + i*shape[3] + j);
 
 				// This check fails for higher accuracy settings
 				assertEquals(String.format("Test average frame for (%d, %d)", i, j), expected, value, 1e-6*expected);
 			}
-	}
-	
-	private NexusTreeNodeSelection getDetectorSelection(String detName, boolean getData) throws Exception {
-		String type;
-		if (getData) type = "2";
-		else type = "1";
-		String xml = "<?xml version='1.0' encoding='UTF-8'?>" +
-		"<nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>NXinstrument</nxClass><wanted>1</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXdetector</nxClass><name>"+ detName + "</name><wanted>2</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>data</name><wanted>2</wanted><dataType>" + type + "</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>NXdetector</nxClass><name>"+ testNormName + "</name><wanted>2</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>data</name><wanted>2</wanted><dataType>" + type + "</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>";
-		return NexusTreeNodeSelection.createFromXML(new InputSource(new StringReader(xml)));
 	}
 	
 	@AfterClass
