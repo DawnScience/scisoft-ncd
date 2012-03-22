@@ -22,47 +22,18 @@ import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
 
 public class LazyBackgroundSubtraction extends LazyDataReduction {
 
-	private String bgFile;
-	private String bgRoot;
 	private Double bgScaling;
-	private Double absScaling;
-
-	private Integer bgFirstFrame;
-	private Integer bgLastFrame;
-
 	public static String name = "BackgroundSubtraction";
 
-	public void setBgFile(String bgFile) {
-		this.bgFile = bgFile;
-	}
-
-	public void setBgRoot(String bgRoot) {
-		this.bgRoot = bgRoot;
-	}
-
-	public void setBgFirstFrame(Integer bgFirstFrame) {
-		this.bgFirstFrame = bgFirstFrame;
-	}
-
-	public void setBgLastFrame(Integer bgLastFrame) {
-		this.bgLastFrame = bgLastFrame;
-	}
-
 	public void setBgScale(Double bgScaling) {
-
-		this.bgScaling = bgScaling;
+		this.bgScaling = new Double(bgScaling);
 	}
-
-	public void setAbsScaling(Double absScaling) {
-
-		this.absScaling = absScaling;
-
-	}
-
+	
 	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id) {
 		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
 		reductionStep.parentngd = data;
 		
+		if (bgScaling != null) bgData.imultiply(bgScaling);
 		reductionStep.setBackground(bgData);
 		reductionStep.setIDs(bg_id);
 		

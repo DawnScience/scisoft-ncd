@@ -68,7 +68,7 @@ public class LazyNcdProcessing {
 	private String frameSelection;
 	private String gridAverage;
 	
-	int frameBatch;
+	private int frameBatch;
 	
 	public LazyNcdProcessing() {
 		enableMask = false;
@@ -330,8 +330,8 @@ public class LazyNcdProcessing {
 			lazyBackgroundSubtraction.setBgScale(bgScaling);
 			
 			if (qaxis != null) {
-				lazyNormalisation.setQaxis(qaxis, qaxisUnit);
-				lazyNormalisation.writeQaxisData(bg_group_id);
+				lazyBackgroundSubtraction.setQaxis(qaxis, qaxisUnit);
+				lazyBackgroundSubtraction.writeQaxisData(bg_group_id);
 			}
 			lazyBackgroundSubtraction.writeNcdMetadata(bg_group_id);
 		}
@@ -453,7 +453,6 @@ public class LazyNcdProcessing {
 				SliceSettings bgSliceParams = new SliceSettings(bgFrames, sliceDim, bgSliceSize);
 				bgSliceParams.setStart(bgStart);
 				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
-				if (bgScaling != null) bgData.imultiply(bgScaling);
 				
 				input_ids.setIDs(bg_group_id, bg_data_id);
 				data = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
@@ -534,7 +533,7 @@ public class LazyNcdProcessing {
 	    H5.H5Fclose(nxsfile_handle);
 	}
 	
-	AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
+	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
 		
 		AbstractDataset qaxis = null;
 		
