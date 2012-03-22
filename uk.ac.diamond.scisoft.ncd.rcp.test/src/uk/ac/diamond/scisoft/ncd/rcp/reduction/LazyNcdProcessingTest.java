@@ -79,9 +79,9 @@ public class LazyNcdProcessingTest {
 	private static String testScratchDirectoryName;
 	private static Integer firstFrame = 60;
 	private static Integer lastFrame = 70;
+	//private static String frameSelection = "0;60-70";
 	private static Integer bgFirstFrame = 5;
 	private static Integer bgLastFrame = 5;
-	//private static String frameSelection = "0;60-70";
 	private static String bgFrameSelection = "0;" + bgFirstFrame.toString() + "-" + bgLastFrame.toString();
 	
 	private static AbstractDataset dr;
@@ -90,8 +90,7 @@ public class LazyNcdProcessingTest {
 	private static long[] drFrames = new long[] {1, 1, 512, 512};
 	private static long[] bgSelFrames = new long[] {1, bgLastFrame - bgFirstFrame + 1, 512, 512};
 	private static long[] framesCal = new long[] {1, 120, 9};
-	private static long[] framesResult = frames;  // TODO: Change after data slicing is supported
-	//private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
+	private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
 	private static long[] framesSec, framesAve, framesBg, framesBgSec, framesInv;
 	
 	@BeforeClass
@@ -141,11 +140,11 @@ public class LazyNcdProcessingTest {
 
 		intSector = new SectorROI(262.0, 11.0, 20.0, 500.0, 60.0, 120.0);
 		intPoints = intSector.getIntRadius(1) - intSector.getIntRadius(0);
-		framesSec = new long[] {1, frames[1], intPoints}; //TODO: update when data slicing is supported
-		framesInv = new long[] {1, frames[1]}; //TODO: update when data slicing is supported
-		framesAve = new long[] {1, 1, intPoints}; //TODO: update when data slicing is supported
-		framesBg = new long[] {1, 1, intPoints}; //TODO: update when data slicing is supported
-		framesBgSec = new long[] {1, bgSelFrames[1], intPoints}; //TODO: update when data slicing is supported
+		framesSec = new long[] {1, lastFrame - firstFrame + 1, intPoints};
+		framesInv = new long[] {1,  lastFrame - firstFrame + 1};
+		framesAve = new long[] {1, 1, intPoints};
+		framesBg = new long[] {1, 1, intPoints};
+		framesBgSec = new long[] {1,  bgLastFrame - bgFirstFrame + 1, intPoints};
 
 		testClass = new LazyNcdProcessing();
 		testClass.setBgFile(bgFilename);
@@ -155,10 +154,6 @@ public class LazyNcdProcessingTest {
 		testClass.setBgScaling(bgScaling);
 		testClass.setFirstFrame(firstFrame);
 		testClass.setLastFrame(lastFrame);
-		//testClass.setBgFirstFrame(bgFirstFrame);
-		//testClass.setBgLastFrame(bgLastFrame);
-		//testClass.setFrameSelection(frameSelection);
-		//testClass.setBgFrameSelection(bgFrameSelection);
 		testClass.setCalibration(calibration);
 		testClass.setNormChannel(normChannel);
 		testClass.setCrb(crb);
@@ -209,7 +204,7 @@ public class LazyNcdProcessingTest {
 		
 	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
 	    SliceSettings resultSlice = new SliceSettings(framesResult, 1, lastFrame - firstFrame + 1);
-	    start = new int[] {0, firstFrame, 0, 0};  //TODO: should be starting from 0 one data slicing is supported
+	    start = new int[] {0, 0, 0, 0};
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
@@ -231,7 +226,7 @@ public class LazyNcdProcessingTest {
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 		    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
-		    SliceSettings dataSlice = new SliceSettings(frames, 1, 1);
+		    SliceSettings dataSlice = new SliceSettings(framesResult, 1, 1);
 		    int[] start = new int[] {0, frame, 0, 0};
 		    dataSlice.setStart(start);
 			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
@@ -259,7 +254,7 @@ public class LazyNcdProcessingTest {
 
 	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazySectorIntegration.name);
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
-	    int[] start = new int[] {0, firstFrame, 0};
+	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 	    
@@ -392,7 +387,7 @@ public class LazyNcdProcessingTest {
 
 	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyNormalisation.name);
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
-	    int[] start = new int[] {0, firstFrame, 0};
+	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 	    
@@ -424,13 +419,13 @@ public class LazyNcdProcessingTest {
 	public void checkInvariant() throws HDF5Exception {
 	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyBackgroundSubtraction.name);
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
-	    int[] start = new int[] {0, firstFrame, 0};
+	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 	    
 	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyInvariant.name);
 	    SliceSettings resultSlice = new SliceSettings(framesInv, 1, lastFrame - firstFrame + 1);
-	    start = new int[] {0, firstFrame};
+	    start = new int[] {0, 0};
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
@@ -447,11 +442,8 @@ public class LazyNcdProcessingTest {
 	
 	@Test
 	public void checkAverage() throws HDF5Exception {
-		// TODO: Change after data slicing is supported
 	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyBackgroundSubtraction.name);
-	    //SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
-	    //int[] start = new int[] {0, firstFrame, 0};
-	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, (int) frames[1]);
+	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, (int) framesSec[1]);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
@@ -465,11 +457,9 @@ public class LazyNcdProcessingTest {
 		for (int i = 0; i < intPoints; i++) {
 			float valResult = result.getFloat(new int[] {0, 0, i});
 			float valData = 0.0f;
-			//for (int frame = 0; frame <  (lastFrame - firstFrame + 1); frame++)
-			for (int frame = 0; frame < frames[1]; frame++)
+			for (int frame = 0; frame < framesSec[1]; frame++)
 				valData += data.getFloat(new int[] {0, frame, i});
-			//valData /= lastFrame - firstFrame + 1;
-			valData /= frames[1];
+			valData /= framesSec[1];
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 			assertEquals(String.format("Test average for index %d", i), valResult, valData, acc);
 		}
