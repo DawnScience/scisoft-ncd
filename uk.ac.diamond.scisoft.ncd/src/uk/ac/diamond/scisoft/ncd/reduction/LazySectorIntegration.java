@@ -64,7 +64,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 			this.cameraLength = new Double(cameraLength);
 	}
 
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id) {
+	public AbstractDataset[] execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id) {
 		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
 		reductionStep.parentdata = data;
 		reductionStep.setROI(intSector);

@@ -159,7 +159,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		}
 	}
 
-	public AbstractDataset writeout(int dim) {
+	public AbstractDataset[] writeout(int dim) {
 		if (roi == null) {
 			return null;
 		}
@@ -185,10 +185,12 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			writeResults(ids, myraddata, dataShape, dim);
 			
 			int resLength =  dataShape.length - dim + 1;
-			int[] resShape = Arrays.copyOf(dataShape, resLength);
-			resShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+			int[] resAzShape = Arrays.copyOf(dataShape, resLength);
+			int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+			resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
+			resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
 			
-			return myraddata.reshape(resShape);
+			return new AbstractDataset[] {myazdata.reshape(resAzShape), myraddata.reshape(resRadShape)};
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);

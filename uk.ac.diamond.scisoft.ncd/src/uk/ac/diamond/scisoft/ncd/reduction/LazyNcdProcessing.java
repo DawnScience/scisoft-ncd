@@ -381,7 +381,7 @@ public class LazyNcdProcessing {
 				DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
 				azimuth_id.setIDs(sec_group_id, az_data_id);
 				
-				data = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id);
+				data = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id)[1];
 			}
 
 			dim = 1;
