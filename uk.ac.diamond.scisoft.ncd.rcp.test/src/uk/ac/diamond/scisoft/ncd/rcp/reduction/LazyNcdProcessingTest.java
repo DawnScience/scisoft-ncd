@@ -88,10 +88,9 @@ public class LazyNcdProcessingTest {
 	
 	private static long[] frames = new long[] {1, 120, 512, 512};
 	private static long[] drFrames = new long[] {1, 1, 512, 512};
-	private static long[] bgSelFrames = new long[] {1, bgLastFrame - bgFirstFrame + 1, 512, 512};
 	private static long[] framesCal = new long[] {1, 120, 9};
 	private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
-	private static long[] framesSec, framesAve, framesBg, framesBgSec, framesInv;
+	private static long[] framesSec, framesAve, framesBg, framesInv;
 	
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
@@ -144,7 +143,6 @@ public class LazyNcdProcessingTest {
 		framesInv = new long[] {1,  lastFrame - firstFrame + 1};
 		framesAve = new long[] {1, 1, intPoints};
 		framesBg = new long[] {1, 1, intPoints};
-		framesBgSec = new long[] {1,  bgLastFrame - bgFirstFrame + 1, intPoints};
 
 		testClass = new LazyNcdProcessing();
 		testClass.setBgFile(bgFilename);
@@ -280,108 +278,6 @@ public class LazyNcdProcessingTest {
 		}
 	}
 
-	//@Test
-	public void checkBackgroundSubtractionData() throws HDF5Exception {
-
-	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFilename, detector);
-	    SliceSettings bgSlice = new SliceSettings(frames, 1, bgLastFrame - bgFirstFrame + 1);
-	    int[] start = new int[] {0, bgFirstFrame, 0, 0};
-	    bgSlice.setStart(start);
-		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_id);
-
-	    DataSliceIdentifiers bgdr_id = readResultsId(filename, detectorBg, LazyDetectorResponse.name);
-	    bgSlice = new SliceSettings(bgSelFrames, 1, bgLastFrame - bgFirstFrame + 1);
-	    start = new int[] {0, 0, 0, 0};
-	    bgSlice.setStart(start);
-		AbstractDataset bgDrData = NcdNexusUtils.sliceInputData(bgSlice, bgdr_id);
-		
-		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
-			for (int i = 0; i < 512; i++)
-				for (int j = 0; j < 512; j++) {
-					float valResult = bgDrData.getFloat(new int[] {0, frame, i, j});
-					float valData = bgData.getFloat(new int[] {0, frame, i, j});
-					float valDr = dr.getFloat(new int[] {0, 0, i, j}); 
-					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
-					
-					assertEquals(String.format("Test bakground detector response for pixel (%d, %d, %d)", frame, i, j), valData*valDr, valResult, acc);
-				}
-		}
-		
-		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
-		    bg_id = readResultsId(filename, detectorBg, LazyDetectorResponse.name);
-		    SliceSettings dataSlice = new SliceSettings(bgSelFrames, 1, 1);
-		    start = new int[] {0, frame, 0, 0};
-		    dataSlice.setStart(start);
-			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
-			
-		    DataSliceIdentifiers result_id = readResultsId(filename, detectorBg, LazySectorIntegration.name);
-		    SliceSettings resultSlice = new SliceSettings(framesBgSec, 1, 1);
-		    start = new int[] {0, frame, 0};
-		    resultSlice.setStart(start);
-			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-
-			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
-
-			for (int j = 0; j < intPoints; j++) {
-				float valResult = result.getFloat(new int[] {0, 0, j});
-				float valData = intResult[0].getFloat(new int[] {j});
-				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
-
-				assertEquals(String.format("Test background sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
-			}
-		}
-		
-	    bg_id = readResultsId(filename, detectorBg, LazySectorIntegration.name);
-	    SliceSettings dataSlice = new SliceSettings(framesBgSec, 1, bgLastFrame - bgFirstFrame + 1);
-	    start = new int[] {0, 0, 0};
-	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
-		
-	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(bgFilename, calibration);
-	    SliceSettings normSlice = new SliceSettings(framesCal, 1, bgLastFrame - bgFirstFrame + 1);
-	    start = new int[] {0, bgFirstFrame, 0};
-	    normSlice.setStart(start);
-		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
-		
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorBg, LazyNormalisation.name);
-	    SliceSettings resultSlice = new SliceSettings(framesBgSec, 1, bgLastFrame - bgFirstFrame + 1);
-	    start = new int[] {0, 0, 0};
-	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-
-		for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
-			float valNorm = norm.getFloat(new int[] {0, frame, normChannel}); 
-			for (int i = 0; i < intPoints; i++) {
-				float valResult = result.getFloat(new int[] {0, frame, i});
-				float valData = data.getFloat(new int[] {0, frame, i});
-				float testResult = (float) (valData * absScaling / valNorm);
-
-				assertEquals(String.format("Test background normalisation for pixel (%d, %d)", frame, i), testResult, valResult, 1e-6*valResult);
-			}
-		}
-		
-	    bg_id = readResultsId(filename, detectorBg, LazyNormalisation.name);
-		data = NcdNexusUtils.sliceInputData(dataSlice, bg_id);
-		
-	    result_id = readResultsId(filename, detectorBg, LazyAverage.name);
-	    dataSlice = new SliceSettings(framesAve, 1, 1);
-	    dataSlice.setStart(start);
-		result = NcdNexusUtils.sliceInputData(dataSlice, result_id);
-
-		for (int i = 0; i < intPoints; i++) {
-			float valData = 0.0f;
-			for (int frame = 0; frame <= bgLastFrame - bgFirstFrame; frame++) {
-				valData += data.getFloat(new int[] { 0, frame, i }) / (bgLastFrame - bgFirstFrame + 1);
-			}
-			float valResult = result.getFloat(new int[] { 0, 0, i });
-			double acc = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
-
-			assertEquals(String.format("Test bakground detector response for pixel (%d)", i),
-					valData, valResult, acc);
-		}
-
-	}
-	
 	@Test
 	public void checkBackgroundSubtraction() throws HDF5Exception {
 

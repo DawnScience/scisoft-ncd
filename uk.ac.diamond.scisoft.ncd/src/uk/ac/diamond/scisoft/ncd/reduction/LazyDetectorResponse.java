@@ -16,31 +16,16 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
-import java.util.Arrays;
-import java.util.concurrent.CancellationException;
-
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.eclipse.core.runtime.IProgressMonitor;
-import org.nexusformat.NexusException;
-import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5DetectorResponse;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
-
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusExtractorException;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
 
 public class LazyDetectorResponse extends LazyDataReduction {
 
@@ -65,68 +50,12 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		this.drData = drData.clone();
 	}
 	
-	public LazyDetectorResponse(String activeDataset, int[] frames, int frameBatch, NexusFile nxsFile) {
-		super(activeDataset, frames, frameBatch, nxsFile);
-	}
-
 	public LazyDetectorResponse(String drFile, String detector) {
 		if(drFile != null)
 			this.drFile = new String(drFile);
 		this.detector = new String(detector);
 	}
 	
-	@Override
-	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
-		
-		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse(name, activeDataset);
-		AbstractDataset responseDataSet = createDetectorResponseInput(detector, dim);
-
-		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
-		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;
-		int gridIdx = NcdDataUtils.gridPoints(frames, dim);
-		for (int n = 0; n < gridIdx; n++) {
-			if (monitor.isCanceled()) {
-				throw new CancellationException("Data reduction cancelled");
-			}			
-			int[] gridFrame = NcdDataUtils.convertFlatIndex(n, frames, dim+1);
-		
-			for (int i = firstFrame; i <= lastFrame; i += frameBatch) {
-				int currentBatch = Math.min(i + frameBatch, lastFrame + 1) - i;
-				int[] start = new int[gridDim];
-				int[] stop = new int[gridDim];
-				NcdDataUtils.selectGridRange(frames, gridFrame, i, currentBatch, start, stop);
-				INexusTree tmpData = NcdDataUtils.selectNAxisFrames(activeDataset, null, tmpNXdata, dim + 1, start, stop);
-	
-				if (dim == 1)
-					reductionStep.setqAxis(qaxis, qaxisUnit);
-	
-				reductionStep.setResponse(responseDataSet);
-				reductionStep.writeout(currentBatch, tmpData);
-	
-				int[] datDimStartPrefix = Arrays.copyOf(start, start.length-dim);
-				datDimStartPrefix[datDimStartPrefix.length-1] -= firstFrame;
-				int[] datDimPrefix = new int[gridFrame.length];
-				Arrays.fill(datDimPrefix, 1);
-				
-				if (dim == 1 && qaxis != null) {
-					NexusGroupData qData = NcdDataUtils.getData(tmpData, name, "q", NexusExtractor.SDSClassName);
-					NcdDataUtils.addAxis(tmpData, name, "q", qData, frames.length, 1, qaxisUnit, false);
-				}
-				
-				if (n==0 && i==firstFrame) {
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
-				}
-				else {
-					nxsFile.opengroup(name, NexusExtractor.NXDetectorClassName);
-					NcdNexusUtils.writeNcdData(nxsFile, NcdDataUtils.getDetTree(tmpData, name).getNode("data"), true, false, null, datDimPrefix, datDimStartPrefix, datDimMake, dim);
-					nxsFile.closegroup();
-				}
-				nxsFile.flush();
-			}
-		}
-		activeDataset = name;
-	}
-
 	public AbstractDataset createDetectorResponseInput() throws HDF5Exception {
 		
 		int nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);

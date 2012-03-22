@@ -18,11 +18,6 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.concurrent.CancellationException;
-
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
-//import gda.device.detector.NXDetectorData;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -34,10 +29,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math.util.MultidimensionalCounter;
 
-import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.nexusformat.NexusException;
-import org.nexusformat.NexusFile;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
@@ -74,9 +66,6 @@ public class LazyNcdProcessing {
 	private Integer firstFrame;
 	private Integer lastFrame;
 	private String frameSelection;
-	private Integer bgFirstFrame;
-	private Integer bgLastFrame;
-	private String bgFrameSelection;
 	private String gridAverage;
 	
 	int frameBatch;
@@ -166,268 +155,8 @@ public class LazyNcdProcessing {
 		this.lastFrame = lastFrame;
 	}
 
-	public void setBgFirstFrame(Integer bgFirstFrame) {
-		this.bgFirstFrame = bgFirstFrame;
-	}
-
-	public void setBgLastFrame(Integer bgLastFrame) {
-		this.bgLastFrame = bgLastFrame;
-	}
-
-	public void execute(String detector, int dim, String filename, IProgressMonitor monitor) throws ExecutionException, NexusException {
-
-		NexusFile nxsFile = null; 
-		String[] tmpName = FilenameUtils.getName(filename).split("_");
-		String monitorFile = tmpName[tmpName.length - 1];
-		try {
-		nxsFile = new NexusFile(filename, NexusFile.NXACC_RDWR);
-		nxsFile.opengroup("entry1", "NXentry");
-		
-		INexusTree detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(detector, calibration));
-		INexusTree tmpNXdata = detectorTree.getNode("entry1/instrument");
-		int[] frames = tmpNXdata.getNode(detector).getNode("data").getData().dimensions;
-		int frameBatch = 5;	//TODO: calculate based on the image size
-		
-		AbstractDataset qaxis = null;
-		
-		if (crb != null) {
-			if (crb.containsKey(detector)) {
-				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
-				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
-				cameraLength = crb.getMeanCameraLength(detector);
-				if (qaxisUnit == null) qaxisUnit = crb.getUnit(detector);
-			}
-		}
-		
-		if (slope != null && intercept != null) {
-			if (dim == 1) {
-				int numPoints = frames[frames.length - 1];
-				qaxis = AbstractDataset.zeros(new int[]{numPoints}, AbstractDataset.FLOAT32);
-				double pxWaxs = ncdDetectors.getPxWaxs();
-				for (int i = 0; i < numPoints; i++)
-					qaxis.set(i*pxWaxs *slope + intercept, i);
-			} else if (dim > 1 && flags.isEnableSector()) {
-				double d2bs = intSector.getRadii()[0]; 
-				int numPoints = (int) Math.ceil(intSector.getRadii()[1] - d2bs); 
-				qaxis = AbstractDataset.zeros(new int[]{numPoints}, AbstractDataset.FLOAT32);
-				double pxSaxs = ncdDetectors.getPxSaxs();
-				for (int i = 0; i < numPoints; i++)
-					qaxis.set((i+d2bs)*pxSaxs *slope + intercept, i);
-			}
-		}
-
-		String activeDataset = detector;
-		
-		String detInvariant = detector;
-		int[] invFrames = frames.clone();
-		
-		if (frameSelection != null) {
-			String selNodeName = detector+"_selection";
-			nxsFile.makegroup(selNodeName, "NXinstrument");
-			nxsFile.opengroup(selNodeName, "NXinstrument");
-			monitor.setTaskName(monitorFile + " : Selecting input frames");
-			LazySelection lazySelection = new LazySelection(activeDataset, frames, frameBatch, nxsFile);
-			lazySelection.setCalibration(calibration);
-			lazySelection.setFormat(frameSelection);
-			lazySelection.execute(tmpNXdata, dim, monitor);
-			activeDataset = lazySelection.getActiveDataset();
-
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_selection");
-			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
-			nxsFile.closegroup();
-		}
-		
-		if (bgFrameSelection != null) {
-			String selNodeName = detector+"_bgselection";
-			nxsFile.makegroup(selNodeName, "NXinstrument");
-			nxsFile.opengroup(selNodeName, "NXinstrument");
-			INexusTree bgDetectorTree = NexusTreeBuilder.getNexusTree(bgFile, NcdDataUtils.getDetectorSelection(detector, calibration));
-			INexusTree bgNXdata = bgDetectorTree.getNode("entry1/instrument");
-			int[] bgFrames = bgNXdata.getNode(detector).getNode("data").getData().dimensions;
-			
-			monitor.setTaskName(monitorFile + " : Selecting background input frames");
-			LazySelection lazySelection = new LazySelection(detector, bgFrames, frameBatch, nxsFile);
-			lazySelection.setCalibration(calibration);
-			lazySelection.setFormat(bgFrameSelection);
-			lazySelection.execute(bgNXdata, dim, monitor);
-			nxsFile.closegroup();
-		}
-		
-		
-		String nodeName = detector+"_processing";
-		nxsFile.makegroup(nodeName, "NXinstrument");
-		nxsFile.opengroup(nodeName, "NXinstrument");
-		
-		if (flags.isEnableNormalisation()) {
-			monitor.setTaskName(monitorFile + " : Normalising data");
-			LazyNormalisation lazyNormalisation = new LazyNormalisation(activeDataset, frames, frameBatch, nxsFile);
-			lazyNormalisation.setDetector(detector);
-			lazyNormalisation.setFirstFrame(firstFrame, dim);
-			lazyNormalisation.setLastFrame(lastFrame, dim);
-			lazyNormalisation.setCalibration(calibration);
-			lazyNormalisation.setNormChannel(normChannel);
-			lazyNormalisation.setAbsScaling(absScaling);
-			lazyNormalisation.setQaxis(qaxis, qaxisUnit);
-			
-			lazyNormalisation.execute(tmpNXdata, dim, monitor);
-			activeDataset = lazyNormalisation.getActiveDataset();
-
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
-		}
-		
-		monitor.worked(1);
-
-		if (flags.isEnableBackground()) {
-			monitor.setTaskName(monitorFile + " : Subtracting background");
-			
-			LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction(activeDataset, frames, frameBatch, nxsFile);
-			lazyBackgroundSubtraction.setDetector(detector);
-			lazyBackgroundSubtraction.setFirstFrame(firstFrame, dim);
-			lazyBackgroundSubtraction.setLastFrame(lastFrame, dim);
-			if (bgFrameSelection != null) {
-				lazyBackgroundSubtraction.setBgFile(filename);
-				lazyBackgroundSubtraction.setBgRoot("entry1/" + detector+"_bgselection");
-			}
-			else {
-				lazyBackgroundSubtraction.setBgFile(bgFile);
-				lazyBackgroundSubtraction.setBgRoot("entry1/instrument");
-			}
-			lazyBackgroundSubtraction.setBgFirstFrame(bgFirstFrame);
-			lazyBackgroundSubtraction.setBgLastFrame(bgLastFrame);
-			lazyBackgroundSubtraction.setBgScale(bgScaling);
-			lazyBackgroundSubtraction.setCalibration(calibration);
-			lazyBackgroundSubtraction.setNormChannel(normChannel);
-			lazyBackgroundSubtraction.setQaxis(qaxis, qaxisUnit);
-			if (flags.isEnableNormalisation())
-				lazyBackgroundSubtraction.setAbsScaling(absScaling);
-			
-			lazyBackgroundSubtraction.execute(tmpNXdata, dim, monitor);
-			activeDataset = lazyBackgroundSubtraction.getActiveDataset();
-			
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
-		}
-		
-		monitor.worked(1);
-
-		if (flags.isEnableDetectorResponse())	{
-			monitor.setTaskName(monitorFile + " : Correct for detector response");
-			LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(activeDataset, frames, frameBatch, nxsFile);
-			lazyDetectorResponse.setDetector(detector);
-			lazyDetectorResponse.setFirstFrame(firstFrame, dim);
-			lazyDetectorResponse.setLastFrame(lastFrame, dim);
-			lazyDetectorResponse.setDrFile(drFile);
-			lazyDetectorResponse.setQaxis(qaxis,qaxisUnit);
-			
-			lazyDetectorResponse.execute(tmpNXdata, dim, monitor);
-			activeDataset = lazyDetectorResponse.getActiveDataset();
-			
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
-		}
-		
-		monitor.worked(1);
-
-		if (dim > 1 && flags.isEnableSector()) {
-			monitor.setTaskName(monitorFile + " : Performing sector integration");
-			LazySectorIntegration lazySectorIntegration = new LazySectorIntegration(activeDataset, frames, frameBatch, nxsFile);
-			lazySectorIntegration.setFirstFrame(firstFrame, dim);
-			lazySectorIntegration.setLastFrame(lastFrame, dim);
-			lazySectorIntegration.setQaxis(qaxis,qaxisUnit);
-			lazySectorIntegration.setIntSector(intSector);
-			if (enableMask) 
-				lazySectorIntegration.setMask(mask);
-			lazySectorIntegration.setCalibrationData(slope, intercept);
-			lazySectorIntegration.setCameraLength(cameraLength);
-			
-			lazySectorIntegration.execute(tmpNXdata, dim, monitor);
-			activeDataset = lazySectorIntegration.getActiveDataset();
-			
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-			
-			frames = updateFrameInfo(tmpNXdata, activeDataset);
-		}
-		
-		monitor.worked(1);
-
-		if (dim > 1 && flags.isEnableInvariant()) {
-			monitor.setTaskName(monitorFile + " : Calculating invariant");
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(detInvariant, calibration));
-			if (detInvariant.equals(detector))
-				tmpNXdata = detectorTree.getNode("entry1/instrument");
-			else
-				tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-			
-			LazyInvariant lazyInvariant = new LazyInvariant(detInvariant, invFrames, frameBatch, nxsFile);
-			lazyInvariant.setFirstFrame(firstFrame, dim);
-			lazyInvariant.setLastFrame(lastFrame, dim);
-			lazyInvariant.execute(tmpNXdata, dim, monitor);
-			
-			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-			if (activeDataset.equals(detector))
-				tmpNXdata = detectorTree.getNode("entry1/instrument");
-			else
-				tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-		}
-		
-		monitor.worked(1);
-
-		if (flags.isEnableAverage()) {
-			monitor.setTaskName(monitorFile + " : Averaging  datasets");
-			LazyAverage lazyAverage = new LazyAverage(activeDataset, frames, frameBatch, nxsFile);
-			int aveDim = (dim > 1 && flags.isEnableSector()) ? dim-1 : dim;
-			
-			if (gridAverage != null) {
-				int[] averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
-				lazyAverage.setAverageIndices(averageIndices , aveDim);
-			}
-			lazyAverage.setFirstFrame(firstFrame, aveDim);
-			lazyAverage.setLastFrame(lastFrame, aveDim);
-			lazyAverage.setQaxis(qaxis, qaxisUnit);
-			
-			lazyAverage.execute(tmpNXdata, aveDim, monitor);
-		}
-		
-		monitor.worked(1);
-		closeResultsFile(nxsFile);
-		} catch (CancellationException e) {
-			if (nxsFile != null) closeResultsFile(nxsFile);
-		} catch (Exception e) {
-			if (nxsFile != null) closeResultsFile(nxsFile);
-			throw new ExecutionException("Error running data reduction using " + detector + " data in " + monitorFile +
-					". Please check input parameters." , e);
-		}
-	}
-
-	private void closeResultsFile(NexusFile nxsFile) throws NexusException {
-		nxsFile.flush();
-		nxsFile.closegroup();
-		nxsFile.closegroup();
-		nxsFile.close();
-	}
-	
-	private int[] updateFrameInfo(INexusTree tmpNXdata, String activeDataset) {
-		if (firstFrame != null && lastFrame != null) lastFrame -= firstFrame;
-		if (firstFrame != null) firstFrame = 0;
-		return tmpNXdata.getNode(activeDataset).getNode("data").getData().dimensions;
-	}
-
 	public void setFrameSelection(String frameSelection) {
 		this.frameSelection = frameSelection;
-	}
-
-	public void setBgFrameSelection(String bgFrameSelection) {
-		this.bgFrameSelection = bgFrameSelection;
 	}
 
 	public void setGridAverageSelection(String gridAverage) {
@@ -481,7 +210,7 @@ public class LazyNcdProcessing {
 		if (frameSelection != null) {
 		    int sel_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySelection.name, "NXdetector");
 		    
-		    LazySelection selection = new LazySelection(null, frames_int, sel_group_id, null);
+		    LazySelection selection = new LazySelection(frames_int);
 		    selection.setFormat(frameSelection);
 		    input_ids = selection.execute(dim, input_ids, sel_group_id);
 			H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
@@ -494,7 +223,7 @@ public class LazyNcdProcessing {
 		int secRank = rank - dim + 1;
 		long[] secFrames = new long[secRank];
 		AbstractDataset qaxis = null;
-		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration(null, frames_int, frameBatch, null);
+		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector()) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -527,7 +256,7 @@ public class LazyNcdProcessing {
 	    int inv_group_id = -1;
 	    int inv_data_id = -1;
 		int invRank = flags.isEnableSector() ? secRank - 1: rank - dim;
-		LazyInvariant lazyInvariant = new LazyInvariant(null, frames_int, frameBatch, null);
+		LazyInvariant lazyInvariant = new LazyInvariant();
 		if(flags.isEnableInvariant()) {
 		    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -557,8 +286,7 @@ public class LazyNcdProcessing {
 	    
 	    int norm_group_id = -1;
 	    int norm_data_id = -1;
-	    int norm_axis_id = -1;
-		LazyNormalisation lazyNormalisation = new LazyNormalisation(null, frames_int, frameBatch, null);
+		LazyNormalisation lazyNormalisation = new LazyNormalisation();
 		if(flags.isEnableNormalisation()) {
 		    norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, "NXdetector");
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -587,7 +315,7 @@ public class LazyNcdProcessing {
 	    DataSliceIdentifiers bgIds = null;
 		long[] bgFrames = null;
 		int[] bgFrames_int = null;
-		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction(null, frames_int, frameBatch, null);
+		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
 		if(flags.isEnableBackground()) {
 		    bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -685,10 +413,9 @@ public class LazyNcdProcessing {
 					int bgdata_group_id = NcdNexusUtils.makegroup(bgentry_group_id,
 							detector + "_result_" + monitorFile, "NXdata");
 
-					LazyAverage lazyAverage = new LazyAverage(null, bgFrames_int, frameBatch, null);
-					lazyAverage.execute(dim, bgFrames_int,
-							ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})), bgdata_group_id,
-							frameBatch, bgIds);
+					LazyAverage lazyAverage = new LazyAverage();
+					lazyAverage.setAverageIndices(ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})));
+					lazyAverage.execute(dim, bgFrames_int,bgdata_group_id, frameBatch, bgIds);
 
 					bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 				}
@@ -752,8 +479,9 @@ public class LazyNcdProcessing {
 			if (gridAverage != null)
 				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
 			
-			LazyAverage lazyAverage = new LazyAverage(null, frames_int, frameBatch, null);
-			lazyAverage.execute(dim, frames_int, averageIndices, processing_group_id, frameBatch, input_ids);
+			LazyAverage lazyAverage = new LazyAverage();
+			lazyAverage.setAverageIndices(averageIndices);
+			lazyAverage.execute(dim, frames_int, processing_group_id, frameBatch, input_ids);
 			
 			if (qaxis != null) {
 				lazyAverage.setQaxis(qaxis, qaxisUnit);

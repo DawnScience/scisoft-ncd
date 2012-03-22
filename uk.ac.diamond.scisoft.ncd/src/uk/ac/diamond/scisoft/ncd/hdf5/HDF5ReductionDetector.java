@@ -35,6 +35,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5ReductionDetector {
@@ -47,7 +48,7 @@ public class HDF5ReductionDetector {
 	protected String qAxisUnit;
 	protected DataSliceIdentifiers ids;
 	
-	protected String detectorType = "REDUCTION";
+	protected String detectorType = DetectorTypes.REDUCTION_DETECTOR;
 	protected double pixelSize = 0.0;
 	protected Map<String, Object> attributeMap = new HashMap<String, Object>();
 	public static final String descriptionLabel = "description";

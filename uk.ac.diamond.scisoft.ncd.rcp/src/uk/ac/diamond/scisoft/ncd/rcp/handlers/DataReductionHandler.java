@@ -22,8 +22,6 @@ import java.net.URI;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.Command;
@@ -40,7 +38,6 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Path;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.widgets.Display;
@@ -171,9 +168,6 @@ public class DataReductionHandler extends AbstractHandler {
 							bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
 							processing.setBgFile(bgFilename);
 							processing.setBgDetector(detectorSaxs+"_result");
-							processing.setBgFirstFrame(null);
-							processing.setLastFrame(null);
-							processing.setBgFrameSelection(null);
 							}
 						}
 					} catch (Exception e) {
@@ -218,7 +212,7 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (enableWaxs)
-								processing.execute(detectorWaxs, dimWaxs, filename, monitor);
+								processing.executeHDF5(detectorWaxs, dimWaxs, filename, monitor);
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
@@ -406,15 +400,9 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		String bgFile = null;
 		Double bgScaling = null;
-		Integer bgFirstFrame = null;
-		Integer bgLastFrame = null;
-		String bgFrameSelection = null;
 		if (flags.isEnableBackground()) {
 			bgFile = NcdDataReductionParameters.getBgFile();
 			bgScaling = NcdDataReductionParameters.getBgScale();
-			bgFirstFrame = NcdDataReductionParameters.getBgFirstFrame();
-			bgLastFrame = NcdDataReductionParameters.getBgLastFrame();
-			bgFrameSelection = NcdDataReductionParameters.getBgAdvancedSelection();
 		}
 
 		String drFile = null;
@@ -475,9 +463,6 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setLastFrame(lastFrame);
 		processing.setFrameSelection(frameSelection);
 		processing.setGridAverageSelection(gridAverage);
-		processing.setBgFirstFrame(bgFirstFrame);
-		processing.setBgLastFrame(bgLastFrame);
-		processing.setBgFrameSelection(bgFrameSelection);
 		processing.setCalibration(calibration);
 		processing.setNormChannel(normChannel);
 		processing.setEnableMask(enableMask);
