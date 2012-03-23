@@ -92,7 +92,7 @@ public class LazyNcdProcessing {
 		flags = new NcdReductionFlags();
 		ncdDetectors = new NcdDetectors();
 		
-		frameBatch = 150;	//TODO: calculate based on the image size
+		frameBatch = 5;
 		
 	}
 
@@ -240,8 +240,9 @@ public class LazyNcdProcessing {
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
 			
-			lazySectorIntegration.setMask(mask);
 			lazySectorIntegration.setIntSector(intSector);
+			if(enableMask)
+				lazySectorIntegration.setMask(mask);
 			lazySectorIntegration.setCameraLength(cameraLength);
 			
 			qaxis = calculateQaxisDataset(detector, dim, secFrames);
@@ -339,6 +340,7 @@ public class LazyNcdProcessing {
 	    
 		int sliceDim = 0;
 		int sliceSize = (int) frames[0];
+		estimateFrameBatchSize(dim, frames);
 
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
@@ -394,6 +396,7 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(secFrames, int[].class);
 
 			sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
+			idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
 			
 			input_ids.setIDs(sec_group_id, sec_data_id);
@@ -543,6 +546,17 @@ public class LazyNcdProcessing {
 	    H5.H5Fclose(nxsfile_handle);
 	}
 	
+	private void estimateFrameBatchSize(int dim, long[] frames) {
+	    Runtime runtime = Runtime.getRuntime();
+	    long maxMemory = runtime.maxMemory();
+
+		int batchSize = 4; // use 4 byte data size
+		for (int i = frames.length - dim; i < frames.length; i++)
+			batchSize *= frames[i];
+		
+		frameBatch = (int) (maxMemory / (5 * batchSize));
+	}
+
 	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
 		
 		AbstractDataset qaxis = null;
@@ -571,63 +585,6 @@ public class LazyNcdProcessing {
 					qaxis.set((i+d2bs)*pxSaxs *slope + intercept, i);
 			}
 		}
-		
 		return qaxis;
-        
-		//if (flags.isEnableNormalisation()) {
-		//	monitor.setTaskName(monitorFile + " : Normalising data");
-		//	LazyNormalisation lazyNormalisation = new LazyNormalisation(activeDataset, frames, frameBatch, nxsFile);
-		//	lazyNormalisation.setDetector(detector);
-		//	lazyNormalisation.setFirstFrame(firstFrame, dim);
-		//	lazyNormalisation.setLastFrame(lastFrame, dim);
-		//	lazyNormalisation.setCalibration(calibration);
-		//	lazyNormalisation.setNormChannel(normChannel);
-		//	lazyNormalisation.setAbsScaling(absScaling);
-		//	lazyNormalisation.setQaxis(qaxis, qaxisUnit);
-		//	
-		//	lazyNormalisation.execute(tmpNXdata, dim, monitor);
-		//	activeDataset = lazyNormalisation.getActiveDataset();
-        //
-		//	detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-		//	tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
-		//	frames = updateFrameInfo(tmpNXdata, activeDataset);
-		//	if (flags.isEnableInvariant()) detInvariant = activeDataset;
-		//}
-		//String detInvariant = detector;
-		//int[] invFrames = frames.clone();
-		//
-		//if (frameSelection != null) {
-		//	String selNodeName = detector+"_selection";
-		//	int selection_group_id = NcdNexusUtils.makegroup(entry_group_id, selNodeName, "NXinstrument");
-		//	monitor.setTaskName(monitorFile + " : Selecting input frames");
-		//	LazySelection lazySelection = new LazySelection(activeDataset, frames, frameBatch, nxsFile);
-		//	lazySelection.setCalibration(calibration);
-		//	lazySelection.setFormat(frameSelection);
-		//	lazySelection.execute(tmpNXdata, dim, monitor);
-		//	activeDataset = lazySelection.getActiveDataset();
-        //
-		//	detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
-		//	tmpNXdata = detectorTree.getNode("entry1/"+detector+"_selection");
-		//	frames = updateFrameInfo(tmpNXdata, activeDataset);
-		//	if (flags.isEnableInvariant()) detInvariant = activeDataset;
-		//	nxsFile.closegroup();
-		//}
-		//
-		//if (bgFrameSelection != null) {
-		//	String selNodeName = detector+"_bgselection";
-		//	nxsFile.makegroup(selNodeName, "NXinstrument");
-		//	nxsFile.opengroup(selNodeName, "NXinstrument");
-		//	INexusTree bgDetectorTree = NexusTreeBuilder.getNexusTree(bgFile, NcdDataUtils.getDetectorSelection(detector, calibration));
-		//	INexusTree bgNXdata = bgDetectorTree.getNode("entry1/instrument");
-		//	int[] bgFrames = bgNXdata.getNode(detector).getNode("data").getData().dimensions;
-		//	
-		//	monitor.setTaskName(monitorFile + " : Selecting background input frames");
-		//	LazySelection lazySelection = new LazySelection(detector, bgFrames, frameBatch, nxsFile);
-		//	lazySelection.setCalibration(calibration);
-		//	lazySelection.setFormat(bgFrameSelection);
-		//	lazySelection.execute(bgNXdata, dim, monitor);
-		//	nxsFile.closegroup();
-		//}
 	}
-	
 }
