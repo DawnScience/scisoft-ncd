@@ -26,7 +26,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 	public static String name = "BackgroundSubtraction";
 
 	public void setBgScale(Double bgScaling) {
-		this.bgScaling = new Double(bgScaling);
+			this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 	}
 	
 	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id) {
