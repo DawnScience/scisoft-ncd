@@ -53,12 +53,11 @@ public class NcdLazyDataReductionTest {
 	private static String testNormName = "testNorm"; 
 	
 	private static AbstractDataset data;
-	static long [] shape = new long[] {3, 91, 128, 64};
-	static long [] normShape = new long[] {shape[0], shape[1], 1};
-	static long [] invShape = new long[] {shape[0], shape[1]};
-	static long [] imageShape = new long[] {shape[2], shape[3]};
-	static int bgFrames = (int) (shape[1] / 9);
-	static long [] bgShape = new long[] {bgFrames, imageShape[0], imageShape[1]};
+	static long [] shape = new long[] {5, 3, 91, 32, 64};
+	static long [] normShape = new long[] {shape[0], shape[1], shape[2], 1};
+	static long [] invShape = new long[] {shape[0], shape[1], shape[2]};
+	static long [] imageShape = new long[] {shape[3], shape[4]};
+	static long [] bgShape = new long[] {4, 13, imageShape[0], imageShape[1]};
 	private static float scale = 1.0f; 
 	private static float scaleBg = 0.46246f;
 	private static float absScale = 100.0f;
@@ -85,21 +84,22 @@ public class NcdLazyDataReductionTest {
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
 			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape.length, normShape, true, "counts");
 
-			for (int n = 0; n < shape[0]; n++) {
-				for (int frames = 0; frames < shape[1]; frames++) {
+			for (int m = 0; m < shape[0]; m++)
+			  for (int n = 0; n < shape[1]; n++) {
+				for (int frames = 0; frames < shape[2]; frames++) {
 					float[] norm = new float[] {scale*(n+1)};
 					float[] data = new float[points];
-					for (int i = 0; i < shape[2]; i++) {
-						for (int j = 0; j < shape[3]; j++) {
-							int idx = (int) (i*shape[3] + j); 
-							float val = n*shape[1] + frames + i*shape[3] + j;
+					for (int i = 0; i < imageShape[0]; i++) {
+						for (int j = 0; j < imageShape[1]; j++) {
+							int idx = (int) (i*imageShape[1] + j); 
+							float val = n*shape[2] + frames + i*imageShape[1] + j;
 							data[idx] = val;
 						}
 					}
 					{
-						long[] start = new long[] { n, frames, 0, 0 };
-						long[] count = new long[] { 1, 1, 1, 1 };
-						long[] block = new long[] { 1, 1, shape[2], shape[3] };
+						long[] start = new long[] { m, n, frames, 0, 0 };
+						long[] count = new long[] { 1, 1, 1, 1, 1 };
+						long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
 						int filespace_id = H5.H5Dget_space(data_id);
 						int type_id = H5.H5Dget_type(data_id);
 						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
@@ -110,9 +110,9 @@ public class NcdLazyDataReductionTest {
 						H5.H5Tclose(type_id);
 					}
 					{
-						long[] start = new long[] { n, frames, 0 };
-						long[] count = new long[] { 1, 1, 1 };
-						long[] block = new long[] { 1, 1, 1 };
+						long[] start = new long[] { m, n, frames, 0 };
+						long[] count = new long[] { 1, 1, 1, 1 };
+						long[] block = new long[] { 1, 1, 1, 1 };
 						int filespace_id = H5.H5Dget_space(norm_id);
 						int type_id = H5.H5Dget_type(norm_id);
 						int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
@@ -141,18 +141,19 @@ public class NcdLazyDataReductionTest {
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape.length, bgShape, true, "counts");
 
-			for (int frames = 0; frames < bgFrames; frames++) {
-				float[] data = new float[points];
-				for (int i = 0; i < shape[2]; i++) {
-					for (int j = 0; j < shape[3]; j++) {
-						int idx = (int) (i*shape[3] + j);
-						data[idx] = i*shape[3] + j;
+			for (int k = 0; k < bgShape[0]; k++)
+				for (int frames = 0; frames < bgShape[1]; frames++) {
+					float[] data = new float[points];
+					for (int i = 0; i < imageShape[0]; i++) {
+						for (int j = 0; j < imageShape[1]; j++) {
+							int idx = (int) (i * imageShape[1] + j);
+							data[idx] = frames + i * imageShape[1] + j;
+						}
 					}
-				}
 				{
-					long[] start = new long[] { frames, 0, 0 };
-					long[] count = new long[] { 1, 1, 1 };
-					long[] block = new long[] { 1, bgShape[1], bgShape[2] };
+					long[] start = new long[] { k, frames, 0, 0 };
+					long[] count = new long[] { 1, 1, 1, 1 };
+					long[] block = new long[] { 1, 1, imageShape[0], imageShape[1] };
 					int filespace_id = H5.H5Dget_space(data_id);
 					int type_id = H5.H5Dget_type(data_id);
 					int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
@@ -179,9 +180,9 @@ public class NcdLazyDataReductionTest {
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape.length, imageShape, true, "counts");
 
 			float[] data = new float[points];
-			for (int i = 0; i < shape[2]; i++) {
-				for (int j = 0; j < shape[3]; j++) {
-					int idx = (int) (i*shape[3] + j); 
+			for (int i = 0; i < imageShape[0]; i++) {
+				for (int j = 0; j < imageShape[1]; j++) {
+					int idx = (int) (i*imageShape[1] + j); 
 					float val = scaleBg;
 					data[idx] = val;
 				}
@@ -211,20 +212,21 @@ public class NcdLazyDataReductionTest {
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
 
-			for (int n = 0; n < shape[0]; n++) {
-				for (int frames = 0; frames < shape[1]; frames++) {
+			for (int m = 0; m < shape[0]; m++)
+			  for (int n = 0; n < shape[1]; n++) {
+				for (int frames = 0; frames < shape[2]; frames++) {
 					float[] data = new float[points];
-					for (int i = 0; i < shape[2]; i++) {
-						for (int j = 0; j < shape[3]; j++) {
-							int idx = (int) (i*shape[3] + j); 
-							float val = n*shape[1] + frames + (float)Math.sqrt((i*i+j*j)/(1.0f*shape[3]*shape[3]));
+					for (int i = 0; i < imageShape[0]; i++) {
+						for (int j = 0; j < imageShape[1]; j++) {
+							int idx = (int) (i*imageShape[1] + j); 
+							float val = n*shape[2] + frames + (float)Math.sqrt((i*i+j*j)/(1.0f*imageShape[1]*imageShape[1]));
 							data[idx] = val;
 						}
 					}
 					{
-						long[] start = new long[] { n, frames, 0, 0 };
-						long[] count = new long[] { 1, 1, 1, 1 };
-						long[] block = new long[] { 1, 1, shape[2], shape[3] };
+						long[] start = new long[] { m, n, frames, 0, 0 };
+						long[] count = new long[] { 1, 1, 1, 1, 1 };
+						long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
 						int filespace_id = H5.H5Dget_space(data_id);
 						int type_id = H5.H5Dget_type(data_id);
 						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
@@ -244,7 +246,7 @@ public class NcdLazyDataReductionTest {
 		
 	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, testDatasetName);
 	    SliceSettings dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
-	    int[] start = new int[] {0, 0, 0, 0};
+	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		
@@ -271,30 +273,31 @@ public class NcdLazyDataReductionTest {
 		lazyNormalisation.setNormChannel(0);
 
 		SliceSettings calibrationSliceParams = new SliceSettings(framesCal, 0, (int) framesCal[0]);
-	    int[] start = new int[] {0, 0, 0};
+	    int[] start = new int[] {0, 0, 0, 0};
 	    calibrationSliceParams.setStart(start);
 		AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
 
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
 		input_ids.setIDs(norm_group_id, norm_data_id);
-	    long[] lstart = new long[] {0, 0, 0, 0};
-		long[] count = new long[] {1, 1, 1, 1};
+	    long[] lstart = new long[] {0, 0, 0, 0, 0};
+		long[] count = new long[] {1, 1, 1, 1, 1};
 		input_ids.setSlice(lstart, shape, count, shape);
 		AbstractDataset outDataset = lazyNormalisation.execute(dim, data, dataCal, input_ids);
 		
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < shape[1]; k++) {
-				for (int i = 0; i < shape[2]; i++)
-					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {g, k, i, j});
-						float expected = absScale*(g*shape[1] + k + i*shape[3] + j) / (scale*(g+1));
+		for (int h = 0; h < shape[0]; h++)
+		  for (int g = 0; g < shape[1]; g++)
+			for (int k = 0; k < shape[2]; k++) {
+				for (int i = 0; i < imageShape[0]; i++)
+					for (int j = 0; j < imageShape[1]; j++) {
+						float value = outDataset.getFloat(new int[] {h, g, k, i, j});
+						float expected = absScale*(g*shape[2] + k + i*imageShape[1] + j) / (scale*(g+1));
 
-						assertEquals(String.format("Test normalisation frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test normalisation frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-6*expected);
 					}
 			}
 	}
 	
-	//@Test
+	@Test
 	public void testLazyBackgroundSubtraction() throws HDF5Exception {
 		
 		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
@@ -311,26 +314,29 @@ public class NcdLazyDataReductionTest {
 		lazyBackgroundSubtraction.setBgScale((double) scaleBg);
 
 		SliceSettings bgSliceParams = new SliceSettings(bgShape, 0, bgShape_int[0]);
-		int[] start = new int[] { 0, 0, 0 };
+		int[] start = new int[] { 0, 0, 0, 0 };
 		bgSliceParams.setStart(start);
 		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
+		int bgFrames = bgShape_int[0] * bgShape_int[1];
+		bgData = bgData.sum(0).sum(0).idivide(bgFrames);
 
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
 		input_ids.setIDs(bg_group_id, bg_data_id);
-		long[] lstart = new long[] { 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1 };
+		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		input_ids.setIDs(bg_group_id, bg_data_id);
 		AbstractDataset outDataset = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
 			
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < shape[1]; k++) {
-				for (int i = 0; i < shape[2]; i++)
-					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {g, k, i, j});
-						float expected = g*shape[1] + k + (1.0f - scaleBg)*(i*shape[3] + j);
+		for (int h = 0; h < shape[0]; h++)
+		  for (int g = 0; g < shape[1]; g++)
+			for (int k = 0; k < shape[2]; k++) {
+				for (int i = 0; i < imageShape[0]; i++)
+					for (int j = 0; j < imageShape[1]; j++) {
+						float value = outDataset.getFloat(new int[] {h, g, k, i, j});
+						float expected = g*shape[2] + k + (1.0f - scaleBg)*(i*imageShape[1] + j) - scaleBg*(bgShape_int[1] - 1)/2.0f;
 
-						assertEquals(String.format("Test background subtraction frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test background subtraction frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-4*Math.abs(expected));
 					}
 			}
 	}
@@ -350,19 +356,20 @@ public class NcdLazyDataReductionTest {
 		
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
 		input_ids.setIDs(dr_group_id, dr_data_id);
-		long[] lstart = new long[] { 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1 };
+		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		AbstractDataset outDataset = lazyDetectorResponse.execute(dim, data, input_ids);
 		
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < shape[1]; k++) {
-				for (int i = 0; i < shape[2]; i++)
-					for (int j = 0; j < shape[3]; j++) {
-						float value = outDataset.getFloat(new int[] {g, k, i, j});
-						float expected = (g*shape[1] + k + i*shape[3] + j)*scaleBg;
+		for (int h = 0; h < shape[0]; h++)
+ 		  for (int g = 0; g < shape[1]; g++)
+			for (int k = 0; k < shape[2]; k++) {
+				for (int i = 0; i < imageShape[0]; i++)
+					for (int j = 0; j < imageShape[1]; j++) {
+						float value = outDataset.getFloat(new int[] {h, g, k, i, j});
+						float expected = (g*shape[2] + k + i*imageShape[1] + j)*scaleBg;
 
-						assertEquals(String.format("Test detector response frame for (%d, %d, %d, %d)", g, k, i, j), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test detector response frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-6*expected);
 					}
 			}
 	}
@@ -380,19 +387,20 @@ public class NcdLazyDataReductionTest {
 		
 		DataSliceIdentifiers inv_id = new DataSliceIdentifiers();
 		inv_id.setIDs(inv_group_id, inv_data_id);
-		long[] lstart = new long[] { 0, 0 };
-		long[] count = new long[] { 1, 1 };
+		long[] lstart = new long[] { 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1 };
 		inv_id.setSlice(lstart, invShape, count, invShape);
     
 		AbstractDataset outDataset = lazyInvariant.execute(dim, data, inv_id);
-		for (int g = 0; g < invShape[0]; g++)
-			for (int k = 0; k < invShape[1]; k++) {
-				float value = outDataset.getFloat(new int[] {g, k});
+		for (int h = 0; h < invShape[0]; h++)
+		  for (int g = 0; g < invShape[1]; g++)
+			for (int k = 0; k < invShape[2]; k++) {
+				float value = outDataset.getFloat(new int[] {h, g, k});
 				float expected = 0.0f;
-				for (int i = 0; i < shape[2]; i++)
-					for (int j = 0; j < shape[3]; j++) 
-						expected += g*shape[1] + k + i*shape[3] + j;
-				assertEquals(String.format("Test invariant result for (%d, %d)", g, k), expected, value, 1e-6*expected);
+				for (int i = 0; i < imageShape[0]; i++)
+					for (int j = 0; j < imageShape[1]; j++) 
+						expected += g*shape[2] + k + i*imageShape[1] + j;
+				assertEquals(String.format("Test invariant result for (%d, %d, %d)", h, g, k), expected, value, 1e-6*expected);
 			}
 	}
 	
@@ -405,7 +413,7 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		int sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		SectorROI intSector = new SectorROI(0, 0, 0, shape[3], 0, 90);
+		SectorROI intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
 		int[] intRadii = intSector.getIntRadii();
 		double[] radii = intSector.getRadii();
 		double dpp = intSector.getDpp();
@@ -423,8 +431,8 @@ public class NcdLazyDataReductionTest {
 		lazySectorIntegration.setIntSector(intSector);
 
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
-		long[] lstart = new long[] { 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1 };
+		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 
 		DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
@@ -434,21 +442,22 @@ public class NcdLazyDataReductionTest {
 
 		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id);
 			
-		for (int g = 0; g < shape[0]; g++)
-			for (int k = 0; k < shape[1]; k++) {
-				int[] startImage = new int[] {g, k, 0, 0};
-				int[] stopImage = new int[] {g + 1, k + 1, (int) shape[2], (int) shape[3]};
+		for (int h = 0; h < shape[0]; h++)
+		  for (int g = 0; g < shape[1]; g++)
+			for (int k = 0; k < shape[2]; k++) {
+				int[] startImage = new int[] {h, g, k, 0, 0};
+				int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
 				AbstractDataset image = data.getSlice(startImage, stopImage, null);
 				AbstractDataset[] intResult = ROIProfile.sector(image.squeeze(), null, intSector);
-				for (int i = 0; i < outDataset[1].getShape()[2]; i++) {
-						float value = outDataset[1].getFloat(new int[] {g, k, i});
+				for (int i = 0; i < outDataset[1].getShape()[3]; i++) {
+						float value = outDataset[1].getFloat(new int[] {h, g, k, i});
 						float expected = intResult[0].getFloat(new int[] {i});
-						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d)", g, k, i), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 				}
-				for (int i = 0; i < outDataset[0].getShape()[2]; i++) {
-					float value = outDataset[0].getFloat(new int[] {g, k, i});
+				for (int i = 0; i < outDataset[0].getShape()[3]; i++) {
+					float value = outDataset[0].getFloat(new int[] {h, g, k, i});
 					float expected = intResult[1].getFloat(new int[] {i});
-					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d)", g, k, i), expected, value, 1e-6*expected);
+					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 				}
 			}
 	}
@@ -462,29 +471,30 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
 	    DataSliceIdentifiers input_ids = NcdNexusUtils.readDataId(filename, testDatasetName);
-		long[] lstart = new long[] { 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1 };
+		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
+		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		
-		lazyAverage.setAverageIndices(new int[] {1,2});
-		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 1000, input_ids);
+		lazyAverage.setAverageIndices(new int[] {1,3});
+		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 100, input_ids);
 		
-	    long[] shapeRes = new long[] {1, 1, shape[2], shape[3]}; 
+	    long[] shapeRes = new long[] {1, shape[1], 1, imageShape[0], imageShape[1]}; 
 		SliceSettings resultsSlice = new SliceSettings(shapeRes, 0, (int) shapeRes[0]);
-	    int[] start = new int[] {0, 0, 0, 0};
+	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    resultsSlice.setStart(start);
 		AbstractDataset outDataset = NcdNexusUtils.sliceInputData(resultsSlice, input_ids);
 		
-		for (int i = 0; i < shape[2]; i++)
-			for (int j = 0; j < shape[3]; j++) {
-				start = new int[] {0, 0, i, j};
-				int[] stop = new int[] {(int) shape[0], (int) shape[1], i +1 , j + 1};
+		for (int k = 0; k < shape[1]; k++)
+		  for (int i = 0; i < imageShape[0]; i++)
+			for (int j = 0; j < imageShape[1]; j++) {
+				start = new int[] {0, k, 0, i, j};
+				int[] stop = new int[] {(int) shape[0], k + 1, (int) shape[2], i + 1 , j + 1};
 				AbstractDataset dataSlice = data.getSlice(start, stop, null);
-				float value = outDataset.getFloat(new int[] {0, 0, i, j});
-				float expected = (Float) dataSlice.sum() / (shape[0] * shape[1]);
+				float value = outDataset.getFloat(new int[] {0, k, 0, i, j});
+				float expected = (Float) dataSlice.sum() / (shape[0] * shape[2]);
 
 				// This check fails for higher accuracy settings
-				assertEquals(String.format("Test average frame for (%d, %d)", i, j), expected, value, 1e-6*expected);
+				assertEquals(String.format("Test average frame for (%d, %d, %d)", k, i, j), expected, value, 1e-6*expected);
 			}
 	}
 	
