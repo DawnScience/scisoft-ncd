@@ -26,6 +26,7 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math.exception.OutOfRangeException; 
@@ -468,4 +469,41 @@ public class NcdDataUtils {
 		return gridIdx;
 	}
 	
+	public static AbstractDataset[] matchDataDimensions(AbstractDataset data, AbstractDataset bgData) {
+		int bgRank = bgData.getRank();
+		int[] bgShape = bgData.getShape();
+		int rank = data.getRank();
+		int[] shape = data.getShape();
+		
+		ArrayList<Integer> matchBgDims = new ArrayList<Integer>();
+		ArrayList<Integer> nomatchBgDims = new ArrayList<Integer>();
+		for (int i = 0; i < bgRank; i++) {
+			nomatchBgDims.add(i);
+		}
+		ArrayList<Integer> matchDataDims = new ArrayList<Integer>();
+		ArrayList<Integer> nomatchDataDims = new ArrayList<Integer>();
+		for (int i = 0; i < rank; i++) {
+			nomatchDataDims.add(i);
+		}
+		
+		for (int i = 0; i < Math.min(bgRank, rank); i++) {
+			if (bgShape[bgRank - i - 1] == shape[rank - i - 1]) {
+				matchDataDims.add(new Integer(rank - i - 1));
+				matchBgDims.add(new Integer(bgRank - i - 1));
+				nomatchDataDims.remove(new Integer(rank - i - 1));
+				nomatchBgDims.remove(new Integer(bgRank - i - 1));
+			}
+		}
+		
+		Collections.reverse(matchDataDims);
+		nomatchDataDims.addAll(matchDataDims);
+		data = DatasetUtils.transpose(data, ArrayUtils.toPrimitive(nomatchDataDims.toArray(new Integer[] {})));
+		
+		Collections.reverse(matchBgDims);
+		nomatchBgDims.addAll(matchBgDims);
+		bgData = DatasetUtils.transpose(bgData, ArrayUtils.toPrimitive(nomatchBgDims.toArray(new Integer[] {})));
+		
+		return new AbstractDataset[] {data, bgData}; 
+	}
+
 }

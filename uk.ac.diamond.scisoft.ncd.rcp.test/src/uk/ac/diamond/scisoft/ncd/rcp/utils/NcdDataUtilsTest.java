@@ -21,6 +21,7 @@ import java.util.ArrayList;
 import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class NcdDataUtilsTest {
@@ -34,6 +35,13 @@ public class NcdDataUtilsTest {
 	int [] axis3 = new int [] {0,1,2,3,4};
 	int [] axis4 = new int [] {0,1,2,3};
 	int [] axis5 = new int [] {7,8,9};
+	
+	int [] shape1 = new int[] {5, 3, 14, 256, 128};
+	int [] shape2 = new int[] {3, 16, 256, 128};
+	int [] newShape1 = new int[] {5, 14, 3, 256, 128};
+	int [] newShape2 = new int[] {16, 3, 256, 128};
+	
+	AbstractDataset data1, data2;
 	
 	@Test
 	public void createSliceListTest() {
@@ -64,5 +72,19 @@ public class NcdDataUtilsTest {
 								assertArrayEquals(String.format("At index %d", idxList), expected, tmpVal);
 								idxList++;
 							}
+	}
+	
+	@Test
+	public void matchDataDimensionsTest() {
+		data1 = AbstractDataset.ones(shape1, AbstractDataset.INT32);
+		data2 = AbstractDataset.ones(shape2, AbstractDataset.INT32);
+		
+		AbstractDataset[] newDatasets = NcdDataUtils.matchDataDimensions(data1, data2);
+		
+		int[] testShape1 = newDatasets[0].getShape();
+		int[] testShape2 = newDatasets[1].getShape();
+		
+		assertArrayEquals("Shape match failed for data1", newShape1, testShape1);
+		assertArrayEquals("Shape match failed for data1", newShape2, testShape2);
 	}
 }
