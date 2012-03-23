@@ -42,7 +42,9 @@ public class BackgroundSubtraction {
 
 	public float[] process(Serializable buffer, final int[] dimensions) {
 		
-		float[] mydata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		
+		float[] mydata = new float[parentdata.length];
 		
 		// first dim is timeframe
 		int[] imagedim = Arrays.copyOfRange(dimensions, 1, dimensions.length);
@@ -58,8 +60,8 @@ public class BackgroundSubtraction {
 
 		// match
 		if (bgsize == parentsize) {
-			for (int i = 0; i < mydata.length; i++) {
-				mydata[i] = mydata[i] - background.getData()[i];
+			for (int i = 0; i < parentdata.length; i++) {
+				mydata[i] = parentdata[i] - background.getData()[i];
 			}
 		} else {
 			float[] mybg = background.getData().clone();
@@ -71,14 +73,14 @@ public class BackgroundSubtraction {
 					bgsize *= n;
 				}
 				mybg = new float[bgsize];
-				double multiplicity = mydata.length / bgsize;
+				double multiplicity = parentdata.length / bgsize;
 				for (int i = 0; i < background.getData().length; i++) {
 					mybg[i % bgsize] += background.getData()[i] / multiplicity;
 				}
 			}
 			if (parentsize % bgsize == 0) {
-				for (int i = 0; i < mydata.length; i++) {
-					mydata[i] = mydata[i] - mybg[i % bgsize];
+				for (int i = 0; i < parentdata.length; i++) {
+					mydata[i] = parentdata[i] - mybg[i % bgsize];
 				}
 			} else {
 				logger.error("background and data sizes imcompatible");
