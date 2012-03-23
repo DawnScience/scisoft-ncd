@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
@@ -455,7 +456,16 @@ public class LazyNcdProcessing {
 				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
 				
 				input_ids.setIDs(bg_group_id, bg_data_id);
-				data = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
+				AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
+				remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], input_ids);
+
+				// restore original axis order in output dataset
+				int[] datashape = data.getShape();
+				int[] resshape = remapData[0].getShape();
+				int[] perm = new int[datashape.length];
+				for (int i = 0; i < datashape.length; i++)
+					perm[i] = ArrayUtils.indexOf(resshape, datashape[i]);
+				data = DatasetUtils.transpose(remapData[0], perm);
 			}
 
 			if (flags.isEnableInvariant()) {
