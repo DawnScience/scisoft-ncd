@@ -92,9 +92,14 @@ public class LazyAverage extends LazyDataReduction {
 		while (iter.hasNext()) {
 			
 			int[] currentFrame = iter.getPos();
-			int[] data_iter_array = Arrays.copyOf(currentFrame, currentFrame.length);
+			int[] data_stop = Arrays.copyOf(currentFrame, currentFrame.length);
+			long[] data_iter_array = Arrays.copyOf(frames, frames.length);
+			Arrays.fill(data_iter_array, 0, frames.length - dim, 1);
 			for (int i = 0; i < currentFrame.length; i++)
-				data_iter_array[i]++;
+				if (i < currentFrame.length - dim)
+					data_stop[i]++;
+				else
+					data_stop[i] = frames_int[i];
 			
 			int[] data_start = Arrays.copyOf(currentFrame, currentFrame.length);
 			int[] data_step = Arrays.copyOf(step, currentFrame.length);
@@ -102,6 +107,7 @@ public class LazyAverage extends LazyDataReduction {
 			for (int idx : averageIndices) {
 				int i = idx - 1;
 				data_start[i] = 0;
+				data_stop[i] = frames_int[i];
 				data_iter_array[i] = frames_int[i];
 				if (i > sliceDim)
 					data_step[i] = frames_int[i];
@@ -109,15 +115,15 @@ public class LazyAverage extends LazyDataReduction {
 					data_step[i] = sliceSize;
 			}
 			
-			IntegerDataset data_idx_dataset = new IntegerDataset(data_iter_array);
-			IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_iter_array, data_step);
+			IntegerDataset data_idx_dataset = new IntegerDataset(data_stop);
+			IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
 			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;
-	    	SliceSettings sliceSettings = new SliceSettings(frames, sliceDim, sliceSize);
+	    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
 			while (data_iter.hasNext()) {
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
