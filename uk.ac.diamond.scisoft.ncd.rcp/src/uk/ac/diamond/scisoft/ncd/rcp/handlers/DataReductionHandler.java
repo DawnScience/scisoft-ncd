@@ -508,9 +508,9 @@ public class DataReductionHandler extends AbstractHandler {
 					if (!f.exists()) {
 						throw new HDF5Exception("File, " + lpath + ", does not exist");
 					}
-					lpath = f.getAbsolutePath();
-				    H5.H5Lcreate_external(lpath, ltarget, detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				}
+				lpath = f.getAbsolutePath();
+				H5.H5Lcreate_external(lpath, ltarget, detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			} else {
 				System.err.println("Wrong scheme: " + ulink.getScheme());
 			}
