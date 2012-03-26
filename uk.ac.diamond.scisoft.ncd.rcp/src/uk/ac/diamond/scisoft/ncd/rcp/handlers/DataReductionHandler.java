@@ -16,11 +16,18 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import gda.data.nexus.extractor.NexusExtractor;
+
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.commands.AbstractHandler;
@@ -29,7 +36,6 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.commands.State;
 import org.eclipse.core.filesystem.EFS;
-import org.eclipse.core.filesystem.IFileInfo;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -58,17 +64,27 @@ import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 import uk.ac.gda.common.rcp.util.EclipseUtils;
 
 public class DataReductionHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionHandler.class);
 
+	
+	private String detectorWaxs;
+	private String detectorSaxs;
+	private String calibration;
+	private Integer dimWaxs, dimSaxs;
+	private boolean enableWaxs, enableSaxs, enableBackground;
+	private String workingDir;
+	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
@@ -126,14 +142,15 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			
-			final String detectorWaxs = ncdDetectors.getDetectorWaxs();
-			final String detectorSaxs = ncdDetectors.getDetectorSaxs();
-			final Integer dimWaxs = ncdDetectors.getDimWaxs();
-			final Integer dimSaxs = ncdDetectors.getDimSaxs();
-			final boolean enableWaxs = flags.isEnableWaxs();
-			final boolean enableSaxs = flags.isEnableSaxs();
-			final boolean enableBackground = flags.isEnableBackground();
-			final String workingDir = NcdDataReductionParameters.getWorkingDirectory();
+			detectorWaxs = ncdDetectors.getDetectorWaxs();
+			detectorSaxs = ncdDetectors.getDetectorSaxs();
+			calibration = NcdDataReductionParameters.getCalList().getItem(NcdDataReductionParameters.getCalList().getSelectionIndex());
+			dimWaxs = ncdDetectors.getDimWaxs();
+			dimSaxs = ncdDetectors.getDimSaxs();
+			enableWaxs = flags.isEnableWaxs();
+			enableSaxs = flags.isEnableSaxs();
+			enableBackground = flags.isEnableBackground();
+			workingDir = NcdDataReductionParameters.getWorkingDirectory();
 			final String bgPath = NcdDataReductionParameters.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
 			
@@ -149,25 +166,14 @@ public class DataReductionHandler extends AbstractHandler {
 					if (enableSaxs) idxMonitor += 6;
 					monitor.beginTask("Running NCD data reduction",idxMonitor*selObjects.length);
 					
-					String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
-					
 					IFileSystem fileSystem = EFS.getLocalFileSystem();
 					try {
 						if (enableBackground) {
-							final String bgFilename = workingDir + "/background" + detNames + generateDateTimeStamp() + bgName;
-							IFileStore inputFile = fileSystem.getStore(URI.create(bgPath));
-							IFileStore outputFile = fileSystem.getStore(URI.create(bgFilename));
-							inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
-							// Check that results file is writable
-							IFileInfo info = outputFile.fetchInfo();
-							if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
-								info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
-								outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
-							}	
+							final String bgFilename = createResultsFile(bgName, bgPath, "background");
 							if (enableSaxs) {
-							bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
-							processing.setBgFile(bgFilename);
-							processing.setBgDetector(detectorSaxs+"_result");
+								bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
+								processing.setBgFile(bgFilename);
+								processing.setBgDetector(detectorSaxs+"_result");
 							}
 						}
 					} catch (Exception e) {
@@ -176,35 +182,22 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 					
 					for (int i = 0; i < selObjects.length; i++) {
-						String inputfileExtension;
-						String tmpfilePath;
-						String inputfileName;
+						final String inputfileName, inputfileExtension, inputfilePath;
 						if (selObjects[i] instanceof IFile) {
+							inputfilePath = ((IFile)selObjects[i]).getLocation().toString();
 							inputfileExtension = ((IFile)selObjects[i]).getFileExtension();
-							tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
 							inputfileName = ((IFile)selObjects[i]).getName().toString();
 						} else {
-							tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
-							inputfileExtension = FilenameUtils.getExtension(tmpfilePath);
-							inputfileName = FilenameUtils.getName(tmpfilePath);
+							inputfilePath = ((File)selObjects[i]).getAbsolutePath();
+							inputfileExtension = FilenameUtils.getExtension(inputfilePath);
+							inputfileName = FilenameUtils.getName(inputfilePath);
 						}
 						if (!inputfileExtension.equals("nxs"))
 							continue;
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
-							String datetime = generateDateTimeStamp();
-							final String filename = workingDir + "/results" + detNames + datetime + inputfileName;
-							
-							IFileStore inputFile = fileSystem.getStore(URI.create(tmpfilePath));
+							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
 							IFileStore outputFile = fileSystem.getStore(URI.create(filename));
-							inputFile.copy(outputFile, EFS.OVERWRITE, new NullProgressMonitor());
-							
-							// Check that results file is writable
-							IFileInfo info = outputFile.fetchInfo();
-							if (info.exists() && info.getAttribute(EFS.ATTRIBUTE_READ_ONLY)) {
-								info.setAttribute(EFS.ATTRIBUTE_OWNER_WRITE, true);
-								outputFile.putInfo(info, EFS.SET_ATTRIBUTES, new NullProgressMonitor());
-							}
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
@@ -260,16 +253,6 @@ public class DataReductionHandler extends AbstractHandler {
 
 					monitor.done();
 					return Status.OK_STATUS;
-				}
-
-				private String generateDateTimeStamp() {
-
-					Date date = new Date();
-
-					SimpleDateFormat format =
-						new SimpleDateFormat("ddMMyy_HHmmss_");
-
-					return format.format(date);
 				}
 			};
 			
@@ -470,6 +453,78 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setIntercept(qIntercept);
 		processing.setUnit(qUnit);
 		
+	}
+	
+	private String generateDateTimeStamp() {
+
+		Date date = new Date();
+
+		SimpleDateFormat format =
+			new SimpleDateFormat("ddMMyy_HHmmss_");
+
+		return format.format(date);
+	}
+	
+	private String createResultsFile(String inputfileName, String inputfilePath, String prefix) throws HDF5Exception, URISyntaxException {
+		String datetime = generateDateTimeStamp();
+		String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
+		final String filename = workingDir + "/" + prefix + detNames + datetime + inputfileName;
+		
+		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
+		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,fapl);  
+		H5.H5Pclose(fapl);
+		
+		int entry_id = NcdNexusUtils.makegroup(fid, "entry1", NexusExtractor.NXEntryClassName);
+		
+		if (calibration != null) {
+			int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NexusExtractor.NXDataClassName);
+		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		    H5.H5Gclose(calib_id);
+		}
+		
+		int detector_id = NcdNexusUtils.makegroup(entry_id, detectorSaxs, NexusExtractor.NXDataClassName);
+		DataSliceIdentifiers dataIDs = NcdNexusUtils.readDataId(inputfilePath, detectorSaxs);
+		boolean isNAPImount = H5.H5Aexists(dataIDs.dataset_id, "napimount");
+		if (isNAPImount) {
+			int attr_id = H5.H5Aopen(dataIDs.dataset_id, "napimount", HDF5Constants.H5P_DEFAULT);
+			int type_id = H5.H5Aget_type(attr_id);
+			int size = H5.H5Tget_size(type_id);
+			byte[] link = new byte[size];
+			H5.H5Aread(attr_id, type_id, link);
+			
+			String str = new String(link);
+			final URI ulink = new URI(str);
+			if (ulink.getScheme().equals("nxfile")) {
+				String lpath = ulink.getPath();
+				String ltarget = ulink.getFragment();
+				File f = new File(lpath);
+				if (!f.exists()) {
+					logger.debug("File, {}, does not exist!", lpath);
+
+					// see if linked file in same directory
+					File file = new File(inputfilePath);
+					f = new File(file.getParent(), f.getName());
+					if (!f.exists()) {
+						throw new HDF5Exception("File, " + lpath + ", does not exist");
+					}
+					lpath = f.getAbsolutePath();
+				    H5.H5Lcreate_external(lpath, ltarget, detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				}
+			} else {
+				System.err.println("Wrong scheme: " + ulink.getScheme());
+			}
+			H5.H5Tclose(type_id);
+			H5.H5Aclose(attr_id);
+			
+		} else
+		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detectorSaxs + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		
+		H5.H5Gclose(detector_id);
+		H5.H5Gclose(entry_id);
+		H5.H5Fclose(fid);
+		
+		return filename;
 	}
 
 }
