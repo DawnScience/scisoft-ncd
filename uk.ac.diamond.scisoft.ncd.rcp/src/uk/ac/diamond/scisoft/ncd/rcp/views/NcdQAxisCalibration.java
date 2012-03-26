@@ -374,7 +374,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		command.append(",");
 
 		if (originalData2D)
-			command.append(disttobeamstop);
+			// distance to beamstop is now accounted in the sector integration profile axis
+			command.append(0.0);
 		else 
 			command.append("None");
 		command.append(",");
