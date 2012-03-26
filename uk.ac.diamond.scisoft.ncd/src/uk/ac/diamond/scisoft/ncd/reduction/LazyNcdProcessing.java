@@ -237,6 +237,11 @@ public class LazyNcdProcessing {
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
+			if (intSector.getSymmetry() == SectorROI.FULL)
+				angles[1] = angles[0] + 2 * Math.PI;
+			if (intSector.getSymmetry() != SectorROI.NONE && intSector.getSymmetry() != SectorROI.FULL) {
+				 throw new IllegalArgumentException("Using symmetry related sectors in SectorIntegration stage is currently is not supported.");
+			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
 			
