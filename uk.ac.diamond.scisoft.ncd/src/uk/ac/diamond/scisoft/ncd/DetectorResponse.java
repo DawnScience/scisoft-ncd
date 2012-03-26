@@ -17,8 +17,8 @@
 package uk.ac.diamond.scisoft.ncd;
 
 import java.io.Serializable;
-import java.util.Arrays;
 
+import org.apache.commons.beanutils.ConvertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,16 +41,10 @@ public class DetectorResponse {
 
 	
 	public float[] process(Serializable buffer, int frames, final int[] dimensions) {
-		float[] mydata;
-		if (buffer instanceof float[]) {
-			mydata = Arrays.copyOf((float[]) buffer, ((float[]) buffer).length);
-		} else {
-			double[] farr = (double[]) buffer;
-			mydata = new float[farr.length];
-			for (int i = 0; i < farr.length; i++) {
-				mydata[i] = new Float(farr[i]);
-			}
-		}
+		
+		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		
+		float[] mydata = new float[parentdata.length];
 		
 		float[] responseBuffer = response.getData();
 
@@ -64,7 +58,7 @@ public class DetectorResponse {
 
 		for (int i = 0; i < frames; i++) {
 			for (int j = 0; j < dataLength; j++) {
-				mydata[i * dataLength + j] = new Float(responseBuffer[j] * mydata[i * dataLength + j]);
+				mydata[i * dataLength + j] = new Float(responseBuffer[j] * parentdata[i * dataLength + j]);
 			}
 		}
 		

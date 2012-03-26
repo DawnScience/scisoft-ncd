@@ -21,6 +21,7 @@ import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
 import gda.data.nexus.tree.NexusTreeNode;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -33,6 +34,8 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5ReductionDetector {
@@ -43,21 +46,27 @@ public class HDF5ReductionDetector {
 	protected String key;
 	protected AbstractDataset qAxis;
 	protected String qAxisUnit;
+	protected DataSliceIdentifiers ids;
 	
-	protected String detectorType = "REDUCTION";
+	protected String detectorType = DetectorTypes.REDUCTION_DETECTOR;
 	protected double pixelSize = 0.0;
 	protected Map<String, Object> attributeMap = new HashMap<String, Object>();
 	public static final String descriptionLabel = "description";
 	protected String description;
 	protected DoubleDataset mask = null;
-
+	
 	public HDF5ReductionDetector(String name, String key) {
 		this.key = key;
 		this.name = name;
+		ids = new DataSliceIdentifiers();
 	}
 	
 	public void setName(String name) {
 		this.name = name;
+	}
+	
+	public void setIDs(DataSliceIdentifiers input_id) {
+		ids = new DataSliceIdentifiers(input_id);
 	}
 	
 	public String getName() {
@@ -205,5 +214,21 @@ public class HDF5ReductionDetector {
 		if (qAxis != null) {
 			NcdDataUtils.addAxis(nxdata, getName(), "q", Nexus.createNexusGroupData(qAxis), axisValue, 1, qAxisUnit, false);
 		}
+	}
+	
+	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+		
+		int dataRank = data.getRank();
+		int[] dataShape = data.getShape();
+		if (dataRank > (dimension + 1)) {
+			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
+			int totalFrames = 1;
+			for (int val : frameArray)
+				totalFrames *= val;
+			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
+			newShape[0] = totalFrames;
+			return data.reshape(newShape);
+		}
+		return data;
 	}
 }

@@ -19,21 +19,13 @@ package uk.ac.diamond.scisoft.ncd;
 import java.io.Serializable;
 import java.util.Arrays;
 
+import org.apache.commons.beanutils.ConvertUtils;
+
 public class Invariant {
 
 	public float[] process(Serializable buffer, final int[] dimensions) {
-		float[] parentdata;
-
-		if (buffer instanceof float[]) {
-			parentdata = (float[]) buffer;
-		} else {
-			double[] farr = (double[]) buffer;
-			parentdata = new float[farr.length];
-			for (int i = 0; i < farr.length; i++) {
-				parentdata[i] = new Float(farr[i]);
-			}
-		}	
 		
+		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
 		float[] mydata = new float[dimensions[0]];
 		
 		// first dim is timeframe

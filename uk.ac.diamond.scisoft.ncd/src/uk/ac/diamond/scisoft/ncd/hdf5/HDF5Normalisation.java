@@ -16,16 +16,15 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
 
-import org.nexusformat.NexusFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5Normalisation extends HDF5ReductionDetector {
 
@@ -36,6 +35,9 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 	private String calibName;
 	private int calibChannel = 1;
 
+	public AbstractDataset parentngd;
+	public AbstractDataset calibngd;
+	
 	public HDF5Normalisation(String name, String key) {
 		super(name, key);
 	}
@@ -64,35 +66,34 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		this.calibChannel = calibChannel;
 	}
 
-	@Override
-	public void writeout(int frames, INexusTree nxdata) {
-		if (calibName == null) {
-			logger.error(getName()+": no calibration source set up");
-			return;
-		}
+	public AbstractDataset writeout(int dim) {
 
 		try {
-			NexusGroupData parentngd = NcdDataUtils.getData(nxdata, key, "data", NexusExtractor.SDSClassName);
-			NexusGroupData calibngd = NcdDataUtils.getData(nxdata, calibName, "data", NexusExtractor.SDSClassName);
-			//LazyDataset parentngd = (LazyDataset) nxdata.getDataset("/data").getDataset();
-			//LazyDataset calibngd = (LazyDataset) nxdata.getDataset(calibName + "/data").getDataset();
-
-			if (calibngd.dimensions.length != 2) {
-				throw new IllegalArgumentException("calibration of wrong dimensionality");
-			}
-
 			Normalisation nm = new Normalisation();
 			nm.setCalibChannel(calibChannel);
 			nm.setNormvalue(normvalue);
-			float[] mydata = nm.process(parentngd.getBuffer(), calibngd.getBuffer(), frames, parentngd.dimensions, calibngd.dimensions);
-			NexusGroupData myngd = new NexusGroupData(parentngd.dimensions, NexusFile.NX_FLOAT32, mydata);
-			myngd.isDetectorEntryData = true;
-			NcdDataUtils.addData(nxdata, getName(), "data", myngd, "1", 1);
-			addQAxis(nxdata, parentngd.dimensions.length);
-
-			addMetadata(nxdata);
+			int[] dataShape = parentngd.getShape();
+			
+			parentngd = flattenGridData(parentngd, dim);
+			calibngd = flattenGridData(calibngd, 1);
+			
+			float[] mydata = nm.process(parentngd.getBuffer(), calibngd.getBuffer(), parentngd.getShape()[0], parentngd.getShape(), calibngd.getShape());
+			
+			int filespace_id = H5.H5Dget_space(ids.dataset_id);
+			int type_id = H5.H5Dget_type(ids.dataset_id);
+			int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+					ids.start, ids.stride, ids.count, ids.block);
+			H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
+					HDF5Constants.H5P_DEFAULT, mydata);
+			
+			return new FloatDataset(mydata, dataShape);
+			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);
 		}
+		
+		return null;
+		
 	}
 }

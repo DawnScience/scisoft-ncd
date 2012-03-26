@@ -16,63 +16,70 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
 
-import org.nexusformat.NexusFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.DetectorResponse;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5DetectorResponse extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5DetectorResponse.class);
 
-	private FloatDataset response;
+	public AbstractDataset parentngd;
+	private AbstractDataset response;
 
-	public FloatDataset getResponse() {
+	public AbstractDataset getResponse() {
 		return response;
 	}
 
 	public void setResponse(AbstractDataset response) {
-		this.response = (FloatDataset) response.cast(AbstractDataset.FLOAT32);
+		this.response = response;
 	}
 
 	public HDF5DetectorResponse(String name, String key) {
 		super(name, key);
 	}
 
-	@Override
-	public void writeout(int frames, INexusTree nxdata) {
+	public AbstractDataset writeout(int dim) {
 		if (response == null) {
-			return;
+			return null;
 		}
 
 		try {
-			NexusGroupData parentngd = NcdDataUtils.getData(nxdata, key, "data", NexusExtractor.SDSClassName);
-
-			if (parentngd.dimensions.length != response.getShape().length + 1) {
+			DetectorResponse dr = new DetectorResponse();
+			dr.setResponse(response);
+			int[] dataShape = parentngd.getShape();
+			
+			parentngd = flattenGridData(parentngd, dim);
+			response = response.squeeze();
+			
+			if (parentngd.getRank() != response.getRank() + 1) {
 				throw new IllegalArgumentException("response of wrong dimensionality");
 			}
 
-			DetectorResponse dr = new DetectorResponse();
-			dr.setResponse(response);
-			
-			float[] mydata = dr.process(parentngd.getBuffer(), frames, parentngd.dimensions);
-			NexusGroupData myngd = new NexusGroupData(parentngd.dimensions, NexusFile.NX_FLOAT32, mydata);
-			myngd.isDetectorEntryData = true;
-			NcdDataUtils.addData(nxdata, getName(), "data", myngd, "1", 1);
-			addQAxis(nxdata, parentngd.dimensions.length);
+			int[] flatShape = parentngd.getShape();
+			float[] mydata = dr.process(parentngd.getBuffer(), flatShape[0], flatShape);
 
-			addMetadata(nxdata);
+			int filespace_id = H5.H5Dget_space(ids.dataset_id);
+			int type_id = H5.H5Dget_type(ids.dataset_id);
+			int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+					ids.start, ids.stride, ids.count, ids.block);
+			H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
+					HDF5Constants.H5P_DEFAULT, mydata);
+			
+			return new FloatDataset(mydata, dataShape);
+			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);
 		}
+		
+		return null;
 	}
 
 }

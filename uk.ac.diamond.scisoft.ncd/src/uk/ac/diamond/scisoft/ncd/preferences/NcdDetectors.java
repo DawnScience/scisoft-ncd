@@ -23,12 +23,22 @@ public class NcdDetectors {
 	private Integer dimWaxs, dimSaxs;
 	
 	public NcdDetectors() {
-		// TODO Auto-generated constructor stub
 		detectorWaxs = null;
 		detectorSaxs = null;
 		
 		pxWaxs = 0.0;
 		pxSaxs = 0.0;
+		
+		dimWaxs = 1;
+		dimSaxs = 2;
+	}
+
+	public NcdDetectors(NcdDetectors detectors) {
+		detectorWaxs = detectors.detectorWaxs;
+		detectorSaxs = detectors.detectorSaxs;
+		
+		pxWaxs = detectors.pxWaxs;
+		pxSaxs = detectors.pxSaxs;
 		
 		dimWaxs = 1;
 		dimSaxs = 2;

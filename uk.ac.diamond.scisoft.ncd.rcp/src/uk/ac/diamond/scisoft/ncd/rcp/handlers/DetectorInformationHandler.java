@@ -17,17 +17,10 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
-import java.io.StringReader;
-import java.io.UnsupportedEncodingException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
-
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeBuilder;
-import gda.data.nexus.tree.NexusTreeNodeSelection;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -39,8 +32,14 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PlatformUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.xml.sax.InputSource;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 
@@ -59,7 +58,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 			
 			Object[] selObjects = sel.toArray();
 			HashMap<String, Integer> detNames = new HashMap<String, Integer>();
-			HashMap<String, INexusTree> detInfo = new HashMap<String, INexusTree>();
+			HashMap<String, HDF5Group> detInfo = new HashMap<String, HDF5Group>();
 			for (int i = 0; i < selObjects.length; i++) {
 				
 				String tmpfilePath;
@@ -69,19 +68,20 @@ public class DetectorInformationHandler extends AbstractHandler {
 					tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
 				
 				try {
-					INexusTree detectorTree = NexusTreeBuilder.getNexusTree(tmpfilePath, getDetectorSelection());
-				    Iterator<INexusTree> iterator = detectorTree.getNode("entry1/instrument").iterator();
+					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
+					HDF5Group node = (HDF5Group) tmpfile.findNodeLink("/entry1/instrument").getDestination();
+					Iterator<String> iterator = node.getNodeNameIterator();
 				    
 				    while (iterator.hasNext ()) {
-				    	INexusTree tmpTree = iterator.next();
-				    	String tmpName = tmpTree.getName();
-				    	
-				    	if (detNames.containsKey(tmpName))
-				    		detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
-				    	else {
-				    		detNames.put(tmpName, new Integer(1));
-				    		
-				    		detInfo.put(tmpName, tmpTree);
+				    	String tmpName = iterator.next();
+				    	HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
+				    	if (tmpTree instanceof HDF5Group) {
+					    	if (detNames.containsKey(tmpName))
+					    		detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
+					    	else {
+					    		detNames.put(tmpName, new Integer(1));
+					    		detInfo.put(tmpName, (HDF5Group) tmpTree);
+					    	}
 				    	}
 				    }
 					
@@ -106,7 +106,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, INexusTree> detectors) {
+	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors) {
 		
     	HashMap<String, Integer> detDims = new HashMap<String, Integer>();
     	HashMap<String, Double> pixels = new HashMap<String, Double>();
@@ -115,14 +115,14 @@ public class DetectorInformationHandler extends AbstractHandler {
     	ArrayList<String> detListWaxs = new ArrayList<String>();
     	ArrayList<String> detListSaxs = new ArrayList<String>();
     	
-		Iterator<Entry<String, INexusTree>> it = detectors.entrySet().iterator();
+		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
-	        Entry<String, INexusTree> detector = it.next();
-	        String detName = detector.getValue().getName();
-	        INexusTree sasTree = detector.getValue().getChildNode("sas_type", NexusExtractor.SDSClassName);
+	        Entry<String, HDF5Group> detector = it.next();
+	        String detName = detector.getKey();
+	        HDF5NodeLink sasTree = detector.getValue().getNodeLink("sas_type");
 	        if (sasTree != null) {
 				try {
-					String type = new String((byte[]) sasTree.getData().getBuffer(), "UTF-8");
+					String type = ((AbstractDataset)((HDF5Dataset)sasTree.getDestination()).getDataset()).getString(0);
 					
 		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR))
 		        			calList.add(detName);
@@ -136,19 +136,19 @@ public class DetectorInformationHandler extends AbstractHandler {
 		        		detDims.put(detName, 2);
 				    }
 		        	
-				} catch (UnsupportedEncodingException e) {
+				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading sas_type information in " + detName + " detector", e);
 				}
 	        }
-	        INexusTree pixelData = detector.getValue().getChildNode("x_pixel_size", NexusExtractor.SDSClassName);
+	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
 	        if (pixelData != null) {
-					double[] pxSize = (double[]) pixelData.getData().getBuffer();
-					pixels.put(detName, pxSize[0]*1000);
+					double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
+					pixels.put(detName, pxSize*1000);
 	        }
 	        
-			INexusTree dataNode = detector.getValue().getChildNode("data", NexusExtractor.SDSClassName);
+			HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
 	        if (dataNode != null) {
-				int[] dims = dataNode.getData().dimensions;
+				int[] dims = ((HDF5Dataset)dataNode.getDestination()).getDataset().getShape();
 				maxChannel.put(detName, dims[dims.length - 1] - 1);
 	        }
 	    }
@@ -160,24 +160,4 @@ public class DetectorInformationHandler extends AbstractHandler {
 	    NcdDataReductionParameters.setWaxsDetectors(detListWaxs);
 	    NcdDataReductionParameters.setSaxsDetectors(detListSaxs);
 	}
-
-	private NexusTreeNodeSelection getDetectorSelection() throws Exception {
-		String xml = "<?xml version='1.0' encoding='UTF-8'?>" +
-		"<nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>NXentry</nxClass><wanted>1</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXinstrument</nxClass><wanted>1</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>NXdetector</nxClass><wanted>1</wanted><dataType>2</dataType>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>data</name><wanted>1</wanted><dataType>1</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>sas_type</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"<nexusTreeNodeSelection><nxClass>SDS</nxClass><name>x_pixel_size</name><wanted>1</wanted><dataType>2</dataType>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>" +
-		"</nexusTreeNodeSelection>";
-		return NexusTreeNodeSelection.createFromXML(new InputSource(new StringReader(xml)));
-	}
-
 }

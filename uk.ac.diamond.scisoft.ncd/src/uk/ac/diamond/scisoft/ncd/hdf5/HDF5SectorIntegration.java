@@ -16,9 +16,15 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
+import java.util.Arrays;
+
 import gda.data.nexus.extractor.NexusExtractor;
 import gda.data.nexus.extractor.NexusGroupData;
 import gda.data.nexus.tree.INexusTree;
+
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.nexusformat.NexusFile;
 import org.slf4j.Logger;
@@ -30,12 +36,16 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5SectorIntegration extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5SectorIntegration.class);
 
+	public AbstractDataset parentdata;
+	private DataSliceIdentifiers azimuthalIds;
+	
 	private SectorROI roi;
 	private Double gradient, intercept, cameraLength;
 
@@ -58,11 +68,16 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		this.intercept =  new Double(intercept);
 	}
 
+	public void setAzimuthalIDs(DataSliceIdentifiers input_id) {
+		azimuthalIds = new DataSliceIdentifiers(input_id);
+	}
+	
 	@SuppressWarnings("hiding")
 	private AbstractDataset mask;
 	
 	public HDF5SectorIntegration(String name, String key) {
 		super(name, key);
+		azimuthalIds = new DataSliceIdentifiers();
 	}
 
 	public void setMask(IDataset mask) {
@@ -144,4 +159,63 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		}
 	}
 
+	public AbstractDataset[] writeout(int dim) {
+		if (roi == null) {
+			return null;
+		}
+
+		AbstractDataset maskUsed = mask;
+
+		roi.setClippingCompensation(true);
+
+		try {
+			AbstractDataset myazdata = null, myraddata = null;
+
+			SectorIntegration sec = new SectorIntegration();
+			sec.setROI(roi);
+			int[] dataShape = parentdata.getShape();
+			
+			parentdata = flattenGridData(parentdata, dim);
+			
+			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed, myazdata, myraddata);
+			myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+			myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+
+			writeResults(azimuthalIds, myazdata, dataShape, dim);
+			writeResults(ids, myraddata, dataShape, dim);
+			
+			int resLength =  dataShape.length - dim + 1;
+			int[] resAzShape = Arrays.copyOf(dataShape, resLength);
+			int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+			resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
+			resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+			
+			return new AbstractDataset[] {myazdata.reshape(resAzShape), myraddata.reshape(resRadShape)};
+			
+		} catch (Exception e) {
+			logger.error("exception caught reducing data", e);
+		}
+		
+		return null;
+	}
+	
+	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim) throws HDF5Exception {
+		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
+		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
+		
+		int resLength =  dataShape.length - dim + 1;
+		int integralLength = data.getShape()[data.getRank() - 1];
+		
+		long[] res_start = Arrays.copyOf(dataIDs.start, resLength);
+		long[] res_count = Arrays.copyOf(dataIDs.count, resLength);
+		long[] res_block = Arrays.copyOf(dataIDs.block, resLength);
+		res_block[resLength - 1] = integralLength;
+		
+		int memspace_id = H5.H5Screate_simple(resLength, res_block, null);
+		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+				res_start, res_block, res_count, res_block);
+		
+		H5.H5Dwrite(dataIDs.dataset_id, type_id, memspace_id, filespace_id,
+				HDF5Constants.H5P_DEFAULT, data.getBuffer());
+	}
 }

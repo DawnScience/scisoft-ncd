@@ -6,5 +6,10 @@ Bundle-Version: 1.1.0.qualifier
 Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="1.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit4;bundle-version="4.8.1"
-Import-Package: org.apache.commons.io
-Bundle-Vendor: Diamond Light Source
+Import-Package: ncsa.hdf.hdf5lib,
+ ncsa.hdf.object.h5,
+ org.apache.commons.beanutils,
+ org.apache.commons.io,
+ org.apache.commons.lang,
+ org.apache.commons.math.util
+Bundle-Vendor: Diamond Light Souce Ltd.
