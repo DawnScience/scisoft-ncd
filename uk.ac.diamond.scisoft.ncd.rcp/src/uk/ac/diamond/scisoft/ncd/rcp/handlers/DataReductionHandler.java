@@ -38,6 +38,7 @@ import org.eclipse.core.commands.State;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
+import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.core.resources.IFile;
@@ -197,7 +198,7 @@ public class DataReductionHandler extends AbstractHandler {
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
 							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
-							IFileStore outputFile = fileSystem.getStore(URI.create(filename));
+							IFileStore outputFile = fileSystem.getStore(URIUtil.toURI(filename));
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
