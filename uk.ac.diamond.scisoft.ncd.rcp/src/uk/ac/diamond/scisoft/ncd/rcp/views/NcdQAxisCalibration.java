@@ -324,9 +324,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		final StringBuilder command = new StringBuilder();
 		try {
 			File pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd.rcp").getAbsolutePath());
-			command.append("sys.path.append(\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
+			command.append("sys.path.append(r\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
 			pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd").getAbsolutePath());
-			command.append("sys.path.append(\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
+			command.append("sys.path.append(r\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
 		} catch (IOException e) {
 			String msg = "SCISOFT NCD: Error configuring Jython console";
 			logger.error(msg, e);
