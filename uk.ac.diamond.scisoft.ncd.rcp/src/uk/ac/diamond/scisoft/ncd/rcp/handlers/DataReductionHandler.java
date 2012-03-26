@@ -468,7 +468,7 @@ public class DataReductionHandler extends AbstractHandler {
 	private String createResultsFile(String inputfileName, String inputfilePath, String prefix) throws HDF5Exception, URISyntaxException {
 		String datetime = generateDateTimeStamp();
 		String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
-		final String filename = workingDir + File.pathSeparator + prefix + detNames + datetime + inputfileName;
+		final String filename = workingDir + File.separator + prefix + detNames + datetime + inputfileName;
 		
 		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
