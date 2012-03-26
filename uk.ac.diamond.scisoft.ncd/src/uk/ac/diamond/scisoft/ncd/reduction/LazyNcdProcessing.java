@@ -554,7 +554,7 @@ public class LazyNcdProcessing {
 		for (int i = frames.length - dim; i < frames.length; i++)
 			batchSize *= frames[i];
 		
-		frameBatch = (int) (maxMemory / (5 * batchSize));
+		frameBatch = (int) (maxMemory / (20 * batchSize));
 	}
 
 	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {

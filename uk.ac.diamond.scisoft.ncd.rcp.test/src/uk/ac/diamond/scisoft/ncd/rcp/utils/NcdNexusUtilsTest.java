@@ -50,7 +50,8 @@ public class NcdNexusUtilsTest {
 	private static String detector = "Rapid2D";
 	private static int totalFrames = 120;
 	private static int dim = 2;
-	private static int[] frames = new int[] {1, totalFrames, 512, 512};
+	private static int[] image = new int[] {512, 512};
+	private static int[] frames = new int[] {1, totalFrames, image[0], image[1]};
 	
 	private static String format = "0;1,3,15-30,55";
 	
@@ -102,17 +103,18 @@ public class NcdNexusUtilsTest {
 		AbstractDataset result = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
 		for (int idx = 0; idx < data.getShape()[0]; idx++)
-			for (int frame = 0; frame < data.getShape()[1]; frame++)
-				for (int i = 0; i < 512; i++)
-					for (int j = 0; j < 512; j++) {
-						float valResult = result.getFloat(new int[] { idx, frame, i, j });
-						float valData = data.getFloat(new int[] { idx, frame, i, j });
-						double acc = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)),
-								1e-10);
-
-						assertEquals(String.format("Data slicing test for pixel (%d, %d, %d) has failed.", frame, i, j),
-								valData, valResult, acc);
-					}
+			for (int frame = 0; frame < data.getShape()[1]; frame++) {
+				start = new int[] { idx, frame, 0, 0 };
+				stop = new int[] { idx + 1, frame + 1, image[0], image[1] };
+				AbstractDataset testResult = result.getSlice(start, stop, null);
+				AbstractDataset testData = (AbstractDataset) data.getSlice(start, stop, null);
+				float valResult = testResult.max().floatValue();
+				float valData = testData.max().floatValue();
+				float acc = (float) Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)),
+						1e-10);
+				assertArrayEquals(String.format("Data slicing test for frame (%d, %d) has failed.", idx, frame),
+						(float[])testResult.getBuffer(), (float[])testData.getBuffer(), acc);
+			}
 	}
 	
 	@Test

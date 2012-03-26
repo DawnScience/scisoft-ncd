@@ -490,8 +490,8 @@ public class NcdLazyDataReductionTest {
 				start = new int[] {0, k, 0, i, j};
 				int[] stop = new int[] {(int) shape[0], k + 1, (int) shape[2], i + 1 , j + 1};
 				AbstractDataset dataSlice = data.getSlice(start, stop, null);
-				float value = outDataset.getFloat(new int[] {0, k, 0, i, j});
-				float expected = (Float) dataSlice.sum() / (shape[0] * shape[2]);
+				double value = outDataset.getDouble(new int[] {0, k, 0, i, j});
+				double expected = (Double) dataSlice.sum() / (shape[0] * shape[2]);
 
 				// This check fails for higher accuracy settings
 				assertEquals(String.format("Test average frame for (%d, %d, %d)", k, i, j), expected, value, 1e-6*expected);
