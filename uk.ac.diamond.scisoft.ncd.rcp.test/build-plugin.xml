@@ -16,7 +16,7 @@
            Invoke the tests
          ==================================================================== -->
 
-    <target name="junit-tests" depends="toolCheck, set-test-base">
+    <target name="junit-tests" depends="toolCheck, set-ncsa-hdf-context-SDA-else-GDA, set-test-base">
         <junit-call description="${ant.project.name} Java JUnit tests">
             <formatter type="xml" />
             <classpath>
@@ -30,6 +30,7 @@
                 <pathelement location="${workspace.git.loc}/gda-nexus.git/uk.ac.gda.nexus/bin" />
                 <pathelement location="${workspace.git.loc}/gda-nexus.git/uk.ac.gda.nexus/jars/*" />
                 <pathelement location="${workspace.loc}/tp/plugins/*" />
+                <path refid="ncsa.hdf.classpath" />
                 <path refid="libs.jars.path" />
             </classpath>
             <batchtest todir="@{report.dir}">
