@@ -27,9 +27,12 @@ import java.util.Date;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.HDFArray;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.io.FilenameUtils;
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -476,6 +479,17 @@ public class DataReductionHandler extends AbstractHandler {
 		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,fapl);  
 		H5.H5Pclose(fapl);
 		
+		int[] libversion = new int[3];
+		H5.H5get_libversion(libversion);
+		putattr(fid, "HDF5_version", StringUtils.join(ArrayUtils.toObject(libversion), "."));
+		putattr(fid, "file_name", filename);
+		
+		Date date = new Date();
+		SimpleDateFormat format =
+			new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+		String dt =  format.format(date);
+		putattr(fid, "file_time", dt);
+		
 		int entry_id = NcdNexusUtils.makegroup(fid, "entry1", NexusExtractor.NXEntryClassName);
 		
 		if (calibration != null) {
@@ -528,4 +542,30 @@ public class DataReductionHandler extends AbstractHandler {
 		return filename;
 	}
 
+	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
+		int attr_type = -1;
+		int dataspace_id = -1;
+		byte[] data = null;
+		
+		if (value instanceof String) {
+			data = ((String) value).getBytes();
+			attr_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attr_type, data.length);
+		}
+		if (value instanceof Integer) {
+			HDFArray ha = new HDFArray(new int[] {(Integer) value});
+			data = ha.byteify();
+			attr_type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
+		}
+		dataspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+		int attribute_id = H5.H5Acreate(dataset_id, name, attr_type,
+				dataspace_id, HDF5Constants.H5P_DEFAULT,
+				HDF5Constants.H5P_DEFAULT);
+		
+		H5.H5Awrite(attribute_id, attr_type, data);
+		
+		H5.H5Tclose(attr_type);
+		H5.H5Sclose(dataspace_id);
+		H5.H5Aclose(attribute_id);
+	}
 }
