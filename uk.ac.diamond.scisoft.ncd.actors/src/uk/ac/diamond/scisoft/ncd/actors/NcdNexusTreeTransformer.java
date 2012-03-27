@@ -101,7 +101,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			final Map<String,String> scalar = MessageUtils.getScalar(cache);
 			final String fileName = scalar!=null ? scalar.get("file_name") : null;
 			//final File  output = new File(scalar.get("file_path"));
-			fileFullPath = filePath + "/" + FilenameUtils.getBaseName(fileName) + ".nxs";
+			fileFullPath = filePath + File.separator + FilenameUtils.getBaseName(fileName) + ".nxs";
 			
 			final DataMessageComponent comp = new DataMessageComponent();
 			comp.addScalar(scalar);
