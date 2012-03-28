@@ -222,16 +222,15 @@ public class LazyNcdProcessing {
 	    int sec_data_id = -1;
 	    int az_data_id = -1;
 		int secRank = rank - dim + 1;
-		long[] secFrames = new long[secRank];
+		long[] secFrames = Arrays.copyOf(frames, secRank);
 		AbstractDataset qaxis = null;
 		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
-		if(flags.isEnableSector()) {
+		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			int[] intRadii = intSector.getIntRadii();
 			double[] radii = intSector.getRadii();
 			double dpp = intSector.getDpp();
-			secFrames = Arrays.copyOf(frames, secRank);
 			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
 			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secRank, secFrames, true, "counts");
 			
@@ -371,7 +370,7 @@ public class LazyNcdProcessing {
 		IntegerDataset idx_dataset = new IntegerDataset(iter_array);
 		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
 		
-		if (flags.isEnableSector()) {
+		if (flags.isEnableSector() && dim == 2) {
 			while (iter.hasNext()) {
 				sliceParams.setStart(iter.getPos());
 				AbstractDataset data = NcdNexusUtils.sliceInputData(sliceParams, input_ids);
@@ -519,7 +518,7 @@ public class LazyNcdProcessing {
 	    	H5.H5Gclose(dr_group_id);
 	    }
 	    
-	    if (flags.isEnableSector()) {
+	    if (flags.isEnableSector() && dim == 2) {
 	    	H5.H5Dclose(sec_data_id);
 	    	H5.H5Dclose(az_data_id);
 	    	H5.H5Gclose(sec_group_id);
