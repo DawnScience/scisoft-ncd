@@ -12,7 +12,6 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  org.eclipse.ui.navigator.resources;bundle-version="3.4.201",
  uk.ac.gda.common;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0",
- uk.ac.diamond.scisoft.deprecated;bundle-version="1.0.0",
  uk.ac.gda.common.rcp;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.analysis.rcp;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.ncd;bundle-version="1.0.0"
