@@ -174,7 +174,7 @@ public class DataReductionHandler extends AbstractHandler {
 					try {
 						if (enableBackground) {
 							final String bgFilename = createResultsFile(bgName, bgPath, "background");
-							if (enableSaxs)
+							if (enableWaxs)
 								bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
 							if (enableSaxs)
 								bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
