@@ -354,7 +354,13 @@ public class LazyNcdProcessing {
 				//TOD0: dimCounter.getCounts(frameBatch) is broken in Apache Math v2.2
 				//		Use getCounts(int index) after update to v3.0
 				int[] sliceIdx = NcdDataUtils.getCounts(dimCounter, frameBatch);
-				sliceDim = ArrayUtils.lastIndexOf(sliceIdx, 0) + 1;
+				for (int i = 0; i < sliceIdx.length; i++) {
+					int idx = sliceIdx.length - 1 - i;
+					if (sliceIdx[i] != frames_int[idx]) {
+						sliceDim = i;
+						break;
+					}
+				}
 				sliceSize = sliceIdx[sliceDim];
 			}
 		}
