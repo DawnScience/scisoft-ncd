@@ -174,11 +174,11 @@ public class DataReductionHandler extends AbstractHandler {
 					try {
 						if (enableBackground) {
 							final String bgFilename = createResultsFile(bgName, bgPath, "background");
-							if (enableSaxs) {
+							if (enableSaxs)
+								bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
+							if (enableSaxs)
 								bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
-								processing.setBgFile(bgFilename);
-								processing.setBgDetector(detectorSaxs+"_result");
-							}
+							processing.setBgFile(bgFilename);
 						}
 					} catch (Exception e) {
 						logger.error("SCISOFT NCD: Error processing background file", e);
@@ -208,16 +208,20 @@ public class DataReductionHandler extends AbstractHandler {
 								return Status.CANCEL_STATUS;
 							}
 							
-							if (enableWaxs)
+							if (enableWaxs) {
+								processing.setBgDetector(detectorWaxs+"_result");
 								processing.execute(detectorWaxs, dimWaxs, filename, monitor);
+							}
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
 							
-							if (enableSaxs)
+							if (enableSaxs) {
+								processing.setBgDetector(detectorSaxs+"_result");
 								processing.execute(detectorSaxs, dimSaxs, filename, monitor);
+							}
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
@@ -498,8 +502,21 @@ public class DataReductionHandler extends AbstractHandler {
 		    H5.H5Gclose(calib_id);
 		}
 		
-		int detector_id = NcdNexusUtils.makegroup(entry_id, detectorSaxs, NXDataClassName);
-		DataSliceIdentifiers dataIDs = NcdNexusUtils.readDataId(inputfilePath, detectorSaxs);
+		if (enableWaxs)
+			createDetectorNode(detectorWaxs, entry_id, inputfilePath);
+		
+		if (enableSaxs)
+			createDetectorNode(detectorSaxs, entry_id, inputfilePath);
+		
+		H5.H5Gclose(entry_id);
+		H5.H5Fclose(fid);
+		
+		return filename;
+	}
+
+	private void createDetectorNode(String detector, int entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
+		int detector_id = NcdNexusUtils.makegroup(entry_id, detector, NXDataClassName);
+		DataSliceIdentifiers dataIDs = NcdNexusUtils.readDataId(inputfilePath, detector);
 		boolean isNAPImount = H5.H5Aexists(dataIDs.dataset_id, "napimount");
 		if (isNAPImount) {
 			int attr_id = H5.H5Aopen(dataIDs.dataset_id, "napimount", HDF5Constants.H5P_DEFAULT);
@@ -533,15 +550,11 @@ public class DataReductionHandler extends AbstractHandler {
 			H5.H5Aclose(attr_id);
 			
 		} else
-		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detectorSaxs + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detector + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		
 		H5.H5Gclose(detector_id);
-		H5.H5Gclose(entry_id);
-		H5.H5Fclose(fid);
-		
-		return filename;
 	}
-
+	
 	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
 		int attr_type = -1;
 		int dataspace_id = -1;
