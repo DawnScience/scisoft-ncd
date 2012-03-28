@@ -181,7 +181,7 @@ public class LazyNcdProcessing {
 	}
 
 	
-	public void executeHDF5(String detector, int dim, String filename, IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
+	public void execute(String detector, int dim, String filename, IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
 		String monitorFile = tmpName[tmpName.length - 1];

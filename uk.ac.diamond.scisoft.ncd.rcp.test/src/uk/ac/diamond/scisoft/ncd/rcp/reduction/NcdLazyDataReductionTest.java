@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 
 import java.util.Arrays;
 
-import gda.data.nexus.extractor.NexusExtractor;
 import gda.util.TestUtils;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -47,6 +46,10 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdLazyDataReductionTest {
 
+	private static final String NXEntryClassName = "NXentry";
+	private static final String NXInstrumentClassName = "NXinstrument";
+	private static final String NXDataClassName = "NXdata";
+	private static final String NXDetectorClassName = "NXdetector";
 	private static String testScratchDirectoryName;
 	private static String filename, bgFile, drFile, secFile;
 	private static String testDatasetName = "testInput"; 
@@ -77,10 +80,10 @@ public class NcdLazyDataReductionTest {
 			filename = testScratchDirectoryName + "ncd_sda_test.nxs"; 
 
 			int nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
-			NcdNexusUtils.makegroup(entry_id, "results", NexusExtractor.NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
-			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NexusExtractor.NXDataClassName);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
 			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape.length, normShape, true, "counts");
 
@@ -137,8 +140,8 @@ public class NcdLazyDataReductionTest {
 			bgFile = testScratchDirectoryName + "bgfile_ncd_sda_test.nxs"; 
 
 			int nxsFile = H5.H5Fcreate(bgFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape.length, bgShape, true, "counts");
 
 			for (int k = 0; k < bgShape[0]; k++)
@@ -174,9 +177,9 @@ public class NcdLazyDataReductionTest {
 			drFile = testScratchDirectoryName + "drfile_ncd_sda_test.nxs"; 
         
 			int nxsFile = H5.H5Fcreate(drFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
-			int processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NexusExtractor.NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NexusExtractor.NXDetectorClassName);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			int processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NXInstrumentClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NXDetectorClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape.length, imageShape, true, "counts");
 
 			float[] data = new float[points];
@@ -208,8 +211,8 @@ public class NcdLazyDataReductionTest {
 			secFile = testScratchDirectoryName + "secfile_ncd_sda_test.nxs"; 
 			
 			int nxsFile = H5.H5Fcreate(secFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NexusExtractor.NXEntryClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NexusExtractor.NXDataClassName);
+			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
 
 			for (int m = 0; m < shape[0]; m++)

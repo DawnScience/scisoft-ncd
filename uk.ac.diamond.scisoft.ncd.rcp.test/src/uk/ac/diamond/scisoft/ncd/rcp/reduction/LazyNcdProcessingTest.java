@@ -187,8 +187,8 @@ public class LazyNcdProcessingTest {
 	    drSlice.setStart(start);
 		dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
-		testbgClass.executeHDF5(detector, dim, bgFilename, new NullProgressMonitor());
-		testClass.executeHDF5(detector, dim, filename, new NullProgressMonitor());
+		testbgClass.execute(detector, dim, bgFilename, new NullProgressMonitor());
+		testClass.execute(detector, dim, filename, new NullProgressMonitor());
 	}
 
 	@Test

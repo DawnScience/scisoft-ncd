@@ -16,16 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.hdf5;
 
-import gda.data.nexus.extractor.NexusExtractor;
-import gda.data.nexus.extractor.NexusGroupData;
-import gda.data.nexus.tree.INexusTree;
-import gda.data.nexus.tree.NexusTreeNode;
-
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.nexusformat.NexusFile;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -33,10 +27,8 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Nexus;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 
 public class HDF5ReductionDetector {
 
@@ -81,11 +73,6 @@ public class HDF5ReductionDetector {
 		return null;
 	}
 	
-	@SuppressWarnings("unused")
-	public void writeout(int frames, INexusTree nxdata) {
-		addMetadata(nxdata);
-	}
-	
 	public void setAttribute(String attributeName, Object value) {
 		if (descriptionLabel.equals(attributeName)) {
 			description = (String) value;
@@ -103,72 +90,6 @@ public class HDF5ReductionDetector {
 			return attributeMap.get(attributeName);
 		}
 		return null;
-	}
-
-
-	protected void addMetadata(INexusTree nxdata) {
-		NexusGroupData ngd;
-		INexusTree detTree = NcdDataUtils.getDetTree(nxdata, getName());
-
-		if (getDetectorType() != null) {
-			ngd = new NexusGroupData(getDetectorType());
-			ngd.isDetectorEntryData = false;
-
-			NexusTreeNode type_node = new NexusTreeNode("sas_type", NexusExtractor.SDSClassName, null, ngd);
-			type_node.setIsPointDependent(false);
-
-			detTree.addChildNode(type_node);
-		}
-
-		if (description != null) {
-			ngd = new NexusGroupData(description);
-			ngd.isDetectorEntryData = false;
-
-			NexusTreeNode type_node = new NexusTreeNode(descriptionLabel, NexusExtractor.SDSClassName, null, ngd);
-			type_node.setIsPointDependent(false);
-
-			detTree.addChildNode(type_node);
-		}
-
-		if (getPixelSize() != 0.0) {
-			ngd = new NexusGroupData(new int[] { 1 }, NexusFile.NX_FLOAT64, new double[] { getPixelSize() });
-			ngd.isDetectorEntryData = false;
-
-			for (String label : new String[] { "x_pixel_size", "y_pixel_size" }) {
-				NexusTreeNode type_node = new NexusTreeNode(label, NexusExtractor.SDSClassName, null, ngd);
-				type_node.setIsPointDependent(false);
-				type_node.addChildNode(new NexusTreeNode("units", NexusExtractor.AttrClassName, type_node,
-						new NexusGroupData("m")));
-
-				detTree.addChildNode(type_node);
-			}
-		}
-
-		if (mask != null) {
-			int[] devicedims = getDataDimensions();
-			ngd = new NexusGroupData(new int[] { devicedims[0], devicedims[1] }, NexusFile.NX_FLOAT64, mask.getData());
-			NcdDataUtils.addData(nxdata, getName() + "mask", "data", ngd, null, null);
-		}
-		
-		for (String label : new String[] { "distance", "beam_center_x", "beam_center_y" }) {
-			if (attributeMap.containsKey(label)) {
-				try {
-					ngd = new NexusGroupData(new int[] { 1 }, NexusFile.NX_FLOAT64,
-							new double[] { (Double) attributeMap.get(label) });
-					ngd.isDetectorEntryData = false;
-
-					NexusTreeNode type_node = new NexusTreeNode(label, NexusExtractor.SDSClassName, null, ngd);
-					type_node.setIsPointDependent(false);
-
-					type_node.addChildNode(new NexusTreeNode("units", NexusExtractor.AttrClassName, type_node, label
-							.equals("distance") ? new NexusGroupData("m") : null));
-
-					detTree.addChildNode(type_node);
-				} catch (Exception e) {
-					logger.warn("Error writing metadata " + label + ": ", e);
-				}
-			}
-		}
 	}
 
 	public double getPixelSize() {
@@ -208,12 +129,6 @@ public class HDF5ReductionDetector {
 
 	public AbstractDataset getqAxis() {
 		return qAxis;
-	}
-	
-	protected void addQAxis(INexusTree nxdata, int axisValue) {
-		if (qAxis != null) {
-			NcdDataUtils.addAxis(nxdata, getName(), "q", Nexus.createNexusGroupData(qAxis), axisValue, 1, qAxisUnit, false);
-		}
 	}
 	
 	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {

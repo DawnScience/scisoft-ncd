@@ -16,8 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import gda.data.nexus.extractor.NexusExtractor;
-
 import java.io.File;
 import java.io.Serializable;
 import java.net.URI;
@@ -81,6 +79,8 @@ public class DataReductionHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionHandler.class);
 
+	private static final String NXEntryClassName = "NXentry";
+	private static final String NXDataClassName = "NXdata";
 	
 	private String detectorWaxs;
 	private String detectorSaxs;
@@ -175,7 +175,7 @@ public class DataReductionHandler extends AbstractHandler {
 						if (enableBackground) {
 							final String bgFilename = createResultsFile(bgName, bgPath, "background");
 							if (enableSaxs) {
-								bgProcessing.executeHDF5(detectorSaxs, dimSaxs, bgFilename, monitor);
+								bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
 								processing.setBgFile(bgFilename);
 								processing.setBgDetector(detectorSaxs+"_result");
 							}
@@ -209,7 +209,7 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (enableWaxs)
-								processing.executeHDF5(detectorWaxs, dimWaxs, filename, monitor);
+								processing.execute(detectorWaxs, dimWaxs, filename, monitor);
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
@@ -217,7 +217,7 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (enableSaxs)
-								processing.executeHDF5(detectorSaxs, dimSaxs, filename, monitor);
+								processing.execute(detectorSaxs, dimSaxs, filename, monitor);
 							
 							if (monitor.isCanceled()) {
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
@@ -490,15 +490,15 @@ public class DataReductionHandler extends AbstractHandler {
 		String dt =  format.format(date);
 		putattr(fid, "file_time", dt);
 		
-		int entry_id = NcdNexusUtils.makegroup(fid, "entry1", NexusExtractor.NXEntryClassName);
+		int entry_id = NcdNexusUtils.makegroup(fid, "entry1", NXEntryClassName);
 		
 		if (calibration != null) {
-			int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NexusExtractor.NXDataClassName);
+			int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NXDataClassName);
 		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		    H5.H5Gclose(calib_id);
 		}
 		
-		int detector_id = NcdNexusUtils.makegroup(entry_id, detectorSaxs, NexusExtractor.NXDataClassName);
+		int detector_id = NcdNexusUtils.makegroup(entry_id, detectorSaxs, NXDataClassName);
 		DataSliceIdentifiers dataIDs = NcdNexusUtils.readDataId(inputfilePath, detectorSaxs);
 		boolean isNAPImount = H5.H5Aexists(dataIDs.dataset_id, "napimount");
 		if (isNAPImount) {
