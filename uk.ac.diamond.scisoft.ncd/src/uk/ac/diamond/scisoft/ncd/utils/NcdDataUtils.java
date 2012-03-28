@@ -245,7 +245,16 @@ public class NcdDataUtils {
 		nomatchBgDims.addAll(matchBgDims);
 		bgData = DatasetUtils.transpose(bgData, ArrayUtils.toPrimitive(nomatchBgDims.toArray(new Integer[] {})));
 		
-		return new AbstractDataset[] {data, bgData}; 
+		// Calculate permutations to restore original data shapes after processing
+		IntegerDataset revPermData = new IntegerDataset(nomatchDataDims.size());
+		for(int i = 0; i < nomatchDataDims.size(); i++)
+			revPermData.set(nomatchDataDims.indexOf(i), i);
+		
+		IntegerDataset revPermBg = new IntegerDataset(nomatchBgDims.size());
+		for(int i = 0; i < nomatchBgDims.size(); i++)
+			revPermBg.set(nomatchBgDims.indexOf(i), i);
+		
+		return new AbstractDataset[] {data, bgData, revPermData, revPermBg}; 
 	}
 
 }

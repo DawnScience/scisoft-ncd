@@ -467,12 +467,7 @@ public class LazyNcdProcessing {
 				remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], input_ids);
 
 				// restore original axis order in output dataset
-				int[] datashape = data.getShape();
-				int[] resshape = remapData[0].getShape();
-				int[] perm = new int[datashape.length];
-				for (int i = 0; i < datashape.length; i++)
-					perm[i] = ArrayUtils.indexOf(resshape, datashape[i]);
-				data = DatasetUtils.transpose(remapData[0], perm);
+				data = DatasetUtils.transpose(remapData[0], (int[]) remapData[3].getBuffer());
 			}
 
 			if (flags.isEnableInvariant()) {
