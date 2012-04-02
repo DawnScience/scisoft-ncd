@@ -19,6 +19,8 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.measure.unit.Unit;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -177,7 +179,8 @@ public class LazyNcdProcessing {
 	}
 
 	public void setUnit(String unit) {
-		this.qaxisUnit = unit;
+		// q-axis units need to be inverse of the linear dimension units
+		this.qaxisUnit = (unit != null ? Unit.valueOf(unit).inverse().toString() : null);
 	}
 
 	
@@ -571,7 +574,7 @@ public class LazyNcdProcessing {
 				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
 				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
 				cameraLength = crb.getMeanCameraLength(detector);
-				if (qaxisUnit == null) qaxisUnit = crb.getUnit(detector);
+				if (qaxisUnit == null) qaxisUnit = crb.getUnit(crb.getUnit(detector));
 			}
 		}
 		

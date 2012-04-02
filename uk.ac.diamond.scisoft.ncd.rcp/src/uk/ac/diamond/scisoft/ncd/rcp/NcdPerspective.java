@@ -31,23 +31,30 @@ import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 //import uk.ac.diamond.scisoft.ncd.rcp.views.WaxsQAxisCalibration;
 
+
 public class NcdPerspective implements IPerspectiveFactory {
 	
 	public static final String PLUGIN_ID = FrameworkUtil.getBundle(NcdPerspective.class).getSymbolicName();
 	
 	static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdperspective";
+	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
 	static final String QAxisFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.qaxisfolder";
 	static final String SideplotFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.sideplotfolder";
+	
+	// Currently defined in uk.ac.diamond.sda.navigator.views class 
+	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
 
 	@Override
 	public void createInitialLayout(IPageLayout layout) {
 
 		layout.addView(NcdDataReductionParameters.ID, IPageLayout.BOTTOM, 0.5f, IPageLayout.ID_EDITOR_AREA);
 		
+		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.2f, IPageLayout.ID_EDITOR_AREA);
 		String explorer = ProjectExplorer.VIEW_ID;
-		layout.addView(explorer, IPageLayout.LEFT, 0.2f, IPageLayout.ID_EDITOR_AREA);
+		projectFolderLayout.addView(explorer);
 		if (layout.getViewLayout(explorer) != null)
 			layout.getViewLayout(explorer).setCloseable(false);
+		projectFolderLayout.addView(FileView_ID);
 
 		String plot = PlotView.ID + "DP";
 		layout.addView(plot, IPageLayout.RIGHT, 0.3f, IPageLayout.ID_EDITOR_AREA);

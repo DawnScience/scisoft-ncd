@@ -21,18 +21,19 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
 import org.eclipse.core.commands.Parameterization;
 import org.eclipse.core.commands.ParameterizedCommand;
-import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
@@ -45,10 +46,11 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
-import org.eclipse.ui.progress.UIJob;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -109,9 +111,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
+			Unit<Length> selUnit = SI.NANO(SI.METER);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
 					memento.putString(CalibrationPreferences.QAXIS_UNITS, unitBtn.getKey());
+					selUnit = (Unit<Length>) Unit.valueOf(unitBtn.getKey());
 					break;
 				}
 			
@@ -123,7 +127,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -171,7 +175,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
+									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
@@ -214,8 +218,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units == null) units = NcdConstants.DEFAULT_UNIT;
 			
+			Unit<Length> selUnit = (Unit<Length>) Unit.valueOf(units);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(units)) unitBtn.getValue().setSelection(true);
+				if (unitBtn.getKey().equals(units)) {
+					unitBtn.getValue().setSelection(true);
+					
+				}
 				else unitBtn.getValue().setSelection(false);
 			
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
@@ -232,7 +240,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 					Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 				}
 			}
 			setCalTable(calibrationPeakList);
@@ -264,7 +272,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 							Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 						}
 					}
 					
@@ -285,16 +293,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 			}
 			try {
-				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-				IViewPart activePlot = page.findView(ACTIVE_PLOT);
-				if (activePlot instanceof PlotView) {
-					if (roiData != null)
-						((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
-					if (crb != null) {
-						((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
-						updateCalibrationResults(crb);
-					}
-				}
+				GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+				if (newBean == null)
+					newBean = new GuiBean();
+				newBean.put(GuiParameters.ROIDATA, roiData);
+				newBean.put(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
+				PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
 			} catch (Exception e) {
 				logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
 			}
@@ -308,10 +312,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		currentMode = getDetectorName();
 
 		final int n = braggOrder.getSelection();
-		final Double unitScale = getUnitScale();
+		final Unit<Length> unitScale = getUnitScale();
 		final String lambda, mmpp;
 		try {
-			lambda = Double.toString(1e-3 * 1e9 * 4.13566733e-15 * 299792458 * unitScale / NcdDataReductionParameters.getEnergy());
+			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458 / NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER)); 
+			lambda = Double.toString(lambdaDim.doubleValue(getUnitScale()));
 			mmpp = getPixel(true).toString();
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
@@ -358,8 +363,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 		command.append("[");
 
-		for (Map.Entry<String, Double>  peak : cal2peaks.get(standard.getText()).entrySet()) {
-			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue() * unitScale));
+		for (Entry<String, Amount<Length>>  peak : cal2peaks.get(standard.getText()).entrySet()) {
+			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue().doubleValue(unitScale)));
 		}
 
 		command.append("],");
@@ -380,39 +385,25 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			command.append("None");
 		command.append(",");
 		
-		command.append(String.format("\"%s\"", getUnitName()));
+		command.append(String.format("\"%s\"", unitScale.toString()));
 		command.append(")\n");
 		
-		UIJob job = new UIJob("Calibration") {
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				try {
-					ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+		try {
+			ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
+			IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
 
-					Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
+			Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
 
-					IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
-					Parameterization parm = new Parameterization(script, command.toString());
-					ParameterizedCommand command = new ParameterizedCommand(inject, new Parameterization[] {parm});
-					handlerService.executeCommand(command, null);
-
-					if (NcdDataReductionParameters.getDetListSaxs().isEnabled())
-						NcdDataReductionParameters.getDetListSaxs().notifyListeners(SWT.Selection, null);
-					//if (NcdDataReductionParameters.getDetListWaxs().isEnabled())
-					//	NcdDataReductionParameters.getDetListWaxs().notifyListeners(SWT.Selection, null);
-				} catch (Exception err) {
-					String msg = "SCISOFT NCD: Error running q-axis calibration script";
-					logger.error(msg, err);
-					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
-					ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
-					return Status.CANCEL_STATUS;
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setUser(true);
-		job.schedule();
+			IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
+			Parameterization parm = new Parameterization(script, command.toString());
+			ParameterizedCommand param_command = new ParameterizedCommand(inject, new Parameterization[] {parm});
+			handlerService.executeCommand(param_command, null);
+		} catch (Exception err) {
+			String msg = "SCISOFT NCD: Error running q-axis calibration script";
+			logger.error(msg, err);
+			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
+			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
+		}
 	}
 
 	protected String getDetectorName() {
