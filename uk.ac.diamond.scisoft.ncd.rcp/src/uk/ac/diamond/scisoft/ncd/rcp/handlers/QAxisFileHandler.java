@@ -19,6 +19,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.ArrayList;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -40,12 +44,12 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiPlotMode;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
@@ -76,9 +80,14 @@ public class QAxisFileHandler extends AbstractHandler {
 						HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
 						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration").getDestination();
 						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						String units = "nm^-1";
-						if (node.getAttribute("unit") != null)
-							units = node.getAttribute("unit").getFirstElement();
+						String units = node.getAttribute("unit").getFirstElement();
+						if (units != null) {
+							Unit<Length> inv_units = (Unit<Length>) Unit.valueOf(units).inverse();
+							units = inv_units.toString();
+						} else {
+							// The default value that was used when unit setting was fixed.
+							units = SI.NANO(SI.METER).toString(); 
+						}
 						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length").getDestination();
 						double cameraLength = Double.NaN;
 						if (node instanceof HDF5Dataset)

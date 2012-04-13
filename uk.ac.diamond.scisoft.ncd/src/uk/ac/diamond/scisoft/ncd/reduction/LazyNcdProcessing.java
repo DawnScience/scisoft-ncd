@@ -19,6 +19,8 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.measure.unit.Unit;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -27,7 +29,7 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.apache.commons.math.util.MultidimensionalCounter;
+import org.apache.commons.math3.util.MultidimensionalCounter;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 
@@ -36,8 +38,8 @@ import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
@@ -177,7 +179,8 @@ public class LazyNcdProcessing {
 	}
 
 	public void setUnit(String unit) {
-		this.qaxisUnit = unit;
+		// q-axis units need to be inverse of the linear dimension units
+		this.qaxisUnit = (unit != null ? Unit.valueOf(unit).inverse().toString() : null);
 	}
 
 	
@@ -351,9 +354,7 @@ public class LazyNcdProcessing {
 			// Find dimension that needs to be sliced
 			MultidimensionalCounter dimCounter = new MultidimensionalCounter(Arrays.copyOfRange(frames_int, 0, rank - dim));
 			if (dimCounter.getSize() > frameBatch) {
-				//TOD0: dimCounter.getCounts(frameBatch) is broken in Apache Math v2.2
-				//		Use getCounts(int index) after update to v3.0
-				int[] sliceIdx = NcdDataUtils.getCounts(dimCounter, frameBatch);
+				int[] sliceIdx = dimCounter.getCounts(frameBatch);
 				for (int i = 0; i < sliceIdx.length; i++) {
 					int idx = sliceIdx.length - 1 - i;
 					if (sliceIdx[i] != frames_int[idx]) {
@@ -571,7 +572,7 @@ public class LazyNcdProcessing {
 				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
 				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
 				cameraLength = crb.getMeanCameraLength(detector);
-				if (qaxisUnit == null) qaxisUnit = crb.getUnit(detector);
+				setUnit(crb.getUnit(detector));
 			}
 		}
 		

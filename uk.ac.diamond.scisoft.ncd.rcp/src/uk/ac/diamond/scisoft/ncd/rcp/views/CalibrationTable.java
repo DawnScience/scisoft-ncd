@@ -18,6 +18,9 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.util.ArrayList;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
 import org.eclipse.jface.viewers.ITableLabelProvider;
@@ -30,7 +33,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 
 public class CalibrationTable {
 	private TableViewer tViewer;
@@ -59,6 +62,10 @@ public class CalibrationTable {
 	}
 
 	final public void setInput(ArrayList<CalibrationPeak> cpl) {
+		if (cpl.size() > 0) {
+			nameList[2] = String.format("d Spacing (%s)",cpl.get(0).getDSpacing().getUnit().toString());
+			tViewer.getTable().getColumn(2).setText(nameList[2]);
+		}
 		tViewer.setInput(cpl);
 	}
 
@@ -115,7 +122,8 @@ class CalibrationLabelProvider implements ITableLabelProvider {
 				msg = String.format("%.2f",cal.getTwoTheta()*(180/Math.PI));
 				break;
 			case 2:
-				msg = String.format("%.2f",cal.getDSpacing());
+				Unit<Length> unit = cal.getDSpacing().getUnit();
+				msg = String.format("%.2f",cal.getDSpacing().doubleValue(unit));
 				break;
 			case 3:
 				Integer h = cal.getIndex("h");

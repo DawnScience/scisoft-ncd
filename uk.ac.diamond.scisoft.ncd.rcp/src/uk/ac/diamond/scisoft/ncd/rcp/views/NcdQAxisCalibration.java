@@ -21,9 +21,19 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
+import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.math3.optimization.ConvergenceChecker;
+import org.apache.commons.math3.optimization.GoalType;
+import org.apache.commons.math3.optimization.PointValuePair;
+import org.apache.commons.math3.optimization.SimplePointChecker;
+import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
+import org.apache.commons.math3.random.Well19937a;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
 import org.eclipse.core.commands.Parameterization;
@@ -31,42 +41,67 @@ import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.ActionContributionItem;
+import org.eclipse.jface.action.IAction;
+import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.handlers.IHandlerService;
-import org.eclipse.ui.progress.UIJob;
+import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.Gaussian;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.plotting.actions.InjectPyDevConsoleHandler;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.gda.common.rcp.util.BundleUtils;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	private IMemento memento;
+	private NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
+	private String calibrant;
+	
+	private int cmaesLambda = 5;
+	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
+	private int cmaesMaxIterations = 1000;
+	private int cmaesCheckFeasableCount = 10;
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2); 	 
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
 	
@@ -83,6 +118,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		GUI_PLOT_NAME = "Dataset Plot";
 
 		super.createPartControl(parent);
+		
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		
 		modeSelectionListener = new SelectionAdapter() {
 			@Override
@@ -109,9 +148,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
+			Unit<Length> selUnit = SI.NANO(SI.METER);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
 					memento.putString(CalibrationPreferences.QAXIS_UNITS, unitBtn.getKey());
+					selUnit = (Unit<Length>) Unit.valueOf(unitBtn.getKey());
 					break;
 				}
 			
@@ -123,10 +164,43 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
+				}
+			}
+			
+			CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			if (!crb.keySet().isEmpty()) {
+				IMemento crbMemento = memento.createChild(CalibrationPreferences.QAXIS_CRB);
+				for (String key : crb.keySet()) {
+					IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
+
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getFuction(key)
+							.getParameterValue(0));
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getFuction(key)
+							.getParameterValue(1));
+
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH,
+							(float) crb.getMeanCameraLength(key));
+
+					IMemento calibrationPeaksMemento = crbDataMemento
+							.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
+					for (CalibrationPeak peak : crb.getPeakList(key)) {
+						IMemento calibrationPeakMemento = calibrationPeaksMemento
+								.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
+						calibrationPeakMemento
+								.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
+						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA,
+								(float) peak.getTwoTheta());
+						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak
+								.getDSpacing().doubleValue(selUnit));
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
+					}
+
 				}
 			}
 			
@@ -146,39 +220,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIEP, (float) intSector.getAngle(1));
 							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTX, (float) intSector.getPoint()[0]);
 							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTY, (float) intSector.getPoint()[1]);
-						}
-					}
-
-					if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
-						Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
-						IMemento crbMemento = memento.createChild(CalibrationPreferences.QAXIS_CRB);
-
-						if (bd != null && bd instanceof CalibrationResultsBean) {
-							CalibrationResultsBean crb = (CalibrationResultsBean) bd;
-							for (String key: crb.keySet()) {
-								IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
-
-								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT,
-										(float) crb.getFuction(key).getParameterValue(0));
-								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT,
-										(float) crb.getFuction(key).getParameterValue(1));
-
-								crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH,
-										(float) crb.getMeanCameraLength(key));
-
-								IMemento calibrationPeaksMemento = crbDataMemento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
-								for (CalibrationPeak peak: crb.getPeakList(key)) {
-									IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
-									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
-									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-									calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing());
-									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
-									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
-									calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
-								}
-
-							}
-
 						}
 					}
 				}
@@ -214,8 +255,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units == null) units = NcdConstants.DEFAULT_UNIT;
 			
+			Unit<Length> selUnit = (Unit<Length>) Unit.valueOf(units);
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(units)) unitBtn.getValue().setSelection(true);
+				if (unitBtn.getKey().equals(units)) {
+					unitBtn.getValue().setSelection(true);
+					
+				}
 				else unitBtn.getValue().setSelection(false);
 			
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
@@ -232,7 +277,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 					Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 				}
 			}
 			setCalTable(calibrationPeakList);
@@ -264,14 +309,17 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 							Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, dSpacing, new int[] {h,k,l}));
+							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
 						}
 					}
 					
 					crb.putCalibrationResult(key, new StraightLine(new Parameter[]{gradient, intercept}), dataPeakList, meanCameraLength, units);
 				}
-
+				
+				ncdCalibrationSourceProvider.putCalibrationResult(crb);
+				updateCalibrationResults(crb);
 			}
+			
 			IMemento roiMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ROI);
 			SectorROI roiData = null;
 			if (roiMemento != null) {
@@ -285,16 +333,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 			}
 			try {
-				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-				IViewPart activePlot = page.findView(ACTIVE_PLOT);
-				if (activePlot instanceof PlotView) {
-					if (roiData != null)
-						((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
-					if (crb != null) {
-						((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
-						updateCalibrationResults(crb);
-					}
-				}
+				GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+				if (newBean == null)
+					newBean = new GuiBean();
+				newBean.put(GuiParameters.ROIDATA, roiData);
+				PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
 			} catch (Exception e) {
 				logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
 			}
@@ -303,15 +346,199 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	}
 
 	@Override
+	protected void runJavaCommand() {
+		currentMode = getDetectorName();
+		calibrant = standard.getText();
+		final boolean runRefinement = beamRefineButton.getSelection();
+
+		final int n = braggOrder.getSelection();
+		final Unit<Length> unitScale = getUnitScale();
+		final Double lambda, mmpp;
+		try {
+			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
+					/ NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER));
+			lambda = lambdaDim.doubleValue(getUnitScale());
+			mmpp = getPixel(true) * 1000;
+		} catch (Exception e) {
+			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
+			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
+					"Failed to read energy or detector pixel size parameter from NCD Q axis calibration view.");
+			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+					"Input parameter error",
+					"Please check that energy and detector pixel size parameters are properly set.", status);
+			return;
+		}
+
+		final ArrayList<APeak> initPeaks = (ArrayList<APeak>) peaks.clone();
+		final MultivariateFunction beamOffset = new MultivariateFunction() {
+
+			@Override
+			public double value(double[] beamxy) {
+				SectorROI sroi = twoDData.getROI();
+				sroi.setPoint(beamxy);
+				AbstractDataset[] intresult = ROIProfile.sector((AbstractDataset) twoDData.getStoredDataset(),
+						twoDData.getMask(), sroi);
+				AbstractDataset axis = DatasetUtils.linSpace(sroi.getRadius(0), sroi.getRadius(1),
+						intresult[0].getSize(), AbstractDataset.INT32);
+				double error = 0.0;
+				for (int idx = 0; idx < peaks.size(); idx++) {
+					APeak peak = initPeaks.get(idx);
+					// logger.info("idx {} peak start position {}", idx, peak.getParameterValues());
+					double pos = peak.getPosition();
+					double fwhm = peak.getFWHM() / 2.0;
+					int startIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos - fwhm);
+					int stopIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos + fwhm);
+
+					AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
+					AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
+							null);
+					CompositeFunction peakFit;
+					try {
+						peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
+								new Gaussian(peak.getParameters()));
+						peak.setParameterValues(peakFit.getParameterValues());
+						// logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
+						peaks.set(idx, peak);
+						//error += peak.getHeight() / peak.getFWHM();
+						error += peak.getHeight() / peak.getFWHM();
+						// totalArea += Math.max(Math.log(peak.getHeight()), 1.0) * peak.getHeight() / peak.getFWHM();
+					} catch (Exception e) {
+						logger.error("Peak fitting failed", e);
+						return Double.NaN;
+					}
+
+				}
+				if (checkPeakOverlap(peaks))
+					return Double.NaN;
+				CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda,
+						mmpp, n, unitScale);
+				error /= Math.log(1.0 + calibrationMethod.performCalibration(true));
+				logger.info("Beam position distance error for postion {}", new double[] { error, beamxy[0], beamxy[1] });
+
+				Display.getDefault().asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						try {
+							IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager().getItems();
+							for (IContributionItem item2 : items) {
+								if (item2 instanceof ActionContributionItem
+										&& item2.getId() != null
+										&& item2.getId().equalsIgnoreCase(
+												"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfileAction")) {
+									IAction sector = ((ActionContributionItem) item2).getAction();
+									if (sector.isChecked() != true) {
+										sector.setChecked(true);
+										sector.run();
+									}
+								}
+							}
+							
+							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+							if (newBean == null)
+								newBean = new GuiBean();
+							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
+							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
+							twoDData.plot(ACTIVE_PLOT);
+						} catch (Exception e) {
+							logger.error("Error updating plot view", e);
+						}
+					}
+				});
+
+				return error;
+			}
+
+			private boolean checkPeakOverlap(ArrayList<APeak> peaks) {
+				for (int idx1 = 0; idx1 < peaks.size(); idx1++)
+					for (int idx2 = idx1 + 1; idx2 < peaks.size(); idx2++) {
+						double pos1 = peaks.get(idx1).getPosition();
+						double pos2 = peaks.get(idx2).getPosition();
+						double dist = Math.abs(pos2 - pos1);
+						double fwhm1 = peaks.get(idx1).getFWHM();
+						double fwhm2 = peaks.get(idx2).getFWHM();
+						if (dist < fwhm1 || dist < fwhm2)
+							return true;
+					}
+				return false;
+			}
+		};
+
+		logger.info("Beam position before fit {}", twoDData.getROI().getPoint());
+		Job job = new Job("Beam Position Refinement") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				
+				if (runRefinement) {
+					CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(cmaesLambda, cmaesInputSigma, cmaesMaxIterations, 0.0, true,
+							0, cmaesCheckFeasableCount, new Well19937a(), false, cmaesChecker);
+					final PointValuePair newBeamPos = beamPosOptimizer.optimize(1000, beamOffset, GoalType.MAXIMIZE,
+							twoDData.getROI().getPoint());
+					Display.getDefault().syncExec(new Runnable() {
+						@Override
+						public void run() {
+							twoDData.getROI().setPoint(newBeamPos.getPoint());
+						}
+					});
+				}
+
+				Display.getDefault().syncExec(new Runnable() {
+					@Override
+					public void run() {
+						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, n, unitScale);
+						calibrationMethod.performCalibration(true);
+						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
+
+						CalibrationResultsBean crb = new CalibrationResultsBean();
+						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
+						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
+						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+						double meanCameraLength = calibrationMethod.getMeanCameraLength();
+						double stdCameraLength = calibrationMethod.getStdCameraLength() / 1e3;
+						cameralengthErr.setText(String.format("%3.3f", stdCameraLength));
+
+						crb.putCalibrationResult(currentMode, calibrationFunction,
+								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale.toString());
+						ncdCalibrationSourceProvider.putCalibrationResult(crb);
+						updateCalibrationResults(crb);
+
+						try {
+
+							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+							if (newBean == null)
+								newBean = new GuiBean();
+							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
+							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
+						} catch (Exception e) {
+							logger.error("SCISOFT NCD: Error running q-axis calibration procedure", e);
+							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
+									"Error running q-axis calibration procedure.");
+							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+									"Q-axis calibration error", "Q-axis calibration procedure has failed.", status);
+							return;
+						}
+
+					}
+				});
+
+				return Status.OK_STATUS;
+			}
+		};
+
+		job.schedule();
+
+	}
+	
+	@Override
 	protected void runJythonCommand() {
 		
 		currentMode = getDetectorName();
 
 		final int n = braggOrder.getSelection();
-		final Double unitScale = getUnitScale();
+		final Unit<Length> unitScale = getUnitScale();
 		final String lambda, mmpp;
 		try {
-			lambda = Double.toString(1e-3 * 1e9 * 4.13566733e-15 * 299792458 * unitScale / NcdDataReductionParameters.getEnergy());
+			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458 / NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER)); 
+			lambda = Double.toString(lambdaDim.doubleValue(getUnitScale()));
 			mmpp = getPixel(true).toString();
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
@@ -358,8 +585,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 		command.append("[");
 
-		for (Map.Entry<String, Double>  peak : cal2peaks.get(standard.getText()).entrySet()) {
-			command.append(String.format("(%s, %5.5g),", peak.getKey(), peak.getValue() * unitScale));
+		for (Entry<HKL, Amount<Length>>  peak : cal2peaks.get(standard.getText()).entrySet()) {
+			command.append(String.format("(%s, %5.5g),", peak.getKey().toString(), peak.getValue().doubleValue(unitScale)));
 		}
 
 		command.append("],");
@@ -380,39 +607,25 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			command.append("None");
 		command.append(",");
 		
-		command.append(String.format("\"%s\"", getUnitName()));
+		command.append(String.format("\"%s\"", unitScale.toString()));
 		command.append(")\n");
 		
-		UIJob job = new UIJob("Calibration") {
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				try {
-					ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+		try {
+			ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
+			IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
 
-					Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
+			Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
 
-					IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
-					Parameterization parm = new Parameterization(script, command.toString());
-					ParameterizedCommand command = new ParameterizedCommand(inject, new Parameterization[] {parm});
-					handlerService.executeCommand(command, null);
-
-					if (NcdDataReductionParameters.getDetListSaxs().isEnabled())
-						NcdDataReductionParameters.getDetListSaxs().notifyListeners(SWT.Selection, null);
-					//if (NcdDataReductionParameters.getDetListWaxs().isEnabled())
-					//	NcdDataReductionParameters.getDetListWaxs().notifyListeners(SWT.Selection, null);
-				} catch (Exception err) {
-					String msg = "SCISOFT NCD: Error running q-axis calibration script";
-					logger.error(msg, err);
-					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
-					ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
-					return Status.CANCEL_STATUS;
-				}
-				return Status.OK_STATUS;
-			}
-		};
-		job.setUser(true);
-		job.schedule();
+			IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
+			Parameterization parm = new Parameterization(script, command.toString());
+			ParameterizedCommand param_command = new ParameterizedCommand(inject, new Parameterization[] {parm});
+			handlerService.executeCommand(param_command, null);
+		} catch (Exception err) {
+			String msg = "SCISOFT NCD: Error running q-axis calibration script";
+			logger.error(msg, err);
+			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
+			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
+		}
 	}
 
 	protected String getDetectorName() {
@@ -424,6 +637,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	protected Double getPixel(boolean b) {
 		// Override in subclass to return the appropriate pixel size
 		return null;
+	}
+	
+	public static void setCalibrationResultsBean(CalibrationResultsBean crb) {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider calibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		
+		calibrationSourceProvider.putCalibrationResult(crb);
 	}
 	
 	public void updateResults(String detector) {

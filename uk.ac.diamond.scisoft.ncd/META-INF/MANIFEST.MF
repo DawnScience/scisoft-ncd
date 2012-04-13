@@ -4,7 +4,10 @@ Bundle-Name: Ncd
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd
 Bundle-Version: 1.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Eclipse-BuddyPolicy: registered
+Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
 Export-Package: uk.ac.diamond.scisoft.ncd,
+ uk.ac.diamond.scisoft.ncd.calibration,
  uk.ac.diamond.scisoft.ncd.data,
  uk.ac.diamond.scisoft.ncd.hdf5,
  uk.ac.diamond.scisoft.ncd.preferences,
@@ -14,11 +17,12 @@ Require-Bundle: org.apache.commons.lang,
  org.eclipse.core.runtime,
  org.eclipse.core.commands,
  uk.ac.gda.libs;bundle-version="1.0.0",
- uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0"
+ uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0",
+ uk.ac.diamond.org.uncommons.maths;bundle-version="1.0.0",
+ org.apache.commons.math;bundle-version="[3.0.0,4.0.0)",
+ uk.ac.diamond.sda.jscience;bundle-version="1.0.0";visibility:=reexport
 Import-Package: ncsa.hdf.hdf5lib,
  ncsa.hdf.hdf5lib.exceptions,
- org.apache.commons.math.exception;version="[2.2.0,3.0.0)",
- org.apache.commons.math.util;version="[2.2.0,3.0.0)",
  org.slf4j;version="[1.5.0,2.0.0)",
  uk.ac.gda.monitor
-Bundle-Vendor: Diamond Light Source
+Bundle-Vendor: Diamond Light Source Ltd.

@@ -16,10 +16,13 @@
 
 package uk.ac.diamond.scisoft.ncd.preferences;
 
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+
 public class NcdConstants {
 	
 	public static String[] detChoices = new String[] { "SAXS", "WAXS" };
 	public static String[] dimChoices = new String[] { "1D", "2D" };
-	public static String[] unitChoices = new String[] { "Å^-1", "nm^-1" };
+	public static String[] unitChoices = new String[] { NonSI.ANGSTROM.toString(), SI.NANO(SI.METER).toString() };
 	public static String DEFAULT_UNIT = unitChoices[1];
 }
