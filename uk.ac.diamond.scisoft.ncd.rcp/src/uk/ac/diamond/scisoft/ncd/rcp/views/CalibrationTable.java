@@ -33,7 +33,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationPeak;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 
 public class CalibrationTable {
 	private TableViewer tViewer;

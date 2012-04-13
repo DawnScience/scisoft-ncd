@@ -16,7 +16,7 @@
 
 from calibrationMethods import performCalibration
 from uk.ac.diamond.scisoft.analysis.plotserver import GuiParameters
-from uk.ac.diamond.scisoft.analysis.plotserver import CalibrationResultsBean
+from uk.ac.diamond.scisoft.ncd.data import CalibrationResultsBean
 from uk.ac.diamond.scisoft.ncd.preferences.NcdConstants import DEFAULT_UNIT
 from javax.measure.unit import Unit
 from javax.measure.unit import SI

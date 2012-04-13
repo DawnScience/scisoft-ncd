@@ -243,6 +243,13 @@
                priorityLevel="workbench">
          </variable>
       </sourceProvider>
+      <sourceProvider
+            provider="uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider">
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.contributions.variable1"
+               priorityLevel="workbench">
+         </variable>
+      </sourceProvider>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">

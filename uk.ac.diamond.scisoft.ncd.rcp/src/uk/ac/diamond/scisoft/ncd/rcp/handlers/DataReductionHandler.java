@@ -56,19 +56,21 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.commands.ICommandService;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.plotserver.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
@@ -434,13 +436,17 @@ public class DataReductionHandler extends AbstractHandler {
 			}
 			else flags.setEnableSector(false);
 
-			CalibrationResultsBean crb = null;
-			if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
-				Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
-
-				if (bd != null && bd instanceof CalibrationResultsBean)
-					crb = (CalibrationResultsBean) bd;
-			}
+			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
+			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			//CalibrationResultsBean crb = null;
+			//if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
+			//	Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
+            //
+			//	if (bd != null && bd instanceof CalibrationResultsBean)
+			//		crb = (CalibrationResultsBean) bd;
+			//}
 			processing.setMask(mask);
 			processing.setIntSector(intSector);
 			processing.setCrb(crb);

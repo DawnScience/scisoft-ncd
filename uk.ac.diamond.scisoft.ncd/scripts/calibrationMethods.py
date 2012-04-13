@@ -17,7 +17,7 @@
 import sys
 import math
 
-from uk.ac.diamond.scisoft.analysis.plotserver import CalibrationPeak
+from uk.ac.diamond.scisoft.ncd.data import CalibrationPeak
 import scisoftpy as dnp
 
   

@@ -21,8 +21,6 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.math.exception.OutOfRangeException; 
-import org.apache.commons.math.util.MultidimensionalCounter;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -166,49 +164,6 @@ public class NcdDataUtils {
 			return IntegerDataset.arange(1, axes, 1).getData();
 
 		return ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {}));
-	}
-	
-	/**
-	 * Convert to multidimensional counter.
-	 * 
-	 * @param index
-	 *            Index in unidimensional counter.
-	 * @return the multidimensional counts.
-	 * @throws OutOfRangeException
-	 *             if {@code index} is not between {@code 0} and the value returned by getSize() (excluded).
-	 *
-	 * TODO: This method is a work-around for the bug in
-	 *  org.apache.commons.math.utils.MultidimensionalCounter.getCounts(int index) method
-	 *  in org.apache.commons.math.utils v2.2 release. It should become obsolete after upgrade to v3.0   
-	 */
-	public static int[] getCounts(MultidimensionalCounter counter, int index) {
-		int totalSize = counter.getSize();
-		int dimension = counter.getDimension();
-		int[] sizes = counter.getSizes();
-		int last = dimension - 1;
-		if (index < 0 || index >= totalSize) {
-			throw new OutOfRangeException(index, 0, totalSize);
-		}
-
-		final int[] indices = new int[dimension];
-		int count = 0;
-		for (int i = 0; i < last; i++) {
-			int idx = 0;
-			int offset = 1;
-			for (int j = i + 1; j < dimension; j++)
-				offset *= sizes[j];
-			while (count <= index) {
-				count += offset;
-				++idx;
-			}
-			--idx;
-			count -= offset;
-			indices[i] = idx;
-		}
-
-		indices[last] = index - count;
-
-		return indices;
 	}
 	
 	public static AbstractDataset[] matchDataDimensions(AbstractDataset data, AbstractDataset bgData) {
