@@ -355,7 +355,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		calibrant = standard.getText();
 		final boolean runRefinement = beamRefineButton.getSelection();
 
-		final int n = braggOrder.getSelection();
 		final Unit<Length> unitScale = getUnitScale();
 		final Double lambda, mmpp;
 		try {
@@ -456,14 +455,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			private boolean checkPeakOverlap(ArrayList<APeak> peaks) {
 				CombinationGenerator<APeak> peakPair = new CombinationGenerator<APeak>(peaks, peaks.size());
 				for (List<APeak> pair : peakPair) {
-						APeak peak1 = pair.get(0);
-						APeak peak2 = pair.get(1);
-						double dist = Math.abs(peak2.getPosition() - peak1.getPosition());
-						double fwhm1 = peak1.getFWHM();
-						double fwhm2 = peak2.getFWHM();
-						if (dist < (fwhm1 + fwhm2) / 2.0)
-							return true;
-					}
+					APeak peak1 = pair.get(0);
+					APeak peak2 = pair.get(1);
+					double dist = Math.abs(peak2.getPosition() - peak1.getPosition());
+					double fwhm1 = peak1.getFWHM();
+					double fwhm2 = peak2.getFWHM();
+					if (dist < (fwhm1 + fwhm2) / 2.0)
+						return true;
+				}
 				return false;
 			}
 		};
@@ -489,7 +488,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				Display.getDefault().syncExec(new Runnable() {
 					@Override
 					public void run() {
-						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, n, unitScale);
+						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
 						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
 

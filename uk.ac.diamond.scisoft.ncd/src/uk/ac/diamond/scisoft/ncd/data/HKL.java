@@ -52,4 +52,29 @@ public class HKL implements Serializable {
 		String str = String.format("(%d, %d, %d)", hkl.get("h"), hkl.get("k"), hkl.get("l"));
 		return str;
 	}
+	
+	@Override
+	public boolean equals(Object input) {
+		
+		if (this == input) return true;
+		if (!(input instanceof HKL)) return false;
+		
+		HKL hklInput = (HKL) input;
+		if (hklInput.getIndex("h") != this.getIndex("h"))
+			return false;
+		if (hklInput.getIndex("k") != this.getIndex("k"))
+			return false;
+		if (hklInput.getIndex("l") != this.getIndex("l"))
+			return false;
+		return true;
+	}
+
+	@Override
+	public int hashCode() {
+	    int hash = 1;
+	    hash = hash * 31 + this.getIndex("h").hashCode();
+	    hash = hash * 31 + this.getIndex("k").hashCode();
+	    hash = hash * 31 + this.getIndex("l").hashCode();
+	    return hash;
+	}
 }
