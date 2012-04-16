@@ -21,6 +21,7 @@ import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
@@ -64,6 +65,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.uncommons.maths.combinatorics.CombinationGenerator;
 
 import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
@@ -96,6 +98,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	private IMemento memento;
 	private NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
 	private String calibrant;
+	
+	private static boolean plottingActive = false;
 	
 	private int cmaesLambda = 5;
 	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
@@ -392,16 +396,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
 					AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
 							null);
-					CompositeFunction peakFit;
 					try {
-						peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
+						CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
 								new Gaussian(peak.getParameters()));
 						peak.setParameterValues(peakFit.getParameterValues());
 						// logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
 						peaks.set(idx, peak);
-						//error += peak.getHeight() / peak.getFWHM();
-						error += peak.getHeight() / peak.getFWHM();
-						// totalArea += Math.max(Math.log(peak.getHeight()), 1.0) * peak.getHeight() / peak.getFWHM();
+						error += Math.log(1.0 + peak.getHeight() / peak.getFWHM());
 					} catch (Exception e) {
 						logger.error("Peak fitting failed", e);
 						return Double.NaN;
@@ -410,53 +411,57 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				}
 				if (checkPeakOverlap(peaks))
 					return Double.NaN;
-				CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda,
-						mmpp, n, unitScale);
-				error /= Math.log(1.0 + calibrationMethod.performCalibration(true));
 				logger.info("Beam position distance error for postion {}", new double[] { error, beamxy[0], beamxy[1] });
 
-				Display.getDefault().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						try {
-							IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager().getItems();
-							for (IContributionItem item2 : items) {
-								if (item2 instanceof ActionContributionItem
-										&& item2.getId() != null
-										&& item2.getId().equalsIgnoreCase(
-												"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfileAction")) {
-									IAction sector = ((ActionContributionItem) item2).getAction();
-									if (sector.isChecked() != true) {
-										sector.setChecked(true);
-										sector.run();
+				if (!plottingActive) {
+					plottingActive = true;
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							try {
+								IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager()
+										.getItems();
+								for (IContributionItem item2 : items) {
+									if (item2 instanceof ActionContributionItem
+											&& item2.getId() != null
+											&& item2.getId()
+													.equalsIgnoreCase(
+															"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfileAction")) {
+										IAction sector = ((ActionContributionItem) item2).getAction();
+										if (sector.isChecked() != true) {
+											sector.setChecked(true);
+											sector.run();
+										}
 									}
 								}
+
+								GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+								if (newBean == null)
+									newBean = new GuiBean();
+								newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
+								PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
+								twoDData.plot(ACTIVE_PLOT);
+							} catch (Exception e) {
+								logger.error("Error updating plot view", e);
+							} finally {
+								plottingActive = false;
 							}
-							
-							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
-							if (newBean == null)
-								newBean = new GuiBean();
-							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
-							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
-							twoDData.plot(ACTIVE_PLOT);
-						} catch (Exception e) {
-							logger.error("Error updating plot view", e);
 						}
-					}
-				});
+					});
+				}
 
 				return error;
 			}
 
 			private boolean checkPeakOverlap(ArrayList<APeak> peaks) {
-				for (int idx1 = 0; idx1 < peaks.size(); idx1++)
-					for (int idx2 = idx1 + 1; idx2 < peaks.size(); idx2++) {
-						double pos1 = peaks.get(idx1).getPosition();
-						double pos2 = peaks.get(idx2).getPosition();
-						double dist = Math.abs(pos2 - pos1);
-						double fwhm1 = peaks.get(idx1).getFWHM();
-						double fwhm2 = peaks.get(idx2).getFWHM();
-						if (dist < fwhm1 || dist < fwhm2)
+				CombinationGenerator<APeak> peakPair = new CombinationGenerator<APeak>(peaks, peaks.size());
+				for (List<APeak> pair : peakPair) {
+						APeak peak1 = pair.get(0);
+						APeak peak2 = pair.get(1);
+						double dist = Math.abs(peak2.getPosition() - peak1.getPosition());
+						double fwhm1 = peak1.getFWHM();
+						double fwhm2 = peak2.getFWHM();
+						if (dist < (fwhm1 + fwhm2) / 2.0)
 							return true;
 					}
 				return false;

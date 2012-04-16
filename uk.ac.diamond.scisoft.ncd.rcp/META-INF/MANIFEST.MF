@@ -26,7 +26,8 @@ Import-Package: javax.measure.quantity,
  org.apache.commons.io,
  org.apache.commons.lang,
  org.jscience.physics.amount,
- org.slf4j;version="[1.5.0,2.0.0)"
+ org.slf4j;version="[1.5.0,2.0.0)",
+ org.uncommons.maths.combinatorics
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
 Bundle-Vendor: Diamond Light Souce Ltd.

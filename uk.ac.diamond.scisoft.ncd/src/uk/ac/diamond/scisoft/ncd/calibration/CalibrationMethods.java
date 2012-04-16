@@ -145,7 +145,7 @@ public class CalibrationMethods {
    			regression.addData(position, qVal);
 		}
    		regression.regress();
-   		fitResult = new double [] {regression.getIntercept(), regression.getSlope()};
+   		fitResult = new double [] {regression.getIntercept(), regression.getSlope()/pixelSize};
 	}
 	
 	private double[] estimateCameraLength() {
