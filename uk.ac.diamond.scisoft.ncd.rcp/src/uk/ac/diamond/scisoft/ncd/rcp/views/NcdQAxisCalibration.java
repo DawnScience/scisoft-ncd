@@ -47,8 +47,10 @@ import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -135,6 +137,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			}
 		};
 		
+		calibrationControls.setLayout(new GridLayout(2, false));
+		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
+		beamRefineButton.setText("Refine Beam Position");
+		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
+		
+		lblN.dispose();
+		braggOrder.dispose();
+		
 		restoreState();
 	}
 
@@ -159,8 +169,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					selUnit = (Unit<Length>) Unit.valueOf(unitBtn.getKey());
 					break;
 				}
-			
-			memento.putInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER, braggOrder.getSelection());
 			
 			if (!(calibrationPeakList.isEmpty())) {
 				IMemento calibrationPeaksMemento = memento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -266,9 +274,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					
 				}
 				else unitBtn.getValue().setSelection(false);
-			
-			val = this.memento.getInteger(CalibrationPreferences.QAXIS_MAXBRAGGORDER);
-			if (val != null) braggOrder.setSelection(val);
 			
 			IMemento calibrationPeaksMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 			if (calibrationPeaksMemento != null) {

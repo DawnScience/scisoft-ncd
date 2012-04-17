@@ -35,7 +35,6 @@ public class CalibrationPreferences {
 	public static final String QAXIS_CAMERALENGTH = "qaxis.cameraLength";
 	
 	public static final String QAXIS_STANDARD = "qaxis.standard";
-	public static final String QAXIS_MAXBRAGGORDER = "qaxis.maxBraggOrder";
 	public static final String QAXIS_UNITS = "qaxis.units";
 	
 	public static final String QAXIS_CRB = "qaxis.crb";

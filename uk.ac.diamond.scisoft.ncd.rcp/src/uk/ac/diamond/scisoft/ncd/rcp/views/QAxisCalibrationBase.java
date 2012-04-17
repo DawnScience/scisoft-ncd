@@ -100,7 +100,8 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	private Button fittingButton;
 	protected Button beamRefineButton;
 	private PlotServer plotServer;
-	protected Group gpSelectMode;
+	protected Group gpSelectMode, calibrationControls;
+	protected Label lblN;
 
 
 	protected StoredPlottingObject oneDData;
@@ -361,13 +362,13 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		disLab = new Label(gpCameraDistance, SWT.NONE);
 		disLab.setText("m");
 
-		Group calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
+		calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
 		calibrationControls.setLayout(new GridLayout(3, false));
 		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		calibrationControls.setText("Calibration Controls");
 
 		Label lblStandard = new Label(calibrationControls, SWT.NONE);
-		lblStandard.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, true));
+		lblStandard.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
 		lblStandard.setText("Standard");
 
 		standard = new Combo(calibrationControls, SWT.NONE);
@@ -389,7 +390,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		unitSel.get(NcdConstants.unitChoices[1]).setToolTipText("calibrate q-axis in nanometers");
 		unitSel.get(NcdConstants.unitChoices[1]).setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
 		
-		Label lblN = new Label(calibrationControls, SWT.NONE);
+		lblN = new Label(calibrationControls, SWT.NONE);
 		lblN.setToolTipText("n in Braggs law");
 		lblN.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, true, 2, 1));
 		lblN.setText("Maximum reflection index");
@@ -518,14 +519,10 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			}
 		});
 
-		beamRefineButton = new Button(progress, SWT.CHECK);
-		beamRefineButton.setText("Refine Beam Position");
-		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
-		
 		calibrateButton = new Button(progress, SWT.NONE);
 		calibrateButton.setText("Calibrate");
 		calibrateButton.setEnabled(false);
-		calibrateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		calibrateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1));
 		calibrateButton.addSelectionListener(new SelectionAdapter() {
 
 			@Override
