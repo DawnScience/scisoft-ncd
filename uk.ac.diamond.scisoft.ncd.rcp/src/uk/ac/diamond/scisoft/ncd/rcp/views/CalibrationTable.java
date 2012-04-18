@@ -126,9 +126,9 @@ class CalibrationLabelProvider implements ITableLabelProvider {
 				msg = String.format("%.2f",cal.getDSpacing().doubleValue(unit));
 				break;
 			case 3:
-				Integer h = cal.getIndex("h");
-				Integer k = cal.getIndex("k");
-				Integer l = cal.getIndex("l");
+				Integer h = cal.getReflection().getH();
+				Integer k = cal.getReflection().getK();
+				Integer l = cal.getReflection().getL();
 				msg = String.format("(%d %d %d)", h, k, l);
 				break;
 			}

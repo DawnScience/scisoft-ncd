@@ -57,8 +57,8 @@ public class CalibrationPeak implements Serializable {
 		return dSpacing;
 	}
 
-	public Integer getIndex(String key) {
-		return reflection.getIndex(key);
+	public HKL getReflection() {
+		return reflection;
 	}
 	
 }

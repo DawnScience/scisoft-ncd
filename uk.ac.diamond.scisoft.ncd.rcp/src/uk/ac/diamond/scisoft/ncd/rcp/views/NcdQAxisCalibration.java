@@ -177,9 +177,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
-					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
-					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
-					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
+					HKL idx = peak.getReflection();
+					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
+					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
+					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, idx.getL());
 				}
 			}
 			
@@ -208,9 +209,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 								(float) peak.getTwoTheta());
 						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak
 								.getDSpacing().doubleValue(selUnit));
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, peak.getIndex("h"));
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, peak.getIndex("k"));
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, peak.getIndex("l"));
+						HKL idx = peak.getReflection();
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
+						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, idx.getL());
 					}
 
 				}

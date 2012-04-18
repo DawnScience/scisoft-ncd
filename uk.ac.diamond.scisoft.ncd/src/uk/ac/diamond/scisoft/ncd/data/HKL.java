@@ -17,39 +17,44 @@
 package uk.ac.diamond.scisoft.ncd.data;
 
 import java.io.Serializable;
-import java.util.HashMap;
 
 public class HKL implements Serializable {
-	private HashMap<String,Integer> hkl;
+	
+	private int[] hkl;
 	
 	public HKL(int h, int k, int l) {
 		super();
 		
-		hkl = new HashMap<String, Integer>(3);
-		hkl.put("h", h);
-		hkl.put("k", k);
-		hkl.put("l", l);
+		hkl = new int[] {h, k, l};
 	}
 	
-	public Integer getIndex(String key) {
-		return hkl.get(key);
+	public Integer getH() {
+		return hkl[0];
 	}
 	
-	public int[] getIndeces() {
-		return new int[] {hkl.get("h"), hkl.get("k"), hkl.get("l")};
+	public Integer getK() {
+		return hkl[1];
+	}
+	
+	public Integer getL() {
+		return hkl[2];
+	}
+	
+	public int[] getIndices() {
+		return hkl;
 	}
 	
 	public Integer getMaxIndex() {
-		return Math.max(Math.max(hkl.get("h"), hkl.get("k")), hkl.get("l"));
+		return Math.max(Math.max(getH(), getK()), getL());
 	}
 	
 	public Integer getMinIndex() {
-		return Math.min(Math.min(hkl.get("h"), hkl.get("k")), hkl.get("l"));
+		return Math.min(Math.min(getH(), getK()), getL());
 	}
 	
 	@Override
 	public String toString() {
-		String str = String.format("(%d, %d, %d)", hkl.get("h"), hkl.get("k"), hkl.get("l"));
+		String str = String.format("(%d, %d, %d)", getH(), getK(), getL());
 		return str;
 	}
 	
@@ -60,11 +65,11 @@ public class HKL implements Serializable {
 		if (!(input instanceof HKL)) return false;
 		
 		HKL hklInput = (HKL) input;
-		if (hklInput.getIndex("h") != this.getIndex("h"))
+		if (hklInput.getH() != this.getH())
 			return false;
-		if (hklInput.getIndex("k") != this.getIndex("k"))
+		if (hklInput.getK() != this.getK())
 			return false;
-		if (hklInput.getIndex("l") != this.getIndex("l"))
+		if (hklInput.getL() != this.getL())
 			return false;
 		return true;
 	}
@@ -72,9 +77,9 @@ public class HKL implements Serializable {
 	@Override
 	public int hashCode() {
 	    int hash = 1;
-	    hash = hash * 31 + this.getIndex("h").hashCode();
-	    hash = hash * 31 + this.getIndex("k").hashCode();
-	    hash = hash * 31 + this.getIndex("l").hashCode();
+	    hash = hash * 31 + this.getH().hashCode();
+	    hash = hash * 31 + this.getK().hashCode();
+	    hash = hash * 31 + this.getL().hashCode();
 	    return hash;
 	}
 }
