@@ -35,6 +35,13 @@ import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
 import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
 import org.apache.commons.math3.random.Well19937a;
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
+import org.dawb.common.ui.plot.PlotType;
+import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.trace.ILineTrace;
+import org.dawb.common.ui.plot.trace.ILineTrace.PointStyle;
+import org.dawb.common.ui.plot.trace.ILineTrace.TraceType;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.IParameter;
 import org.eclipse.core.commands.Parameterization;
@@ -43,6 +50,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.jface.action.IContributionItem;
@@ -50,10 +58,13 @@ import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.layout.FillLayout;
+import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
@@ -107,7 +118,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
 	private int cmaesMaxIterations = 1000;
 	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2); 	 
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2);
+	
+	private AbstractPlottingSystem plottingSystem;
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
 	
@@ -146,6 +159,25 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		braggOrder.dispose();
 		
 		restoreState();
+		
+		try {
+	        this.plottingSystem = PlottingFactory.getPlottingSystem();
+	        plottingSystem.setColorOption(ColorOption.NONE);
+	        plottingSystem.setDatasetChoosingRequired(false);
+		} catch (Exception e) {
+			logger.error("Cannot locate any plotting systems!", e);
+		}
+		
+		final Composite plot = new Composite(parent, SWT.NONE);
+		plot.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plot.setLayout(new FillLayout());
+		try {
+	        IActionBars wrapper = this.getViewSite().getActionBars();
+			plottingSystem.createPlotPart(plot, "Calibration Plot", wrapper, PlotType.PT1D, this);
+
+		} catch (Exception e) {
+			logger.error("Error creating plot part.", e);
+		}
 	}
 
 	@Override
@@ -368,7 +400,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
 					/ NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER));
 			lambda = lambdaDim.doubleValue(getUnitScale());
-			mmpp = getPixel(true) * 1000;
+			mmpp = getPixel(false);
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
 			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
@@ -447,6 +479,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 								newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
 								PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
 								twoDData.plot(ACTIVE_PLOT);
+								
+								CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, unitScale);
+								calibrationMethod.performCalibration(true);
+								Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
+								Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
+								StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+								plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
+								
 							} catch (Exception e) {
 								logger.error("Error updating plot view", e);
 							} finally {
@@ -512,6 +552,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 						updateCalibrationResults(crb);
 
+						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
+						
 						try {
 
 							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
@@ -539,7 +581,48 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 	}
 	
+
+	private void plotCalibrationResults(StraightLine calibrationFunction, List<CalibrationPeak> list) {
+		
+		plottingSystem.clear();
+		
+		double px = getPixel(false);
+		AbstractDataset xAxis = AbstractDataset.arange(twoDData.getROI().getIntRadius(1), AbstractDataset.FLOAT32);
+		xAxis.imultiply(px);
+		AbstractDataset qvalues = calibrationFunction.makeDataset(xAxis);
+		
+        ILineTrace calibrationLine = plottingSystem.createLineTrace("Fitting line");
+        calibrationLine.setTraceType(TraceType.SOLID_LINE);
+        calibrationLine.setLineWidth(2);
+        calibrationLine.setTraceColor(ColorConstants.red);
+        calibrationLine.setData(xAxis, qvalues);
+        plottingSystem.addTrace(calibrationLine);
+
+		ArrayList<Double> peakPos = new ArrayList<Double>();
+		ArrayList<Double> qData = new ArrayList<Double>();
+		
+		for (CalibrationPeak peak : list) {
+			peakPos.add(peak.getPeakPos() * px);
+			qData.add(2.0 * Math.PI / peak.getDSpacing().doubleValue(getUnitScale()));
+		}
+		
+		AbstractDataset.createFromList(peakPos);
+        ILineTrace referencePoints = plottingSystem.createLineTrace("Calibration Points");
+        referencePoints.setTraceType(TraceType.POINT);
+        referencePoints.setTraceColor(ColorConstants.darkBlue);
+        referencePoints.setPointStyle(PointStyle.FILLED_TRIANGLE);
+        referencePoints.setPointSize(10);
+        referencePoints.setData(AbstractDataset.createFromList(peakPos), AbstractDataset.createFromList(qData));
+        plottingSystem.addTrace(referencePoints);
+        
+        plottingSystem.getSelectedXAxis().setTitle("Pixel position / mm");
+        plottingSystem.getSelectedYAxis().setTitle("q / " + getUnitScale().inverse().toString());
+        plottingSystem.autoscaleAxes();
+
+	}
+	
 	@Override
+	@Deprecated
 	protected void runJythonCommand() {
 		
 		currentMode = getDetectorName();

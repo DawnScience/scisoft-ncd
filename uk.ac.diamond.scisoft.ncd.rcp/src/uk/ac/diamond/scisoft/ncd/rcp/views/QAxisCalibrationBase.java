@@ -628,6 +628,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	protected void runJavaCommand() {
 	}
 	
+	@Deprecated
 	protected void runJythonCommand() {
 	}
 
