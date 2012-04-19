@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.data;
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 public class HKL implements Serializable {
 	
@@ -62,24 +63,21 @@ public class HKL implements Serializable {
 	public boolean equals(Object input) {
 		
 		if (this == input) return true;
+		
 		if (!(input instanceof HKL)) return false;
 		
 		HKL hklInput = (HKL) input;
-		if (hklInput.getH() != this.getH())
+		if (!(hklInput.getH().equals(this.getH())))
 			return false;
-		if (hklInput.getK() != this.getK())
+		if (!(hklInput.getK().equals(this.getK())))
 			return false;
-		if (hklInput.getL() != this.getL())
+		if (!(hklInput.getL().equals(this.getL())))
 			return false;
 		return true;
 	}
 
 	@Override
 	public int hashCode() {
-	    int hash = 1;
-	    hash = hash * 31 + this.getH().hashCode();
-	    hash = hash * 31 + this.getK().hashCode();
-	    hash = hash * 31 + this.getL().hashCode();
-	    return hash;
+	    return Arrays.hashCode(getIndices());
 	}
 }
