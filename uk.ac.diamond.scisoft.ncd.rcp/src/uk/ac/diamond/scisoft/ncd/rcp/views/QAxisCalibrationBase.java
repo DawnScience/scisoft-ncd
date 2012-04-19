@@ -563,7 +563,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	}
 
 	protected void findViewAndDetermineMode(String et) {
-		int bo = 0;
 		IWorkbenchWindow page = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 
 		if (pv != null) {
@@ -575,27 +574,16 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			// TODO choices should be in a clever object
 			if ("SAXS".equals(et)) {
 
-				bo = (10);
 				currentMode = et;
 				ACTIVE_PLOT = SAXS_PLOT_NAME;
 
 			} else { // if (et == ExperimentType.WAXS)
 
-				bo = (2);
 				currentMode = et;
 				ACTIVE_PLOT = WAXS_PLOT_NAME;
 
 			}
 
-			final int boo = bo;
-			page.getShell().getDisplay().asyncExec(new Runnable() {
-
-				@Override
-				public void run() {
-					braggOrder.setSelection(boo);
-				}
-			});
-			
 			pv = getPlotViewOfView(ACTIVE_PLOT);
 			if (pv == null) {
 				logger.warn("no plotview found for " + et);
@@ -650,6 +638,8 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		standard.select(0);
 
 		braggOrder.setSelection(0);
+		
+		unitSel.values().iterator().next().setSelection(true);
 	}
 
 	@Override
