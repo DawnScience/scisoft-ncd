@@ -21,6 +21,7 @@ import java.util.Arrays;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 
+import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -54,7 +55,7 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 		return null;
 	}
 
-	public AbstractDataset writeout(int dim) {
+	public AbstractDataset writeout(int dim, ILock lock) {
 		try {
 			if (parentngd == null) return null;
 			Invariant inv = new Invariant();
@@ -63,14 +64,20 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 			parentngd = flattenGridData(parentngd, dim);
 			
 			float[] mydata = inv.process(parentngd.getBuffer(), parentngd.getShape());
-			
-			int filespace_id = H5.H5Dget_space(ids.dataset_id);
-			int type_id = H5.H5Dget_type(ids.dataset_id);
-			int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
-			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
-					ids.start, ids.stride, ids.count, ids.block);
-			H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
-					HDF5Constants.H5P_DEFAULT, mydata);
+			try {
+				lock.acquire();
+				
+				int filespace_id = H5.H5Dget_space(ids.dataset_id);
+				int type_id = H5.H5Dget_type(ids.dataset_id);
+				int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
+						ids.block);
+				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
+			} catch (Exception e) {
+				throw e;
+			} finally {
+				lock.release();
+			}
 			
 			return new FloatDataset(mydata, dataShape);
 			

@@ -26,10 +26,12 @@ public class SliceSettings {
 	int sliceSize;
 	
 	public SliceSettings(SliceSettings slice) {
-		this.frames = Arrays.copyOf(slice.getFrames(), slice.getFrames().length);
-		this.start =  Arrays.copyOf(slice.getStart(), slice.getStart().length);
-		this.sliceDim = slice.getSliceDim();
-		this.sliceSize = slice.getSliceSize();
+		if (slice != null) {
+			this.frames = Arrays.copyOf(slice.getFrames(), slice.getFrames().length);
+			this.start = Arrays.copyOf(slice.getStart(), slice.getStart().length);
+			this.sliceDim = slice.getSliceDim();
+			this.sliceSize = slice.getSliceSize();
+		}
 	}
 
 	public SliceSettings(long[] frames, int sliceDim, int sliceSize) {

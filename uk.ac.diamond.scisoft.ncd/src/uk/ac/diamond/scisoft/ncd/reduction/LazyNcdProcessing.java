@@ -197,7 +197,7 @@ public class LazyNcdProcessing {
 	}
 
 	
-	public void execute(String detector, int dim, String filename, IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
+	public void execute(String detector, int dim, String filename, final IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
 		final String monitorFile = tmpName[tmpName.length - 1];
@@ -279,10 +279,10 @@ public class LazyNcdProcessing {
 			az_data_id = -1;
 		}
 		
-	    int inv_group_id = -1;
-	    int inv_data_id = -1;
-		int invRank = flags.isEnableSector() ? secRank - 1: rank - dim;
-		LazyInvariant lazyInvariant = new LazyInvariant();
+	    final int inv_group_id;
+	    final int inv_data_id;
+		final int invRank = flags.isEnableSector() ? secRank - 1: rank - dim;
+		final LazyInvariant lazyInvariant = new LazyInvariant();
 		if(flags.isEnableInvariant()) {
 		    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -290,13 +290,16 @@ public class LazyNcdProcessing {
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
 			
 			lazyInvariant.writeNcdMetadata(inv_group_id);
+		} else {
+		    inv_group_id = -1;
+		    inv_data_id = -1;
 		}
 		
 		
 		DataSliceIdentifiers calibration_ids = null;
 		
 		int rankCal;
-		long[] framesCal = null;
+		final long[] framesCal;
 		
 	    final int dr_group_id;
 	    final int dr_data_id;
@@ -313,9 +316,9 @@ public class LazyNcdProcessing {
 		    dr_data_id = -1;
 		}
 	    
-	    int norm_group_id = -1;
-	    int norm_data_id = -1;
-		LazyNormalisation lazyNormalisation = new LazyNormalisation();
+	    final int norm_group_id;
+	    final int norm_data_id;
+		final LazyNormalisation lazyNormalisation = new LazyNormalisation();
 		if(flags.isEnableNormalisation()) {
 		    norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, "NXdetector");
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -336,15 +339,19 @@ public class LazyNcdProcessing {
 				lazyNormalisation.writeQaxisData(norm_group_id);
 			}
 			lazyNormalisation.writeNcdMetadata(norm_group_id);
+		} else {
+		    norm_group_id = -1;
+		    norm_data_id = -1;
+		    framesCal = null;
 		}
 		
-	    int bg_group_id = -1; 
-	    int bg_data_id = -1; 
+	    final int bg_group_id; 
+	    final int bg_data_id; 
 	    int bgRank;
 	    DataSliceIdentifiers bgIds = null;
-		long[] bgFrames = null;
-		int[] bgFrames_int = null;
-		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
+		final long[] bgFrames;
+		int[] bgFrames_int;
+		final LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
 		if(flags.isEnableBackground()) {
 		    bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -363,6 +370,11 @@ public class LazyNcdProcessing {
 				lazyBackgroundSubtraction.writeQaxisData(bg_group_id);
 			}
 			lazyBackgroundSubtraction.writeNcdMetadata(bg_group_id);
+		} else {
+		    bg_group_id = -1; 
+		    bg_data_id = -1;
+		    bgFrames = null;
+		    bgFrames_int = null;
 		}
 	    
 		int sliceDim = 0;
@@ -413,7 +425,7 @@ public class LazyNcdProcessing {
 					private SliceSettings currentSliceParams = new SliceSettings(finalSliceParams);
 					
 					@Override
-					protected IStatus run(IProgressMonitor monitor) {
+					protected IStatus run(IProgressMonitor jobmonitor) {
 						try {
 							AbstractDataset data;
 							try {
@@ -429,7 +441,7 @@ public class LazyNcdProcessing {
 								monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 								tmp_ids.setIDs(dr_group_id, dr_data_id);
-								data = lazyDetectorResponse.execute(finalDim, data, tmp_ids);
+								data = lazyDetectorResponse.execute(finalDim, data, tmp_ids, lock);
 							}
 
 							DataSliceIdentifiers sector_id = new DataSliceIdentifiers(tmp_ids);
@@ -514,61 +526,123 @@ public class LazyNcdProcessing {
 				}
 			}
 		
+		final int finalDim = dim;
+		final int finalSliceDim = sliceDim;
+		final int finalSliceSize = sliceSize;
+		final int[] final_bgFrames_int = flags.isEnableBackground() ? Arrays.copyOf(bgFrames_int, bgFrames_int.length) : null;
+		final DataSliceIdentifiers final_input_ids = new DataSliceIdentifiers(input_ids);
+		final DataSliceIdentifiers final_calibration_ids = flags.isEnableNormalisation() ? new DataSliceIdentifiers(calibration_ids) : null;
+		final DataSliceIdentifiers final_bg_ids = flags.isEnableBackground() ? new DataSliceIdentifiers(bgIds) : null;
+		ArrayList<Job> processingJobList = new ArrayList<Job>();
+		ArrayList<Job> runningJobList = new ArrayList<Job>();
+		
 		while (iter.hasNext()) {
 			sliceParams.setStart(iter.getPos());
-			data = NcdNexusUtils.sliceInputData(sliceParams, input_ids);
+			final SliceSettings finalSliceParams = new SliceSettings(sliceParams);
 
-			if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
-				monitor.setTaskName(monitorFile + " : Correct for detector response");
+			Job processingJob = new Job("Data Reduction") {
 
-				input_ids.setIDs(dr_group_id, dr_data_id);
-				data = lazyDetectorResponse.execute(dim, data, input_ids);
-			}
+				private DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers(final_input_ids);
+				private DataSliceIdentifiers tmp_calibration_ids = new DataSliceIdentifiers(final_calibration_ids);
+				private DataSliceIdentifiers tmp_bgIds = new DataSliceIdentifiers(final_bg_ids);
+				private SliceSettings currentSliceParams = new SliceSettings(finalSliceParams);
 
-			if (flags.isEnableNormalisation()) {
-				monitor.setTaskName(monitorFile + " : Normalising data");
+				@Override
+				protected IStatus run(IProgressMonitor jobmonitor) {
+					try {
+						AbstractDataset data;
+						try {
+							lock.acquire();
+							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+						} catch (Exception e) {
+							throw e;
+						} finally {
+							lock.release();
+						}
 
-				SliceSettings calibrationSliceParams = new SliceSettings(sliceParams);
-				calibrationSliceParams.setFrames(framesCal);
-				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
+						if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
+							monitor.setTaskName(monitorFile + " : Correct for detector response");
 
-				input_ids.setIDs(norm_group_id, norm_data_id);
-				data = lazyNormalisation.execute(dim, data, dataCal, input_ids);
-			}
+							tmp_ids.setIDs(dr_group_id, dr_data_id);
+							data = lazyDetectorResponse.execute(finalDim, data, tmp_ids, lock);
+						}
 
-			if (flags.isEnableBackground()) {
-				monitor.setTaskName(monitorFile + " : Correct for detector response");
+						if (flags.isEnableNormalisation()) {
+							monitor.setTaskName(monitorFile + " : Normalising data");
 
-				int bgSliceSize = Math.min(sliceSize, bgFrames_int[sliceDim]);
-				int[] bgStart = new int[sliceDim + 1]; 
-				for (int i = 0; i <= sliceDim; i++)
-					bgStart[i] = Math.min(sliceParams.getStart()[i], bgFrames_int[i] - 1);
-				SliceSettings bgSliceParams = new SliceSettings(bgFrames, sliceDim, bgSliceSize);
-				bgSliceParams.setStart(bgStart);
-				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
-				
-				input_ids.setIDs(bg_group_id, bg_data_id);
-				AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-				remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], input_ids);
+							SliceSettings calibrationSliceParams = new SliceSettings(currentSliceParams);
+							calibrationSliceParams.setFrames(framesCal);
+							AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams,
+									tmp_calibration_ids);
 
-				// restore original axis order in output dataset
-				data = DatasetUtils.transpose(remapData[0], (int[]) remapData[3].getBuffer());
-			}
+							tmp_ids.setIDs(norm_group_id, norm_data_id);
+							data = lazyNormalisation.execute(finalDim, data, dataCal, tmp_ids, lock);
+						}
 
-			if (flags.isEnableInvariant()) {
-				monitor.setTaskName(monitorFile + " : Calculating invariant");
-				
-				DataSliceIdentifiers inv_id = new DataSliceIdentifiers(input_ids);
-				inv_id.setIDs(inv_group_id, inv_data_id);
-				inv_id.start = Arrays.copyOf(input_ids.start, invRank);
-				inv_id.stride = Arrays.copyOf(input_ids.stride, invRank);
-				inv_id.count = Arrays.copyOf(input_ids.count, invRank);
-				inv_id.block = Arrays.copyOf(input_ids.block, invRank);
-            
-				lazyInvariant.execute(dim, data, inv_id);
-			}
+						if (flags.isEnableBackground()) {
+							monitor.setTaskName(monitorFile + " : Correct for detector response");
+
+							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
+							int[] bgStart = new int[finalSliceDim + 1];
+							for (int i = 0; i <= finalSliceDim; i++)
+								bgStart[i] = Math.min(currentSliceParams.getStart()[i], final_bgFrames_int[i] - 1);
+							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
+							bgSliceParams.setStart(bgStart);
+							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
+
+							tmp_ids.setIDs(bg_group_id, bg_data_id);
+							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
+							remapData[0] = lazyBackgroundSubtraction.execute(finalDim, remapData[0], remapData[1], tmp_ids, lock);
+
+							// restore original axis order in output dataset
+							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[3].getBuffer());
+						}
+
+						if (flags.isEnableInvariant()) {
+							monitor.setTaskName(monitorFile + " : Calculating invariant");
+
+							DataSliceIdentifiers inv_id = new DataSliceIdentifiers(tmp_ids);
+							inv_id.setIDs(inv_group_id, inv_data_id);
+							inv_id.start = Arrays.copyOf(tmp_ids.start, invRank);
+							inv_id.stride = Arrays.copyOf(tmp_ids.stride, invRank);
+							inv_id.count = Arrays.copyOf(tmp_ids.count, invRank);
+							inv_id.block = Arrays.copyOf(tmp_ids.block, invRank);
+
+							lazyInvariant.execute(finalDim, data, inv_id, lock);
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+						return Status.CANCEL_STATUS;
+					}
+
+					return Status.OK_STATUS;
+				}
+			};
+	
+			processingJobList.add(processingJob);
 		}
 
+		for (Job job : processingJobList) {
+			job.schedule();
+			runningJobList.add(job);
+			if (runningJobList.size() >= cores) {
+				try {
+					runningJobList.get(0).join();
+					runningJobList.remove(0);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+		
+		for (Job job : processingJobList) {
+			try {
+				job.join();
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+		}
+		
 		if(flags.isEnableAverage()) {
 			monitor.setTaskName(monitorFile + " : Averaging  datasets");
 			int[] averageIndices = new int[] {frames.length - dim};

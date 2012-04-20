@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import org.eclipse.core.runtime.jobs.ILock;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Invariant;
@@ -24,12 +26,12 @@ public class LazyInvariant extends LazyDataReduction {
 
 	public static String name = "Invariant";
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers inv_id) {
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers inv_id, ILock lock) {
 		HDF5Invariant reductionStep = new HDF5Invariant("inv", "data");
 		reductionStep.parentngd = data;
 		reductionStep.setIDs(inv_id);
 		
-		return reductionStep.writeout(dim);
+		return reductionStep.writeout(dim, lock);
 	}
 	
 	

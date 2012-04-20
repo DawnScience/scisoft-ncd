@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import org.eclipse.core.runtime.jobs.ILock;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5Normalisation;
@@ -29,7 +31,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		this.absScaling = absScaling;
 	}
 
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset dataCal, DataSliceIdentifiers norm_id) {
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset dataCal, DataSliceIdentifiers norm_id, ILock lock) {
 		HDF5Normalisation reductionStep = new HDF5Normalisation("norm", "data");
 		reductionStep.setCalibChannel(normChannel);
 		if(absScaling != null)
@@ -38,7 +40,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		reductionStep.calibngd = dataCal;
 		reductionStep.setIDs(norm_id);
 		
-		return reductionStep.writeout(dim);
+		return reductionStep.writeout(dim, lock);
 	}
 	
 	

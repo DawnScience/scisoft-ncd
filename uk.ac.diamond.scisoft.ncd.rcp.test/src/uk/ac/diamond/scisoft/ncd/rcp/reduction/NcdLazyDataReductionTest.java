@@ -289,7 +289,7 @@ public class NcdLazyDataReductionTest {
 	    long[] lstart = new long[] {0, 0, 0, 0, 0};
 		long[] count = new long[] {1, 1, 1, 1, 1};
 		input_ids.setSlice(lstart, shape, count, shape);
-		AbstractDataset outDataset = lazyNormalisation.execute(dim, data, dataCal, input_ids);
+		AbstractDataset outDataset = lazyNormalisation.execute(dim, data, dataCal, input_ids, lock);
 		
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)
@@ -333,7 +333,7 @@ public class NcdLazyDataReductionTest {
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		input_ids.setIDs(bg_group_id, bg_data_id);
-		AbstractDataset outDataset = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids);
+		AbstractDataset outDataset = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids, lock);
 			
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)
@@ -366,7 +366,7 @@ public class NcdLazyDataReductionTest {
 		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
-		AbstractDataset outDataset = lazyDetectorResponse.execute(dim, data, input_ids);
+		AbstractDataset outDataset = lazyDetectorResponse.execute(dim, data, input_ids, lock);
 		
 		for (int h = 0; h < shape[0]; h++)
  		  for (int g = 0; g < shape[1]; g++)
@@ -398,7 +398,7 @@ public class NcdLazyDataReductionTest {
 		long[] count = new long[] { 1, 1, 1 };
 		inv_id.setSlice(lstart, invShape, count, invShape);
     
-		AbstractDataset outDataset = lazyInvariant.execute(dim, data, inv_id);
+		AbstractDataset outDataset = lazyInvariant.execute(dim, data, inv_id, lock);
 		for (int h = 0; h < invShape[0]; h++)
 		  for (int g = 0; g < invShape[1]; g++)
 			for (int k = 0; k < invShape[2]; k++) {

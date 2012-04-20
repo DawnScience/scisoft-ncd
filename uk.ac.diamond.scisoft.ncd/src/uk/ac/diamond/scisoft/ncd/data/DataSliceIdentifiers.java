@@ -34,29 +34,26 @@ public class DataSliceIdentifiers {
 	
 	public DataSliceIdentifiers(DataSliceIdentifiers ids) {
 		super();
-		this.datagroup_id = ids.datagroup_id;
-		this.dataset_id = ids.dataset_id;
-		this.dataspace_id = ids.dataspace_id;
-		this.dataclass_id = ids.dataclass_id;
-		this.datatype_id = ids.datatype_id;
-		this.datasize_id = ids.datasize_id;
-		if (ids.start  != null) this.start = Arrays.copyOf(ids.start, ids.start.length);
-		if (ids.stride != null) this.stride = Arrays.copyOf(ids.stride, ids.stride.length);
-		if (ids.count  != null) this.count = Arrays.copyOf(ids.count, ids.count.length);
-		if (ids.block  != null) this.block = Arrays.copyOf(ids.block, ids.block.length);
+		if (ids != null) {
+			this.datagroup_id = ids.datagroup_id;
+			this.dataset_id = ids.dataset_id;
+			this.dataspace_id = ids.dataspace_id;
+			this.dataclass_id = ids.dataclass_id;
+			this.datatype_id = ids.datatype_id;
+			this.datasize_id = ids.datasize_id;
+			if (ids.start  != null)
+				this.start  = Arrays.copyOf(ids.start, ids.start.length);
+			if (ids.stride != null)
+				this.stride = Arrays.copyOf(ids.stride, ids.stride.length);
+			if (ids.count  != null)
+				this.count  = Arrays.copyOf(ids.count, ids.count.length);
+			if (ids.block  != null)
+				this.block  = Arrays.copyOf(ids.block, ids.block.length);
+		}
 	}
 	
 	
-/*	public DataSliceIdentifiers(int dataset_id, long[] start, long[] stride, long[] count, long[] block) throws HDF5LibraryException {
-		super();
-		setIDs(dataset_id);
-		this.start = start;
-		this.stride = stride;
-		this.count = count;
-		this.block = block;
-	}
-	
-*/	public void setIDs(int datagroup_id, int dataset_id) throws HDF5LibraryException {
+	public void setIDs(int datagroup_id, int dataset_id) throws HDF5LibraryException {
 		this.datagroup_id = datagroup_id;
 		this.dataset_id = dataset_id;
 		dataspace_id = H5.H5Dget_space(dataset_id);

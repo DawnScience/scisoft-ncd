@@ -21,6 +21,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.core.runtime.jobs.ILock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
@@ -87,12 +88,12 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		return drData;
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id) {
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id, ILock lock) {
 		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse("det", "data");
 		reductionStep.setResponse(drData);
 		reductionStep.parentngd = data;
 		reductionStep.setIDs(det_id);
 		
-		return reductionStep.writeout(dim);
+		return reductionStep.writeout(dim, lock);
 	}
 }

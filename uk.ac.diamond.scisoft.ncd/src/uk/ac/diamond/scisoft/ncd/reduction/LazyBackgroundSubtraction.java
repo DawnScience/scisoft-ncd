@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import org.eclipse.core.runtime.jobs.ILock;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
@@ -29,7 +31,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id) {
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id, ILock lock) {
 		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
 		reductionStep.parentngd = data;
 		
@@ -37,7 +39,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		reductionStep.setBackground(bgData);
 		reductionStep.setIDs(bg_id);
 		
-		return reductionStep.writeout(dim);
+		return reductionStep.writeout(dim, lock);
 	}
 	
 	
