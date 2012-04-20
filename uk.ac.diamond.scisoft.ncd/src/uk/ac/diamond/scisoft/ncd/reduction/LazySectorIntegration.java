@@ -22,6 +22,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.core.runtime.jobs.ILock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -64,7 +65,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 			this.cameraLength = new Double(cameraLength);
 	}
 
-	public AbstractDataset[] execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id) {
+	public AbstractDataset[] execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id, ILock lock) {
 		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
 		reductionStep.parentdata = data;
 		reductionStep.setROI(intSector);
@@ -73,7 +74,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		reductionStep.setIDs(sector_id);
 		reductionStep.setAzimuthalIDs(azimuth_id);
 		
-		return reductionStep.writeout(dim);
+		return reductionStep.writeout(dim, lock);
 	}
 	
 	@Override

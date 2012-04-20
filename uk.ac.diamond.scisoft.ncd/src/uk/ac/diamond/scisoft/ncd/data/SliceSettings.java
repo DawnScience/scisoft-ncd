@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.data;
 
+import java.util.Arrays;
+
 public class SliceSettings {
 	
 	long[] frames;
@@ -24,8 +26,8 @@ public class SliceSettings {
 	int sliceSize;
 	
 	public SliceSettings(SliceSettings slice) {
-		this.frames = slice.getFrames();
-		this.start = slice.getStart();
+		this.frames = Arrays.copyOf(slice.getFrames(), slice.getFrames().length);
+		this.start =  Arrays.copyOf(slice.getStart(), slice.getStart().length);
 		this.sliceDim = slice.getSliceDim();
 		this.sliceSize = slice.getSliceSize();
 	}

@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.data;
 
+import java.util.Arrays;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
@@ -38,10 +40,10 @@ public class DataSliceIdentifiers {
 		this.dataclass_id = ids.dataclass_id;
 		this.datatype_id = ids.datatype_id;
 		this.datasize_id = ids.datasize_id;
-		this.start = ids.start;
-		this.stride = ids.stride;
-		this.count = ids.count;
-		this.block = ids.block;
+		if (ids.start  != null) this.start = Arrays.copyOf(ids.start, ids.start.length);
+		if (ids.stride != null) this.stride = Arrays.copyOf(ids.stride, ids.stride.length);
+		if (ids.count  != null) this.count = Arrays.copyOf(ids.count, ids.count.length);
+		if (ids.block  != null) this.block = Arrays.copyOf(ids.block, ids.block.length);
 	}
 	
 	

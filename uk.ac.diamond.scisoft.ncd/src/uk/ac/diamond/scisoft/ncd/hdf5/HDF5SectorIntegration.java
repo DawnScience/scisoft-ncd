@@ -22,6 +22,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
+import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -90,7 +91,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		return roi;
 	}
 
-	public AbstractDataset[] writeout(int dim) {
+	public AbstractDataset[] writeout(int dim, ILock lock) {
 		if (roi == null) {
 			return null;
 		}
@@ -111,9 +112,15 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed, myazdata, myraddata);
 			myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
 			myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
-
-			writeResults(azimuthalIds, myazdata, dataShape, dim);
-			writeResults(ids, myraddata, dataShape, dim);
+			try {
+				lock.acquire();
+				writeResults(azimuthalIds, myazdata, dataShape, dim);
+				writeResults(ids, myraddata, dataShape, dim);
+			} catch (Exception e) {
+				throw e;
+			} finally {
+				lock.release();
+			}
 			
 			int resLength =  dataShape.length - dim + 1;
 			int[] resAzShape = Arrays.copyOf(dataShape, resLength);

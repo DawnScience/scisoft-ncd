@@ -27,6 +27,8 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.core.runtime.jobs.Job;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -54,6 +56,8 @@ public class NcdLazyDataReductionTest {
 	private static String filename, bgFile, drFile, secFile;
 	private static String testDatasetName = "testInput"; 
 	private static String testNormName = "testNorm"; 
+	
+	private ILock lock = Job.getJobManager().newLock();
 	
 	private static AbstractDataset data;
 	static long [] shape = new long[] {5, 3, 91, 32, 64};
@@ -443,7 +447,7 @@ public class NcdLazyDataReductionTest {
 		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
 		azimuth_id.setIDs(sec_group_id, az_data_id);
 
-		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id);
+		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
 			
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)

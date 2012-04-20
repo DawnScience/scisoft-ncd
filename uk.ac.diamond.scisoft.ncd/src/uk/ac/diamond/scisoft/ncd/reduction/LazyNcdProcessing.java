@@ -32,6 +32,10 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.ILock;
+import org.eclipse.core.runtime.jobs.Job;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
@@ -73,6 +77,11 @@ public class LazyNcdProcessing {
 	
 	private int frameBatch;
 	
+	private static ILock lock;
+	
+	private int cores;
+    private long maxMemory;
+	
 	public LazyNcdProcessing() {
 		enableMask = false;
 		normChannel = -1;
@@ -94,8 +103,12 @@ public class LazyNcdProcessing {
 		flags = new NcdReductionFlags();
 		ncdDetectors = new NcdDetectors();
 		
-		frameBatch = 5;
+		frameBatch = 1;
 		
+		cores = 2 * Runtime.getRuntime().availableProcessors();
+		maxMemory = Runtime.getRuntime().maxMemory();
+		
+		lock = Job.getJobManager().newLock();
 	}
 
 	public void setAbsScaling(Double absScaling) {
@@ -187,7 +200,7 @@ public class LazyNcdProcessing {
 	public void execute(String detector, int dim, String filename, IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
-		String monitorFile = tmpName[tmpName.length - 1];
+		final String monitorFile = tmpName[tmpName.length - 1];
 		
 		int nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
@@ -221,13 +234,13 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		}
 		
-	    int sec_group_id = -1;
-	    int sec_data_id = -1;
-	    int az_data_id = -1;
+	    final int sec_group_id;
+	    final int sec_data_id;
+	    final int az_data_id;
 		int secRank = rank - dim + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
 		AbstractDataset qaxis = null;
-		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
+		final LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -260,6 +273,10 @@ public class LazyNcdProcessing {
 			}
 			
 			lazySectorIntegration.writeNcdMetadata(sec_group_id);
+		} else {
+			sec_group_id = -1;
+			sec_data_id = -1;
+			az_data_id = -1;
 		}
 		
 	    int inv_group_id = -1;
@@ -281,9 +298,9 @@ public class LazyNcdProcessing {
 		int rankCal;
 		long[] framesCal = null;
 		
-	    int dr_group_id = -1;
-	    int dr_data_id = -1;
-		LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, detector);
+	    final int dr_group_id;
+	    final int dr_data_id;
+		final LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, detector);
 		if(flags.isEnableDetectorResponse()) {
 		    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -291,6 +308,9 @@ public class LazyNcdProcessing {
 			
 			lazyDetectorResponse.createDetectorResponseInput();
 			lazyDetectorResponse.writeNcdMetadata(dr_group_id);
+		} else {
+		    dr_group_id = -1;
+		    dr_data_id = -1;
 		}
 	    
 	    int norm_group_id = -1;
@@ -355,9 +375,8 @@ public class LazyNcdProcessing {
 			MultidimensionalCounter dimCounter = new MultidimensionalCounter(Arrays.copyOfRange(frames_int, 0, rank - dim));
 			if (dimCounter.getSize() > frameBatch) {
 				int[] sliceIdx = dimCounter.getCounts(frameBatch);
-				for (int i = 0; i < sliceIdx.length; i++) {
-					int idx = sliceIdx.length - 1 - i;
-					if (sliceIdx[i] != frames_int[idx]) {
+				for (int i = sliceIdx.length - 1; i >= 0; i--) {
+					if (sliceIdx[i] != frames_int[i]) {
 						sliceDim = i;
 						break;
 					}
@@ -378,26 +397,85 @@ public class LazyNcdProcessing {
 		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
 		
 		if (flags.isEnableSector() && dim == 2) {
+			final int finalDim = dim;
+			final DataSliceIdentifiers final_input_ids = new DataSliceIdentifiers(input_ids);
+			ArrayList<Job> sectorJobList = new ArrayList<Job>();
+			ArrayList<Job> runningJobList = new ArrayList<Job>();
+			
 			while (iter.hasNext()) {
-				sliceParams.setStart(iter.getPos());
-				AbstractDataset data = NcdNexusUtils.sliceInputData(sliceParams, input_ids);
-
-				if (flags.isEnableDetectorResponse()) {
-					monitor.setTaskName(monitorFile + " : Correct for detector response");
-
-					input_ids.setIDs(dr_group_id, dr_data_id);
-					data = lazyDetectorResponse.execute(dim, data, input_ids);
-				}
-
-				monitor.setTaskName(monitorFile + " : Performing sector integration");
-				DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
-				sector_id.setIDs(sec_group_id, sec_data_id);
-				DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
-				azimuth_id.setIDs(sec_group_id, az_data_id);
 				
-				data = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id)[1];
-			}
+				sliceParams.setStart(iter.getPos());
+				final SliceSettings finalSliceParams = new SliceSettings(sliceParams);
 
+				Job sectorJob = new Job("Sector Integration") {
+
+					private DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers(final_input_ids);
+					private SliceSettings currentSliceParams = new SliceSettings(finalSliceParams);
+					
+					@Override
+					protected IStatus run(IProgressMonitor monitor) {
+						try {
+							AbstractDataset data;
+							try {
+								lock.acquire();
+								data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+							} catch (Exception e) {
+								throw e;
+							} finally {
+								lock.release();
+							}
+
+							if (flags.isEnableDetectorResponse()) {
+								monitor.setTaskName(monitorFile + " : Correct for detector response");
+
+								tmp_ids.setIDs(dr_group_id, dr_data_id);
+								data = lazyDetectorResponse.execute(finalDim, data, tmp_ids);
+							}
+
+							DataSliceIdentifiers sector_id = new DataSliceIdentifiers(tmp_ids);
+							DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(tmp_ids);
+							monitor.setTaskName(monitorFile + " : Performing sector integration");
+							sector_id.setIDs(sec_group_id, sec_data_id);
+							azimuth_id.setIDs(sec_group_id, az_data_id);
+							
+							LazySectorIntegration tmpLazySectorIntegration = new LazySectorIntegration();
+							tmpLazySectorIntegration.setIntSector(intSector);
+							tmpLazySectorIntegration.setMask(mask);
+							tmpLazySectorIntegration.execute(finalDim, data, sector_id, azimuth_id, lock);
+						} catch (Exception e) {
+							e.printStackTrace();
+							return Status.CANCEL_STATUS;
+						}
+
+						return Status.OK_STATUS;
+					}
+				};
+				
+				sectorJobList.add(sectorJob);
+				
+			}
+			
+			for (Job job : sectorJobList) {
+				job.schedule();
+				runningJobList.add(job);
+				if (runningJobList.size() >= cores) {
+					try {
+						runningJobList.get(0).join();
+						runningJobList.remove(0);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			}
+			
+			for (Job job : sectorJobList) {
+				try {
+					job.join();
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
+			
 			dim = 1;
 			rank = secRank;
 			sliceDim = 0;
@@ -553,14 +631,14 @@ public class LazyNcdProcessing {
 	}
 	
 	private void estimateFrameBatchSize(int dim, long[] frames) {
-	    Runtime runtime = Runtime.getRuntime();
-	    long maxMemory = runtime.maxMemory();
-
+		
+		Runtime.getRuntime().gc();
+		
 		int batchSize = 4; // use 4 byte data size
 		for (int i = frames.length - dim; i < frames.length; i++)
 			batchSize *= frames[i];
 		
-		frameBatch = (int) (maxMemory / (20 * batchSize));
+		frameBatch = Math.max(1, (int) (maxMemory / (3 * batchSize * cores)));
 	}
 
 	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
