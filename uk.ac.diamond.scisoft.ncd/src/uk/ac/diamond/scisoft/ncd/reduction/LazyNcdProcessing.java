@@ -81,6 +81,49 @@ public class LazyNcdProcessing {
 	
 	private int cores;
     private long maxMemory;
+    
+    private abstract class DataReductionJob extends Job {
+
+		protected int dim;
+    	protected DataSliceIdentifiers tmp_ids, tmp_calibration_ids, tmp_bgIds;
+		protected SliceSettings currentSliceParams;
+		
+		public DataReductionJob(String name) {
+			super(name);
+			
+			tmp_ids = null;
+			setCurrentSliceParams(null);
+		}
+		
+		protected void setDim(int dim) {
+			this.dim = dim;
+		}
+
+		protected DataSliceIdentifiers getResultIds() {
+			return tmp_ids;
+		}
+
+		protected void setResultIds(DataSliceIdentifiers tmp_ids) {
+			this.tmp_ids = new DataSliceIdentifiers(tmp_ids);
+		}
+
+		protected void setCalibrationIds(DataSliceIdentifiers calibration_ids) {
+			this.tmp_calibration_ids = new DataSliceIdentifiers(calibration_ids);
+		}
+
+		protected void setBgIds(DataSliceIdentifiers bg_ids) {
+			this.tmp_bgIds = new DataSliceIdentifiers(bg_ids);
+		}
+
+		protected SliceSettings getCurrentSliceParams() {
+			return currentSliceParams;
+		}
+
+		protected void setCurrentSliceParams(SliceSettings currentSliceParams) {
+			this.currentSliceParams = new SliceSettings(currentSliceParams);
+		}
+    	
+    }
 	
 	public LazyNcdProcessing() {
 		enableMask = false;
@@ -409,21 +452,15 @@ public class LazyNcdProcessing {
 		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
 		
 		if (flags.isEnableSector() && dim == 2) {
-			final int finalDim = dim;
-			final DataSliceIdentifiers final_input_ids = new DataSliceIdentifiers(input_ids);
 			ArrayList<Job> sectorJobList = new ArrayList<Job>();
 			ArrayList<Job> runningJobList = new ArrayList<Job>();
 			
 			while (iter.hasNext()) {
 				
 				sliceParams.setStart(iter.getPos());
-				final SliceSettings finalSliceParams = new SliceSettings(sliceParams);
 
-				Job sectorJob = new Job("Sector Integration") {
+				DataReductionJob sectorJob = new DataReductionJob("Sector Integration") {
 
-					private DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers(final_input_ids);
-					private SliceSettings currentSliceParams = new SliceSettings(finalSliceParams);
-					
 					@Override
 					protected IStatus run(IProgressMonitor jobmonitor) {
 						try {
@@ -441,7 +478,7 @@ public class LazyNcdProcessing {
 								monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 								tmp_ids.setIDs(dr_group_id, dr_data_id);
-								data = lazyDetectorResponse.execute(finalDim, data, tmp_ids, lock);
+								data = lazyDetectorResponse.execute(dim, data, tmp_ids, lock);
 							}
 
 							DataSliceIdentifiers sector_id = new DataSliceIdentifiers(tmp_ids);
@@ -453,7 +490,7 @@ public class LazyNcdProcessing {
 							LazySectorIntegration tmpLazySectorIntegration = new LazySectorIntegration();
 							tmpLazySectorIntegration.setIntSector(intSector);
 							tmpLazySectorIntegration.setMask(mask);
-							tmpLazySectorIntegration.execute(finalDim, data, sector_id, azimuth_id, lock);
+							tmpLazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
 						} catch (Exception e) {
 							e.printStackTrace();
 							return Status.CANCEL_STATUS;
@@ -463,6 +500,9 @@ public class LazyNcdProcessing {
 					}
 				};
 				
+				sectorJob.setDim(dim);
+				sectorJob.setResultIds(input_ids);
+				sectorJob.setCurrentSliceParams(sliceParams);
 				sectorJobList.add(sectorJob);
 				
 			}
@@ -503,7 +543,6 @@ public class LazyNcdProcessing {
 			input_ids.setIDs(sec_group_id, sec_data_id);
 		}
 
-		AbstractDataset data = null;
 		if (flags.isEnableBackground())
 			if (!Arrays.equals(bgFrames_int, frames_int)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
@@ -526,31 +565,22 @@ public class LazyNcdProcessing {
 				}
 			}
 		
-		final int finalDim = dim;
-		final int finalSliceDim = sliceDim;
-		final int finalSliceSize = sliceSize;
 		final int[] final_bgFrames_int = flags.isEnableBackground() ? Arrays.copyOf(bgFrames_int, bgFrames_int.length) : null;
-		final DataSliceIdentifiers final_input_ids = new DataSliceIdentifiers(input_ids);
-		final DataSliceIdentifiers final_calibration_ids = flags.isEnableNormalisation() ? new DataSliceIdentifiers(calibration_ids) : null;
-		final DataSliceIdentifiers final_bg_ids = flags.isEnableBackground() ? new DataSliceIdentifiers(bgIds) : null;
-		ArrayList<Job> processingJobList = new ArrayList<Job>();
-		ArrayList<Job> runningJobList = new ArrayList<Job>();
+		ArrayList<DataReductionJob> processingJobList = new ArrayList<DataReductionJob>();
+		ArrayList<DataReductionJob> runningJobList = new ArrayList<DataReductionJob>();
 		
 		while (iter.hasNext()) {
 			sliceParams.setStart(iter.getPos());
-			final SliceSettings finalSliceParams = new SliceSettings(sliceParams);
 
-			Job processingJob = new Job("Data Reduction") {
-
-				private DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers(final_input_ids);
-				private DataSliceIdentifiers tmp_calibration_ids = new DataSliceIdentifiers(final_calibration_ids);
-				private DataSliceIdentifiers tmp_bgIds = new DataSliceIdentifiers(final_bg_ids);
-				private SliceSettings currentSliceParams = new SliceSettings(finalSliceParams);
+			DataReductionJob processingJob = new DataReductionJob("Data Reduction") {
 
 				@Override
 				protected IStatus run(IProgressMonitor jobmonitor) {
 					try {
 						AbstractDataset data;
+						int finalSliceDim = currentSliceParams.getSliceDim();
+						int finalSliceSize = currentSliceParams.getSliceSize();
+						
 						try {
 							lock.acquire();
 							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
@@ -564,7 +594,7 @@ public class LazyNcdProcessing {
 							monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 							tmp_ids.setIDs(dr_group_id, dr_data_id);
-							data = lazyDetectorResponse.execute(finalDim, data, tmp_ids, lock);
+							data = lazyDetectorResponse.execute(dim, data, tmp_ids, lock);
 						}
 
 						if (flags.isEnableNormalisation()) {
@@ -576,7 +606,7 @@ public class LazyNcdProcessing {
 									tmp_calibration_ids);
 
 							tmp_ids.setIDs(norm_group_id, norm_data_id);
-							data = lazyNormalisation.execute(finalDim, data, dataCal, tmp_ids, lock);
+							data = lazyNormalisation.execute(dim, data, dataCal, tmp_ids, lock);
 						}
 
 						if (flags.isEnableBackground()) {
@@ -592,7 +622,7 @@ public class LazyNcdProcessing {
 
 							tmp_ids.setIDs(bg_group_id, bg_data_id);
 							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-							remapData[0] = lazyBackgroundSubtraction.execute(finalDim, remapData[0], remapData[1], tmp_ids, lock);
+							remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], tmp_ids, lock);
 
 							// restore original axis order in output dataset
 							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[3].getBuffer());
@@ -608,7 +638,7 @@ public class LazyNcdProcessing {
 							inv_id.count = Arrays.copyOf(tmp_ids.count, invRank);
 							inv_id.block = Arrays.copyOf(tmp_ids.block, invRank);
 
-							lazyInvariant.execute(finalDim, data, inv_id, lock);
+							lazyInvariant.execute(dim, data, inv_id, lock);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -618,11 +648,18 @@ public class LazyNcdProcessing {
 					return Status.OK_STATUS;
 				}
 			};
-	
+			
+			processingJob.setDim(dim);
+			processingJob.setResultIds(input_ids);
+			if (flags.isEnableNormalisation())
+				processingJob.setCalibrationIds(calibration_ids);
+			if(flags.isEnableBackground())
+				processingJob.setBgIds(bgIds);
+			processingJob.setCurrentSliceParams(sliceParams);
 			processingJobList.add(processingJob);
 		}
 
-		for (Job job : processingJobList) {
+		for (DataReductionJob job : processingJobList) {
 			job.schedule();
 			runningJobList.add(job);
 			if (runningJobList.size() >= cores) {
@@ -635,12 +672,18 @@ public class LazyNcdProcessing {
 			}
 		}
 		
-		for (Job job : processingJobList) {
+		for (DataReductionJob job : processingJobList) {
 			try {
 				job.join();
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
+		}
+		
+		if (!processingJobList.isEmpty()) {
+			DataReductionJob tmpJob = processingJobList.get(0);
+			input_ids = new DataSliceIdentifiers(tmpJob.getResultIds());
+			sliceParams = new SliceSettings(tmpJob.getCurrentSliceParams());
 		}
 		
 		if(flags.isEnableAverage()) {
