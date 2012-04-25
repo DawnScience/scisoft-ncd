@@ -67,8 +67,8 @@ public class LazyAverage extends LazyDataReduction {
 		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
 		Arrays.fill(start, 0);
 		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
-		IntegerDataset idx_dataset = new IntegerDataset(iter_array);
-		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
+		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
 		
 		int sliceDim = 0;
 		int sliceSize = frames_int[0];
@@ -116,8 +116,8 @@ public class LazyAverage extends LazyDataReduction {
 					data_step[i] = sliceSize;
 			}
 			
-			int[] newShape = AbstractDataset.checkSlice(data_stop, data_start, data_stop, data_start, data_stop, data_step);
-			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);//data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
+			newShape = AbstractDataset.checkSlice(data_stop, data_start, data_stop, data_start, data_stop, data_step);
+			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);

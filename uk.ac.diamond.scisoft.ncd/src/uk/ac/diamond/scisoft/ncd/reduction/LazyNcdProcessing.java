@@ -450,7 +450,7 @@ public class LazyNcdProcessing {
 		Arrays.fill(step, 1);
 		step[sliceDim] = sliceSize;
 		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
-		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);//data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
 		
 		if (flags.isEnableSector() && dim == 2) {
 			ArrayList<Job> sectorJobList = new ArrayList<Job>();
