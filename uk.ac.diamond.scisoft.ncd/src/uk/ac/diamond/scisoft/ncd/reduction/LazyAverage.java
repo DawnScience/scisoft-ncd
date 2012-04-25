@@ -28,6 +28,7 @@ import org.apache.commons.lang.ArrayUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
@@ -115,8 +116,8 @@ public class LazyAverage extends LazyDataReduction {
 					data_step[i] = sliceSize;
 			}
 			
-			IntegerDataset data_idx_dataset = new IntegerDataset(data_stop);
-			IndexIterator data_iter = data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
+			int[] newShape = AbstractDataset.checkSlice(data_stop, data_start, data_stop, data_start, data_stop, data_step);
+			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);//data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);

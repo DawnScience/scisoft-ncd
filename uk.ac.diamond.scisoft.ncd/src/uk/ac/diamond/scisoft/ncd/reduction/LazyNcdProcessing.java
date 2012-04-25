@@ -42,6 +42,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -448,8 +449,8 @@ public class LazyNcdProcessing {
 		Arrays.fill(start, 0);
 		Arrays.fill(step, 1);
 		step[sliceDim] = sliceSize;
-		IntegerDataset idx_dataset = new IntegerDataset(iter_array);
-		IndexIterator iter = idx_dataset.getSliceIterator(start, iter_array, step);
+		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);//data_idx_dataset.getSliceIterator(data_start, data_stop, data_step);
 		
 		if (flags.isEnableSector() && dim == 2) {
 			ArrayList<Job> sectorJobList = new ArrayList<Job>();
@@ -537,7 +538,7 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(secFrames, int[].class);
 
 			sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
-			idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
+			IntegerDataset idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
 			
 			input_ids.setIDs(sec_group_id, sec_data_id);
