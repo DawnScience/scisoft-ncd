@@ -148,7 +148,7 @@ public class LazyNcdProcessing {
 		
 		frameBatch = 1;
 		
-		cores = 2 * Runtime.getRuntime().availableProcessors();
+		cores = Runtime.getRuntime().availableProcessors();
 		maxMemory = Runtime.getRuntime().maxMemory();
 		
 		lock = Job.getJobManager().newLock();
@@ -508,9 +508,7 @@ public class LazyNcdProcessing {
 			}
 			
 			for (Job job : sectorJobList) {
-				job.schedule();
-				runningJobList.add(job);
-				if (runningJobList.size() >= cores) {
+				while (runningJobList.size() >= cores) {
 					try {
 						runningJobList.get(0).join();
 						runningJobList.remove(0);
@@ -518,6 +516,8 @@ public class LazyNcdProcessing {
 						e.printStackTrace();
 					}
 				}
+				job.schedule();
+				runningJobList.add(job);
 			}
 			
 			for (Job job : sectorJobList) {
@@ -660,9 +660,7 @@ public class LazyNcdProcessing {
 		}
 
 		for (DataReductionJob job : processingJobList) {
-			job.schedule();
-			runningJobList.add(job);
-			if (runningJobList.size() >= cores) {
+			while (runningJobList.size() >= cores) {
 				try {
 					runningJobList.get(0).join();
 					runningJobList.remove(0);
@@ -670,6 +668,8 @@ public class LazyNcdProcessing {
 					e.printStackTrace();
 				}
 			}
+			job.schedule();
+			runningJobList.add(job);
 		}
 		
 		for (DataReductionJob job : processingJobList) {
@@ -755,7 +755,7 @@ public class LazyNcdProcessing {
 		for (int i = frames.length - dim; i < frames.length; i++)
 			batchSize *= frames[i];
 		
-		frameBatch = Math.max(1, (int) (maxMemory / (3 * batchSize * cores)));
+		frameBatch = Math.max(1, (int) (maxMemory / (10 * batchSize * cores)));
 	}
 
 	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
