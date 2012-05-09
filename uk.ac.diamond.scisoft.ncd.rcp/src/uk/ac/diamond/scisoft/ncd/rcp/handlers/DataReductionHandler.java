@@ -302,15 +302,26 @@ public class DataReductionHandler extends AbstractHandler {
 		Boolean enableSector = readReductionStage(service, SectorIntegrationHandler.COMMAND_ID,
 				SectorIntegrationHandler.STATE_ID);
 		
+		Boolean enableRadial = readReductionStage(service, RadialHandler.COMMAND_ID,
+				RadialHandler.STATE_ID);
+		
+		Boolean enableAzimuthal = readReductionStage(service, AzimuthalHandler.COMMAND_ID,
+				AzimuthalHandler.STATE_ID);
+		
+		Boolean enableFastIntegration = readReductionStage(service, FastIntegrationHandler.COMMAND_ID,
+				FastIntegrationHandler.STATE_ID);
+		
 		if (enableWaxs) flags.setEnableWaxs(true);
 		if (enableSaxs) flags.setEnableSaxs(true);
 		if (enableNormalisation) flags.setEnableNormalisation(true);
 		if (enableBackground) flags.setEnableBackground(true);
 		if (enableDetectorResponse) flags.setEnableDetectorResponse(true);
 		if (enableSector) flags.setEnableSector(true);
+		if (enableRadial) flags.setEnableRadial(true);
+		if (enableAzimuthal) flags.setEnableAzimuthal(true);
+		if (enableFastIntegration) flags.setEnableFastintegration(true);
 		if (enableInvariant) flags.setEnableInvariant(true);
 		if (enableAverage) flags.setEnableAverage(true);
-		
 	}
 
 	private Boolean readReductionStage(final ICommandService service, String COMMAND_ID, String STATE_ID) {

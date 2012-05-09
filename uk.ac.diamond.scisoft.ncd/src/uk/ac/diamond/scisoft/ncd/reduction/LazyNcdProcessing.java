@@ -43,6 +43,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
+import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -281,6 +282,7 @@ public class LazyNcdProcessing {
 	    final int sec_group_id;
 	    final int sec_data_id;
 	    final int az_data_id;
+	    final AbstractDataset[] areaData;
 		int secRank = rank - dim + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
 		AbstractDataset qaxis = null;
@@ -304,6 +306,7 @@ public class LazyNcdProcessing {
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
 			
+			intSector.setAverageArea(false);
 			lazySectorIntegration.setIntSector(intSector);
 			if(enableMask)
 				lazySectorIntegration.setMask(mask);
@@ -317,10 +320,13 @@ public class LazyNcdProcessing {
 			}
 			
 			lazySectorIntegration.writeNcdMetadata(sec_group_id);
+			areaData = ROIProfile.area(Arrays.copyOfRange(frames_int, rank - dim, rank), mask,
+					intSector, flags.isEnableRadial(), flags.isEnableAzimuthal(), flags.isEnableFastintegration());
 		} else {
 			sec_group_id = -1;
 			sec_data_id = -1;
 			az_data_id = -1;
+			areaData = null;
 		}
 		
 	    final int inv_group_id;
@@ -490,7 +496,11 @@ public class LazyNcdProcessing {
 							
 							LazySectorIntegration tmpLazySectorIntegration = new LazySectorIntegration();
 							tmpLazySectorIntegration.setIntSector(intSector);
+							tmpLazySectorIntegration.setCalculateRadial(flags.isEnableRadial());
+							tmpLazySectorIntegration.setCalculateAzimuthal(flags.isEnableAzimuthal());
+							tmpLazySectorIntegration.setFast(flags.isEnableFastintegration());
 							tmpLazySectorIntegration.setMask(mask);
+							tmpLazySectorIntegration.setAreaData(areaData);
 							tmpLazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
 						} catch (Exception e) {
 							e.printStackTrace();

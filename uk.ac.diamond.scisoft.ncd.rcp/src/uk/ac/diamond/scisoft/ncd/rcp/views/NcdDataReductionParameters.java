@@ -59,11 +59,14 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.AverageHandler;
+import uk.ac.diamond.scisoft.ncd.rcp.handlers.AzimuthalHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.BackgroundSubtractionHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.DetectorMaskHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.DetectorResponseHandler;
+import uk.ac.diamond.scisoft.ncd.rcp.handlers.FastIntegrationHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.InvariantHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.NormalisationHandler;
+import uk.ac.diamond.scisoft.ncd.rcp.handlers.RadialHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.SaxsDataReductionHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.SectorIntegrationHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.WaxsDataReductionHandler;
@@ -98,6 +101,7 @@ public class NcdDataReductionParameters extends ViewPart {
 	private NcdProcessingSourceProvider ncdSaxsSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	private static Button detTypeWaxs, detTypeSaxs, useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton, inputQAxis;
+	private static Button radialButton, azimuthalButton, fastIntButton;
 	private static Combo detListWaxs, detListSaxs, calList;
 	private static HashMap<String, Double> pixels;
 	private static HashMap<String, Integer> detDims;
@@ -471,6 +475,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (val!=null) {
 				secButton.setSelection(val);
 				if (val.booleanValue()) secButton.notifyListeners(SWT.Selection, null);
+				else updateSectorIntegrationWidgets();
 			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_INVARIANT);
@@ -725,6 +730,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			secButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
+					updateSectorIntegrationWidgets();
 					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
 					try {
 						handlerService.executeCommand(SectorIntegrationHandler.COMMAND_ID, null);
@@ -773,6 +779,72 @@ public class NcdDataReductionParameters extends ViewPart {
 			});
 			if (NcdProcessingSourceProvider.isEnableAverage()) aveButton.setSelection(true);
 			else aveButton.setSelection(false);
+		}
+
+		g = new Group(c, SWT.BORDER);
+		g.setText("Sector Integration Parameters");
+		gl = new GridLayout(3, false);
+		gl.horizontalSpacing = 15;
+		g.setLayout(gl);
+		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+		{
+			radialButton = new Button(g, SWT.CHECK);
+			radialButton.setText("Radial Profile");
+			radialButton.setToolTipText("Activate radial profile calculation");
+			radialButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand(RadialHandler.COMMAND_ID, null);
+						ncdNormalisationSourceProvider.setEnableRadial(radialButton.getSelection());
+					} catch (Exception err) {
+						logger.error("Cannot set radial profile calculation step", err);
+					}
+				}
+
+			});
+			if (NcdProcessingSourceProvider.isEnableRadial()) radialButton.setSelection(true);
+			else radialButton.setSelection(false);		
+
+			azimuthalButton = new Button(g, SWT.CHECK);
+			azimuthalButton.setText("Azimuthal Profile");
+			azimuthalButton.setToolTipText("Activate azimuthal profile calculation");
+			azimuthalButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand(AzimuthalHandler.COMMAND_ID, null);
+						ncdNormalisationSourceProvider.setEnableAzimuthal(azimuthalButton.getSelection());
+					} catch (Exception err) {
+						logger.error("Cannot set azimuthal profile calculation step", err);
+					}
+				}
+
+			});
+			
+			if (NcdProcessingSourceProvider.isEnableAzimuthal()) azimuthalButton.setSelection(true);
+			else azimuthalButton.setSelection(false);		
+
+			fastIntButton = new Button(g, SWT.CHECK);
+			fastIntButton.setText("Fast Integration");
+			fastIntButton.setToolTipText("Use fast algorithm for profile calculations");
+			fastIntButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand(FastIntegrationHandler.COMMAND_ID, null);
+						ncdNormalisationSourceProvider.setEnableFastIntegration(fastIntButton.getSelection());
+					} catch (Exception err) {
+						logger.error("Cannot set fast sector profile integration algorithm", err);
+					}
+				}
+
+			});
+			if (NcdProcessingSourceProvider.isEnableFastIntegration()) fastIntButton.setSelection(true);
+			else fastIntButton.setSelection(false);		
 		}
 
 		g = new Group(c, SWT.NONE);
@@ -1347,6 +1419,13 @@ public class NcdDataReductionParameters extends ViewPart {
 		normChanLabel.setEnabled(selection);
 		absScale.setEnabled(selection);
 		absScaleLabel.setEnabled(selection);
+	}
+
+	private static void updateSectorIntegrationWidgets() {
+		boolean selection = secButton.getSelection();
+		radialButton.setEnabled(selection);
+		azimuthalButton.setEnabled(selection);
+		fastIntButton.setEnabled(selection);
 	}
 
 	private void updateBackgroundSubtractionWidgets() {

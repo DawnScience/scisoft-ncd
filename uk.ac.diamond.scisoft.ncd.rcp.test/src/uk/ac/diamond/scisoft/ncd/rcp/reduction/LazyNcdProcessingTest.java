@@ -126,6 +126,9 @@ public class LazyNcdProcessingTest {
 		flags.setEnableBackground(true);
 		flags.setEnableDetectorResponse(true);
 		flags.setEnableSector(true);
+		flags.setEnableRadial(true);
+		flags.setEnableAzimuthal(true);
+		flags.setEnableFastintegration(false);
 		flags.setEnableInvariant(true);
 		flags.setEnableAverage(true);
 		flags.setEnableSaxs(true);
@@ -235,6 +238,7 @@ public class LazyNcdProcessingTest {
 		    resultSlice.setStart(start);
 			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
+			intSector.setAverageArea(true);
 			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
 
 			for (int j = 0; j < intPoints; j++) {

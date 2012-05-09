@@ -435,6 +435,7 @@ public class NcdLazyDataReductionTest {
 		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames.length, azFrames, false,
 				"counts");
 
+		intSector.setClippingCompensation(true);
 		lazySectorIntegration.setIntSector(intSector);
 
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
@@ -446,9 +447,15 @@ public class NcdLazyDataReductionTest {
 		sector_id.setIDs(sec_group_id, sec_data_id);
 		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
 		azimuth_id.setIDs(sec_group_id, az_data_id);
-
+		
+		AbstractDataset[] areaData = ROIProfile.area((int[])ConvertUtils.convert(imageShape, int[].class), null, intSector);
+		lazySectorIntegration.setAreaData(areaData);
+		lazySectorIntegration.setCalculateRadial(true);
+		lazySectorIntegration.setCalculateAzimuthal(true);
+		lazySectorIntegration.setFast(false);
 		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
 			
+		intSector.setAverageArea(true);
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)
 			for (int k = 0; k < shape[2]; k++) {

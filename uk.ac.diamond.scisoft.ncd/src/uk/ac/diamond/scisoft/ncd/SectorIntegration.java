@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Maths;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 
@@ -27,7 +28,11 @@ public class SectorIntegration {
 	
 	private static final Logger logger = LoggerFactory.getLogger(SectorIntegration.class);
 
+	private AbstractDataset[] areaData;
 	private SectorROI roi;
+	private boolean calulcateRadial = true;
+	private boolean calculateAzimuthal = true;
+	private boolean fast = true;
 	
 	public void setROI(SectorROI ds) {
 		roi = ds;
@@ -37,7 +42,25 @@ public class SectorIntegration {
 		return roi;
 	}
 
+	public void setAreaData(AbstractDataset... area) {
+		this.areaData = new AbstractDataset[2];
+		this.areaData[0] = area[0];
+		this.areaData[1] = area[1];
+	}
+
 	
+	public void setCalulcateRadial(boolean calulcateRadial) {
+		this.calulcateRadial = calulcateRadial;
+	}
+
+	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
+		this.calculateAzimuthal = calculateAzimuthal;
+	}
+
+	public void setFast(boolean fast) {
+		this.fast = fast;
+	}
+
 	public AbstractDataset[] process(final AbstractDataset parentdata, int frames, AbstractDataset maskUsed, AbstractDataset myazdata, AbstractDataset myraddata) {
 		int[] parentdim = parentdata.getShape();
 		int[] start = parentdim.clone();
@@ -53,14 +76,18 @@ public class SectorIntegration {
 			slice.squeeze();
 			AbstractDataset[] intresult;
 			try {
-				intresult = ROIProfile.sector(slice, maskUsed, roi);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calulcateRadial, calculateAzimuthal, fast);
 			} catch (IllegalArgumentException ill) {
 				logger.warn("mask and dataset incompatible rank", ill);
 				maskUsed = null;
-				intresult = ROIProfile.sector(slice, maskUsed, roi);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calulcateRadial, calculateAzimuthal, fast);
 			}
 			AbstractDataset radset = intresult[0];
 			AbstractDataset azset = intresult[1];
+			if (areaData[0] != null)
+				radset = Maths.dividez(radset, areaData[0]);
+			if (areaData[1] != null)
+				azset = Maths.dividez(azset, areaData[1]);
 			int azrange = azset.getShape()[0];
 			int radrange = radset.getShape()[0];
 			azset.resize(new int[] { 1, azrange });

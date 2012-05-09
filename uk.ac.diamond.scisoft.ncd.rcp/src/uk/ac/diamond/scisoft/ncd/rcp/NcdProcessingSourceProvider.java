@@ -30,6 +30,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public final static String INVARIANT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableInvariant";
 	public final static String NORMALISATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableNormalisation";
 	public final static String SECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSectorIntegration";
+	public final static String RADIAL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableRadialIntegration";
+	public final static String AZIMUTH_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableAzimuthalIntegration";
+	public final static String FASTINT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableFastIntegration";
 	public final static String WAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableWaxsDataReduction";
 	public final static String SAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSaxsDataReduction";
 	public final static String MASK_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableMask";
@@ -40,6 +43,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	static boolean enableInvariant = false;
 	static boolean enableNormalisation = false;
 	static boolean enableSector = false;
+	static boolean enableRadial = false;
+	static boolean enableAzimuthal = false;
+	static boolean enableFastIntegration = false;
 	static boolean enableWaxs = false;
 	static boolean enableSaxs = false;
 	static boolean enableMask = false;
@@ -63,6 +69,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(INVARIANT_STATE, enableInvariant);
 		currentState.put(NORMALISATION_STATE, enableNormalisation);
 		currentState.put(SECTOR_STATE, enableSector);
+		currentState.put(RADIAL_STATE, enableRadial);
+		currentState.put(AZIMUTH_STATE, enableAzimuthal);
+		currentState.put(FASTINT_STATE, enableFastIntegration);
 		currentState.put(WAXS_STATE, enableWaxs);
 		currentState.put(SAXS_STATE, enableSaxs);
 		currentState.put(MASK_STATE, enableMask);
@@ -78,6 +87,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     INVARIANT_STATE,
 		                     NORMALISATION_STATE,
 		                     SECTOR_STATE,
+		                     RADIAL_STATE,
+		                     AZIMUTH_STATE,
+		                     FASTINT_STATE,
 		                     WAXS_STATE,
 		                     SAXS_STATE,
 		                     MASK_STATE};
@@ -111,6 +123,21 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public void setEnableSector(boolean enableSector) {
 		NcdProcessingSourceProvider.enableSector = enableSector;
 		fireSourceChanged(ISources.WORKBENCH, SECTOR_STATE, enableSector);
+	}
+
+	public void setEnableRadial(boolean enableRadial) {
+		NcdProcessingSourceProvider.enableRadial = enableRadial;
+		fireSourceChanged(ISources.WORKBENCH, RADIAL_STATE, enableRadial);
+	}
+
+	public void setEnableAzimuthal(boolean enableAzimuthal) {
+		NcdProcessingSourceProvider.enableAzimuthal = enableAzimuthal;
+		fireSourceChanged(ISources.WORKBENCH, AZIMUTH_STATE, enableAzimuthal);
+	}
+
+	public void setEnableFastIntegration(boolean enableFastIntegration) {
+		NcdProcessingSourceProvider.enableFastIntegration = enableFastIntegration;
+		fireSourceChanged(ISources.WORKBENCH, FASTINT_STATE, enableFastIntegration);
 	}
 
 	public void setEnableWaxs(boolean enableWaxs) {
@@ -150,6 +177,18 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 
 	public static boolean isEnableSector() {
 		return enableSector;
+	}
+
+	public static boolean isEnableRadial() {
+		return enableRadial;
+	}
+
+	public static boolean isEnableAzimuthal() {
+		return enableAzimuthal;
+	}
+
+	public static boolean isEnableFastIntegration() {
+		return enableFastIntegration;
 	}
 
 	public static boolean isEnableWaxs() {

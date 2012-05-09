@@ -52,6 +52,30 @@
          </state>
       </command>
       <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableRadialIntegration"
+            name="Radial Integration">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.radial.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableAzimuthalIntegration"
+            name="Azimuthal Integration">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.azimuthal.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableFastIntegration"
+            name="Fast Integration">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.fastintegration.state">
+         </state>
+      </command>
+      <command
             id="uk.ac.diamond.scisoft.ncd.rcp.enableWaxsDataReduction"
             name="WAXS Data Reduction">
          <state
@@ -304,6 +328,18 @@
       <handler
             class="uk.ac.diamond.scisoft.ncd.rcp.handlers.SectorIntegrationHandler"
             commandId="uk.ac.diamond.scisoft.ncd.rcp.enableSectorIntegration">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.RadialHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableRadialIntegration">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.AzimuthalHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableAzimuthalIntegration">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.FastIntegrationHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableFastIntegration">
       </handler>
       <handler
             class="uk.ac.diamond.scisoft.ncd.rcp.handlers.WaxsDataReductionHandler"

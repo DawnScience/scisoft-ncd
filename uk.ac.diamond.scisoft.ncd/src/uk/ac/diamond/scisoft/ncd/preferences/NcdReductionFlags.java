@@ -24,6 +24,9 @@ public class NcdReductionFlags {
 	private boolean enableInvariant;
 	private boolean enableNormalisation;
 	private boolean enableSector;
+	private boolean enableRadial;
+	private boolean enableAzimuthal;
+	private boolean enableFastintegration;
 	private boolean enableWaxs;
 	private boolean enableSaxs;
 	
@@ -34,6 +37,9 @@ public class NcdReductionFlags {
 		enableInvariant = false;
 		enableNormalisation = false;
 		enableSector = false;
+		enableRadial = false;
+		enableAzimuthal = false;
+		enableFastintegration = false;
 		enableWaxs = false;
 		enableSaxs = false;
 	}
@@ -45,6 +51,9 @@ public class NcdReductionFlags {
 		enableInvariant = flags.enableInvariant;
 		enableNormalisation = flags.enableNormalisation;
 		enableSector = flags.enableSector;
+		enableRadial = flags.enableRadial;
+		enableAzimuthal = flags.enableAzimuthal;
+		enableFastintegration = flags.enableFastintegration;
 		enableWaxs = flags.enableWaxs;
 		enableSaxs = flags.enableSaxs;
 	}
@@ -52,39 +61,75 @@ public class NcdReductionFlags {
 	public boolean isEnableAverage() {
 		return enableAverage;
 	}
+	
 	public void setEnableAverage(boolean enableAverage) {
 		this.enableAverage = enableAverage;
 	}
+	
 	public boolean isEnableBackground() {
 		return enableBackground;
 	}
+	
 	public void setEnableBackground(boolean enableBackground) {
 		this.enableBackground = enableBackground;
 	}
+	
 	public boolean isEnableDetectorResponse() {
 		return enableDetectorResponse;
 	}
+	
 	public void setEnableDetectorResponse(boolean enableDetectorResponse) {
 		this.enableDetectorResponse = enableDetectorResponse;
 	}
+	
 	public boolean isEnableInvariant() {
 		return enableInvariant;
 	}
+	
 	public void setEnableInvariant(boolean enableInvariant) {
 		this.enableInvariant = enableInvariant;
 	}
+	
 	public boolean isEnableNormalisation() {
 		return enableNormalisation;
 	}
+	
 	public void setEnableNormalisation(boolean enableNormalisation) {
 		this.enableNormalisation = enableNormalisation;
 	}
+	
 	public boolean isEnableSector() {
 		return enableSector;
 	}
+	
 	public void setEnableSector(boolean enableSector) {
 		this.enableSector = enableSector;
 	}
+	
+	public boolean isEnableRadial() {
+		return enableRadial;
+	}
+
+	public void setEnableRadial(boolean enableRadial) {
+		this.enableRadial = enableRadial;
+	}
+
+	public boolean isEnableAzimuthal() {
+		return enableAzimuthal;
+	}
+
+	public void setEnableAzimuthal(boolean enableAzimuthal) {
+		this.enableAzimuthal = enableAzimuthal;
+	}
+
+	public boolean isEnableFastintegration() {
+		return enableFastintegration;
+	}
+
+	public void setEnableFastintegration(boolean enableFastintegration) {
+		this.enableFastintegration = enableFastintegration;
+	}
+
 	public boolean isEnableWaxs() {
 		return enableWaxs;
 	}

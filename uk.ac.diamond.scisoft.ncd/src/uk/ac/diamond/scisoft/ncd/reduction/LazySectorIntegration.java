@@ -34,9 +34,14 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 public class LazySectorIntegration extends LazyDataReduction {
 
 	private SectorROI intSector;
+	private AbstractDataset[] areaData;
 	private AbstractDataset mask;
 	private Double gradient, intercept, cameraLength;
 	
+	private boolean calulcateRadial = true;
+	private boolean calculateAzimuthal = true;
+	private boolean fast = true;
+
 	public static String name = "SectorIntegration";
 
 	public void setIntSector(SectorROI intSector) {
@@ -47,6 +52,24 @@ public class LazySectorIntegration extends LazyDataReduction {
 		this.mask = mask;
 	}
 
+	public void setAreaData(AbstractDataset... area) {
+		this.areaData = new AbstractDataset[2];
+		this.areaData[0] = area[0];
+		this.areaData[1] = area[1];
+	}
+
+	public void setCalculateRadial(boolean calulcateRadial) {
+		this.calulcateRadial = calulcateRadial;
+	}
+
+	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
+		this.calculateAzimuthal = calculateAzimuthal;
+	}
+
+	public void setFast(boolean fast) {
+		this.fast = fast;
+	}
+	
 	public double[] getCalibrationData() {
 		if (gradient != null && intercept != null)
 			return new double[] {gradient.doubleValue(), intercept.doubleValue()};
@@ -73,6 +96,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 			reductionStep.setMask(mask);
 		reductionStep.setIDs(sector_id);
 		reductionStep.setAzimuthalIDs(azimuth_id);
+		reductionStep.setAreaData(areaData);
+		reductionStep.setCalulcateRadial(calulcateRadial);
+		reductionStep.setCalculateAzimuthal(calculateAzimuthal);
+		reductionStep.setFast(fast);
 		
 		return reductionStep.writeout(dim, lock);
 	}

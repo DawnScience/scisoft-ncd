@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Maths;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -38,10 +39,15 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	private static final Logger logger = LoggerFactory.getLogger(HDF5SectorIntegration.class);
 
 	public AbstractDataset parentdata;
+	private AbstractDataset[] areaData;
 	private DataSliceIdentifiers azimuthalIds;
 	
 	private SectorROI roi;
 	private Double gradient, intercept, cameraLength;
+	
+	private boolean calulcateRadial = true;
+	private boolean calculateAzimuthal = true;
+	private boolean fast = true;
 
 	public double getCameraLength() {
 		return cameraLength.doubleValue();
@@ -91,6 +97,24 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		return roi;
 	}
 
+	public void setAreaData(AbstractDataset... area) {
+		this.areaData = new AbstractDataset[2];
+		this.areaData[0] = area[0];
+		this.areaData[1] = area[1];
+	}
+
+	public void setCalulcateRadial(boolean calulcateRadial) {
+		this.calulcateRadial = calulcateRadial;
+	}
+
+	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
+		this.calculateAzimuthal = calculateAzimuthal;
+	}
+
+	public void setFast(boolean fast) {
+		this.fast = fast;
+	}
+
 	public AbstractDataset[] writeout(int dim, ILock lock) {
 		if (roi == null) {
 			return null;
@@ -105,10 +129,14 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(roi);
+			sec.setAreaData(areaData);
+			sec.setCalulcateRadial(calulcateRadial);
+			sec.setCalculateAzimuthal(calculateAzimuthal);
+			sec.setFast(fast);
 			int[] dataShape = parentdata.getShape();
 			
 			parentdata = flattenGridData(parentdata, dim);
-			
+			roi.setAverageArea(false);
 			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed, myazdata, myraddata);
 			myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
 			myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
