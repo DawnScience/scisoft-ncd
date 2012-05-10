@@ -30,7 +30,7 @@ public class SectorIntegration {
 
 	private AbstractDataset[] areaData;
 	private SectorROI roi;
-	private boolean calulcateRadial = true;
+	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
 	
@@ -49,8 +49,8 @@ public class SectorIntegration {
 	}
 
 	
-	public void setCalulcateRadial(boolean calulcateRadial) {
-		this.calulcateRadial = calulcateRadial;
+	public void setCalculateRadial(boolean calulcateRadial) {
+		this.calculateRadial = calulcateRadial;
 	}
 
 	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
@@ -61,7 +61,7 @@ public class SectorIntegration {
 		this.fast = fast;
 	}
 
-	public AbstractDataset[] process(final AbstractDataset parentdata, int frames, AbstractDataset maskUsed, AbstractDataset myazdata, AbstractDataset myraddata) {
+	public AbstractDataset[] process(final AbstractDataset parentdata, int frames, AbstractDataset maskUsed) {
 		int[] parentdim = parentdata.getShape();
 		int[] start = parentdim.clone();
 		for (int i = 1; i < start.length; i++) {
@@ -69,6 +69,7 @@ public class SectorIntegration {
 		}
 		int[] stop = parentdim.clone();
 
+		AbstractDataset myraddata = null, myazdata = null;
 		for (int i = 0; i < frames; i++) {
 			start[0] = i;
 			stop[0] = i + 1;
@@ -76,28 +77,34 @@ public class SectorIntegration {
 			slice.squeeze();
 			AbstractDataset[] intresult;
 			try {
-				intresult = ROIProfile.sector(slice, maskUsed, roi, calulcateRadial, calculateAzimuthal, fast);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast);
 			} catch (IllegalArgumentException ill) {
 				logger.warn("mask and dataset incompatible rank", ill);
 				maskUsed = null;
-				intresult = ROIProfile.sector(slice, maskUsed, roi, calulcateRadial, calculateAzimuthal, fast);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast);
 			}
-			AbstractDataset radset = intresult[0];
-			AbstractDataset azset = intresult[1];
-			if (areaData[0] != null)
-				radset = Maths.dividez(radset, areaData[0]);
-			if (areaData[1] != null)
-				azset = Maths.dividez(azset, areaData[1]);
-			int azrange = azset.getShape()[0];
-			int radrange = radset.getShape()[0];
-			azset.resize(new int[] { 1, azrange });
-			radset.resize(new int[] { 1, radrange });
-			if (myazdata == null || myraddata == null) {
-				myazdata = AbstractDataset.zeros(new int[] { frames, azrange }, azset.getDtype());
-				myraddata = AbstractDataset.zeros(new int[] { frames, radrange }, radset.getDtype());
+			if (calculateRadial) {
+				AbstractDataset radset = intresult[0];
+				if (areaData[0] != null)
+					radset = Maths.dividez(radset, areaData[0]);
+				int radrange = radset.getShape()[0];
+				radset.resize(new int[] { 1, radrange });
+				if (myraddata  == null) {
+					myraddata = AbstractDataset.zeros(new int[] { frames, radrange }, radset.getDtype());
+				}
+				myraddata.setSlice(radset, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
 			}
-			myazdata.setSlice(azset, new int[] {i, 0}, new int[] { i + 1, azrange }, null);
-			myraddata.setSlice(radset, new int[] {i, 0}, new int[] { i + 1, radrange }, null);
+			if (calculateAzimuthal) {
+				AbstractDataset azset = intresult[1];
+				if (areaData[1] != null)
+					azset = Maths.dividez(azset, areaData[1]);
+				int azrange = azset.getShape()[0];
+				azset.resize(new int[] { 1, azrange });
+				if (myazdata == null) {
+					myazdata = AbstractDataset.zeros(new int[] { frames, azrange }, azset.getDtype());
+				}
+				myazdata.setSlice(azset, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
+			}
 		}
 		
 		return new AbstractDataset[] {myazdata, myraddata}; 

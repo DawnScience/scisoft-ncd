@@ -38,7 +38,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private AbstractDataset mask;
 	private Double gradient, intercept, cameraLength;
 	
-	private boolean calulcateRadial = true;
+	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
 
@@ -59,7 +59,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 
 	public void setCalculateRadial(boolean calulcateRadial) {
-		this.calulcateRadial = calulcateRadial;
+		this.calculateRadial = calulcateRadial;
 	}
 
 	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
@@ -97,7 +97,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		reductionStep.setIDs(sector_id);
 		reductionStep.setAzimuthalIDs(azimuth_id);
 		reductionStep.setAreaData(areaData);
-		reductionStep.setCalulcateRadial(calulcateRadial);
+		reductionStep.setCalculateRadial(calculateRadial);
 		reductionStep.setCalculateAzimuthal(calculateAzimuthal);
 		reductionStep.setFast(fast);
 		

@@ -29,7 +29,6 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Maths;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -45,7 +44,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	private SectorROI roi;
 	private Double gradient, intercept, cameraLength;
 	
-	private boolean calulcateRadial = true;
+	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
 
@@ -103,8 +102,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		this.areaData[1] = area[1];
 	}
 
-	public void setCalulcateRadial(boolean calulcateRadial) {
-		this.calulcateRadial = calulcateRadial;
+	public void setCalculateRadial(boolean calculateRadial) {
+		this.calculateRadial = calculateRadial;
 	}
 
 	public void setCalculateAzimuthal(boolean calculateAzimuthal) {
@@ -130,20 +129,24 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(roi);
 			sec.setAreaData(areaData);
-			sec.setCalulcateRadial(calulcateRadial);
+			sec.setCalculateRadial(calculateRadial);
 			sec.setCalculateAzimuthal(calculateAzimuthal);
 			sec.setFast(fast);
 			int[] dataShape = parentdata.getShape();
 			
 			parentdata = flattenGridData(parentdata, dim);
 			roi.setAverageArea(false);
-			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed, myazdata, myraddata);
-			myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
-			myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed);
+			if (calculateAzimuthal)
+				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+			if (calculateRadial)
+				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
 			try {
 				lock.acquire();
-				writeResults(azimuthalIds, myazdata, dataShape, dim);
-				writeResults(ids, myraddata, dataShape, dim);
+				if (calculateAzimuthal)
+					writeResults(azimuthalIds, myazdata, dataShape, dim);
+				if(calculateRadial)
+					writeResults(ids, myraddata, dataShape, dim);
 			} catch (Exception e) {
 				throw e;
 			} finally {
@@ -151,12 +154,18 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			}
 			
 			int resLength =  dataShape.length - dim + 1;
-			int[] resAzShape = Arrays.copyOf(dataShape, resLength);
-			int[] resRadShape = Arrays.copyOf(dataShape, resLength);
-			resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
-			resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+			if (calculateAzimuthal && myazdata != null) {
+				int[] resAzShape = Arrays.copyOf(dataShape, resLength);
+				resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
+				myazdata = myazdata.reshape(resAzShape);
+			}
+			if (calculateRadial && myraddata != null) {
+				int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+				resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+				myraddata = myraddata.reshape(resRadShape);
+			}
 			
-			return new AbstractDataset[] {myazdata.reshape(resAzShape), myraddata.reshape(resRadShape)};
+			return new AbstractDataset[] {myazdata, myraddata};
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);
