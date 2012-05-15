@@ -16,12 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import gda.observable.IObserver;
-
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
@@ -29,14 +27,15 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IContributionItem;
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawb.common.ui.plot.trace.IImageTrace;
+import org.dawb.workbench.plotting.tools.FittingTool;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -46,43 +45,22 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IViewReference;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.PlotServer;
-import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
-import uk.ac.diamond.scisoft.analysis.plotserver.AxisMapBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.DataBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.DataBeanException;
-import uk.ac.diamond.scisoft.analysis.plotserver.DataSetWithAxisInformation;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiPlotMode;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiUpdate;
-import uk.ac.diamond.scisoft.analysis.rcp.plotting.DataSetPlotter;
-import uk.ac.diamond.scisoft.analysis.rcp.plotting.PlottingMode;
-import uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.ISidePlot;
-import uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfile;
-import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.analysis.rcp.views.SidePlotView;
-import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 
-public class QAxisCalibrationBase extends ViewPart implements IObserver {
+public class QAxisCalibrationBase extends ViewPart {
 
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
@@ -93,21 +71,16 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	protected LinkedHashMap<String, LinkedHashMap<HKL, Amount<Length>> > cal2peaks;
 	
-
 	protected Combo standard;
 	protected Spinner braggOrder;
-	private Button sectorButton;
-	private Button fittingButton;
 	protected Button beamRefineButton;
-	private PlotServer plotServer;
 	protected Group gpSelectMode, calibrationControls;
 	protected Label lblN;
 
 
-	protected StoredPlottingObject oneDData;
 	protected StoredPlottingObject twoDData;
 
-	protected ArrayList<APeak> peaks = new ArrayList<APeak>();
+	protected ArrayList<IPeak> peaks = new ArrayList<IPeak>();
 
 	private Button calibrateButton;
 	protected Text gradient;
@@ -124,34 +97,21 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 
 	protected String currentMode = NcdConstants.detChoices[0];
 	
-	protected boolean originalData2D = true;
-
-	public static String SAXS_PLOT_NAME = "uk.ac.gda.client.ncd.saxsview";
-	public static String WAXS_PLOT_NAME = "uk.ac.gda.client.ncd.waxsview";
-	public static String GUI_PLOT_NAME = "Saxs Plot";
-	protected String ACTIVE_PLOT;
-	protected PlotView pv;
-
-	private boolean weHaveOnePending = false;
-
 	protected class StoredPlottingObject {
-		private IDataset dataset, axis;
+		private IDataset dataset;
 		private BooleanDataset mask;
 		private SectorROI sroi;
-		private GuiPlotMode plotMode;
-		String plotViewName;
 
-		public StoredPlottingObject(String plotName) {
-			DataSetPlotter mp = getMainPlotterofView(plotName);
-			if (mp == null) {
-				return;
+		public StoredPlottingObject() {
+			try {
+				AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
+				dataset = trace.getData();
+				mask = (BooleanDataset) trace.getMask();
+				sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
+			} catch (Exception e) {
+				logger.error("Error reading input data", e);
 			}
-			plotMode = mp.getMode().getGuiPlotMode();
-			dataset = mp.getCurrentDataSet();
-			if (plotMode == GuiPlotMode.ONED) {
-				axis = get1DAxis(plotName);
-			}
-			plotViewName = plotName;
 		}
 
 		public BooleanDataset getMask() {
@@ -170,47 +130,9 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			this.sroi = sroi.copy();
 		}
 		
-		private IDataset get1DAxis(String plotName) {
-			DataSetPlotter mp = getMainPlotterofView(plotName);
-			if (mp == null) {
-				return null;
-			}
-			return mp.getXAxisValues().get(0).toDataset();
-		}
-
 		public IDataset getStoredDataset() {
 			return dataset;
 		}
-
-		public void plot() {
-			plot(plotViewName);
-		}
-
-		protected void plot(String plotName) {
-
-			PlotView pv = getPlotViewOfView(plotName);
-			if (pv == null) {
-				return;
-			}
-			pv.updatePlotMode(plotMode);
-			DataBean dBean = new DataBean();
-			DataSetWithAxisInformation dswai = new DataSetWithAxisInformation();
-			dswai.setData(dataset);
-			AxisMapBean amb = new AxisMapBean(AxisMapBean.FULL);
-			dswai.setAxisMap(amb);
-			try {
-				dBean.addData(dswai);
-				if (axis != null) {
-					dBean.addAxis(AxisMapBean.XAXIS, axis);
-				}
-				pv.processPlotUpdate(dBean);
-			} catch (NullPointerException e) {
-				logger.error("The main plotter object does not exist in QAxis calibration");
-			} catch (DataBeanException e) {
-				logger.error("something wrong with the beans {}", e);
-			}
-		}
-
 	}
 
 	@SuppressWarnings("unchecked")
@@ -403,9 +325,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		progress.setLayout(new GridLayout(1, false));
 		progress.setText("Progress");
 
-		plotServer = PlotServerProvider.getPlotServer();
-		plotServer.addIObserver(this);
-
 		displayControlButtons(progress);
 		setupGUI();
 	}
@@ -427,22 +346,11 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	}
 
 	public void runCalibration() {
-		set1DfittingActivatedState(false);
-		weHaveOnePending = true;
+		twoDData = new StoredPlottingObject();
+		storePeaks();
+		
 		runJavaCommand();
 	}
-
-	protected SelectionListener modeSelectionListener = new SelectionAdapter() {
-		@Override
-		public void widgetSelected(SelectionEvent e) {
-			for (Button bu : detTypes) {
-				if (bu.getSelection()) {
-					findViewAndDetermineMode(bu.getText());
-					return;
-				}
-			}
-		}
-	};
 
 	private void displayControlButtons(Group progress) {
 		progress.setLayout(new GridLayout(2, true));
@@ -461,67 +369,12 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 			if (i == 0) {
 				detTypes[i].setSelection(true);
 			}
-			detTypes[i].addSelectionListener(modeSelectionListener);
 			i++;
 		}
 
-		sectorButton = new Button(progress, SWT.PUSH);
-		sectorButton.setText("Radial Integration");
-		sectorButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-		sectorButton.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-
-				if (pv == null) {
-					modeSelectionListener.widgetSelected(null);
-					if (pv == null || !sectorButton.isEnabled()) {
-						return;
-					}
-				}
-
-				if (pv.getMainPlotter().getMode() != PlottingMode.TWOD && twoDData != null) {
-					twoDData.plot(ACTIVE_PLOT);
-				}
-
-				runRadialIntegrationAction();
-			}
-		});
-
-		fittingButton = new Button(progress, SWT.PUSH);
-		fittingButton.setText("1D Fitting");
-		fittingButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-		fittingButton.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-
-				if (pv == null) {
-					modeSelectionListener.widgetSelected(null);
-					if (pv == null) {
-						return;
-					}
-				}
-
-				if (pv.getMainPlotter().getMode() == PlottingMode.TWOD) {
-					runRadialIntegrationAction();
-					runPushRadialProfileAction();
-					oneDData = new StoredPlottingObject(ACTIVE_PLOT);
-				} else {
-					if (oneDData == null) {
-						oneDData = new StoredPlottingObject(ACTIVE_PLOT);
-					} else {
-						oneDData.plot(ACTIVE_PLOT);
-					}
-				}
-
-				set1DfittingActivatedState(true);
-			}
-		});
-
 		calibrateButton = new Button(progress, SWT.NONE);
 		calibrateButton.setText("Calibrate");
-		calibrateButton.setEnabled(false);
+		calibrateButton.setEnabled(true);
 		calibrateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1));
 		calibrateButton.addSelectionListener(new SelectionAdapter() {
 
@@ -533,96 +386,13 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	}
 
 	private void storePeaks() {
-		if (pv == null) {
-			return;
-		}
-		GuiBean bean = pv.getGUIInfo();
-		if (bean == null) {
-			return;
-		}
-
-		Serializable dataEntery;
-		if (bean.containsKey(GuiParameters.FITTEDPEAKS)) {
+		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Radial Profile");
+		List<IPeak> fittedPeaks = (List<IPeak>) ((FittingTool) plotSystem.getToolPage("org.dawb.workbench.plotting.tools.fittingTool")).getFittedPeaks().getPeaks();
+		if (peaks != null && peaks.size() > 0)
 			peaks.clear();
-			dataEntery = bean.get(GuiParameters.FITTEDPEAKS);
-			if (dataEntery instanceof ArrayList<?>) {
-				for (Object p : (ArrayList<?>) dataEntery) {
-					if (p instanceof APeak) {
-						peaks.add((APeak) p);
-					}
-				}
-			}
+		for (IPeak peak : fittedPeaks) {
+			peaks.add(peak);
 		}
-
-		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
-			@Override
-			public void run() {
-				calibrateButton.setEnabled(peaks.size() >= 2);
-			}
-		});
-	}
-
-	protected void findViewAndDetermineMode(String et) {
-		IWorkbenchWindow page = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-
-		if (pv != null) {
-			pv.deleteDataObserver(this);
-		}
-
-		if (page != null) {
-			// if in SAXS perspective
-			// TODO choices should be in a clever object
-			if ("SAXS".equals(et)) {
-
-				currentMode = et;
-				ACTIVE_PLOT = SAXS_PLOT_NAME;
-
-			} else { // if (et == ExperimentType.WAXS)
-
-				currentMode = et;
-				ACTIVE_PLOT = WAXS_PLOT_NAME;
-
-			}
-
-			pv = getPlotViewOfView(ACTIVE_PLOT);
-			if (pv == null) {
-				logger.warn("no plotview found for " + et);
-				page.getShell().getDisplay().asyncExec(new Runnable() {
-
-					@Override
-					public void run() {
-						fittingButton.setEnabled(false);
-						sectorButton.setEnabled(false);
-						calibrateButton.setEnabled(false);
-					}
-				});
-				return;
-			}
-
-			pv.addDataObserver(this);
-			determineMode();
-		}
-	}
-
-	private void determineMode() {
-		if (pv.getMainPlotter().getMode() == PlottingMode.TWOD) {
-			originalData2D = true;
-		} else {
-			originalData2D = false;
-		}
-
-		//oneDData = null;
-		//twoDData = null;
-
-		final boolean is2Dtemp = originalData2D;
-		pv.getSite().getShell().getDisplay().asyncExec(new Runnable() {
-
-			@Override
-			public void run() {
-				fittingButton.setEnabled(true);
-				sectorButton.setEnabled(is2Dtemp);
-			}
-		});
 	}
 
 	protected void runJavaCommand() {
@@ -646,47 +416,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 	@Override
 	public void setFocus() {
 		logger.debug("setting focus");
-	}
-
-	@Override
-	public void update(Object source, Object arg) {
-
-		if (arg instanceof DataBean) {
-			if (!weHaveOnePending) {
-				DataBean bean = (DataBean) arg;
-				logger.debug("new data on plot view: {}", bean);
-				determineMode();
-			} else {
-				weHaveOnePending = false;
-			}
-		}
-		if (arg instanceof GuiUpdate) {
-			GuiUpdate guiUpdate = (GuiUpdate) arg;
-			if (guiUpdate.getGuiName().contains(GUI_PLOT_NAME)) {
-				GuiBean bean = guiUpdate.getGuiData();
-				if (bean.containsKey(GuiParameters.ROIDATA)) {
-					Object obj = bean.get(GuiParameters.ROIDATA);
-					if (obj instanceof SectorROI) {
-						SectorROI sectorROI = (SectorROI) obj;
-						double[] radii = sectorROI.getRadii();
-						disttobeamstop = radii[0];
-					}
-				}
-				if (bean.containsKey(GuiParameters.FITTEDPEAKS)) {
-					storePeaks();
-				}
-				if (bean.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
-					Serializable bd = bean.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
-
-					if (bd != null && bd instanceof CalibrationResultsBean) {
-						CalibrationResultsBean crb = (CalibrationResultsBean) bd;
-						updateCalibrationResults(crb);
-					}
-				}
-			}
-		}
-		
-		findViewAndDetermineMode(currentMode);
 	}
 
 	protected void updateCalibrationResults(CalibrationResultsBean crb) {
@@ -720,132 +449,6 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		}
 	}
 
-	private PlotView getPlotViewOfView(String currentView) {
-		IWorkbenchWindow page = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		IWorkbenchPage[] pages = page.getPages();
-		if (pages.length > 0) {
-			if (pages[0] == null) {
-				return null;
-			}
-
-			IViewPart view = pages[0].findView(currentView);
-			if (view == null) {
-				return null;
-			}
-			return (PlotView) view;
-		}
-		return null;
-	}
-
-	private DataSetPlotter getMainPlotterofView(String currentView) {
-		return getPlotViewOfView(currentView).getMainPlotter();
-	}
-
-	private void runRadialIntegrationAction() {
-
-		if (pv == null) {
-			return;
-		}
-
-		if (pv.getMainPlotter().getMode() == PlottingMode.TWOD && originalData2D) {
-
-			twoDData = new StoredPlottingObject(ACTIVE_PLOT);
-
-			ISidePlot sidePlot = getOurSidePlotView().getActivePlot();
-
-			if (!(sidePlot instanceof SectorProfile)) {
-
-				IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager().getItems();
-				for (IContributionItem item : items) {
-					if (item instanceof ActionContributionItem
-							&& item.getId() != null
-							&& item.getId().equalsIgnoreCase(
-									"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfileAction")) {
-						IAction act = ((ActionContributionItem) item).getAction();
-						act.run();
-						break;
-					}
-				}
-			}
-			// check to see is there is an existing sectorROI
-			GuiBean guiinfo = pv.getGUIInfo();
-			if (guiinfo.containsKey(GuiParameters.MASKING)) {
-				if (guiinfo.get(GuiParameters.MASKING) instanceof MaskingBean) {
-					MaskingBean mb = (MaskingBean)guiinfo.get(GuiParameters.MASKING);
-					twoDData.setMask(mb.getMask());
-				}
-			}
-			
-			if (guiinfo.containsKey(GuiParameters.ROIDATA)) {
-				if (guiinfo.get(GuiParameters.ROIDATA) instanceof SectorROI) {
-					SectorROI sroi = (SectorROI)guiinfo.get(GuiParameters.ROIDATA);
-					twoDData.setROI(sroi);
-					return;
-				}
-			}
-
-			GuiBean guibean = new GuiBean();
-			SectorROI sroi = new SectorROI(); // TODO better placement
-			sroi.setPlot(true);
-			guibean.put(GuiParameters.ROIDATA, sroi);
-			getOurSidePlotView().updateGUI(guibean);
-		}
-	}
-
-	private SidePlotView getOurSidePlotView() {
-		IWorkbenchWindow page = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		IWorkbenchPage[] pages = page.getPages();
-		if (pages[0] == null) {
-			return null;
-		}
-
-		IViewReference viewRef = pages[0].findViewReference("uk.ac.diamond.scisoft.analysis.rcp.views.SidePlotView",
-				pv.getTitle());
-		if (viewRef == null) {
-			return null;
-		}
-
-		SidePlotView sidePV = (SidePlotView) viewRef.getView(true);
-		return sidePV;
-	}
-
-	private void set1DfittingActivatedState(boolean state) {
-
-		IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager().getItems();
-		for (IContributionItem item2 : items) {
-			if (item2 instanceof ActionContributionItem
-					&& item2.getId() != null
-					&& item2.getId().equalsIgnoreCase(
-							"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.Fitting1DAction")) {
-				IAction fit1d = ((ActionContributionItem) item2).getAction();
-				if (fit1d.isChecked() != state) {
-					fit1d.run();
-				}
-			}
-		}
-	}
-
-	private void runPushRadialProfileAction() {
-		if (pv == null) {
-			return;
-		}
-
-		if (pv.getMainPlotter().getMode() == PlottingMode.TWOD) {
-
-			SidePlotView sidePV = getOurSidePlotView();
-			ISidePlot sideplot = sidePV.getActivePlot();
-			if (sideplot instanceof SectorProfile) {
-				weHaveOnePending = true;
-				((SectorProfile) sideplot).pushPlottingData(sidePV.getViewSite(), ACTIVE_PLOT, 0);
-			}
-		}
-	}
-
-	@Override
-	public void dispose() {
-		plotServer.deleteIObserver(this);
-	}
-	
 	protected void setCalTable(ArrayList<CalibrationPeak> cpl) {
 		calTable.setInput(cpl);
 	}

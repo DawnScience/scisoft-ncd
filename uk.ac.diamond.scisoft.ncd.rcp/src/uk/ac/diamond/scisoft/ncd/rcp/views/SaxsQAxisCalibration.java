@@ -24,17 +24,13 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		SAXS_PLOT_NAME = "uk.ac.diamond.scisoft.analysis.rcp.plotViewDP";
-		WAXS_PLOT_NAME = "uk.ac.diamond.scisoft.analysis.rcp.plotViewDP";
 		GUI_PLOT_NAME = "Dataset Plot";
 		
 		super.createPartControl(parent);
 		
 		detTypes[0].setSelection(true);
 		detTypes[1].setSelection(false);
-		findViewAndDetermineMode(currentMode);
 		gpSelectMode.dispose();
-		
 	}
 
 	@Override

@@ -34,7 +34,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
-import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 
@@ -42,7 +42,7 @@ public class CalibrationMethods {
 	
 	private static final Logger logger = LoggerFactory.getLogger(CalibrationMethods.class);
 	
-	private ArrayList<APeak> peaks;
+	private ArrayList<IPeak> peaks;
 	private LinkedHashMap<HKL, Amount<Length>> spacing;
 	private double wavelength;
 	private double pixelSize;
@@ -54,7 +54,7 @@ public class CalibrationMethods {
     
 	SimpleRegression regression;
 
-	public CalibrationMethods(ArrayList<APeak> peaks, LinkedHashMap<HKL, Amount<Length>> spacing, double wavelength,
+	public CalibrationMethods(ArrayList<IPeak> peaks, LinkedHashMap<HKL, Amount<Length>> spacing, double wavelength,
 			double pixelSize, Unit<Length> unit) {
 		
 		this.peaks = peaks;
@@ -102,15 +102,15 @@ public class CalibrationMethods {
 	    return twoTheta;
 	}
 	   
-	private LinkedHashMap<APeak, HKL> indexPeaks(LinkedHashMap<HKL, Double> twoTheta) {
-		LinkedHashMap<APeak, HKL> indexedPeaks = new LinkedHashMap<APeak, HKL>(peaks.size());
+	private LinkedHashMap<IPeak, HKL> indexPeaks(LinkedHashMap<HKL, Double> twoTheta) {
+		LinkedHashMap<IPeak, HKL> indexedPeaks = new LinkedHashMap<IPeak, HKL>(peaks.size());
 		CombinationGenerator<HKL> combinations = new CombinationGenerator<HKL>(twoTheta.keySet(), peaks.size());
 		Double minVar = Double.MAX_VALUE;
 		for (List<HKL> comb : combinations) {
 			ArrayList<Double> distance = new ArrayList<Double>();
-			LinkedHashMap<APeak, HKL> tmpResult = new LinkedHashMap<APeak, HKL>();
+			LinkedHashMap<IPeak, HKL> tmpResult = new LinkedHashMap<IPeak, HKL>();
 			for (int i = 0; i < comb.size(); i++) {
-				APeak peak = peaks.get(i); 
+				IPeak peak = peaks.get(i); 
 				HKL tmpHKL = comb.get(i); 
 	            distance.add(peak.getPosition() / Math.tan(twoTheta.get(tmpHKL)));
 	            tmpResult.put(peak, tmpHKL);
@@ -123,7 +123,7 @@ public class CalibrationMethods {
 		}
 		
 		indexedPeakList = new ArrayList<CalibrationPeak>();
-		for (Entry<APeak, HKL> peak : indexedPeaks.entrySet()) {
+		for (Entry<IPeak, HKL> peak : indexedPeaks.entrySet()) {
 			double position = peak.getKey().getPosition();
 			HKL idx = peak.getValue();
 			Double angle = twoTheta.get(idx);
@@ -133,11 +133,11 @@ public class CalibrationMethods {
 		return indexedPeaks;
 	}
 	
-	private double fitFunctionToData(LinkedHashMap<APeak, HKL> peaks, boolean intercept) {
+	private double fitFunctionToData(LinkedHashMap<IPeak, HKL> peaks, boolean intercept) {
 		regression = new SimpleRegression(intercept);
 		if (intercept)
 			regression.addData(0.0, 0.0);
-		for (Entry<APeak, HKL> peak : peaks.entrySet()) {
+		for (Entry<IPeak, HKL> peak : peaks.entrySet()) {
 			double position = peak.getKey().getPosition();
 	        double qVal = 2.0 * Math.PI / spacing.get(peak.getValue()).doubleValue(unit);
    			regression.addData(position, qVal);
@@ -147,12 +147,12 @@ public class CalibrationMethods {
    		return regression.getSumSquaredErrors();
 	}
 	
-	private double[] estimateCameraLength(LinkedHashMap<APeak, HKL> indexedPeaks) {
+	private double[] estimateCameraLength(LinkedHashMap<IPeak, HKL> indexedPeaks) {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
-		CombinationGenerator<Entry<APeak,HKL>> combinations = new CombinationGenerator<Entry<APeak,HKL>>(indexedPeaks.entrySet(), 2);
-		for (List<Entry<APeak, HKL>> comb : combinations) {
-			Entry<APeak, HKL> peak1 = comb.get(0);
-			Entry<APeak, HKL> peak2 = comb.get(1);
+		CombinationGenerator<Entry<IPeak,HKL>> combinations = new CombinationGenerator<Entry<IPeak,HKL>>(indexedPeaks.entrySet(), 2);
+		for (List<Entry<IPeak, HKL>> comb : combinations) {
+			Entry<IPeak, HKL> peak1 = comb.get(0);
+			Entry<IPeak, HKL> peak2 = comb.get(1);
 			//double q1 = regression.predict(peak1.getPosition());
 			//double q2 = regression.predict(peak2.getPosition());
 	        double q1 = 2.0 * Math.PI / spacing.get(peak1.getValue()).doubleValue(unit);
@@ -169,9 +169,9 @@ public class CalibrationMethods {
    	    return new double[] {meanCameraLength, stdCameraLength};
 	}
 	
-	private double[] estimateCameraLengthSingle(LinkedHashMap<APeak, HKL> indexedPeaks) {
+	private double[] estimateCameraLengthSingle(LinkedHashMap<IPeak, HKL> indexedPeaks) {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
-		for (Entry<APeak, HKL> peak : indexedPeaks.entrySet()) {
+		for (Entry<IPeak, HKL> peak : indexedPeaks.entrySet()) {
 			double peakPos = peak.getKey().getPosition();
 			double q = regression.predict(peakPos);
 			double dist = (peakPos * pixelSize * 2.0 * Math.PI / (q * wavelength));
@@ -187,10 +187,10 @@ public class CalibrationMethods {
 	
 	public double performCalibration(boolean intercept) {
 		LinkedHashMap<HKL, Double> twoTheta = twoThetaAngles();
-		LinkedHashMap<APeak, HKL> indexedPeaks = indexPeaks(twoTheta);
+		LinkedHashMap<IPeak, HKL> indexedPeaks = indexPeaks(twoTheta);
 		double error = fitFunctionToData(indexedPeaks, intercept);
-		//estimateCameraLengthSingle();
-		estimateCameraLength(indexedPeaks);
+		estimateCameraLengthSingle(indexedPeaks);
+		//estimateCameraLength(indexedPeaks);
 		return error;
 	}
 }

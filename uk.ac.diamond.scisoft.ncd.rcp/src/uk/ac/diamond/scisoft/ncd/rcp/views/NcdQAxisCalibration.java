@@ -16,11 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import java.io.File;
-import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -33,31 +30,27 @@ import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
+import org.apache.commons.math3.optimization.direct.MultiDirectionalSimplex;
 import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
+import org.apache.commons.math3.optimization.direct.NelderMeadSimplex;
+import org.apache.commons.math3.optimization.direct.SimplexOptimizer;
 import org.apache.commons.math3.random.Well19937a;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
 import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.trace.ILineTrace;
 import org.dawb.common.ui.plot.trace.ILineTrace.PointStyle;
 import org.dawb.common.ui.plot.trace.ILineTrace.TraceType;
-import org.eclipse.core.commands.Command;
-import org.eclipse.core.commands.IParameter;
-import org.eclipse.core.commands.Parameterization;
-import org.eclipse.core.commands.ParameterizedCommand;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.ColorConstants;
-import org.eclipse.jface.action.ActionContributionItem;
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.action.IContributionItem;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -72,8 +65,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.ICommandService;
-import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
@@ -84,15 +76,15 @@ import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.APeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Gaussian;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.PseudoVoigt;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
-import uk.ac.diamond.scisoft.analysis.rcp.plotting.actions.InjectPyDevConsoleHandler;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -104,7 +96,6 @@ import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.gda.common.rcp.util.BundleUtils;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
@@ -112,14 +103,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	private NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
 	private String calibrant;
 	
-	private static boolean plottingActive = false;
-	
 	private int cmaesLambda = 5;
 	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
 	private int cmaesMaxIterations = 1000;
 	private int cmaesCheckFeasableCount = 10;
 	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2);
 	
+	protected String GUI_PLOT_NAME = "Dataset Plot";
+	protected String ACTIVE_PLOT = "Dataset Plot";
 	private AbstractPlottingSystem plottingSystem;
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
@@ -132,23 +123,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	@Override
 	public void createPartControl(Composite parent) {
-		SAXS_PLOT_NAME = "uk.ac.diamond.scisoft.analysis.rcp.plotViewDP";
-		WAXS_PLOT_NAME = "uk.ac.diamond.scisoft.analysis.rcp.plotViewDP";
-		GUI_PLOT_NAME = "Dataset Plot";
 
 		super.createPartControl(parent);
 		
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-		
-		modeSelectionListener = new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				findViewAndDetermineMode(currentMode);
-				return;
-			}
-		};
 		
 		calibrationControls.setLayout(new GridLayout(2, false));
 		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
@@ -161,7 +141,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		restoreState();
 		
 		try {
-	        this.plottingSystem = PlottingFactory.getPlottingSystem();
+	        this.plottingSystem = PlottingFactory.createPlottingSystem();
 	        plottingSystem.setColorOption(ColorOption.NONE);
 	        plottingSystem.setDatasetChoosingRequired(false);
 		} catch (Exception e) {
@@ -411,25 +391,28 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			return;
 		}
 
-		final ArrayList<APeak> initPeaks = (ArrayList<APeak>) peaks.clone();
+		final ArrayList<IPeak> initPeaks = (ArrayList<IPeak>) peaks.clone();
 		final MultivariateFunction beamOffset = new MultivariateFunction() {
 
+			private IJobManager jobManager = Job.getJobManager();
+			
 			@Override
 			public double value(double[] beamxy) {
-				SectorROI sroi = twoDData.getROI();
+				final SectorROI sroi = twoDData.getROI();
 				sroi.setPoint(beamxy);
+				sroi.setDpp(1.0);
 				AbstractDataset[] intresult = ROIProfile.sector((AbstractDataset) twoDData.getStoredDataset(),
-						twoDData.getMask(), sroi);
+						twoDData.getMask(), sroi, true, false, true);
 				AbstractDataset axis = DatasetUtils.linSpace(sroi.getRadius(0), sroi.getRadius(1),
 						intresult[0].getSize(), AbstractDataset.INT32);
 				double error = 0.0;
 				for (int idx = 0; idx < peaks.size(); idx++) {
-					APeak peak = initPeaks.get(idx);
+					IPeak peak = initPeaks.get(idx);
 					// logger.info("idx {} peak start position {}", idx, peak.getParameterValues());
 					double pos = peak.getPosition();
 					double fwhm = peak.getFWHM() / 2.0;
 					int startIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos - fwhm);
-					int stopIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos + fwhm);
+					int stopIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos + fwhm) + 1;
 
 					AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
 					AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
@@ -437,10 +420,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					try {
 						CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
 								new Gaussian(peak.getParameters()));
+						//CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
+						//		new PseudoVoigt(peak.getParameters()));
 						peak.setParameterValues(peakFit.getParameterValues());
-						// logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
+						//logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
 						peaks.set(idx, peak);
 						error += Math.log(1.0 + peak.getHeight() / peak.getFWHM());
+						//error += (Double) peakSlice.max();// peak.getHeight();// / peak.getFWHM();
 					} catch (Exception e) {
 						logger.error("Peak fitting failed", e);
 						return Double.NaN;
@@ -451,59 +437,56 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					return Double.NaN;
 				logger.info("Beam position distance error for postion {}", new double[] { error, beamxy[0], beamxy[1] });
 
-				if (!plottingActive) {
-					plottingActive = true;
-					Display.getDefault().asyncExec(new Runnable() {
-						@Override
-						public void run() {
-							try {
-								IContributionItem[] items = pv.getViewSite().getActionBars().getToolBarManager()
-										.getItems();
-								for (IContributionItem item2 : items) {
-									if (item2 instanceof ActionContributionItem
-											&& item2.getId() != null
-											&& item2.getId()
-													.equalsIgnoreCase(
-															"uk.ac.diamond.scisoft.analysis.rcp.plotting.sideplot.SectorProfileAction")) {
-										IAction sector = ((ActionContributionItem) item2).getAction();
-										if (sector.isChecked() != true) {
-											sector.setChecked(true);
-											sector.run();
-										}
-									}
-								}
+				final String jobName = "Sector plot";
+				UIJob plotingJob = new UIJob(jobName) {
+					
+					@Override
+					public boolean belongsTo(Object family) {
+						return family == jobName;
+					}
+				      
+					@Override
+					public IStatus runInUIThread(IProgressMonitor monitor) {
+						try {
+							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
+							if (newBean == null)
+								newBean = new GuiBean();
+							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
+							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
+							
+							AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+							plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
+							
+							CalibrationMethods calibrationMethod = new CalibrationMethods(peaks,
+							cal2peaks.get(calibrant), lambda, mmpp, unitScale);
+							calibrationMethod.performCalibration(true);
+							Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
+							Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
+							StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept});
+							plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
 
-								GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
-								if (newBean == null)
-									newBean = new GuiBean();
-								newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
-								PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
-								twoDData.plot(ACTIVE_PLOT);
-								
-								CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, unitScale);
-								calibrationMethod.performCalibration(true);
-								Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
-								Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
-								StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-								plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
-								
-							} catch (Exception e) {
-								logger.error("Error updating plot view", e);
-							} finally {
-								plottingActive = false;
-							}
+							return Status.OK_STATUS;
+							
+						} catch (Exception e) {
+							logger.error("Error updating plot view", e);
+							return Status.CANCEL_STATUS;
 						}
-					});
-				}
+					}
+				};
+				
+				jobManager.cancel(jobName);
+				plotingJob.schedule();
 
 				return error;
 			}
 
-			private boolean checkPeakOverlap(ArrayList<APeak> peaks) {
-				CombinationGenerator<APeak> peakPair = new CombinationGenerator<APeak>(peaks, peaks.size());
-				for (List<APeak> pair : peakPair) {
-					APeak peak1 = pair.get(0);
-					APeak peak2 = pair.get(1);
+			private boolean checkPeakOverlap(ArrayList<IPeak> peaks) {
+				if (peaks.size() < 2)
+					return false;
+				CombinationGenerator<IPeak> peakPair = new CombinationGenerator<IPeak>(peaks, peaks.size());
+				for (List<IPeak> pair : peakPair) {
+					IPeak peak1 = pair.get(0);
+					IPeak peak2 = pair.get(1);
 					double dist = Math.abs(peak2.getPosition() - peak1.getPosition());
 					double fwhm1 = peak1.getFWHM();
 					double fwhm2 = peak2.getFWHM();
@@ -522,7 +505,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				if (runRefinement) {
 					CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(cmaesLambda, cmaesInputSigma, cmaesMaxIterations, 0.0, true,
 							0, cmaesCheckFeasableCount, new Well19937a(), false, cmaesChecker);
-					final PointValuePair newBeamPos = beamPosOptimizer.optimize(1000, beamOffset, GoalType.MAXIMIZE,
+					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(cmaesChecker);
+					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(1e-6, 1e-4);
+					//beamPosOptimizer.setSimplex(new MultiDirectionalSimplex(cmaesInputSigma));
+					final PointValuePair newBeamPos = beamPosOptimizer.optimize(cmaesMaxIterations, beamOffset, GoalType.MAXIMIZE,
 							twoDData.getROI().getPoint());
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
@@ -621,107 +607,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 	}
 	
-	@Override
-	@Deprecated
-	protected void runJythonCommand() {
-		
-		currentMode = getDetectorName();
-
-		final int n = braggOrder.getSelection();
-		final Unit<Length> unitScale = getUnitScale();
-		final String lambda, mmpp;
-		try {
-			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458 / NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER)); 
-			lambda = Double.toString(lambdaDim.doubleValue(getUnitScale()));
-			mmpp = getPixel(true).toString();
-		} catch (Exception e) {
-			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, "Failed to read energy or detector pixel size parameter from NCD Q axis calibration view.");
-			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Input parameter error", "Please check that energy and detector pixel size parameters are properly set.", status);
-			return;
-			
-		}
-		
-		final StringBuilder command = new StringBuilder();
-		try {
-			File pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd.rcp").getAbsolutePath());
-			command.append("sys.path.append(r\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
-			pythonPlugin = new File(BundleUtils.getBundleLocation("uk.ac.diamond.scisoft.ncd").getAbsolutePath());
-			command.append("sys.path.append(r\"".concat(new File(pythonPlugin, "scripts").getAbsolutePath()).concat("\");"));
-		} catch (IOException e) {
-			String msg = "SCISOFT NCD: Error configuring Jython console";
-			logger.error(msg, e);
-			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
-			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Jython console configuration error", msg, status);
-			return;
-		}
-		command.append("import calibrateDetector as ca;");
-
-		command.append("ca.calibrate(");
-
-		command.append(String.format("\"%s\"", getDetectorName()));
-		command.append(",");
-
-		command.append(String.format("\"%s\"", GUI_PLOT_NAME));
-		command.append(",None,");
-		
-		command.append("[");
-
-		for (Iterator<APeak> iterator = peaks.iterator(); iterator.hasNext();) {
-			APeak peak = iterator.next();
-			command.append(String.format("%5.5g", peak.getPosition()));
-			if (iterator.hasNext()) {
-				command.append(",");
-			}
-		}
-
-		command.append("],");
-
-		command.append("[");
-
-		for (Entry<HKL, Amount<Length>>  peak : cal2peaks.get(standard.getText()).entrySet()) {
-			command.append(String.format("(%s, %5.5g),", peak.getKey().toString(), peak.getValue().doubleValue(unitScale)));
-		}
-
-		command.append("],");
-
-		command.append(lambda);
-		command.append(",");
-
-		command.append(mmpp);
-		command.append(",");
-
-		command.append(n);
-		command.append(",");
-
-		if (originalData2D)
-			// distance to beamstop is now accounted in the sector integration profile axis
-			command.append(0.0);
-		else 
-			command.append("None");
-		command.append(",");
-		
-		command.append(String.format("\"%s\"", unitScale.toString()));
-		command.append(")\n");
-		
-		try {
-			ICommandService commandService = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-			IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-
-			Command inject = commandService.getCommand(InjectPyDevConsoleHandler.COMMAND_ID);
-
-			IParameter script = inject.getParameter(InjectPyDevConsoleHandler.INJECT_COMMANDS_PARAM);
-			Parameterization parm = new Parameterization(script, command.toString());
-			ParameterizedCommand param_command = new ParameterizedCommand(inject, new Parameterization[] {parm});
-			handlerService.executeCommand(param_command, null);
-		} catch (Exception err) {
-			String msg = "SCISOFT NCD: Error running q-axis calibration script";
-			logger.error(msg, err);
-			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, err.getMessage());
-			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(), "Q-axis calibration script error", msg, status);
-		}
-	}
-
 	protected String getDetectorName() {
 		//  Override in subclass to refer to the calibrated detector
 		return null;
