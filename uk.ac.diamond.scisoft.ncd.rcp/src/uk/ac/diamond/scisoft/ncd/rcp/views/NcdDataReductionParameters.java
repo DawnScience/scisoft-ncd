@@ -496,16 +496,22 @@ public class NcdDataReductionParameters extends ViewPart {
 			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_RADIAL);
-			if (val!=null)
+			if (val!=null) {
 				radialButton.setSelection(val);
+				radialButton.notifyListeners(SWT.Selection, null);
+			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_AZIMUTH);
-			if (val!=null)
+			if (val!=null) {
 				azimuthalButton.setSelection(val);
+				azimuthalButton.notifyListeners(SWT.Selection, null);
+			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_FAST);
-			if (val!=null)
+			if (val!=null) {
 				fastIntButton.setSelection(val);
+				fastIntButton.notifyListeners(SWT.Selection, null);
+			}
 			
 			IMemento[] waxsMemento = memento.getChildren(NcdPreferences.NCD_WAXS_DETECTOR);
 			if (waxsMemento != null) {
