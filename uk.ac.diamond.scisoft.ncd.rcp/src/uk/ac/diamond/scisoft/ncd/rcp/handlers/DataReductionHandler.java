@@ -31,6 +31,10 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.trace.IImageTrace;
+import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -431,11 +435,10 @@ public class DataReductionHandler extends AbstractHandler {
 			GuiBean guiinfo = ((PlotView)page.showView(PlotView.ID + "DP")).getGUIInfo();
 			BooleanDataset mask = null;
 			if (enableMask) {
-				if (guiinfo.containsKey(GuiParameters.MASKING)) {
-					if (guiinfo.get(GuiParameters.MASKING) instanceof MaskingBean) {
-						MaskingBean mb = (MaskingBean)guiinfo.get(GuiParameters.MASKING);
-						mask = mb.getMask();
-					}
+				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+				ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+				if (imageTrace != null && imageTrace instanceof IImageTrace) {
+					mask = new BooleanDataset(((IImageTrace) imageTrace).getMask());
 				}
 			}
 			SectorROI intSector = null;
