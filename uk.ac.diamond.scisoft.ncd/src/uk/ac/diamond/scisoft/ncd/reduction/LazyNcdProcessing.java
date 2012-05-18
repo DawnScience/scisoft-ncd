@@ -16,10 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.text.ParseException;
+import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -237,8 +241,19 @@ public class LazyNcdProcessing {
 	}
 
 	public void setUnit(String unit) {
-		// q-axis units need to be inverse of the linear dimension units
-		this.qaxisUnit = (unit != null ? Unit.valueOf(unit).inverse().toString() : null);
+		if (unit == null) {
+			this.qaxisUnit = null;
+			return;
+		}
+		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+		Unit<? extends Quantity> unitObject;
+		try {
+			// q-axis units need to be inverse of the linear dimension units
+			unitObject = unitFormat.parseSingleUnit(unit, new ParsePosition(0)).inverse();
+			this.qaxisUnit = unitFormat.format(unitObject);
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 
 	
@@ -777,8 +792,8 @@ public class LazyNcdProcessing {
 			if (crb.containsKey(detector)) {
 				if (slope == null) slope = crb.getFuction(detector).getParameterValue(0);
 				if (intercept == null) intercept = crb.getFuction(detector).getParameterValue(1);
+				if (qaxisUnit == null) setUnit(crb.getUnit(detector));
 				cameraLength = crb.getMeanCameraLength(detector);
-				setUnit(crb.getUnit(detector));
 			}
 		}
 		

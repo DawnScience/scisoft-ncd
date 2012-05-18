@@ -17,11 +17,13 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
+import java.text.ParsePosition;
 import java.util.ArrayList;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -32,8 +34,10 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -51,6 +55,7 @@ import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
@@ -83,19 +88,20 @@ public class QAxisFileHandler extends AbstractHandler {
 						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
 						
 						// The default value that was used when unit setting was fixed.
-						String units = SI.NANO(SI.METER).toString(); 
+						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+						String units = unitFormat.format(SI.NANO(SI.METER)); 
 						HDF5Attribute unitsAttr = node.getAttribute("unit");
 						if (unitsAttr != null) {
 							units = unitsAttr.getFirstElement();
-							Unit<Length> inv_units = (Unit<Length>) Unit.valueOf(units).inverse();
-							units = inv_units.toString();
+							Unit<Length> inv_units = (Unit<Length>) unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse();
+							units = unitFormat.format(inv_units);
 						}
 						
 						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length").getDestination();
 						double cameraLength = Double.NaN;
 						if (node instanceof HDF5Dataset)
 							cameraLength = ((HDF5Dataset)node).getDataset().getSlice().getDouble(0);
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam centre").getDestination();
+						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam center").getDestination();
 						AbstractDataset beam = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
 						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles").getDestination();
 						AbstractDataset angles = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
@@ -109,6 +115,11 @@ public class QAxisFileHandler extends AbstractHandler {
 						Parameter intercept = new Parameter(qaxis.getDouble(1));
 						CalibrationResultsBean crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
 
+						IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
+						ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
+						NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+						ncdCalibrationSourceProvider.putCalibrationResult(crb);
+						
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
 						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
