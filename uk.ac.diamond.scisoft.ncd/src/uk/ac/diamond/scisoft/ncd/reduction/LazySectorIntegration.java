@@ -218,6 +218,26 @@ public class LazySectorIntegration extends LazyDataReduction {
 		double[] qCalibration = new double[] {gradient.doubleValue(), intercept.doubleValue()};
 		H5.H5Dwrite(qcalibration_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qCalibration);
 		
+		// add unit attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attrtype_id, qaxisUnit.length());
+			
+			int attr_id = H5.H5Acreate(qcalibration_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0)
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, qaxisUnit.getBytes());
+			if (write_id < 0)
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);

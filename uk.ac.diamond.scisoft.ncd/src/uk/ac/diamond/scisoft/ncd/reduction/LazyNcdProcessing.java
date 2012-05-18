@@ -310,12 +310,12 @@ public class LazyNcdProcessing {
 			lazySectorIntegration.setIntSector(intSector);
 			if(enableMask)
 				lazySectorIntegration.setMask(mask);
-			lazySectorIntegration.setCameraLength(cameraLength);
 			
 			qaxis = calculateQaxisDataset(detector, dim, secFrames);
 			if (qaxis != null) {
 				lazySectorIntegration.setQaxis(qaxis, qaxisUnit);
 				lazySectorIntegration.setCalibrationData(slope, intercept);
+				lazySectorIntegration.setCameraLength(cameraLength);
 				lazySectorIntegration.writeQaxisData(sec_group_id);
 			}
 			

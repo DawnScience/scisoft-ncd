@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
@@ -80,14 +81,16 @@ public class QAxisFileHandler extends AbstractHandler {
 						HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
 						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration").getDestination();
 						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						String units = node.getAttribute("unit").getFirstElement();
-						if (units != null) {
+						
+						// The default value that was used when unit setting was fixed.
+						String units = SI.NANO(SI.METER).toString(); 
+						HDF5Attribute unitsAttr = node.getAttribute("unit");
+						if (unitsAttr != null) {
+							units = unitsAttr.getFirstElement();
 							Unit<Length> inv_units = (Unit<Length>) Unit.valueOf(units).inverse();
 							units = inv_units.toString();
-						} else {
-							// The default value that was used when unit setting was fixed.
-							units = SI.NANO(SI.METER).toString(); 
 						}
+						
 						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length").getDestination();
 						double cameraLength = Double.NaN;
 						if (node instanceof HDF5Dataset)
