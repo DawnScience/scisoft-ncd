@@ -18,6 +18,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
 
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.trace.IImageTrace;
+import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -31,22 +35,18 @@ import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 
@@ -83,18 +83,16 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 							return DetectorMaskErrorDialog(shell, msg, null);
 						}
 						
-						mask = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						try {
-							IWorkbenchPage page = window.getActivePage();
-							IViewPart activePlot = page.findView(PlotView.ID + "DP");
-							if (activePlot instanceof PlotView)
-								if (mask != null) {
-									MaskingBean mb = new MaskingBean((BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL), 0, 1);
-									((PlotView)page.showView(PlotView.ID + "DP")).putGUIInfo(GuiParameters.MASKING, mb);
-								}
-						} catch (PartInitException e) {
-							String msg = "SCISOFT NCD: cannot set masking GUI bean information";
-							return DetectorMaskErrorDialog(shell, msg, e);
+						mask = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						
+						IWorkbenchPage page = window.getActivePage();
+						IViewPart activePlot = page.findView(PlotView.ID + "DP");
+						if (activePlot instanceof PlotView) {
+							AbstractPlottingSystem activePlotSystem = PlottingFactory
+									.getPlottingSystem(((PlotView) activePlot).getPartName());
+							ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+							if (imageTrace != null && imageTrace instanceof IImageTrace)
+								((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
 						}
 						return Status.OK_STATUS;
 					} 

@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
-import java.io.Serializable;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -52,8 +51,6 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IEditorPart;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -68,7 +65,6 @@ import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.analysis.roi.MaskingBean;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -79,7 +75,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
-import uk.ac.gda.common.rcp.util.EclipseUtils;
 
 public class DataReductionHandler extends AbstractHandler {
 
@@ -437,8 +432,13 @@ public class DataReductionHandler extends AbstractHandler {
 			if (enableMask) {
 				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 				ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
-				if (imageTrace != null && imageTrace instanceof IImageTrace) {
-					mask = new BooleanDataset(((IImageTrace) imageTrace).getMask());
+				if (imageTrace != null && imageTrace instanceof IImageTrace)
+					mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
+				if (mask != null) {
+					processing.setMask(new BooleanDataset(mask));
+					processing.setEnableMask(true);
+				} else {
+					processing.setEnableMask(false);
 				}
 			}
 			SectorROI intSector = null;
@@ -461,7 +461,6 @@ public class DataReductionHandler extends AbstractHandler {
 			//	if (bd != null && bd instanceof CalibrationResultsBean)
 			//		crb = (CalibrationResultsBean) bd;
 			//}
-			processing.setMask(mask);
 			processing.setIntSector(intSector);
 			processing.setCrb(crb);
 		}
@@ -476,7 +475,6 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setGridAverageSelection(gridAverage);
 		processing.setCalibration(calibration);
 		processing.setNormChannel(normChannel);
-		processing.setEnableMask(enableMask);
 		processing.setSlope(qGradient);
 		processing.setIntercept(qIntercept);
 		processing.setUnit(qUnit);
