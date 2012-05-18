@@ -25,6 +25,10 @@ public class NcdPreferences {
 	public static final String NCD_STAGE_INVARIANT = "ncd.stage.invariant";
 	public static final String NCD_STAGE_AVERAGE = "ncd.stage.average";
 	
+	public static final String NCD_SECTOR_RADIAL = "ncd.sector.radial";
+	public static final String NCD_SECTOR_AZIMUTH = "ncd.sector.azimuth";
+	public static final String NCD_SECTOR_FAST = "ncd.sector.fast";
+	
 	public static final String NCD_ABSOLUTESCALE = "ncd.absolutescale";
 	public static final String NCD_BACKGROUNDSUBTRACTION = "ncd.backgroundsubtraction";
 	public static final String NCD_BACKGROUNDSCALE =  "ncd.backgroundscale";

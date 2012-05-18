@@ -383,6 +383,10 @@ public class NcdDataReductionParameters extends ViewPart {
 			memento.putBoolean(NcdPreferences.NCD_STAGE_INVARIANT, invButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_STAGE_AVERAGE, aveButton.getSelection());
 			
+			memento.putBoolean(NcdPreferences.NCD_SECTOR_RADIAL, radialButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_SECTOR_AZIMUTH, azimuthalButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_SECTOR_FAST, fastIntButton.getSelection());
+			
 			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
@@ -490,6 +494,18 @@ public class NcdDataReductionParameters extends ViewPart {
 				if (val.booleanValue()) aveButton.notifyListeners(SWT.Selection, null);
 				else updateAverageWidgets();
 			}
+			
+			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_RADIAL);
+			if (val!=null)
+				radialButton.setSelection(val);
+			
+			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_AZIMUTH);
+			if (val!=null)
+				azimuthalButton.setSelection(val);
+			
+			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_FAST);
+			if (val!=null)
+				fastIntButton.setSelection(val);
 			
 			IMemento[] waxsMemento = memento.getChildren(NcdPreferences.NCD_WAXS_DETECTOR);
 			if (waxsMemento != null) {
@@ -805,7 +821,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 			});
 			if (NcdProcessingSourceProvider.isEnableRadial()) radialButton.setSelection(true);
-			else radialButton.setSelection(false);		
+			else radialButton.setSelection(true);		
 
 			azimuthalButton = new Button(g, SWT.CHECK);
 			azimuthalButton.setText("Azimuthal Profile");
@@ -825,7 +841,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			});
 			
 			if (NcdProcessingSourceProvider.isEnableAzimuthal()) azimuthalButton.setSelection(true);
-			else azimuthalButton.setSelection(false);		
+			else azimuthalButton.setSelection(true);		
 
 			fastIntButton = new Button(g, SWT.CHECK);
 			fastIntButton.setText("Fast Integration");
