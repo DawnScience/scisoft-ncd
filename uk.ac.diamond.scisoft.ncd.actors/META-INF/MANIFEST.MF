@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Actors
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.actors;singleton:=true
-Bundle-Version: 1.0.0.qualifier
+Bundle-Version: 2.0.0.qualifier
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.actors.Activator
 Bundle-Vendor: Diamond Liaght Source Ltd.
 Eclipse-RegisterBuddy: com.isencia.passerelle.engine, ptolemy.core, com.isencia.passerelle.actor
