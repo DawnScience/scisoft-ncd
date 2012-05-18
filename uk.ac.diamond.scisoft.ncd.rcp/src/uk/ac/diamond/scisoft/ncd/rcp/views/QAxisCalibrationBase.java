@@ -17,6 +17,8 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +32,7 @@ import javax.measure.unit.Unit;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawb.common.ui.plot.tool.IToolPage;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.workbench.plotting.tools.FittingTool;
 import org.eclipse.swt.SWT;
@@ -97,6 +100,21 @@ public class QAxisCalibrationBase extends ViewPart {
 
 	protected String currentMode = NcdConstants.detChoices[0];
 	
+	private static class Compare implements Comparator<IPeak> {
+
+		@Override
+		public int compare(IPeak o1, IPeak o2) {
+			if (o1.getPosition() > o2.getPosition()) {
+				return 1;
+			}
+			if (o1.getPosition() < o2.getPosition()) {
+				return -1;
+			}
+			return 0;
+		}
+
+	}
+
 	protected class StoredPlottingObject {
 		private IDataset dataset;
 		private BooleanDataset mask;
@@ -387,11 +405,15 @@ public class QAxisCalibrationBase extends ViewPart {
 
 	private void storePeaks() {
 		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Radial Profile");
-		List<IPeak> fittedPeaks = (List<IPeak>) ((FittingTool) plotSystem.getToolPage("org.dawb.workbench.plotting.tools.fittingTool")).getFittedPeaks().getPeaks();
-		if (peaks != null && peaks.size() > 0)
-			peaks.clear();
-		for (IPeak peak : fittedPeaks) {
-			peaks.add(peak);
+		IToolPage fittingTool = plotSystem.getToolPage("org.dawb.workbench.plotting.tools.fittingTool");
+		if (fittingTool != null && fittingTool instanceof FittingTool) {
+			List<? extends IPeak> fittedPeaks = ((FittingTool) fittingTool).getFittedPeaks().getPeaks();
+			Collections.sort(fittedPeaks, new Compare());
+			if (peaks != null && peaks.size() > 0)
+				peaks.clear();
+			for (IPeak peak : fittedPeaks) {
+				peaks.add(peak);
+			}
 		}
 	}
 
