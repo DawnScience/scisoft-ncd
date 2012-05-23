@@ -221,7 +221,7 @@ public class QAxisCalibrationBase extends ViewPart implements IObserver {
 		hkl2peaks.put("(0, 0, 11)", 5.94);
 		hkl2peaks.put("(0, 0, 12)", 5.44);
 		hkl2peaks.put("(0, 0, 13)", 5.02);
-		hkl2peaks.put("(0, 0, 15)", 4.35);
+		hkl2peaks.put("(0, 0, 14)", 4.66);
 		cal2peaks.put("Collagen Dry", (LinkedHashMap<String, Double>) hkl2peaks.clone()); // SAXS
 		hkl2peaks.clear();
 		
