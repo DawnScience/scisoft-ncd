@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import org.dawb.common.ui.util.EclipseUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -31,7 +32,6 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.rcp.editors.HDF5TreeEditor;
 import uk.ac.diamond.scisoft.analysis.rcp.inspector.DatasetSelection.InspectorType;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
-import uk.ac.gda.common.rcp.util.EclipseUtils;
 
 public class SectorIntegrationFileHandler extends AbstractHandler {
 
