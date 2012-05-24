@@ -43,6 +43,11 @@ public class LazyNormalisation extends LazyDataReduction {
 	public void execute(INexusTree tmpNXdata, int dim, IProgressMonitor monitor) throws Exception {
 
 		HDF5Normalisation reductionStep = new HDF5Normalisation(name, activeDataset);
+			
+		int[] calFrames = tmpNXdata.getNode(calibration).getNode("data").getData().dimensions;
+		for (int i = 0; i < frames.length - dim; i++)
+			if (frames[i] != calFrames[i])
+				frames[i] = Math.min(frames[i], calFrames[i]);
 		
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		datDimMake[datDimMake.length-1] = lastFrame - firstFrame + 1;

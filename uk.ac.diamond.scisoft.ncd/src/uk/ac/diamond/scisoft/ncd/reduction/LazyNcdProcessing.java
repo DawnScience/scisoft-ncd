@@ -207,7 +207,10 @@ public class LazyNcdProcessing {
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
 			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_selection");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
+			if (flags.isEnableInvariant()) {
+				detInvariant = activeDataset;
+				invFrames = frames.clone();
+			}
 			nxsFile.closegroup();
 		}
 		
@@ -249,7 +252,10 @@ public class LazyNcdProcessing {
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
 			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
+			if (flags.isEnableInvariant()) {
+				detInvariant = activeDataset;
+				invFrames = frames.clone();
+			}
 		}
 		
 		monitor.worked(1);
@@ -284,7 +290,10 @@ public class LazyNcdProcessing {
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
 			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
+			if (flags.isEnableInvariant()) {
+				detInvariant = activeDataset;
+				invFrames = frames.clone();
+			}
 		}
 		
 		monitor.worked(1);
@@ -304,7 +313,10 @@ public class LazyNcdProcessing {
 			detectorTree = NexusTreeBuilder.getNexusTree(filename, NcdDataUtils.getDetectorSelection(activeDataset, calibration));
 			tmpNXdata = detectorTree.getNode("entry1/"+detector+"_processing");
 			frames = updateFrameInfo(tmpNXdata, activeDataset);
-			if (flags.isEnableInvariant()) detInvariant = activeDataset;
+			if (flags.isEnableInvariant()) {
+				detInvariant = activeDataset;
+				invFrames = frames.clone();
+			}
 		}
 		
 		monitor.worked(1);
