@@ -420,10 +420,6 @@ public class QAxisCalibrationBase extends ViewPart {
 	protected void runJavaCommand() {
 	}
 	
-	@Deprecated
-	protected void runJythonCommand() {
-	}
-
 	private void setupGUI() {
 		for (String calibrant : cal2peaks.keySet()) {
 			standard.add(calibrant);

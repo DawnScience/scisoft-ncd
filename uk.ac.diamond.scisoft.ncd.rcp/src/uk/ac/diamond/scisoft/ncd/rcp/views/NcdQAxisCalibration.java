@@ -30,10 +30,7 @@ import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
-import org.apache.commons.math3.optimization.direct.MultiDirectionalSimplex;
 import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
-import org.apache.commons.math3.optimization.direct.NelderMeadSimplex;
-import org.apache.commons.math3.optimization.direct.SimplexOptimizer;
 import org.apache.commons.math3.random.Well19937a;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
@@ -79,7 +76,6 @@ import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Gaussian;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.PseudoVoigt;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
@@ -226,7 +222,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
 						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, idx.getL());
 					}
-
 				}
 			}
 			
@@ -368,6 +363,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		}
 	}
 
+	protected Double getLambda() {
+		Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
+				/ NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER));
+		return lambdaDim.doubleValue(getUnitScale());
+	}
+	
 	@Override
 	protected void runJavaCommand() {
 		currentMode = getDetectorName();
@@ -377,9 +378,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		final Unit<Length> unitScale = getUnitScale();
 		final Double lambda, mmpp;
 		try {
-			Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
-					/ NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER));
-			lambda = lambdaDim.doubleValue(getUnitScale());
+			lambda = getLambda();
 			mmpp = getPixel(false);
 		} catch (Exception e) {
 			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
@@ -564,9 +563,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		};
 
 		job.schedule();
-
 	}
-	
 
 	private void plotCalibrationResults(StraightLine calibrationFunction, List<CalibrationPeak> list) {
 		
