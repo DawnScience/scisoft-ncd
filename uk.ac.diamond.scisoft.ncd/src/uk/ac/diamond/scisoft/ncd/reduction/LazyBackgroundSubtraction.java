@@ -95,6 +95,14 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		NexusGroupData bgGroupData = detectorTree.getNode(bgRoot).getNode(detector).getNode("data").getData();
 		int[] bgDims = bgGroupData.dimensions;
 		int bgFramesIdx = bgDims.length - dim - 1;
+		
+		if (calibration != null) {
+			int[] calDims = detectorTree.getNode(bgRoot).getNode(calibration).getNode("data").getData().dimensions;
+			for (int i = 0; i < bgDims.length - dim; i++)
+				if (bgDims[i] != calDims[i])
+					bgDims[i] = Math.min(bgDims[i], calDims[i]);
+		}
+		
 		int[] start = Arrays.copyOfRange(startGrid, startGrid.length-bgDims.length, startGrid.length);
 		int[] stop = Arrays.copyOfRange(stopGrid, stopGrid.length-bgDims.length, stopGrid.length);
 
