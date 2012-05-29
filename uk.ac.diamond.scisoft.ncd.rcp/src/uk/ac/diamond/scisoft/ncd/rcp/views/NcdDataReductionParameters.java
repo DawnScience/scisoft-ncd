@@ -17,9 +17,12 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Map.Entry;
+
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -43,6 +46,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.ISourceProviderListener;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
@@ -52,11 +56,16 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.AverageHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.AzimuthalHandler;
@@ -71,88 +80,53 @@ import uk.ac.diamond.scisoft.ncd.rcp.handlers.SaxsDataReductionHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.SectorIntegrationHandler;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.WaxsDataReductionHandler;
 
-public class NcdDataReductionParameters extends ViewPart {
+public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdDataReductionParameters.class);
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"; //$NON-NLS-1$
 
 	private IMemento memento;
 
-	private static Spinner normChan;
-	private static Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
-	private static Text bgFile, drFile, bgScale, absScale;
+	private Spinner normChan;
+	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
+	private Text bgFile, drFile, bgScale, absScale;
 
-	private static Text location, energy, pxWaxs, pxSaxs, qGradient, qIntercept;
+	private Text location, energy, pxWaxs, pxSaxs, qGradient, qIntercept;
 	
-	private static Button[] dimWaxs, dimSaxs;
-	protected static HashMap<String, Button> unitSel;
+	private Button[] dimWaxs, dimSaxs;
+	protected HashMap<String, Button> unitSel;
 
-	private static Button browse;
-	private static String inputDirectory = "/tmp";
-	private static Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
-	//private static Button bgFramesButton, detFramesButton;
-	private NcdProcessingSourceProvider ncdNormalisationSourceProvider;
+	private Button browse;
+	private String inputDirectory = "/tmp";
+	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
+	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
 	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
 	private NcdProcessingSourceProvider ncdResponseSourceProvider;
 	private NcdProcessingSourceProvider ncdSectorSourceProvider;
 	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
-	private NcdProcessingSourceProvider ncdWaxsSourceProvider;
-	private NcdProcessingSourceProvider ncdSaxsSourceProvider;
-	private NcdProcessingSourceProvider ncdMaskSourceProvider;
-	private static Button detTypeWaxs, detTypeSaxs, useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton, inputQAxis;
-	private static Button radialButton, azimuthalButton, fastIntButton;
-	private static Combo detListWaxs, detListSaxs, calList;
-	private static HashMap<String, Double> pixels;
-	private static HashMap<String, Integer> detDims;
-	private static HashMap<String, Integer> maxChannel;
-	private static Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel, pxSaxsLabel, pxWaxsLabel;
-	private static Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel, qGradientLabel, qInterceptLabel;
+	private NcdProcessingSourceProvider ncdWaxsSourceProvider, ncdWaxsDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdSaxsSourceProvider, ncdSaxsDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
+	private NcdProcessingSourceProvider ncdEnergySourceProvider, ncdMaskSourceProvider;
+	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
+	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
+	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
+	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
+	
+	private Button detTypeWaxs, detTypeSaxs, useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton, inputQAxis;
+	private Button radialButton, azimuthalButton, fastIntButton;
+	private Combo detListWaxs, detListSaxs, calList;
+	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel, pxSaxsLabel, pxWaxsLabel;
+	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel, qGradientLabel, qInterceptLabel;
 
-	public NcdDataReductionParameters() {
-	}
-
-	public static Spinner getNormChan() {
-		return normChan;
-	}
-
-	public static String getBgFile() {
-		return bgFile.getText();
-	}
-
-	public static void setBgFile(String bgFile) {
-		NcdDataReductionParameters.bgFile.setText(bgFile);
-	}
-
-	public static String getDrFile() {
-		return drFile.getText();
-	}
-
-	public static void setDrFile(String drFile) {
-		NcdDataReductionParameters.drFile.setText(drFile);
-	}
-
-	public static String getWorkingDirectory() {
-		return location.getText();
-	}
-
-	public static Combo getDetListWaxs() {
-		return detListWaxs;
-	}
-
-	public static Combo getDetListSaxs() {
-		return detListSaxs;
-	}
-
-	public static Combo getCalList() {
-		return calList;
-	}
-
-	public static Double getEnergy() {
+	private Double getEnergy() {
 		return Double.valueOf(energy.getText());
 	}
 
-	public static Double getAbsScale() {
+	private Double getAbsScale() {
 		String input = absScale.getText();
 		if (input!= null) {
 			try {
@@ -166,7 +140,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static Double getBgScale() {
+	private Double getBgScale() {
 		String input = bgScale.getText();
 		if (input!= null) {
 			try {
@@ -180,7 +154,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static Integer getBgFirstFrame() {
+	private Integer getBgFirstFrame() {
 		String input = bgFramesStart.getText();
 		if (input!=null && bgFramesStart.isEnabled()) {
 			try {
@@ -194,7 +168,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static Integer getBgLastFrame() {
+	private Integer getBgLastFrame() {
 		String input = bgFramesStop.getText();
 		if (input!=null &&  detFramesStop.isEnabled()) {
 			try {
@@ -208,13 +182,13 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static String getBgAdvancedSelection() {
+	private String getBgAdvancedSelection() {
 		if (bgAdvanced.isEnabled())
 			return bgAdvanced.getText();
 		return null;
 	}
 	
-	public static Integer getDetFirstFrame() {
+	private Integer getDetFirstFrame() {
 		String input = detFramesStart.getText();
 		if (input!=null && detFramesStart.isEnabled()) {
 			try {
@@ -228,7 +202,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static Integer getDetLastFrame() {
+	private Integer getDetLastFrame() {
 		String input = detFramesStop.getText();
 		if (input!=null  && detFramesStop.isEnabled()) {
 			try {
@@ -242,19 +216,19 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static String getDetAdvancedSelection() {
+	private String getDetAdvancedSelection() {
 		if (detAdvanced.isEnabled())
 			return detAdvanced.getText();
 		return null;
 	}
 	
-	public static String getGridAverageSelection() {
+	private String getGridAverageSelection() {
 		if (gridAverage.isEnabled())
 			return gridAverage.getText();
 		return null;
 	}
 	
-	public static Double getSaxsPixel(boolean scale) {
+	private Double getSaxsPixel(boolean scale) {
 		try {
 			Double val = Double.valueOf(pxSaxs.getText());  
 			if (scale)
@@ -268,7 +242,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		}
 	}
 	
-	public static Double getWaxsPixel(boolean scale) {
+	private Double getWaxsPixel(boolean scale) {
 		try {
 			Double val = Double.valueOf(pxWaxs.getText());  
 			if (scale)
@@ -282,7 +256,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		}
 	}
 	
-	public static Double getQGradient() {
+	private Double getQGradient() {
 		String input = qGradient.getText();
 		if (input!=null  && inputQAxis.getSelection()) {
 			try {
@@ -296,7 +270,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static Double getQIntercept() {
+	private Double getQIntercept() {
 		String input = qIntercept.getText();
 		if (input!=null  && inputQAxis.getSelection()) {
 			try {
@@ -310,7 +284,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		return null;
 	}
 	
-	public static String getQUnit() {
+	private String getQUnit() {
 		if (inputQAxis.getSelection()) {
 			for (Entry<String, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection())
@@ -422,23 +396,29 @@ public class NcdDataReductionParameters extends ViewPart {
 			memento.putInteger(NcdPreferences.NCD_SAXS_INDEX, detListSaxs.getSelectionIndex());
 			memento.putInteger(NcdPreferences.NCD_NORM_INDEX, calList.getSelectionIndex());
 			
-			for (String tmpDet: detListWaxs.getItems()) {
-				IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet);
-				if (pixels.containsKey(tmpDet))
-					detMemento.putFloat(NcdPreferences.NCD_PIXEL, pixels.get(tmpDet).floatValue());
-				if (detDims.containsKey(tmpDet))
-					detMemento.putInteger(NcdPreferences.NCD_DIM, detDims.get(tmpDet).intValue());
-			}
-			for (String tmpDet: detListSaxs.getItems()) {
-				IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet);
-				if (pixels.containsKey(tmpDet))
-					detMemento.putFloat(NcdPreferences.NCD_PIXEL, pixels.get(tmpDet).floatValue());
-				if (detDims.containsKey(tmpDet))
-					detMemento.putInteger(NcdPreferences.NCD_DIM, detDims.get(tmpDet).intValue());
-			}
-			for (String tmpDet: calList.getItems()) {
-				IMemento detMemento = memento.createChild(NcdPreferences.NCD_NORM_DETECTOR, tmpDet);
-				detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL, maxChannel.get(tmpDet).intValue());
+			HashMap<String, NcdDetectorSettings> detList = ncdDetectorSourceProvider.getNcdDetectors();
+			for (Entry<String, NcdDetectorSettings> tmpDet : detList.entrySet()) {
+				if (tmpDet.getValue().getType().equals(DetectorTypes.WAXS_DETECTOR)) {
+					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
+					Amount<Length> pixels = tmpDet.getValue().getPxSize();
+					if (pixels != null)
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+					int detDim = tmpDet.getValue().getDimmension();
+					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
+				}
+				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
+					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
+					Amount<Length> pixels = tmpDet.getValue().getPxSize();
+					if (pixels != null)
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+					int detDim = tmpDet.getValue().getDimmension();
+					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
+				}
+				if (tmpDet.getValue().getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+					IMemento detMemento = memento.createChild(NcdPreferences.NCD_NORM_DETECTOR, tmpDet.getKey());
+					int maxChannel = tmpDet.getValue().getMaxChannel();
+					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL, maxChannel);
+				}
 			}
 			memento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChan.getSelection());
 			
@@ -517,17 +497,19 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (waxsMemento != null) {
 				detListWaxs.removeAll(); 
 				for (IMemento det: waxsMemento) {
-					detListWaxs.add(det.getID());
-					
+					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.WAXS_DETECTOR, 1);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						pixels.put(det.getID(), px.doubleValue());
-					
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETER));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
-						detDims.put(det.getID(), dim.intValue());
+						ncdDetector.setDimmension(dim.intValue());
+					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
+					
+					detListWaxs.add(ncdDetector.getName());
 				}
 			}
+			
 			idx = memento.getInteger(NcdPreferences.NCD_WAXS_INDEX);
 			if (idx != null) {
 				detListWaxs.select(idx);
@@ -538,15 +520,16 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (saxsMemento != null) {
 				detListSaxs.removeAll(); 
 				for (IMemento det: saxsMemento) {
-					detListSaxs.add(det.getID());
-					
+					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.SAXS_DETECTOR, 2);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						pixels.put(det.getID(), px.doubleValue());
-					
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETER));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
-						detDims.put(det.getID(), dim.intValue());
+						ncdDetector.setDimmension(dim.intValue());
+					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
+					
+					detListSaxs.add(ncdDetector.getName());
 				}
 			}
 			idx = memento.getInteger(NcdPreferences.NCD_SAXS_INDEX);
@@ -571,8 +554,11 @@ public class NcdDataReductionParameters extends ViewPart {
 			if (normMemento != null) {
 				calList.removeAll(); 
 				for (IMemento det: normMemento) {
-					calList.add(det.getID());
-					maxChannel.put(det.getID(), det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
+					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.CALIBRATION_DETECTOR, 1);
+					ncdDetector.setMaxChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
+					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
+					
+					calList.add(ncdDetector.getName());
 				}
 			}
 			idx = memento.getInteger(NcdPreferences.NCD_NORM_INDEX);
@@ -655,21 +641,8 @@ public class NcdDataReductionParameters extends ViewPart {
 	
 	@Override
 	public void createPartControl(final Composite parent) {
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
-		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
-		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
-		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
-		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
-		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
-		ncdWaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXS_STATE);
-		ncdSaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
-		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
 		
-		pixels = new HashMap<String, Double>();
-		detDims = new HashMap<String, Integer>();
-		maxChannel = new HashMap<String, Integer>();
+		ConfigureNcdSourceProviders();
 		
 		final ScrolledComposite sc = new ScrolledComposite(parent, SWT.VERTICAL);
 		final Composite c = new Composite(sc, SWT.NONE);
@@ -700,7 +673,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 
 			});
-			if (NcdProcessingSourceProvider.isEnableNormalisation()) normButton.setSelection(true);
+			if (ncdNormalisationSourceProvider.isEnableNormalisation()) normButton.setSelection(true);
 			else normButton.setSelection(false);		
 
 			bgButton = new Button(g, SWT.CHECK);
@@ -721,7 +694,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 				
 			});
-			if (NcdProcessingSourceProvider.isEnableBackground()) bgButton.setSelection(true);
+			if (ncdBackgroundSourceProvider.isEnableBackground()) bgButton.setSelection(true);
 			else bgButton.setSelection(false);
 
 
@@ -743,7 +716,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 
 			});
-			if (NcdProcessingSourceProvider.isEnableDetectorResponse()) drButton.setSelection(true);
+			if (ncdResponseSourceProvider.isEnableDetectorResponse()) drButton.setSelection(true);
 			else drButton.setSelection(false);
 
 			secButton = new Button(g, SWT.CHECK);
@@ -762,7 +735,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					}
 				}
 			});
-			if (NcdProcessingSourceProvider.isEnableSector()) secButton.setSelection(true);
+			if (ncdSectorSourceProvider.isEnableSector()) secButton.setSelection(true);
 			else secButton.setSelection(false);
 
 			invButton = new Button(g, SWT.CHECK);
@@ -780,7 +753,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					}
 				}
 			});
-			if (NcdProcessingSourceProvider.isEnableInvariant()) invButton.setSelection(true);
+			if (ncdInvariantSourceProvider.isEnableInvariant()) invButton.setSelection(true);
 			else invButton.setSelection(false);
 
 			aveButton = new Button(g, SWT.CHECK);
@@ -799,7 +772,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					}
 				}
 			});
-			if (NcdProcessingSourceProvider.isEnableAverage()) aveButton.setSelection(true);
+			if (ncdAverageSourceProvider.isEnableAverage()) aveButton.setSelection(true);
 			else aveButton.setSelection(false);
 		}
 
@@ -826,7 +799,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 
 			});
-			if (NcdProcessingSourceProvider.isEnableRadial()) radialButton.setSelection(true);
+			if (ncdRadialSourceProvider.isEnableRadial()) radialButton.setSelection(true);
 			else radialButton.setSelection(true);		
 
 			azimuthalButton = new Button(g, SWT.CHECK);
@@ -846,7 +819,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 			});
 			
-			if (NcdProcessingSourceProvider.isEnableAzimuthal()) azimuthalButton.setSelection(true);
+			if (ncdAzimuthSourceProvider.isEnableAzimuthal()) azimuthalButton.setSelection(true);
 			else azimuthalButton.setSelection(true);		
 
 			fastIntButton = new Button(g, SWT.CHECK);
@@ -865,7 +838,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 
 			});
-			if (NcdProcessingSourceProvider.isEnableFastIntegration()) fastIntButton.setSelection(true);
+			if (ncdFastIntSourceProvider.isEnableFastIntegration()) fastIntButton.setSelection(true);
 			else fastIntButton.setSelection(false);		
 		}
 
@@ -883,9 +856,14 @@ public class NcdDataReductionParameters extends ViewPart {
 			calList.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					if (calList.getSelectionIndex() >= 0) {
+					int idx = calList.getSelectionIndex();
+					if (idx >= 0) {
+						String detName = calList.getItem(idx);
+						ncdScalerSourceProvider.setScaler(detName);
+						
+						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
 						normChan.setMinimum(0);
-						normChan.setMaximum(maxChannel.get(calList.getItem(calList.getSelectionIndex())));
+						normChan.setMaximum(calDet.getMaxChannel());
 						Display dsp = normChan.getDisplay();
 						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
 					}
@@ -899,6 +877,12 @@ public class NcdDataReductionParameters extends ViewPart {
 			normChan = new Spinner(g, SWT.BORDER);
 			normChan.setToolTipText("Select the channel number with calibration data");
 			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+			normChan.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
+				}
+			});
 			
 			absScaleLabel = new Label(g, SWT.NONE);
 			absScaleLabel.setText("Abs. Scale");
@@ -906,6 +890,12 @@ public class NcdDataReductionParameters extends ViewPart {
 			absScale = new Text(g, SWT.BORDER);
 			absScale.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
+			absScale.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale());
+				}
+			});
 			updateNormalisationWidgets();
 
 			bgLabel = new Label(g, SWT.NONE);
@@ -913,6 +903,12 @@ public class NcdDataReductionParameters extends ViewPart {
 			bgFile = new Text(g, SWT.BORDER);
 			bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 			bgFile.setToolTipText("File with the background measurments");
+			bgFile.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdBgFileSourceProvider.setBgFile(bgFile.getText());
+				}
+			});
 
 			browseBg = new Button(g, SWT.NONE);
 			browseBg.setText("...");
@@ -937,12 +933,24 @@ public class NcdDataReductionParameters extends ViewPart {
 			bgScale = new Text(g, SWT.BORDER);
 			bgScale.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1));
 			bgScale.setToolTipText("Scaling values for background data");
+			bgScale.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdBgScaleSourceProvider.setBgScaling(getBgScale());
+				}
+			});
 			
 			drLabel = new Label(g, SWT.NONE);
 			drLabel.setText("Detector Response File");
 			drFile = new Text(g, SWT.BORDER);
 			drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 4, 1));
 			drFile.setToolTipText("File with the detector response frame");
+			drFile.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdDrFileSourceProvider.setDrFile(drFile.getText());
+				}
+			});
 
 			browseDr = new Button(g, SWT.NONE);
 			browseDr.setText("...");
@@ -973,16 +981,43 @@ public class NcdDataReductionParameters extends ViewPart {
 			bgFramesStart = new Text(g, SWT.BORDER);
 			bgFramesStart.setToolTipText("First frame to select from the background data");
 			bgFramesStart.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			bgFramesStart.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					Integer bgStartInt = getBgFirstFrame();
+					Integer bgStopInt = getBgLastFrame();
+					SliceInput tmpBkgSlice = new SliceInput(bgStartInt, bgStopInt);
+					ncdBkgSliceSourceProvider.setBkgSlice(tmpBkgSlice);
+				}
+			});
+			
 			bgFramesStopLabel = new Label(g, SWT.NONE);
 			bgFramesStopLabel.setText("Last");
 			bgFramesStop = new Text(g, SWT.BORDER);
 			bgFramesStop.setToolTipText("Last frame to select from the background data");
 			bgFramesStop.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			bgFramesStop.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					Integer bgStartInt = getBgFirstFrame();
+					Integer bgStopInt = getBgLastFrame();
+					SliceInput tmpBkgSlice = new SliceInput(bgStartInt, bgStopInt);
+					ncdBkgSliceSourceProvider.setBkgSlice(tmpBkgSlice);
+				}
+			});
 			
 			bgAdvanced = new Text(g, SWT.BORDER);
 			bgAdvanced.setToolTipText("Formatting string for advanced data selection");
 			bgAdvanced.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3, 1));
 			bgAdvanced.setEnabled(false);
+			bgAdvanced.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					SliceInput tmpBkgSlice = new SliceInput(getBgAdvancedSelection());
+					ncdBkgSliceSourceProvider.setBkgSlice(tmpBkgSlice);
+				}
+			});
+			
 			bgAdvancedButton = new Button(g, SWT.CHECK);
 			bgAdvancedButton.setText("Advanced");
 			bgAdvancedButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -996,7 +1031,17 @@ public class NcdDataReductionParameters extends ViewPart {
 					bgFramesStop.setEnabled(!sel && bgSel);
 					bgFramesStartLabel.setEnabled(!sel && bgSel);
 					bgFramesStopLabel.setEnabled(!sel && bgSel);
-
+					if (bgSel) {
+						SliceInput tmpBkgSlice;
+						if (sel) {
+							tmpBkgSlice = new SliceInput(getBgAdvancedSelection());
+						} else {
+							Integer bgStartInt = getBgFirstFrame();
+							Integer bgStopInt = getBgLastFrame();
+							tmpBkgSlice = new SliceInput(bgStartInt, bgStopInt);
+						}
+						ncdBkgSliceSourceProvider.setBkgSlice(tmpBkgSlice);
+					}
 				}
 			});
 			bgAdvancedButton.setSelection(false);
@@ -1013,11 +1058,31 @@ public class NcdDataReductionParameters extends ViewPart {
 			detFramesStart = new Text(g, SWT.BORDER);
 			detFramesStart.setToolTipText("First frame to select from the data file ");
 			detFramesStart.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			detFramesStart.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					Integer detStartInt = getDetFirstFrame();
+					Integer detStopInt = getDetLastFrame();
+					SliceInput tmpDetSlice = new SliceInput(detStartInt, detStopInt);
+					ncdDataSliceSourceProvider.setDataSlice(tmpDetSlice);
+				}
+			});
+			
 			detFramesStopLabel = new Label(g, SWT.NONE);
 			detFramesStopLabel.setText("Last");
 			detFramesStop = new Text(g, SWT.BORDER);
 			detFramesStop.setToolTipText("Last frame to select from the data file ");
 			detFramesStop.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			detFramesStop.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					Integer detStartInt = getDetFirstFrame();
+					Integer detStopInt = getDetLastFrame();
+					SliceInput tmpDetSlice = new SliceInput(detStartInt, detStopInt);
+					ncdDataSliceSourceProvider.setDataSlice(tmpDetSlice);
+				}
+			});
+			
 			
 			detAdvanced = new Text(g, SWT.BORDER);
 			detAdvanced.setToolTipText("Formatting string for advanced data selection");
@@ -1036,6 +1101,15 @@ public class NcdDataReductionParameters extends ViewPart {
 					detFramesStop.setEnabled(!sel);
 					detFramesStartLabel.setEnabled(!sel);
 					detFramesStopLabel.setEnabled(!sel);
+					SliceInput tmpDetSlice;
+					if (sel) {
+						tmpDetSlice = new SliceInput(getDetAdvancedSelection());
+					} else {
+						Integer detStartInt = getDetFirstFrame();
+						Integer detStopInt = getDetLastFrame();
+						tmpDetSlice = new SliceInput(detStartInt, detStopInt);
+					}
+					ncdDataSliceSourceProvider.setDataSlice(tmpDetSlice);
 				}
 			});
 		}
@@ -1061,6 +1135,12 @@ public class NcdDataReductionParameters extends ViewPart {
 			gridAverage.setToolTipText("Comma-separated list of grid dimensions to average");
 			gridAverage.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
 			gridAverage.setEnabled(false);
+			gridAverage.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
+				}
+			});
 		}
 		
 		g = new Group(c, SWT.NONE);
@@ -1105,27 +1185,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					int idx = detListWaxs.getSelectionIndex();
 					if (idx >= 0) {
 						String det = detListWaxs.getItem(idx);
-						if (pixels.containsKey(det)) {
-							Double pxSize = pixels.get(det);
-							if (pxSize != null)
-								pxWaxs.setText(String.format("%.3f", pxSize.doubleValue()));
-						}
-						if (detDims.containsKey(det)) {
-							Integer dim = detDims.get(det);
-							if (dim != null) 
-								for (int i = 0; i < dimWaxs.length; i++)
-									if (dim > 0 && dim < dimWaxs.length + 1 && i == dim - 1)
-										dimWaxs[i].setSelection(true);
-									else 
-										dimWaxs[i].setSelection(false);
-						}
-						//try {
-						//	IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-						// IViewPart waxsView = page.findView(WaxsQAxisCalibration.ID);
-						// if (waxsView != null) ((WaxsQAxisCalibration)waxsView).updateResults(det);
-						//} catch (Exception e1) {
-						//	logger.warn("Waxs calibration view unavailable", e1);
-						//}
+						ncdWaxsDetectorSourceProvider.setWaxsDetector(det);
 					}
 				}
 			});
@@ -1144,14 +1204,17 @@ public class NcdDataReductionParameters extends ViewPart {
 					
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						int idxWaxs = detListWaxs.getSelectionIndex();
-						if (idxWaxs >= 0)
+						String waxsDetector = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+						NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
+						if (detSettings != null) {
 							for (int i = 0; i < dimWaxs.length; i++) {
 								if (dimWaxs[i].getSelection()) {
-									detDims.put(detListWaxs.getItem(idxWaxs), i + 1);
+									detSettings.setDimmension(i + 1);
+									ncdDetectorSourceProvider.addNcdDetector(detSettings);
 									break;
 								}
 							}
+						}
 						boolean sel = (dimWaxs[0].getSelection() || !(detTypeWaxs.getSelection())) &&
 										(dimSaxs[0].getSelection() || !(detTypeSaxs.getSelection()));
 						updateSectorIntegrationInvariant(sel);
@@ -1172,31 +1235,27 @@ public class NcdDataReductionParameters extends ViewPart {
 			pxSave.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					int idxWaxs = detListWaxs.getSelectionIndex();
-					int idxSaxs = detListSaxs.getSelectionIndex();
-					if (idxWaxs >= 0 && detTypeWaxs.isEnabled() && !(pxWaxs.getText().isEmpty())) {
-						pixels.put(detListWaxs.getItem(idxWaxs), Double.valueOf(pxWaxs.getText()));
-						for (int i = 0; i < dimWaxs.length; i++) {
-							if (dimWaxs[i].getSelection()) {
-								detDims.put(detListWaxs.getItem(idxWaxs),i + 1);
-								break;
-							}
+					if (detTypeWaxs.isEnabled()) {
+						String waxsDetector = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+						NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
+						if (detSettings != null) {
+							detSettings.setPxSize(Amount.valueOf(getWaxsPixel(false), SI.MILLIMETER));
+							ncdDetectorSourceProvider.addNcdDetector(detSettings);
 						}
 					}
-					if (idxSaxs >= 0 && detTypeSaxs.isEnabled() && !(pxSaxs.getText().isEmpty())) {
-						pixels.put(detListSaxs.getItem(idxSaxs), Double.valueOf(pxSaxs.getText()));
-						for (int i = 0; i < dimSaxs.length; i++) {
-							if (dimSaxs[i].getSelection()) {
-								detDims.put(detListSaxs.getItem(idxSaxs),i + 1);
-								break;
-							}
+					if (detTypeSaxs.isEnabled()) {
+						String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+						NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
+						if (detSettings != null) {
+							detSettings.setPxSize(Amount.valueOf(getSaxsPixel(false), SI.MILLIMETER));
+							ncdDetectorSourceProvider.addNcdDetector(detSettings);
 						}
 					}
 				}
 			});
 
 			
-			if (NcdProcessingSourceProvider.isEnableWaxs()) detTypeWaxs.setSelection(true);
+			if (ncdWaxsSourceProvider.isEnableWaxs()) detTypeWaxs.setSelection(true);
 			else detTypeWaxs.setSelection(false);
 			modeSelectionListenerWaxs.widgetSelected(null);
 			
@@ -1231,22 +1290,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					int idx = detListSaxs.getSelectionIndex();
 					if (idx >= 0) {
 						String det = detListSaxs.getItem(idx);
-						if (pixels.containsKey(det)) {
-							Double pxSize = pixels.get(det);
-							if (pxSize != null)
-								pxSaxs.setText(String.format("%.3f", pxSize));
-						}
-						if (detDims.containsKey(det)) {
-							Integer dim = detDims.get(det);
-							if (dim != null)
-								for (int i = 0; i < dimSaxs.length; i++)
-									if (dim > 0 && dim < dimSaxs.length + 1 && i == dim -1)
-										dimSaxs[i].setSelection(true);
-									else 
-										dimSaxs[i].setSelection(false);
-								
-							
-						}
+						ncdSaxsDetectorSourceProvider.setSaxsDetector(det);
 						try {
 							IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 							IViewPart saxsView = page.findView(SaxsQAxisCalibration.ID);
@@ -1273,14 +1317,17 @@ public class NcdDataReductionParameters extends ViewPart {
 					
 					@Override
 					public void widgetSelected(SelectionEvent e) {
-						int idxSaxs = detListSaxs.getSelectionIndex();
-						if (idxSaxs >= 0)
+						String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+						NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
+						if (detSettings != null) {
 							for (int i = 0; i < dimSaxs.length; i++) {
 								if (dimSaxs[i].getSelection()) {
-									detDims.put(detListSaxs.getItem(idxSaxs), i + 1);
+									detSettings.setDimmension(i + 1);
+									ncdDetectorSourceProvider.addNcdDetector(detSettings);
 									break;
 								}
 							}
+						}
 						boolean sel = (dimWaxs[0].getSelection() || !(detTypeWaxs.getSelection())) &&
 										(dimSaxs[0].getSelection() || !(detTypeSaxs.getSelection()));
 						updateSectorIntegrationInvariant(sel);
@@ -1294,7 +1341,7 @@ public class NcdDataReductionParameters extends ViewPart {
 			pxSaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			pxSaxs.setToolTipText("Set detector pixel size");
 			
-			if (NcdProcessingSourceProvider.isEnableSaxs()) detTypeSaxs.setSelection(true);
+			if (ncdSaxsSourceProvider.isEnableSaxs()) detTypeSaxs.setSelection(true);
 			else detTypeSaxs.setSelection(false);
 			modeSelectionListenerSaxs.widgetSelected(null);
 			
@@ -1327,24 +1374,51 @@ public class NcdDataReductionParameters extends ViewPart {
 			tmpUnitSel.setText(NcdConstants.unitChoices[0]);
 			tmpUnitSel.setToolTipText("calibrate q-axis in Ångstroms");
 			tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			tmpUnitSel.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdQUnitSourceProvider.setQUnit(getQUnit());
+				}
+			});
 			unitSel.put(NcdConstants.unitChoices[0], tmpUnitSel);
 			tmpUnitSel = new Button(unitGrp, SWT.RADIO);
 			tmpUnitSel.setText(NcdConstants.unitChoices[1]);
 			tmpUnitSel.setToolTipText("calibrate q-axis in nanometers");
 			tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+			tmpUnitSel.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdQUnitSourceProvider.setQUnit(getQUnit());
+				}
+			});
 			unitSel.put(NcdConstants.unitChoices[1], tmpUnitSel);
+			
 			qGradientLabel = new Label(gpSelectMode, SWT.NONE);
 			qGradientLabel.setText("Gradient");
 			qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, false, false));
 			qGradient = new Text(gpSelectMode, SWT.BORDER);
 			qGradient.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			qGradient.setToolTipText("Input q-axis calibration line fit gradient");
+			qGradient.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdQGradientSourceProvider.setQGradient(getQGradient());
+				}
+			});
+
 			qInterceptLabel = new Label(gpSelectMode, SWT.NONE);
 			qInterceptLabel.setText("Intercept");
 			qInterceptLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
 			qIntercept = new Text(gpSelectMode, SWT.BORDER);
 			qIntercept.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 			qIntercept.setToolTipText("Input q-axis calibration line fit intercept");
+			qIntercept.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdQInterceptSourceProvider.setQIntercept(getQIntercept());
+				}
+			});
+
 			
 			inputQAxis.setSelection(false);
 			inputQAxis.notifyListeners(SWT.Selection, null);
@@ -1353,6 +1427,12 @@ public class NcdDataReductionParameters extends ViewPart {
 			energy = new Text(g, SWT.BORDER);
 			energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			energy.setToolTipText("Set the energy used in data collection");
+			energy.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdEnergySourceProvider.setEnergy(getEnergy());
+				}
+			});
 			
 			useMask = new Button(g, SWT.CHECK);
 			useMask.setText("Apply detector mask");
@@ -1370,7 +1450,7 @@ public class NcdDataReductionParameters extends ViewPart {
 				}
 
 			});
-			if (NcdProcessingSourceProvider.isEnableMask()) useMask.setSelection(true);
+			if (ncdMaskSourceProvider.isEnableMask()) useMask.setSelection(true);
 			else useMask.setSelection(false);		
 		}
 
@@ -1393,6 +1473,7 @@ public class NcdDataReductionParameters extends ViewPart {
 					} else {
 						location.setText(inputDirectory);
 					}
+					ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 				}
 			});
 
@@ -1425,7 +1506,57 @@ public class NcdDataReductionParameters extends ViewPart {
 			}
 		});
 		
+		ncdDetectorSourceProvider.addSourceProviderListener(this);
+		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
+		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
+		ncdScalerSourceProvider.addSourceProviderListener(this);
+		
 		restoreState();
+	}
+
+	private void ConfigureNcdSourceProviders() {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		
+		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
+		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
+		
+		ncdWaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXS_STATE);
+		ncdSaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
+		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
+		
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		
+		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
+		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
+		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
+		
+		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
+		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
+		
+		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
+		
+		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
+		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
+		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
+		
+		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
+		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
+		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
+		
+		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
+		
+		ncdQGradientSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QGRADIENT_STATE);
+		ncdQInterceptSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QINTERCEPT_STATE);
+		ncdQUnitSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QUNIT_STATE);
+		
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 	}
 
 	@Override
@@ -1433,7 +1564,7 @@ public class NcdDataReductionParameters extends ViewPart {
 
 	}
 
-	private static void updateNormalisationWidgets() {
+	private void updateNormalisationWidgets() {
 		boolean selection = normButton.getSelection();
 		calList.setEnabled(selection);
 		normChan.setEnabled(selection);
@@ -1443,7 +1574,7 @@ public class NcdDataReductionParameters extends ViewPart {
 		absScaleLabel.setEnabled(selection);
 	}
 
-	private static void updateSectorIntegrationWidgets() {
+	private void updateSectorIntegrationWidgets() {
 		boolean selection = secButton.getSelection();
 		radialButton.setEnabled(selection);
 		azimuthalButton.setEnabled(selection);
@@ -1503,75 +1634,96 @@ public class NcdDataReductionParameters extends ViewPart {
 		
 	}
 	
-	public static void setNormalisationDetectors(ArrayList<String> dataList) {
-		calList.removeAll();
-		if (dataList.size() > 0) {
-			calList.setItems(dataList.toArray(new String[dataList.size()]));
-		    if (calList.getItemCount() > 0) {
-		    	normButton.setEnabled(true);
-		    	calList.select(0);
-		    }
-		    else {
-		    	if (normButton.getSelection()) {
-			    	normButton.setSelection(false);
-				    normButton.notifyListeners(SWT.Selection, new Event());
-		    	}
-		    	normButton.setEnabled(false);
-		    }
-		    
-	    	updateNormalisationWidgets();
-		    calList.notifyListeners(SWT.Selection, new Event());
+	@Override
+	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
+		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
+			calList.removeAll();
+			detListSaxs.removeAll();
+			detListWaxs.removeAll();
+			if (sourceValue instanceof HashMap<?, ?>) {
+				for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
+					if (settings instanceof NcdDetectorSettings) {
+						
+						NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
+						
+						if (detSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
+							detListSaxs.add(detSettings.getName());
+							continue;
+						}
+						
+						if (detSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
+							detListWaxs.add(detSettings.getName());
+							continue;
+						}
+						
+						if (detSettings.getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+							calList.add(detSettings.getName());
+							continue;
+						}
+					}
+				}
+			}
+			
+			if (detListSaxs.getItemCount() > 0) {
+				detListSaxs.select(0);
+				ncdSaxsDetectorSourceProvider.setSaxsDetector(detListSaxs.getItem(0));
+			}
+			
+			if (detListWaxs.getItemCount() > 0) {
+				detListWaxs.select(0);
+				ncdSaxsDetectorSourceProvider.setSaxsDetector(detListWaxs.getItem(0));
+			}
+			
+			if (calList.getItemCount() > 0) {
+				calList.select(0);
+				ncdScalerSourceProvider.setScaler(calList.getItem(0));
+			}
 		}
-	}
-
-	public static void setWaxsDetectors(ArrayList<String> dataList) {
-		detListWaxs.removeAll();
-		pxWaxs.setText("");
-		if (dataList.size() > 0) {
-			detListWaxs.setItems(dataList.toArray(new String[dataList.size()]));
-			detListWaxs.select(0);
-			detListWaxs.notifyListeners(SWT.Selection, null);
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
+			if (sourceValue instanceof String) {
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				if (detSettings != null) {
+					int idxDim = detSettings.getDimmension() - 1;
+					for (Button btn : dimSaxs) btn.setSelection(false);
+					dimSaxs[idxDim].setSelection(true);
+					
+					Amount<Length> pxSize = detSettings.getPxSize();
+					if (pxSize != null)
+						pxSaxs.setText(String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER)));
+				}
+			}
 		}
-	}
-
-	public static void setSaxsDetectors(ArrayList<String> dataList) {
-		detListSaxs.removeAll();
-		pxSaxs.setText("");
-		if (dataList.size() > 0) {
-			detListSaxs.setItems(dataList.toArray(new String[dataList.size()]));
-			detListSaxs.select(0);
-			detListSaxs.notifyListeners(SWT.Selection, null);
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.WAXSDETECTOR_STATE)) {
+			if (sourceValue instanceof String) {
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				if (detSettings != null) {
+					int idxDim = detSettings.getDimmension() - 1;
+					for (Button btn : dimWaxs) btn.setSelection(false);
+					dimWaxs[idxDim].setSelection(true);
+					
+					Amount<Length> pxSize = detSettings.getPxSize();
+					if (pxSize != null)
+						pxWaxs.setText(String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER)));
+				}
+			}
 		}
-	}
-	
-	public static Double getPixelData(String detector) {
-		if (pixels.containsKey(detector))
-			return pixels.get(detector);
-		return null;
-	}
-
-	public static void setPixelData(HashMap<String, Double> pixelData) {
-		pixels = new HashMap<String, Double>();
-		pixels.putAll(pixelData);
-	}
-
-	public static Integer getDimData(String detector) {
-		if (detDims.containsKey(detector))
-			return detDims.get(detector);
-		return null;
-	}
-
-	public static void setDimData(HashMap<String, Integer> detDimData) {
-		detDims = new HashMap<String, Integer>();
-		detDims.putAll(detDimData);
-		for (int i = 0; i < NcdConstants.dimChoices.length; i++) {
-			dimWaxs[i].notifyListeners(SWT.Selection, null);
-			dimSaxs[i].notifyListeners(SWT.Selection, null);
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SCALER_STATE)) {
+			if (sourceValue instanceof String) {
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				if (detSettings != null) {
+					int max = detSettings.getMaxChannel();
+					normChan.setMaximum(max);
+				}
+			}
 		}
-	}
-
-	public static void setChannelData(HashMap<String, Integer> channelData) {
-		maxChannel = new HashMap<String, Integer>();
-		maxChannel.putAll(channelData);
 	}
 }

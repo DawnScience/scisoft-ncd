@@ -37,6 +37,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -48,7 +49,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class DetectorMaskFileHandler extends AbstractHandler {
 
@@ -67,10 +68,10 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 				Shell shell = window.getShell();
 				try {
-
-					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-					if (idxSaxs >= 0) {
-						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
+					ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+					NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					if (detectorSaxs != null) {
 						String maskFilename;
 						if (sel instanceof IFile)
 							maskFilename = ((IFile)sel).getLocation().toString();

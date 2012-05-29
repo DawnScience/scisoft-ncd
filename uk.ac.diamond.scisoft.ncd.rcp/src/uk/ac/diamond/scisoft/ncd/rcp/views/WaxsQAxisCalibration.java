@@ -16,7 +16,11 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
+import javax.measure.unit.SI;
+
 import org.eclipse.swt.widgets.Composite;
+
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 
 public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 	
@@ -35,16 +39,13 @@ public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 
 	@Override
 	protected String getDetectorName() {
-		int idx = NcdDataReductionParameters.getDetListWaxs().getSelectionIndex();
-		if (idx < 0)
-			return null;
-		
-		return NcdDataReductionParameters.getDetListWaxs().getItem(idx);
+		return ncdWaxsDetectorSourceProvider.getWaxsDetector();
 	}
 
 	@Override
 	protected Double getPixel(boolean scale) {
-		return NcdDataReductionParameters.getWaxsPixel(scale);
+		NcdDetectorSettings detector = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
+		return detector.getPxSize().doubleValue(SI.MILLIMETER);
 	}
 	
 }

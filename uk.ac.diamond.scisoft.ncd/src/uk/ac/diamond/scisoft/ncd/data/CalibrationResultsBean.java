@@ -24,39 +24,6 @@ import java.util.Set;
 
 import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 
-class CalibrationResultsData implements Serializable {
-	private AFunction fuction;
-	private ArrayList<CalibrationPeak> peakList;
-	private double meanCameraLength;
-	private String unit;
-	
-	CalibrationResultsData(AFunction calibrationFunction, List<CalibrationPeak> peaks, double meanCameraLength, String unit) {
-		super();
-		this.fuction= calibrationFunction;
-		this.peakList = new ArrayList<CalibrationPeak>();
-		for(CalibrationPeak p : peaks)
-			peakList.add(p);
-		this.meanCameraLength = meanCameraLength;
-		this.unit = unit;
-	}
-	
-	public AFunction getFuction() {
-		return fuction;
-	}
-
-	public ArrayList<CalibrationPeak> getPeakList() {
-		return peakList;
-	}
-
-	public double getMeanCameraLength() {
-		return meanCameraLength;
-	}
-	
-	public String getUnit() {
-		return unit;
-	}
-}
-
 public class CalibrationResultsBean implements Serializable {
 	
 	private HashMap<String, CalibrationResultsData> results;

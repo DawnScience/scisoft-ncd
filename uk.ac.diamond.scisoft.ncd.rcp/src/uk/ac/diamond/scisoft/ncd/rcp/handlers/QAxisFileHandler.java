@@ -20,7 +20,7 @@ import java.io.File;
 import java.text.ParsePosition;
 import java.util.ArrayList;
 
-import javax.measure.quantity.Length;
+import javax.measure.quantity.Quantity;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
@@ -48,6 +48,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.plotserver.GuiPlotMode;
@@ -56,7 +57,7 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
 public class QAxisFileHandler extends AbstractHandler {
@@ -65,6 +66,10 @@ public class QAxisFileHandler extends AbstractHandler {
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
+
+		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
@@ -80,61 +85,90 @@ public class QAxisFileHandler extends AbstractHandler {
 					qaxisFilename = ((File)sel).getAbsolutePath();
 				
 				try {
-					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-					if (idxSaxs >= 0) {
-						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
+					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					if (detectorSaxs != null) {
 						HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
-						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration").getDestination();
-						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						
-						// The default value that was used when unit setting was fixed.
-						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-						String units = unitFormat.format(SI.NANO(SI.METER)); 
-						HDF5Attribute unitsAttr = node.getAttribute("unit");
-						if (unitsAttr != null) {
-							units = unitsAttr.getFirstElement();
-							Unit<Length> inv_units = (Unit<Length>) unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse();
-							units = unitFormat.format(inv_units);
+						HDF5Node node;
+						HDF5NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/qaxis calibration");
+						CalibrationResultsBean crb = null;
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+								Parameter gradient = new Parameter(qaxis.getDouble(0));
+								Parameter intercept = new Parameter(qaxis.getDouble(1));
+
+								// The default value that was used when unit setting was fixed.
+								UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+								String units = unitFormat.format(SI.NANO(SI.METER));
+								HDF5Attribute unitsAttr = node.getAttribute("unit");
+								if (unitsAttr != null) {
+									units = unitsAttr.getFirstElement();
+									Unit<? extends Quantity> inv_units = unitFormat.parseProductUnit(units,
+											new ParsePosition(0)).inverse();
+									units = unitFormat.format(inv_units);
+								}
+								double cameraLength = Double.NaN;
+								nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
+								if (nodeLink != null) {
+									node = nodeLink.getDestination();
+									if (node instanceof HDF5Dataset)
+										cameraLength = ((HDF5Dataset)node).getDataset().getSlice().getDouble(0);
+								}
+								
+								crb  = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
+								
+								NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+								ncdCalibrationSourceProvider.putCalibrationResult(crb);
+							}
 						}
-						
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length").getDestination();
-						double cameraLength = Double.NaN;
-						if (node instanceof HDF5Dataset)
-							cameraLength = ((HDF5Dataset)node).getDataset().getSlice().getDouble(0);
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam center").getDestination();
-						AbstractDataset beam = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles").getDestination();
-						AbstractDataset angles = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration radii").getDestination();
-						AbstractDataset radii = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
-						node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration symmetry").getDestination();
-						String symmetryText =  ((AbstractDataset)((HDF5Dataset)node).getDataset()).getString(0);
-						int symmetry = SectorROI.getSymmetry(symmetryText);
-
-						Parameter gradient = new Parameter(qaxis.getDouble(0));
-						Parameter intercept = new Parameter(qaxis.getDouble(1));
-						CalibrationResultsBean crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
-
-						IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
-						ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
-						NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 						
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
-						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
-						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
-						roiData.setPoint(beam.getDouble(0),	beam.getDouble(1));
 						roiData.setClippingCompensation(true);
-						if (roiData.checkSymmetry(symmetry))
-							roiData.setSymmetry(symmetry);
+						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam center");
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								AbstractDataset beam = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+								roiData.setPoint(beam.getDouble(0),	beam.getDouble(1));
+							}
+						}
+						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration angles");
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								AbstractDataset angles = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+								roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
+							}
+						}
+						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration radii");
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								AbstractDataset radii = (AbstractDataset) ((HDF5Dataset)node).getDataset().getSlice();
+								roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
+							}
+						}
+						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/integration symmetry");
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								String symmetryText =  ((AbstractDataset)((HDF5Dataset)node).getDataset()).getString(0);
+								int symmetry = SectorROI.getSymmetry(symmetryText);
+								if (roiData.checkSymmetry(symmetry))
+									roiData.setSymmetry(symmetry);
+							}
+						}
+
 						try {
 							IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 							IViewPart activePlot = page.findView(PlotView.ID + "DP");
 							if (activePlot instanceof PlotView) {
 								((PlotView)activePlot).putGUIInfo(GuiParameters.PLOTMODE, GuiPlotMode.TWOD);
 								((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
-								((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
+								if (crb != null)
+									((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
 							}
 
 							IViewPart saxsView = page.findView(SaxsQAxisCalibration.ID);

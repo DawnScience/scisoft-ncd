@@ -22,6 +22,8 @@ import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+import javax.measure.unit.SI;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.HDFArray;
@@ -68,11 +70,13 @@ import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -89,6 +93,46 @@ public class DataReductionHandler extends AbstractHandler {
 	private Integer dimWaxs, dimSaxs;
 	private boolean enableWaxs, enableSaxs, enableBackground;
 	private String workingDir;
+
+	private NcdProcessingSourceProvider ncdScalerSourceProvider;
+	private NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider;
+	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
+
+	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
+	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;
+	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
+	
+	private void ConfigureNcdSourceProviders(IWorkbenchWindow window) {
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		
+		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
+		
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		
+		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
+		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
+		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
+		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
+		
+		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
+		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
+		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
+		
+		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
+		
+		ncdQGradientSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QGRADIENT_STATE);
+		ncdQInterceptSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QINTERCEPT_STATE);
+		ncdQUnitSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QUNIT_STATE);
+		
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+	}
 	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -96,6 +140,9 @@ public class DataReductionHandler extends AbstractHandler {
 		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
 		final IStructuredSelection sel = (IStructuredSelection)page.getSelection();
+		
+		ConfigureNcdSourceProviders(window);
+		
 		if (sel != null) {
 			
 			final LazyNcdProcessing processing = new LazyNcdProcessing();
@@ -132,9 +179,10 @@ public class DataReductionHandler extends AbstractHandler {
 					bgProcessing.setFlags(bgFlags);
 					bgProcessing.setNcdDetectors(ncdDetectors);
 					
-					Integer bgFirstFrame = NcdDataReductionParameters.getBgFirstFrame();
-					Integer bgLastFrame = NcdDataReductionParameters.getBgLastFrame();
-					String bgFrameSelection = NcdDataReductionParameters.getBgAdvancedSelection();
+					SliceInput bgSliceInput = ncdBkgSliceSourceProvider.getBkgSlice();
+					Integer bgFirstFrame = bgSliceInput.getStartFrame();
+					Integer bgLastFrame = bgSliceInput.getStopFrame();
+					String bgFrameSelection = bgSliceInput.getAdvancedSlice();
 					
 					bgProcessing.setFirstFrame(bgFirstFrame);
 					bgProcessing.setLastFrame(bgLastFrame);
@@ -147,16 +195,16 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			
-			detectorWaxs = ncdDetectors.getDetectorWaxs();
-			detectorSaxs = ncdDetectors.getDetectorSaxs();
-			calibration = NcdDataReductionParameters.getCalList().getItem(NcdDataReductionParameters.getCalList().getSelectionIndex());
+			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			calibration = ncdScalerSourceProvider.getScaler();
 			dimWaxs = ncdDetectors.getDimWaxs();
 			dimSaxs = ncdDetectors.getDimSaxs();
 			enableWaxs = flags.isEnableWaxs();
 			enableSaxs = flags.isEnableSaxs();
 			enableBackground = flags.isEnableBackground();
-			workingDir = NcdDataReductionParameters.getWorkingDirectory();
-			final String bgPath = NcdDataReductionParameters.getBgFile();
+			workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
+			final String bgPath = ncdBgFileSourceProvider.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
 			
 			Job ncdJob = new Job("Running NCD data reduction") {
@@ -341,30 +389,26 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		
 		if (flags.isEnableWaxs()) {
-			int idxWaxs = NcdDataReductionParameters.getDetListWaxs().getSelectionIndex();
-			if (idxWaxs >= 0) {
-				detectorWaxs = NcdDataReductionParameters.getDetListWaxs().getItem(idxWaxs);
-				pxWaxs = NcdDataReductionParameters.getWaxsPixel(false);
-				dimWaxs = NcdDataReductionParameters.getDimData(detectorWaxs);
-				if ((detectorWaxs!=null) && (pxWaxs != null)) {
-					ncdDetectors.setDetectorWaxs(detectorWaxs);
-					ncdDetectors.setPxWaxs(pxWaxs);
-					ncdDetectors.setDimWaxs(dimWaxs);
-				}
+			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+			NcdDetectorSettings detWaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorWaxs);
+			pxWaxs = detWaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
+			dimWaxs = detWaxsInfo.getDimmension();
+			if ((detectorWaxs!=null) && (pxWaxs != null)) {
+				ncdDetectors.setDetectorWaxs(detectorWaxs);
+				ncdDetectors.setPxWaxs(pxWaxs);
+				ncdDetectors.setDimWaxs(dimWaxs);
 			}
 		} 
 		
 		if (flags.isEnableSaxs()) {
-			int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-			if (idxSaxs >= 0) {
-				detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-				pxSaxs = NcdDataReductionParameters.getSaxsPixel(false);
-				dimSaxs = NcdDataReductionParameters.getDimData(detectorSaxs);
-				if ((detectorSaxs != null) && (pxSaxs != null)) {
-					ncdDetectors.setDetectorSaxs(detectorSaxs);
-					ncdDetectors.setPxSaxs(pxSaxs);
-					ncdDetectors.setDimSaxs(dimSaxs);
-				}
+			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			NcdDetectorSettings detSaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorSaxs);
+			pxSaxs = detSaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
+			dimSaxs = detSaxsInfo.getDimmension();
+			if ((detectorSaxs != null) && (pxSaxs != null)) {
+				ncdDetectors.setDetectorSaxs(detectorSaxs);
+				ncdDetectors.setPxSaxs(pxSaxs);
+				ncdDetectors.setDimSaxs(dimSaxs);
 			}
 		}
 		
@@ -392,33 +436,34 @@ public class DataReductionHandler extends AbstractHandler {
 
 		final ICommandService service = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
 
-		Integer firstFrame = NcdDataReductionParameters.getDetFirstFrame();
-		Integer lastFrame = NcdDataReductionParameters.getDetLastFrame();
-		String frameSelection = NcdDataReductionParameters.getDetAdvancedSelection();
-		String gridAverage = NcdDataReductionParameters.getGridAverageSelection();
+		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
+		Integer firstFrame = dataSliceInput.getStartFrame();
+		Integer lastFrame = dataSliceInput.getStopFrame();
+		String frameSelection = dataSliceInput.getAdvancedSlice();
+		String gridAverage = ncdGridAverageSourceProvider.getGridAverage().getAdvancedSlice();
 		
-		Double qGradient = NcdDataReductionParameters.getQGradient();
-		Double qIntercept = NcdDataReductionParameters.getQIntercept();
-		String qUnit = NcdDataReductionParameters.getQUnit();
+		Double qGradient = ncdQGradientSourceProvider.getQGradient();
+		Double qIntercept = ncdQInterceptSourceProvider.getQIntercept();
+		String qUnit = ncdQUnitSourceProvider.getQUnit();
 		
 		String bgFile = null;
 		Double bgScaling = null;
 		if (flags.isEnableBackground()) {
-			bgFile = NcdDataReductionParameters.getBgFile();
-			bgScaling = NcdDataReductionParameters.getBgScale();
+			bgFile = ncdBgFileSourceProvider.getBgFile();
+			bgScaling = ncdBgScaleSourceProvider.getBgScaling();
 		}
 
 		String drFile = null;
 		if (flags.isEnableDetectorResponse())
-			drFile = NcdDataReductionParameters.getDrFile();
+			drFile = ncdDrFileSourceProvider.getDrFile();
 		
 		int normChannel = -1;
 		String calibration = null;
 		Double absScaling = null;
 		if (flags.isEnableNormalisation()) {
-			normChannel = NcdDataReductionParameters.getNormChan().getSelection();
-			calibration = NcdDataReductionParameters.getCalList().getItem(NcdDataReductionParameters.getCalList().getSelectionIndex());
-			absScaling = NcdDataReductionParameters.getAbsScale();
+			normChannel = ncdNormChannelSourceProvider.getNormChannel();
+			calibration = ncdScalerSourceProvider.getScaler();
+			absScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 		}
 		
 		Boolean enableMask = readReductionStage(service, DetectorMaskHandler.COMMAND_ID,
@@ -453,7 +498,7 @@ public class DataReductionHandler extends AbstractHandler {
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-			CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 			//CalibrationResultsBean crb = null;
 			//if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
 			//	Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);

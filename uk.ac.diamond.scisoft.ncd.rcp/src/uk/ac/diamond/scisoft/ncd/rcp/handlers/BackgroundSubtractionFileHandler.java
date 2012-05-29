@@ -30,11 +30,12 @@ import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class BackgroundSubtractionFileHandler extends AbstractHandler {
 
@@ -43,16 +44,19 @@ public class BackgroundSubtractionFileHandler extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		
-		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
+			final IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
 			if (((IStructuredSelection)selection).toList().size() == 1) {
+				ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+				NcdProcessingSourceProvider ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
+				
 				String fileName;
 				if (((IStructuredSelection)selection).getFirstElement() instanceof IFile)
 					fileName = ((IFile)((IStructuredSelection)selection).getFirstElement()).getLocation().toString();
 				else
 					fileName = ((File)((IStructuredSelection)selection).getFirstElement()).getAbsolutePath();
-				NcdDataReductionParameters.setBgFile(fileName);
+				ncdBgFileSourceProvider.setBgFile(fileName);
 			} else {
 				logger.error("SCISOFT NCD: Error setting background subtraction file reference");
 				Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, "Only single file can be used as a reference for background subtraction procedure.");

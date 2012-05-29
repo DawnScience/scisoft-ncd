@@ -22,6 +22,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
@@ -48,22 +49,27 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.ISourceProviderListener;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 
-public class QAxisCalibrationBase extends ViewPart {
+public class QAxisCalibrationBase extends ViewPart implements ISourceProviderListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
@@ -196,7 +202,7 @@ public class QAxisCalibrationBase extends ViewPart {
 		hkl2peaks.put(new HKL(0, 0, 11), Amount.valueOf(5.94, NANOMETER));
 		hkl2peaks.put(new HKL(0, 0, 12), Amount.valueOf(5.44, NANOMETER));
 		hkl2peaks.put(new HKL(0, 0, 13), Amount.valueOf(5.02, NANOMETER));
-		hkl2peaks.put(new HKL(0, 0, 15), Amount.valueOf(4.35, NANOMETER));
+		hkl2peaks.put(new HKL(0, 0, 14), Amount.valueOf(4.66, NANOMETER));
 		cal2peaks.put("Collagen Dry", (LinkedHashMap<HKL, Amount<Length>>) hkl2peaks.clone()); // SAXS
 		hkl2peaks.clear();
 		
@@ -343,6 +349,11 @@ public class QAxisCalibrationBase extends ViewPart {
 		progress.setLayout(new GridLayout(1, false));
 		progress.setText("Progress");
 
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdCalibrationSourceProvider.addSourceProviderListener(this);
+		
 		displayControlButtons(progress);
 		setupGUI();
 	}
@@ -471,17 +482,40 @@ public class QAxisCalibrationBase extends ViewPart {
 		calTable.setInput(cpl);
 	}
 	
-	protected String getUnitName() {
-		for (Entry<String,Button> unitBtn : unitSel.entrySet())
-			if (unitBtn.getValue().getSelection())
-				return unitBtn.getKey();
-		return null;
-	}
-
 	protected Unit<Length> getUnitScale() {
 		for (Entry<String,Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
 				return unitScale.get(unitBtn.getKey());
 		return null;
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
+		// TODO Auto-generated method stub
+		
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
+		if (sourceName.equals(NcdCalibrationSourceProvider.CALIBRATION_STATE)) {
+			if (sourceValue instanceof CalibrationResultsBean) {
+				CalibrationResultsBean cbr = (CalibrationResultsBean) sourceValue;
+				if (cbr.containsKey(currentMode)) {
+					AFunction function = cbr.getFuction(currentMode);
+					gradient.setText(String.format("%5.5g", function.getParameterValue(0)));
+					intercept.setText(String.format("%3.5g", function.getParameterValue(1)));
+					cameralength.setText(String.format("%3.3g", cbr.getMeanCameraLength(currentMode)));
+					// cbr.getUnit(currentMode);
+					// for (Button unitBtn : unitSel.values())
+					// unitBtn.setSelection(false);
+					// if (units == null)
+					// unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
+					// else
+					// unitSel.get(units).setSelection(true);
+					calTable.setInput(cbr.getPeakList(currentMode));
+					calTable.refresh();
+				}
+			}
+		}
 	}
 }

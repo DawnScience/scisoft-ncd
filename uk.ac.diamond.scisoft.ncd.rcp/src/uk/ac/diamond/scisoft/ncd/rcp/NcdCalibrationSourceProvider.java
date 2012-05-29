@@ -24,36 +24,44 @@ import java.util.List;
 import java.util.Map;
 
 import org.eclipse.ui.AbstractSourceProvider;
+import org.eclipse.ui.ISources;
 
 import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 
 public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 
 	public final static String CALIBRATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.calibrationBean";
+	public final static String NCDDETECTORS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.ncdDetectors";
 	
-	static CalibrationResultsBean calibrationResults; 
+	private CalibrationResultsBean calibrationResults; 
+	private HashMap<String, NcdDetectorSettings> ncdDetectors;
 
 	public NcdCalibrationSourceProvider() {
 		calibrationResults = new CalibrationResultsBean();
+		ncdDetectors = new HashMap<String, NcdDetectorSettings>();
 	}
 
 	@Override
 	public void dispose() {
-
+		calibrationResults.clearAllData();
+		ncdDetectors.clear();
 	}
 
 	@Override
-	public Map<String, CalibrationResultsBean> getCurrentState() {
-		Map<String, CalibrationResultsBean> currentState = new HashMap<String, CalibrationResultsBean>();
+	public Map<String, Object> getCurrentState() {
+		Map<String, Object> currentState = new HashMap<String, Object>();
 		currentState.put(CALIBRATION_STATE, calibrationResults);
+		currentState.put(NCDDETECTORS_STATE, ncdDetectors);
 		return currentState;
 	}
 
 	@Override
 	public String[] getProvidedSourceNames() {
-		return new String[] {CALIBRATION_STATE};
+		return new String[] {CALIBRATION_STATE,
+                			NCDDETECTORS_STATE};
 	}
 
 	public void putCalibrationResult(CalibrationResultsBean crb) {
@@ -64,22 +72,32 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 			String unit = crb.getUnit(experiment);
 			calibrationResults.putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit);
 		}
+		
+		fireSourceChanged(ISources.WORKBENCH, CALIBRATION_STATE, crb);
 	}
 	
-	public static AFunction getFunction(String experiment) {
+	public AFunction getFunction(String experiment) {
 		return calibrationResults.getFuction(experiment);
 	}
 	
-	public static double getMeanCameraLength(String experiment) {
+	public double getMeanCameraLength(String experiment) {
 		return calibrationResults.getMeanCameraLength(experiment);
 	}
 	
-	public static ArrayList<CalibrationPeak> getPeakList(String experiment) {
+	public ArrayList<CalibrationPeak> getPeakList(String experiment) {
 		return calibrationResults.getPeakList(experiment);
 	}
 	
-	public static String getUnit(String experiment) {
+	public String getUnit(String experiment) {
 		return calibrationResults.getUnit(experiment);
 	}
 
+	public void addNcdDetector(NcdDetectorSettings ncdDetector) {
+		ncdDetectors.put(ncdDetector.getName(), new NcdDetectorSettings(ncdDetector));
+		fireSourceChanged(ISources.WORKBENCH, NCDDETECTORS_STATE, ncdDetectors);
+	}
+
+	public HashMap<String, NcdDetectorSettings> getNcdDetectors() {
+		return ncdDetectors;
+	}
 }

@@ -23,14 +23,16 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.rcp.editors.HDF5TreeEditor;
 import uk.ac.diamond.scisoft.analysis.rcp.inspector.DatasetSelection.InspectorType;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.gda.common.rcp.util.EclipseUtils;
 
 public class SectorIntegrationFileHandler extends AbstractHandler {
@@ -40,17 +42,18 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
-		final ISelection selection = HandlerUtil.getCurrentSelection(event);
+		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 
+		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
 			if (((IStructuredSelection)selection).toList().size() == 1 && (((IStructuredSelection)selection).getFirstElement() instanceof IFile)) {
 
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
 				try {
-
-					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-					if (idxSaxs >= 0) {
-						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
+					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					if (detectorSaxs != null) {
 						HDF5TreeEditor editor = (HDF5TreeEditor)EclipseUtils.openExternalEditor(((IFile)sel).getLocation().toString());
 						HDF5NodeLink node = editor.getHDF5Tree().findNodeLink("/entry1/"+detectorSaxs+"/data");
 

@@ -92,11 +92,13 @@ import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	private IMemento memento;
-	private NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
+	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
+	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
 	private String calibrant;
 	
 	private int cmaesLambda = 5;
@@ -125,6 +127,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 		
 		calibrationControls.setLayout(new GridLayout(2, false));
 		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
@@ -192,7 +198,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				}
 			}
 			
-			CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 			if (!crb.keySet().isEmpty()) {
 				IMemento crbMemento = memento.createChild(CalibrationPreferences.QAXIS_CRB);
 				for (String key : crb.keySet()) {
@@ -365,7 +371,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 	protected Double getLambda() {
 		Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
-				/ NcdDataReductionParameters.getEnergy(), SI.NANO(SI.METER));
+				/ ncdEnergySourceProvider.getEnergy(), SI.NANO(SI.METER));
 		return lambdaDim.doubleValue(getUnitScale());
 	}
 	
