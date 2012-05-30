@@ -125,15 +125,26 @@
    </extension>
    <extension
          point="org.eclipse.ui.views">
+      <category
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
+            name="NCD Data Reduction">
+      </category>
       <view
-            category="uk.ac.diamond.scisoft.analysis.rcp"
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
             class="uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"
             id="uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"
             name="NCD Data Reduction Parameters"
             restorable="true">
       </view>
       <view
-            category="uk.ac.diamond.scisoft.analysis.rcp"
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
+            class="uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters"
+            id="uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters"
+            name="NCD Detector Parameters"
+            restorable="true">
+      </view>
+      <view
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
             class="uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration"
             id="uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration"
             name="Saxs Q-axis Calibration"
