@@ -53,7 +53,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
@@ -67,18 +66,6 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.AverageHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.AzimuthalHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.BackgroundSubtractionHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.DetectorMaskHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.DetectorResponseHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.FastIntegrationHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.InvariantHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.NormalisationHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.RadialHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.SaxsDataReductionHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.SectorIntegrationHandler;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.WaxsDataReductionHandler;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
@@ -99,6 +86,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Button browse;
 	private String inputDirectory = "/tmp";
 	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
+	
 	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
 	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
 	private NcdProcessingSourceProvider ncdResponseSourceProvider;
@@ -110,11 +98,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdEnergySourceProvider, ncdMaskSourceProvider;
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
-	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
+	
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
 	private Button detTypeWaxs, detTypeSaxs, useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton, inputQAxis;
 	private Button radialButton, azimuthalButton, fastIntButton;
@@ -364,8 +353,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
-			memento.putString(NcdPreferences.NCD_ABSOLUTESCALE, absScale.getText());
-			memento.putString(NcdPreferences.NCD_BACKGROUNDSCALE, bgScale.getText());
+			Double absScale = getAbsScale();
+			if (absScale != null)
+				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScale.floatValue());
+			
+			Double bgScale = getBgScale();
+			if (bgScale != null)
+				memento.putFloat(NcdPreferences.NCD_BACKGROUNDSCALE, bgScale.floatValue());
 			
 			memento.putString(NcdPreferences.NCD_BGFIRSTFRAME, bgFramesStart.getText());
 			memento.putString(NcdPreferences.NCD_BGLASTFRAME, bgFramesStop.getText());
@@ -431,36 +425,24 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		if (memento != null) {
 			Boolean val;
 			Integer idx;
+			Float flt;
 			String tmp;
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_NORMALISATION);
-			if (val!=null) {
-				normButton.setSelection(val);
-				if (val.booleanValue()) normButton.notifyListeners(SWT.Selection, null);
-				else updateNormalisationWidgets();
-			}
+			if (val!=null)
+				ncdNormalisationSourceProvider.setEnableNormalisation(val);
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_BACKGROUND);
-			if (val!=null) {
-				bgButton.setSelection(val);
-				if (val.booleanValue()) bgButton.notifyListeners(SWT.Selection, null);
-				else updateBackgroundSubtractionWidgets();
-				
-			}
+			if (val!=null)
+				ncdBackgroundSourceProvider.setEnableBackground(val);
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_RESPONSE);
-			if (val!=null) {
-				drButton.setSelection(val);
-				if (val.booleanValue()) drButton.notifyListeners(SWT.Selection, null);
-				else updateDetectorResponseWidgets();
-			}
+			if (val!=null)
+				ncdResponseSourceProvider.setEnableDetectorResponse(val);
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_SECTOR);
-			if (val!=null) {
-				secButton.setSelection(val);
-				if (val.booleanValue()) secButton.notifyListeners(SWT.Selection, null);
-				else updateSectorIntegrationWidgets();
-			}
+			if (val!=null)
+				ncdSectorSourceProvider.setEnableSector(val);
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_INVARIANT);
 			if (val!=null) {
@@ -469,11 +451,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_AVERAGE);
-			if (val!=null) {
-				aveButton.setSelection(val);
-				if (val.booleanValue()) aveButton.notifyListeners(SWT.Selection, null);
-				else updateAverageWidgets();
-			}
+			if (val!=null)
+				ncdAverageSourceProvider.setEnableAverage(val);
 			
 			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_RADIAL);
 			if (val!=null) {
@@ -505,8 +484,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					if (dim != null)
 						ncdDetector.setDimmension(dim.intValue());
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
-					
-					detListWaxs.add(ncdDetector.getName());
 				}
 			}
 			
@@ -528,8 +505,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					if (dim != null)
 						ncdDetector.setDimmension(dim.intValue());
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
-					
-					detListSaxs.add(ncdDetector.getName());
 				}
 			}
 			idx = memento.getInteger(NcdPreferences.NCD_SAXS_INDEX);
@@ -557,8 +532,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.CALIBRATION_DETECTOR, 1);
 					ncdDetector.setMaxChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
-					
-					calList.add(ncdDetector.getName());
 				}
 			}
 			idx = memento.getInteger(NcdPreferences.NCD_NORM_INDEX);
@@ -570,9 +543,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			idx = memento.getInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX);
 			if (idx != null) {
 				normChan.setSelection(idx);
+				ncdNormChannelSourceProvider.setNormChannel(idx);
 			}
-			tmp = memento.getString(NcdPreferences.NCD_ABSOLUTESCALE);
-			if (tmp != null) absScale.setText(tmp);
+			
+			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTESCALE);
+			if (flt != null) {
+				absScale.setText(flt.toString());
+				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt));
+			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_BGFIRSTFRAME);
 			if (tmp != null) bgFramesStart.setText(tmp);
@@ -599,12 +577,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_GRIDAVERAGESELECTION);
-			if (tmp != null) gridAverage.setText(tmp);
+			if (tmp != null)
+				gridAverage.setText(tmp);
+			
 			val = memento.getBoolean(NcdPreferences.NCD_GRIDAVERAGE);
 			if (val!=null) {
 				gridAverageButton.setSelection(val);
 				if (val.booleanValue()) gridAverageButton.notifyListeners(SWT.Selection, null);
 			}
+			
+			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getKey().equals(tmp)) unitBtn.getValue().setSelection(true);
+				else unitBtn.getValue().setSelection(false);
 			
 			tmp = memento.getString(NcdPreferences.NCD_QGRADIENT);
 			if (tmp != null) qGradient.setText(tmp);
@@ -613,28 +597,42 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			tmp = this.memento.getString(NcdPreferences.NCD_QUNIT);
 			if (tmp == null) tmp = NcdConstants.DEFAULT_UNIT;
 			
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(tmp)) unitBtn.getValue().setSelection(true);
-				else unitBtn.getValue().setSelection(false);
-			
 			val = memento.getBoolean(NcdPreferences.NCD_QOVERRIDE);
 			if (val!=null) {
 				inputQAxis.setSelection(val);
 				inputQAxis.notifyListeners(SWT.Selection, null);
 			}
 			
+			
 			tmp = memento.getString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION);
-			if (tmp != null) bgFile.setText(tmp);
-			tmp = memento.getString(NcdPreferences.NCD_BACKGROUNDSCALE);
-			if (tmp != null) bgScale.setText(tmp);
+			if (tmp != null) {
+				bgFile.setText(tmp);
+				ncdBgFileSourceProvider.setBgFile(tmp);
+			}
+			
+			flt = memento.getFloat(NcdPreferences.NCD_BACKGROUNDSCALE);
+			if (flt != null) {
+				bgScale.setText(flt.toString());
+				ncdBgScaleSourceProvider.setBgScaling(new Double(flt));
+			}
+			
 			tmp = memento.getString(NcdPreferences.NCD_DETECTORRESPONSE);
-			if (tmp != null) drFile.setText(tmp);
+			if (tmp != null) {
+				drFile.setText(tmp);
+				ncdDrFileSourceProvider.setDrFile(tmp);
+			}
+			
 			tmp = memento.getString(NcdPreferences.NCD_ENERGY);
-			if (tmp != null) energy.setText(tmp);
+			if (tmp != null) {
+				energy.setText(tmp);
+				ncdEnergySourceProvider.setEnergy(getEnergy());
+			}
+			
 			tmp = memento.getString(NcdPreferences.NCD_DIRECTORY);
 			if (tmp != null) {
 				location.setText(tmp);
 				inputDirectory = tmp;
+				ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 			}
 		}
 	}
@@ -662,19 +660,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			normButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					updateNormalisationWidgets();
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(NormalisationHandler.COMMAND_ID, null);
-						ncdNormalisationSourceProvider.setEnableNormalisation(normButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set normalisation step", err);
-					}
+					ncdNormalisationSourceProvider.setEnableNormalisation(normButton.getSelection());
 				}
 
 			});
-			if (ncdNormalisationSourceProvider.isEnableNormalisation()) normButton.setSelection(true);
-			else normButton.setSelection(false);		
 
 			bgButton = new Button(g, SWT.CHECK);
 			bgButton.setText("2. Background subtraction");
@@ -682,20 +671,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						updateBackgroundSubtractionWidgets();
-						handlerService.executeCommand(BackgroundSubtractionHandler.COMMAND_ID, null);
-						ncdBackgroundSourceProvider.setEnableBackground(bgButton.getSelection());
-						
-					} catch (Exception err) {
-						logger.error("Cannot set background subtraction step", err);
-					}
+					ncdBackgroundSourceProvider.setEnableBackground(bgButton.getSelection());
 				}
-				
 			});
-			if (ncdBackgroundSourceProvider.isEnableBackground()) bgButton.setSelection(true);
-			else bgButton.setSelection(false);
 
 
 			drButton = new Button(g, SWT.CHECK);
@@ -704,20 +682,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			drButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						updateDetectorResponseWidgets();
-						handlerService.executeCommand(DetectorResponseHandler.COMMAND_ID, null);
-						ncdResponseSourceProvider.setEnableDetectorResponse(drButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set detector response step", err);
-					}
+					ncdResponseSourceProvider.setEnableDetectorResponse(drButton.getSelection());
 				}
-
 			});
-			if (ncdResponseSourceProvider.isEnableDetectorResponse()) drButton.setSelection(true);
-			else drButton.setSelection(false);
 
 			secButton = new Button(g, SWT.CHECK);
 			secButton.setText("4. Sector integration");
@@ -725,18 +692,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			secButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					updateSectorIntegrationWidgets();
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(SectorIntegrationHandler.COMMAND_ID, null);
-						ncdSectorSourceProvider.setEnableSector(secButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set sector integration step", err);
-					}
+					ncdSectorSourceProvider.setEnableSector(secButton.getSelection());
 				}
 			});
-			if (ncdSectorSourceProvider.isEnableSector()) secButton.setSelection(true);
-			else secButton.setSelection(false);
 
 			invButton = new Button(g, SWT.CHECK);
 			invButton.setText("5. Invariant");
@@ -744,17 +702,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			invButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(InvariantHandler.COMMAND_ID, null);
 						ncdInvariantSourceProvider.setEnableInvariant(invButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set invariant calculation step", err);
-					}
 				}
 			});
-			if (ncdInvariantSourceProvider.isEnableInvariant()) invButton.setSelection(true);
-			else invButton.setSelection(false);
 
 			aveButton = new Button(g, SWT.CHECK);
 			aveButton.setText("6. Average");
@@ -762,18 +712,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			aveButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						updateAverageWidgets();
-						handlerService.executeCommand(AverageHandler.COMMAND_ID, null);
-						ncdAverageSourceProvider.setEnableAverage(aveButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set average calculation step", err);
-					}
+					ncdAverageSourceProvider.setEnableAverage(aveButton.getSelection());
 				}
 			});
-			if (ncdAverageSourceProvider.isEnableAverage()) aveButton.setSelection(true);
-			else aveButton.setSelection(false);
 		}
 
 		g = new Group(c, SWT.BORDER);
@@ -789,18 +730,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			radialButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(RadialHandler.COMMAND_ID, null);
-						ncdNormalisationSourceProvider.setEnableRadial(radialButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set radial profile calculation step", err);
-					}
+					ncdRadialSourceProvider.setEnableRadial(radialButton.getSelection());
 				}
-
 			});
-			if (ncdRadialSourceProvider.isEnableRadial()) radialButton.setSelection(true);
-			else radialButton.setSelection(true);		
 
 			azimuthalButton = new Button(g, SWT.CHECK);
 			azimuthalButton.setText("Azimuthal Profile");
@@ -808,19 +740,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			azimuthalButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(AzimuthalHandler.COMMAND_ID, null);
-						ncdNormalisationSourceProvider.setEnableAzimuthal(azimuthalButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set azimuthal profile calculation step", err);
-					}
+					ncdAzimuthSourceProvider.setEnableAzimuthal(azimuthalButton.getSelection());
 				}
-
 			});
-			
-			if (ncdAzimuthSourceProvider.isEnableAzimuthal()) azimuthalButton.setSelection(true);
-			else azimuthalButton.setSelection(true);		
 
 			fastIntButton = new Button(g, SWT.CHECK);
 			fastIntButton.setText("Fast Integration");
@@ -828,18 +750,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			fastIntButton.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(FastIntegrationHandler.COMMAND_ID, null);
-						ncdNormalisationSourceProvider.setEnableFastIntegration(fastIntButton.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set fast sector profile integration algorithm", err);
-					}
+					ncdFastIntSourceProvider.setEnableFastIntegration(fastIntButton.getSelection());
 				}
 
 			});
-			if (ncdFastIntSourceProvider.isEnableFastIntegration()) fastIntButton.setSelection(true);
-			else fastIntButton.setSelection(false);		
 		}
 
 		g = new Group(c, SWT.NONE);
@@ -896,7 +810,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale());
 				}
 			});
-			updateNormalisationWidgets();
 
 			bgLabel = new Label(g, SWT.NONE);
 			bgLabel.setText("Background Subtraction File");
@@ -969,7 +882,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 		}
-		updateDetectorResponseWidgets();
 
 		g = new Group(c, SWT.NONE);
 		g.setLayout(new GridLayout(4, false));
@@ -1046,7 +958,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			bgAdvancedButton.setSelection(false);
 		}
-		updateBackgroundSubtractionWidgets();
 
 		g = new Group(c, SWT.NONE);
 		g.setLayout(new GridLayout(4, false));
@@ -1164,13 +1075,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 									(dimSaxs[0].getSelection() || !(detTypeSaxs.getSelection()));
 					updateSectorIntegrationInvariant(sel);
 					
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(WaxsDataReductionHandler.COMMAND_ID, null);
-						ncdWaxsSourceProvider.setEnableWaxs(detTypeWaxs.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set WAXS data reduction step", err);
-					}
+					ncdWaxsSourceProvider.setEnableWaxs(detTypeWaxs.getSelection());
 				}
 			});
 
@@ -1270,13 +1175,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 									(dimSaxs[0].getSelection() || !(detTypeSaxs.getSelection()));
 					updateSectorIntegrationInvariant(sel);
 					
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(SaxsDataReductionHandler.COMMAND_ID, null);
-						ncdSaxsSourceProvider.setEnableSaxs(detTypeSaxs.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set SAXS data reduction step", err);
-					}
+					ncdSaxsSourceProvider.setEnableSaxs(detTypeSaxs.getSelection());
 				}
 			});
 			
@@ -1440,18 +1339,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			useMask.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand(DetectorMaskHandler.COMMAND_ID, null);
-						ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
-					} catch (Exception err) {
-						logger.error("Cannot set detector mask", err);
-					}
+					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
 				}
-
 			});
-			if (ncdMaskSourceProvider.isEnableMask()) useMask.setSelection(true);
-			else useMask.setSelection(false);		
 		}
 
 		g = new Group(c, SWT.NONE);
@@ -1506,11 +1396,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 		});
 		
-		ncdDetectorSourceProvider.addSourceProviderListener(this);
-		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
-		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
-		ncdScalerSourceProvider.addSourceProviderListener(this);
-		
 		restoreState();
 	}
 
@@ -1557,15 +1442,25 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdQUnitSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QUNIT_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-	}
+
+		ncdDetectorSourceProvider.addSourceProviderListener(this);
+		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
+		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
+		ncdScalerSourceProvider.addSourceProviderListener(this);
+		ncdNormalisationSourceProvider.addSourceProviderListener(this);
+		ncdBackgroundSourceProvider.addSourceProviderListener(this);
+		ncdDetectorSourceProvider.addSourceProviderListener(this);
+		ncdSectorSourceProvider.addSourceProviderListener(this);
+		ncdAverageSourceProvider.addSourceProviderListener(this);
+}
 
 	@Override
 	public void setFocus() {
 
 	}
 
-	private void updateNormalisationWidgets() {
-		boolean selection = normButton.getSelection();
+	private void updateNormalisationWidgets(boolean selection) {
+		normButton.setSelection(selection);
 		calList.setEnabled(selection);
 		normChan.setEnabled(selection);
 		calListLabel.setEnabled(selection);
@@ -1574,16 +1469,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		absScaleLabel.setEnabled(selection);
 	}
 
-	private void updateSectorIntegrationWidgets() {
-		boolean selection = secButton.getSelection();
+	private void updateSectorIntegrationWidgets(boolean selection) {
+		secButton.setSelection(selection);
 		radialButton.setEnabled(selection);
 		azimuthalButton.setEnabled(selection);
 		fastIntButton.setEnabled(selection);
 	}
 
-	private void updateBackgroundSubtractionWidgets() {
-		
-		boolean selection = bgButton.getSelection();
+	private void updateBackgroundSubtractionWidgets(boolean selection) {
+		bgButton.setSelection(selection);
 		bgLabel.setEnabled(selection);
 		bgFile.setEnabled(selection);
 		browseBg.setEnabled(selection);
@@ -1600,8 +1494,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		
 	}
 	
-	private void updateDetectorResponseWidgets() {
-		boolean selection = drButton.getSelection();
+	private void updateDetectorResponseWidgets(boolean selection) {
+		drButton.setSelection(selection);
 		drLabel.setEnabled(selection);
 		drFile.setEnabled(selection);
 		browseDr.setEnabled(selection);
@@ -1626,12 +1520,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 	}
 	
-	private void updateAverageWidgets() {
-		boolean selection = aveButton.getSelection();
+	private void updateAverageWidgets(boolean selection) {
+		aveButton.setSelection(selection);
 		gridAverage.setEnabled(selection);
 		gridAverageButton.setEnabled(selection);
 		gridAverageButton.notifyListeners(SWT.Selection, null);
-		
 	}
 	
 	@Override
@@ -1723,7 +1616,35 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					int max = detSettings.getMaxChannel();
 					normChan.setMaximum(max);
 				}
+				Integer normChannel = ncdNormChannelSourceProvider.getNormChannel();
+				if (normChannel != null)
+					normChan.setSelection(normChannel);
 			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.NORMALISATION_STATE)) {
+			boolean isEnableNormalisation = ncdNormalisationSourceProvider.isEnableNormalisation();
+			updateNormalisationWidgets(isEnableNormalisation);
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.BACKGROUD_STATE)) {
+			boolean isEnableBackground = ncdBackgroundSourceProvider.isEnableBackground();
+			updateBackgroundSubtractionWidgets(isEnableBackground);
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.RESPONSE_STATE)) {
+			boolean isEnableDetectorResponse = ncdBackgroundSourceProvider.isEnableDetectorResponse();
+			updateDetectorResponseWidgets(isEnableDetectorResponse);
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SECTOR_STATE)) {
+			boolean isEnableSector = ncdSectorSourceProvider.isEnableSector();
+			updateSectorIntegrationWidgets(isEnableSector);
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.AVERAGE_STATE)) {
+			boolean isEnableAverage = ncdAverageSourceProvider.isEnableAverage();
+			updateAverageWidgets(isEnableAverage);
 		}
 	}
 }

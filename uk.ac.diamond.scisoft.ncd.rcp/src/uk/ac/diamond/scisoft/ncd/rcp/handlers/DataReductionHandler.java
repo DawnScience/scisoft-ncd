@@ -37,10 +37,8 @@ import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.commands.State;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
@@ -58,7 +56,6 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -94,11 +91,17 @@ public class DataReductionHandler extends AbstractHandler {
 	private boolean enableWaxs, enableSaxs, enableBackground;
 	private String workingDir;
 
-	private NcdProcessingSourceProvider ncdScalerSourceProvider;
+	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
+	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
+	private NcdProcessingSourceProvider ncdResponseSourceProvider;
+	private NcdProcessingSourceProvider ncdSectorSourceProvider;
+	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
+	private NcdProcessingSourceProvider ncdAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider;
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider;
+	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 
 	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
@@ -106,9 +109,17 @@ public class DataReductionHandler extends AbstractHandler {
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
+	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	
 	private void ConfigureNcdSourceProviders(IWorkbenchWindow window) {
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		
+		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
+		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
 		
 		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 		
@@ -123,6 +134,12 @@ public class DataReductionHandler extends AbstractHandler {
 		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
 		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
 		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
+		
+		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
+		
+		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
+		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
+		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
@@ -322,60 +339,19 @@ public class DataReductionHandler extends AbstractHandler {
 	}
 	
 	public void readDataReductionStages(NcdReductionFlags flags) {
-
-		final ICommandService service = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-
-		Boolean enableWaxs = readReductionStage(service, WaxsDataReductionHandler.COMMAND_ID,
-				WaxsDataReductionHandler.STATE_ID);
-
-		Boolean enableSaxs = readReductionStage(service, SaxsDataReductionHandler.COMMAND_ID,
-				SaxsDataReductionHandler.STATE_ID);
+		flags.setEnableWaxs(ncdWaxsDetectorSourceProvider.isEnableWaxs());
+		flags.setEnableSaxs(ncdSaxsDetectorSourceProvider.isEnableSaxs());
 		
-		Boolean enableAverage = readReductionStage(service, AverageHandler.COMMAND_ID,
-				AverageHandler.STATE_ID);
-
-		Boolean enableBackground = readReductionStage(service, BackgroundSubtractionHandler.COMMAND_ID,
-				BackgroundSubtractionHandler.STATE_ID);
-
-		Boolean enableDetectorResponse = readReductionStage(service, DetectorResponseHandler.COMMAND_ID,
-				DetectorResponseHandler.STATE_ID);
+		flags.setEnableNormalisation(ncdNormalisationSourceProvider.isEnableNormalisation());
+		flags.setEnableBackground(ncdBackgroundSourceProvider.isEnableBackground());
+		flags.setEnableDetectorResponse(ncdResponseSourceProvider.isEnableDetectorResponse());
+		flags.setEnableSector(ncdSectorSourceProvider.isEnableSector());
+		flags.setEnableInvariant(ncdInvariantSourceProvider.isEnableInvariant());
+		flags.setEnableAverage(ncdAverageSourceProvider.isEnableAverage());
 		
-		Boolean enableInvariant = readReductionStage(service, InvariantHandler.COMMAND_ID,
-				InvariantHandler.STATE_ID);
-
-		Boolean enableNormalisation = readReductionStage(service, NormalisationHandler.COMMAND_ID,
-				NormalisationHandler.STATE_ID);
-		
-		Boolean enableSector = readReductionStage(service, SectorIntegrationHandler.COMMAND_ID,
-				SectorIntegrationHandler.STATE_ID);
-		
-		Boolean enableRadial = readReductionStage(service, RadialHandler.COMMAND_ID,
-				RadialHandler.STATE_ID);
-		
-		Boolean enableAzimuthal = readReductionStage(service, AzimuthalHandler.COMMAND_ID,
-				AzimuthalHandler.STATE_ID);
-		
-		Boolean enableFastIntegration = readReductionStage(service, FastIntegrationHandler.COMMAND_ID,
-				FastIntegrationHandler.STATE_ID);
-		
-		if (enableWaxs) flags.setEnableWaxs(true);
-		if (enableSaxs) flags.setEnableSaxs(true);
-		if (enableNormalisation) flags.setEnableNormalisation(true);
-		if (enableBackground) flags.setEnableBackground(true);
-		if (enableDetectorResponse) flags.setEnableDetectorResponse(true);
-		if (enableSector) flags.setEnableSector(true);
-		if (enableRadial) flags.setEnableRadial(true);
-		if (enableAzimuthal) flags.setEnableAzimuthal(true);
-		if (enableFastIntegration) flags.setEnableFastintegration(true);
-		if (enableInvariant) flags.setEnableInvariant(true);
-		if (enableAverage) flags.setEnableAverage(true);
-	}
-
-	private Boolean readReductionStage(final ICommandService service, String COMMAND_ID, String STATE_ID) {
-
-		Command command = service.getCommand(COMMAND_ID);
-		State state = command.getState(STATE_ID);
-		return (Boolean)state.getValue();
+		flags.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());
+		flags.setEnableAzimuthal(ncdAzimuthSourceProvider.isEnableAzimuthal());
+		flags.setEnableFastintegration(ncdFastIntSourceProvider.isEnableFastIntegration());
 	}
 
 	private void readDetectorInformation(final NcdReductionFlags flags, NcdDetectors ncdDetectors) throws ExecutionException {
@@ -434,13 +410,20 @@ public class DataReductionHandler extends AbstractHandler {
 
 	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws PartInitException {
 
-		final ICommandService service = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-
 		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
-		Integer firstFrame = dataSliceInput.getStartFrame();
-		Integer lastFrame = dataSliceInput.getStopFrame();
-		String frameSelection = dataSliceInput.getAdvancedSlice();
-		String gridAverage = ncdGridAverageSourceProvider.getGridAverage().getAdvancedSlice();
+		Integer firstFrame = null;
+		Integer lastFrame = null;
+		String frameSelection = null;
+		if (dataSliceInput != null) {
+			firstFrame = dataSliceInput.getStartFrame();
+			lastFrame = dataSliceInput.getStopFrame();
+			frameSelection = dataSliceInput.getAdvancedSlice();
+		}
+		
+		SliceInput gridAverageSlice = ncdGridAverageSourceProvider.getGridAverage();
+		String gridAverage = null;
+		if (gridAverageSlice != null)
+			gridAverage = gridAverageSlice.getAdvancedSlice();
 		
 		Double qGradient = ncdQGradientSourceProvider.getQGradient();
 		Double qIntercept = ncdQInterceptSourceProvider.getQIntercept();
@@ -466,8 +449,7 @@ public class DataReductionHandler extends AbstractHandler {
 			absScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 		}
 		
-		Boolean enableMask = readReductionStage(service, DetectorMaskHandler.COMMAND_ID,
-				DetectorMaskHandler.STATE_ID);
+		boolean enableMask = ncdMaskSourceProvider.isEnableMask();
 
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		IViewPart activePlot = page.findView(PlotView.ID + "DP");

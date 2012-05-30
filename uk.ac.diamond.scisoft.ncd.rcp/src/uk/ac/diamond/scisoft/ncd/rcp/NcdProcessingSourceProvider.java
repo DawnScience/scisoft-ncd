@@ -248,7 +248,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	public void setBkgSlice(SliceInput bkgSlice) {
-		this.bkgSlice = new SliceInput(bkgSlice);
+		this.bkgSlice = bkgSlice != null ? new SliceInput(bkgSlice) : null;
 		fireSourceChanged(ISources.WORKBENCH, BKGSLICE_STATE, this.bkgSlice);
 	}
 
