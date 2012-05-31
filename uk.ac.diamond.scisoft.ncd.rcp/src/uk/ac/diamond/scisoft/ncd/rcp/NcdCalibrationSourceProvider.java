@@ -84,7 +84,7 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		return calibrationResults.getFunction(experiment);
 	}
 	
-	public double getMeanCameraLength(String experiment) {
+	public Double getMeanCameraLength(String experiment) {
 		return calibrationResults.getMeanCameraLength(experiment);
 	}
 	

@@ -225,18 +225,23 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					Double mcl = crb.getMeanCameraLength(key);
 					if (mcl != null)
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.floatValue());
-
-					IMemento calibrationPeaksMemento = crbDataMemento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
-					for (CalibrationPeak peak : crb.getPeakList(key)) {
-						IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
-						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
-						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
-						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING,
-								(float) peak.getDSpacing().doubleValue(selUnit));
-						HKL idx = peak.getReflection();
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
-						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, idx.getL());
+					
+					ArrayList<CalibrationPeak> calPeaks = crb.getPeakList(key);
+					if (calPeaks != null) {
+						IMemento calibrationPeaksMemento = crbDataMemento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
+						for (CalibrationPeak peak : calPeaks) {
+							IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
+							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS,
+									(float) peak.getPeakPos());
+							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA,
+									(float) peak.getTwoTheta());
+							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING,
+									(float) peak.getDSpacing().doubleValue(selUnit));
+							HKL idx = peak.getReflection();
+							calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
+							calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
+							calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_L, idx.getL());
+						}
 					}
 				}
 			}

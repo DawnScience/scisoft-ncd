@@ -55,19 +55,27 @@ public class CalibrationResultsBean implements Serializable {
 	}
 	
 	public AFunction getFunction(String experiment) {
-		return results.get(experiment).getFuction();
+		if (results.containsKey(experiment))
+			return results.get(experiment).getFuction();
+		return null;
 	}
 
 	public ArrayList<CalibrationPeak> getPeakList(String experiment) {
-		return results.get(experiment).getPeakList();
+		if (results.containsKey(experiment))
+			return results.get(experiment).getPeakList();
+		return null;
 	}
 
 	public Double getMeanCameraLength(String experiment) {
-		return results.get(experiment).getMeanCameraLength();
+		if (results.containsKey(experiment))
+			return results.get(experiment).getMeanCameraLength();
+		return null;
 	}
 	
 	public String getUnit(String experiment) {
-		return results.get(experiment).getUnit();
+		if (results.containsKey(experiment))
+			return results.get(experiment).getUnit();
+		return null;
 	}
 	
 	public boolean containsKey(String experiment) {
@@ -75,7 +83,8 @@ public class CalibrationResultsBean implements Serializable {
 	}
 	
 	public void clearData(String experiment) {
-		results.remove(experiment);
+		if (results.containsKey(experiment))
+			results.remove(experiment);
 	}
 	
 	public Set<String> keySet() {
