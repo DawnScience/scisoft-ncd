@@ -70,6 +70,7 @@ public class QAxisFileHandler extends AbstractHandler {
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
@@ -117,8 +118,6 @@ public class QAxisFileHandler extends AbstractHandler {
 								}
 								
 								crb  = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
-								
-								NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 								ncdCalibrationSourceProvider.putCalibrationResult(crb);
 							}
 						}

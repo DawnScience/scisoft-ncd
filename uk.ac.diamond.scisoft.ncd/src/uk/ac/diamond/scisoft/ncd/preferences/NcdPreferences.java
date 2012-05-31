@@ -59,8 +59,4 @@ public class NcdPreferences {
 	public static final String NCD_DATAADVANCED = "ncd.dataadvanced";
 	public static final String NCD_GRIDAVERAGESELECTION = "ncd.gridaverageselection";
 	public static final String NCD_GRIDAVERAGE = "ncd.gridaverage";
-	public static final String NCD_QGRADIENT = "ncd.qgradient";
-	public static final String NCD_QINTERCEPT = "ncd.qintercept";
-	public static final String NCD_QUNIT = "ncd.qunit";
-	public static final String NCD_QOVERRIDE = "ncd.qoverride";
 }

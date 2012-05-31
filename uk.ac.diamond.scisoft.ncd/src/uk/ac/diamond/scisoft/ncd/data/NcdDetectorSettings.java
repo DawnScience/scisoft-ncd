@@ -27,7 +27,6 @@ public class NcdDetectorSettings {
 	private String name;				// Detector Name
 	private Amount<Length> pxSize;		// Detector pixel size
 	private Integer maxchannel;			// Number of recorded scaler channels
-	private CalibrationResultsData crd;	// Detector calibration settings
 
 	public NcdDetectorSettings(NcdDetectorSettings ncdDetector) {
 		super();
@@ -47,7 +46,6 @@ public class NcdDetectorSettings {
 		this.name = name;
 		this.pxSize = null;
 		this.maxchannel = null;
-		this.crd = null;
 	}
 	
 	public String getType() {
@@ -89,12 +87,4 @@ public class NcdDetectorSettings {
 		this.maxchannel = maxchannel;
 	}
 	
-	public CalibrationResultsData getCrd() {
-		return crd;
-	}
-
-	public void setCrd(CalibrationResultsData crd) {
-		this.crd = new CalibrationResultsData(crd.getFuction(), crd.getPeakList(), crd.getMeanCameraLength(), crd.getUnit());
-	}
-
 }

@@ -44,9 +44,7 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -72,19 +70,16 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	
 	private NcdProcessingSourceProvider ncdWaxsSourceProvider, ncdWaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdSaxsSourceProvider, ncdSaxsDetectorSourceProvider;
-	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
 	
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
 	
 	private static Button[] dimWaxs, dimSaxs;
-	protected static HashMap<String, Button> unitSel;
 
-	private static Button detTypeWaxs, detTypeSaxs, inputQAxis;
-	private static Text pxWaxs, pxSaxs, qGradient, qIntercept;
+	private static Button detTypeWaxs, detTypeSaxs;
+	private static Text pxWaxs, pxSaxs;
 	private static Combo detListWaxs, detListSaxs;
 	private Label pxSaxsLabel, pxWaxsLabel;
-	private Label qGradientLabel, qInterceptLabel;
 	
 	private Double getSaxsPixel() {
 		try {
@@ -108,43 +103,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			logger.error(msg, e);
 			return null;
 		}
-	}
-	
-	private Double getQGradient() {
-		String input = qGradient.getText();
-		if (input!=null  && inputQAxis.getSelection()) {
-			try {
-				Double val = Double.valueOf(qGradient.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Error reading q-axis calibration gradient";
-				logger.error(msg);
-			}
-		}
-		return null;
-	}
-	
-	private Double getQIntercept() {
-		String input = qIntercept.getText();
-		if (input!=null  && inputQAxis.getSelection()) {
-			try {
-				Double val = Double.valueOf(qIntercept.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Error reading q-axis calibration intercept";
-				logger.error(msg);
-			}
-		}
-		return null;
-	}
-	
-	private String getQUnit() {
-		if (inputQAxis.getSelection()) {
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getValue().getSelection())
-					return unitBtn.getKey();
-		}
-		return null;
 	}
 	
 	private SelectionListener modeSelectionListenerWaxs = new SelectionAdapter() {
@@ -207,16 +165,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			memento.putBoolean(NcdPreferences.NCD_WAXS, detTypeWaxs.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_SAXS, detTypeSaxs.getSelection());
 			
-			memento.putString(NcdPreferences.NCD_QGRADIENT, qGradient.getText());
-			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
-			memento.putString(NcdPreferences.NCD_QINTERCEPT, qIntercept.getText());
-			memento.putBoolean(NcdPreferences.NCD_QOVERRIDE, inputQAxis.getSelection());
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getValue().getSelection()) {
-					memento.putString(NcdPreferences.NCD_QUNIT, unitBtn.getKey());
-					break;
-				}
-			
 			memento.putInteger(NcdPreferences.NCD_WAXS_INDEX, detListWaxs.getSelectionIndex());
 			memento.putInteger(NcdPreferences.NCD_SAXS_INDEX, detListSaxs.getSelectionIndex());
 			
@@ -246,7 +194,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		if (memento != null) {
 			Boolean val;
 			Integer idx;
-			String tmp;
 			
 			IMemento[] waxsMemento = memento.getChildren(NcdPreferences.NCD_WAXS_DETECTOR);
 			if (waxsMemento != null) {
@@ -299,25 +246,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			if (val!=null) {
 				detTypeSaxs.setSelection(val);
 				if (val.booleanValue()) detTypeSaxs.notifyListeners(SWT.Selection, null);
-			}
-			
-			tmp = this.memento.getString(NcdPreferences.NCD_QUNIT);
-			if (tmp == null) tmp = NcdConstants.DEFAULT_UNIT;
-			
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(tmp)) unitBtn.getValue().setSelection(true);
-				else unitBtn.getValue().setSelection(false);
-			
-			tmp = memento.getString(NcdPreferences.NCD_QGRADIENT);
-			if (tmp != null) qGradient.setText(tmp);
-			
-			tmp = memento.getString(NcdPreferences.NCD_QINTERCEPT);
-			if (tmp != null) qIntercept.setText(tmp);
-			
-			val = memento.getBoolean(NcdPreferences.NCD_QOVERRIDE);
-			if (val!=null) {
-				inputQAxis.setSelection(val);
-				inputQAxis.notifyListeners(SWT.Selection, null);
 			}
 		}
 	}
@@ -445,13 +373,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				if (idx >= 0) {
 					String det = detListSaxs.getItem(idx);
 					ncdSaxsDetectorSourceProvider.setSaxsDetector(det);
-					try {
-						IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-						IViewPart saxsView = page.findView(SaxsQAxisCalibration.ID);
-						if (saxsView instanceof SaxsQAxisCalibration) ((SaxsQAxisCalibration)saxsView).updateResults(det);
-					} catch (Exception e1) {
-						logger.warn("Saxs calibration view unavailable", e1);
-					}
 				}
 			}
 		});
@@ -512,80 +433,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		else detTypeSaxs.setSelection(false);
 		modeSelectionListenerSaxs.widgetSelected(null);
 		
-		inputQAxis = new Button(gpSelectMode, SWT.CHECK);
-		inputQAxis.setText("q-calibration");
-		inputQAxis.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
-		inputQAxis.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-
-				boolean enabled = inputQAxis.getSelection();
-				for (Button unitButton : unitSel.values())
-					unitButton.setEnabled(enabled);
-				qGradient.setEnabled(enabled);
-				qGradientLabel.setEnabled(enabled);
-				qIntercept.setEnabled(enabled);
-				qInterceptLabel.setEnabled(enabled);
-			}
-		});
-		Group unitGrp = new Group(gpSelectMode, SWT.NONE);
-		unitGrp.setLayout(new GridLayout(2, false));
-		unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
-		unitGrp.setToolTipText("Select q-axis calibration units");
-		unitSel = new HashMap<String, Button>(2);
-		Button tmpUnitSel = new Button(unitGrp, SWT.RADIO);
-		tmpUnitSel.setText(NcdConstants.unitChoices[0]);
-		tmpUnitSel.setToolTipText("calibrate q-axis in Ångstroms");
-		tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		tmpUnitSel.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ncdQUnitSourceProvider.setQUnit(getQUnit());
-			}
-		});
-		unitSel.put(NcdConstants.unitChoices[0], tmpUnitSel);
-		tmpUnitSel = new Button(unitGrp, SWT.RADIO);
-		tmpUnitSel.setText(NcdConstants.unitChoices[1]);
-		tmpUnitSel.setToolTipText("calibrate q-axis in nanometers");
-		tmpUnitSel.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		tmpUnitSel.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ncdQUnitSourceProvider.setQUnit(getQUnit());
-			}
-		});
-		unitSel.put(NcdConstants.unitChoices[1], tmpUnitSel);
-		
-		qGradientLabel = new Label(gpSelectMode, SWT.NONE);
-		qGradientLabel.setText("Gradient");
-		qGradientLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, false, false));
-		qGradient = new Text(gpSelectMode, SWT.BORDER);
-		qGradient.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qGradient.setToolTipText("Input q-axis calibration line fit gradient");
-		qGradient.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ncdQGradientSourceProvider.setQGradient(getQGradient());
-			}
-		});
-
-		qInterceptLabel = new Label(gpSelectMode, SWT.NONE);
-		qInterceptLabel.setText("Intercept");
-		qInterceptLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
-		qIntercept = new Text(gpSelectMode, SWT.BORDER);
-		qIntercept.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
-		qIntercept.setToolTipText("Input q-axis calibration line fit intercept");
-		qIntercept.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				ncdQInterceptSourceProvider.setQIntercept(getQIntercept());
-			}
-		});
-
-		
-		inputQAxis.setSelection(false);
-		inputQAxis.notifyListeners(SWT.Selection, null);
-		
 		sc.setContent(c);
 		sc.setExpandVertical(true);
 		sc.setExpandHorizontal(true);
@@ -609,10 +456,6 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		
 		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-		
-		ncdQGradientSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QGRADIENT_STATE);
-		ncdQInterceptSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QINTERCEPT_STATE);
-		ncdQUnitSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QUNIT_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 

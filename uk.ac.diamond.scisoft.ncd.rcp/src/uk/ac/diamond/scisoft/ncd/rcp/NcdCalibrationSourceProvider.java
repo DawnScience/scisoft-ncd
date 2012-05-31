@@ -64,11 +64,15 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
                 			NCDDETECTORS_STATE};
 	}
 
+	public CalibrationResultsBean getCalibrationResults() {
+		return calibrationResults;
+	}
+
 	public void putCalibrationResult(CalibrationResultsBean crb) {
 		for (String experiment : crb.keySet()) {
-			AFunction calibrationFunction = crb.getFuction(experiment);
+			AFunction calibrationFunction = crb.getFunction(experiment);
 			List<CalibrationPeak> peaks = crb.getPeakList(experiment);
-			double meanCameraLength = crb.getMeanCameraLength(experiment);
+			Double meanCameraLength = crb.getMeanCameraLength(experiment);
 			String unit = crb.getUnit(experiment);
 			calibrationResults.putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit);
 		}
@@ -77,7 +81,7 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 	}
 	
 	public AFunction getFunction(String experiment) {
-		return calibrationResults.getFuction(experiment);
+		return calibrationResults.getFunction(experiment);
 	}
 	
 	public double getMeanCameraLength(String experiment) {

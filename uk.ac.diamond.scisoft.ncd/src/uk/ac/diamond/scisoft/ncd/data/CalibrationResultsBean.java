@@ -39,12 +39,22 @@ public class CalibrationResultsBean implements Serializable {
 		results.put(experiment, newData);
 	}
 	
-	public void putCalibrationResult(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, double meanCameraLength, String unit) {
-		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit); 
+	public void putCalibrationResult(String experiment, AFunction calibrationFunction, String unit) {
+		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, unit); 
 		results.put(experiment, newData);
 	}
 	
-	public AFunction getFuction(String experiment) {
+	public void putCalibrationResult(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Double meanCameraLength, String unit) {
+		CalibrationResultsData newData; 
+		if (peaks != null && meanCameraLength != null)
+			newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit);
+		else 
+			newData = new CalibrationResultsData(calibrationFunction, unit);
+		
+		results.put(experiment, newData);
+	}
+	
+	public AFunction getFunction(String experiment) {
 		return results.get(experiment).getFuction();
 	}
 
@@ -52,7 +62,7 @@ public class CalibrationResultsBean implements Serializable {
 		return results.get(experiment).getPeakList();
 	}
 
-	public double getMeanCameraLength(String experiment) {
+	public Double getMeanCameraLength(String experiment) {
 		return results.get(experiment).getMeanCameraLength();
 	}
 	

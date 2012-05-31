@@ -47,7 +47,6 @@ import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.ISourceProviderListener;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -60,7 +59,6 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -68,11 +66,15 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class QAxisCalibrationBase extends ViewPart implements ISourceProviderListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
+	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
+	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
+	
 	private Unit<Length> NANOMETER = SI.NANO(SI.METER);
 	
 	private CalibrationTable calTable;
@@ -81,10 +83,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected LinkedHashMap<String, LinkedHashMap<HKL, Amount<Length>> > cal2peaks;
 	
 	protected Combo standard;
-	protected Spinner braggOrder;
 	protected Button beamRefineButton;
 	protected Group gpSelectMode, calibrationControls;
-	protected Label lblN;
 
 
 	protected StoredPlottingObject twoDData;
@@ -92,9 +92,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected ArrayList<IPeak> peaks = new ArrayList<IPeak>();
 
 	private Button calibrateButton;
-	protected Text gradient;
-
-	protected Text intercept;
+	protected Text gradient,intercept;
+	protected Button inputQAxis;
 	protected Text cameralength, cameralengthErr;
 
 	protected Double disttobeamstop;
@@ -159,6 +158,41 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		}
 	}
 
+	protected Double getGradient() {
+		String input = gradient.getText();
+		if (input != null) {
+			try {
+				Double val = Double.valueOf(gradient.getText());  
+				return val;
+			} catch (Exception e) {
+				String msg = "SCISOFT NCD: Error reading q-axis calibration gradient";
+				logger.error(msg);
+			}
+		}
+		return null;
+	}
+	
+	protected Double getIntercept() {
+		String input = intercept.getText();
+		if (input != null) {
+			try {
+				Double val = Double.valueOf(intercept.getText());  
+				return val;
+			} catch (Exception e) {
+				String msg = "SCISOFT NCD: Error reading q-axis calibration intercept";
+				logger.error(msg);
+			}
+		}
+		return null;
+	}
+	
+	protected String getUnit() {
+		for (Entry<String, Button> unitBtn : unitSel.entrySet())
+			if (unitBtn.getValue().getSelection())
+				return unitBtn.getKey();
+		return null;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public QAxisCalibrationBase() {
 		cal2peaks = new LinkedHashMap<String, LinkedHashMap<HKL, Amount<Length>> >();
@@ -259,6 +293,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	@Override
 	public void createPartControl(Composite parent) {
 
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
+		
 		ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
@@ -320,38 +362,12 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		standard = new Combo(calibrationControls, SWT.NONE);
 		standard.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 
-		Group unitGrp = new Group(calibrationControls, SWT.NONE);
-		unitGrp.setLayout(new GridLayout(2, false));
-		unitGrp.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
-		unitGrp.setToolTipText("Select q-axis calibration units");
-		
-		unitSel = new HashMap<String, Button>(2);
-		unitSel.put(NcdConstants.unitChoices[0], new Button(unitGrp, SWT.RADIO));
-		unitSel.get(NcdConstants.unitChoices[0]).setText(NcdConstants.unitChoices[0]);
-		unitSel.get(NcdConstants.unitChoices[0]).setToolTipText("calibrate q-axis in Ångstroms");
-		unitSel.get(NcdConstants.unitChoices[0]).setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		
-		unitSel.put(NcdConstants.unitChoices[1], new Button(unitGrp, SWT.RADIO));
-		unitSel.get(NcdConstants.unitChoices[1]).setText(NcdConstants.unitChoices[1]);
-		unitSel.get(NcdConstants.unitChoices[1]).setToolTipText("calibrate q-axis in nanometers");
-		unitSel.get(NcdConstants.unitChoices[1]).setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
-		
-		lblN = new Label(calibrationControls, SWT.NONE);
-		lblN.setToolTipText("n in Braggs law");
-		lblN.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, true, 2, 1));
-		lblN.setText("Maximum reflection index");
-
-		braggOrder = new Spinner(calibrationControls, SWT.BORDER);
-		braggOrder.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-
 		Group progress = new Group(calibrationResultsComposite, SWT.NONE);
 		progress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
 		progress.setLayout(new GridLayout(1, false));
 		progress.setText("Progress");
 
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
 		ncdCalibrationSourceProvider.addSourceProviderListener(this);
 		
 		displayControlButtons(progress);
@@ -362,16 +378,36 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		Label mlab = new Label(group, SWT.NONE);
 		mlab.setText("Gradient");
 
-		gradient = new Text(group, SWT.READ_ONLY | SWT.CENTER);
+		gradient = new Text(group, SWT.CENTER);
 		gradient.setText("--");
 		gradient.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
 		Label clab = new Label(group, SWT.NONE);
 		clab.setText("Intercept");
 
-		intercept = new Text(group, SWT.READ_ONLY | SWT.CENTER);
+		intercept = new Text(group, SWT.CENTER);
 		intercept.setText("--");
 		intercept.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		
+		Group unitGrp = new Group(group, SWT.NONE);
+		unitGrp.setLayout(new GridLayout(2, false));
+		unitGrp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+		unitGrp.setToolTipText("Select q-axis calibration units");
+		
+		unitSel = new HashMap<String, Button>(2);
+		unitSel.put(NcdConstants.unitChoices[0], new Button(unitGrp, SWT.RADIO));
+		unitSel.get(NcdConstants.unitChoices[0]).setText(NcdConstants.unitChoices[0]);
+		unitSel.get(NcdConstants.unitChoices[0]).setToolTipText("calibrate q-axis in Ångstroms");
+		unitSel.get(NcdConstants.unitChoices[0]).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		
+		unitSel.put(NcdConstants.unitChoices[1], new Button(unitGrp, SWT.RADIO));
+		unitSel.get(NcdConstants.unitChoices[1]).setText(NcdConstants.unitChoices[1]);
+		unitSel.get(NcdConstants.unitChoices[1]).setToolTipText("calibrate q-axis in nanometers");
+		unitSel.get(NcdConstants.unitChoices[1]).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		
+		inputQAxis = new Button(group, SWT.NONE);
+		inputQAxis.setText("Override");
+		inputQAxis.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 	}
 
 	public void runCalibration() {
@@ -437,8 +473,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		}
 		standard.select(0);
 
-		braggOrder.setSelection(0);
-		
 		unitSel.values().iterator().next().setSelection(true);
 	}
 
@@ -447,23 +481,36 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		logger.debug("setting focus");
 	}
 
-	protected void updateCalibrationResults(CalibrationResultsBean crb) {
+	protected void updateCalibrationResults() {
+		
+		currentMode = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+		
 		calibrationPeakList.clear();
-		if (crb.containsKey(currentMode)) {
-			calibrationPeakList.addAll(crb.getPeakList(currentMode));
-			final double dist = crb.getMeanCameraLength(currentMode) / 1000;
-			final String units = crb.getUnit(currentMode);
-			if (crb.getFuction(currentMode) != null) {
-				final double mVal = crb.getFuction(currentMode).getParameterValue(0);
-				final double cVal = crb.getFuction(currentMode).getParameterValue(1);
+		
+		calTable.setInput(calibrationPeakList);
+		gradient.setText("--");
+		intercept.setText("--");
+		cameralength.setText("--");
+		cameralengthErr.setText("--");
+		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentMode)) {
+			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentMode);
+			if (peakList != null)
+				calibrationPeakList.addAll(peakList);
+			
+			final String units = ncdCalibrationSourceProvider.getUnit(currentMode);
+			if (ncdCalibrationSourceProvider.getFunction(currentMode) != null) {
 
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						gradient.setText(String.format("%5.5g",mVal));
-						intercept.setText(String.format("%3.5f",cVal));
-						cameralength.setText(String.format("%3.3f",dist));
+						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(0)));
+						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(1)));
+						Double mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentMode);
+						if (mcl != null) {
+							final double dist = mcl  / 1000;
+							cameralength.setText(String.format("%3.3f",dist));
+						}
 						for (Button unitBtn : unitSel.values())
 							unitBtn.setSelection(false);
 						if (units == null) 
@@ -491,31 +538,18 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	@Override
 	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
 		if (sourceName.equals(NcdCalibrationSourceProvider.CALIBRATION_STATE)) {
-			if (sourceValue instanceof CalibrationResultsBean) {
-				CalibrationResultsBean cbr = (CalibrationResultsBean) sourceValue;
-				if (cbr.containsKey(currentMode)) {
-					AFunction function = cbr.getFuction(currentMode);
-					gradient.setText(String.format("%5.5g", function.getParameterValue(0)));
-					intercept.setText(String.format("%3.5g", function.getParameterValue(1)));
-					cameralength.setText(String.format("%3.3g", cbr.getMeanCameraLength(currentMode)));
-					// cbr.getUnit(currentMode);
-					// for (Button unitBtn : unitSel.values())
-					// unitBtn.setSelection(false);
-					// if (units == null)
-					// unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
-					// else
-					// unitSel.get(units).setSelection(true);
-					calTable.setInput(cbr.getPeakList(currentMode));
-					calTable.refresh();
-				}
-			}
+			if (sourceValue instanceof CalibrationResultsBean)
+				updateCalibrationResults();
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
+			if (sourceValue instanceof String)
+				updateCalibrationResults();
 		}
 	}
 }

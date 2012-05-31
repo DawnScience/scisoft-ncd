@@ -47,7 +47,11 @@ import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.IDialogConstants;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -59,11 +63,9 @@ import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
-import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -92,13 +94,10 @@ import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	private IMemento memento;
-	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
-	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
 	private String calibrant;
 	
 	private int cmaesLambda = 5;
@@ -124,21 +123,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 		super.createPartControl(parent);
 		
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
-		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
-		
 		calibrationControls.setLayout(new GridLayout(2, false));
 		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
 		beamRefineButton.setText("Refine Beam Position");
 		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
-		
-		lblN.dispose();
-		braggOrder.dispose();
 		
 		restoreState();
 		
@@ -160,6 +148,33 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		} catch (Exception e) {
 			logger.error("Error creating plot part.", e);
 		}
+		
+		inputQAxis.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				MessageDialog calibrationDialogue = new MessageDialog(getSite().getShell(),
+						"Override calibration data", null,
+						"Do you want to override q-axis calibration data? (WARNING: The existing calibration peak list and camera distance values will be erased!)",
+						MessageDialog.QUESTION,	new String[]{IDialogConstants.YES_LABEL, IDialogConstants.NO_LABEL}, 0);
+				
+				switch(calibrationDialogue.open()) {
+				case 0: 
+					CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCalibrationResults();
+					String det = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					Parameter gradient = new Parameter(getGradient());
+					Parameter intercept = new Parameter(getIntercept());
+					StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+					crb.putCalibrationResult(det, calibrationFunction, getUnit());
+					ncdCalibrationSourceProvider.putCalibrationResult(crb);
+					break;
+					
+				case 1:
+					String saxsDet = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					ncdSaxsDetectorSourceProvider.setSaxsDetector(saxsDet);
+					break;
+				}
+			}
+		});
 	}
 
 	@Override
@@ -204,25 +219,20 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				for (String key : crb.keySet()) {
 					IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
 
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getFuction(key)
-							.getParameterValue(0));
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getFuction(key)
-							.getParameterValue(1));
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getFunction(key).getParameterValue(0));
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getFunction(key).getParameterValue(1));
 
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH,
-							(float) crb.getMeanCameraLength(key));
+					Double mcl = crb.getMeanCameraLength(key);
+					if (mcl != null)
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.floatValue());
 
-					IMemento calibrationPeaksMemento = crbDataMemento
-							.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
+					IMemento calibrationPeaksMemento = crbDataMemento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 					for (CalibrationPeak peak : crb.getPeakList(key)) {
-						IMemento calibrationPeakMemento = calibrationPeaksMemento
-								.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
-						calibrationPeakMemento
-								.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
-						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA,
-								(float) peak.getTwoTheta());
-						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak
-								.getDSpacing().doubleValue(selUnit));
+						IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
+						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
+						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
+						calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING,
+								(float) peak.getDSpacing().doubleValue(selUnit));
 						HKL idx = peak.getReflection();
 						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
 						calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
@@ -320,7 +330,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					
 					Parameter gradient = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_GRADIENT));
 					Parameter intercept = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT));
-					Float meanCameraLength = data.getFloat(CalibrationPreferences.QAXIS_CAMERALENGTH);
+					Float mcl = data.getFloat(CalibrationPreferences.QAXIS_CAMERALENGTH);
+					Double meanCameraLength = (mcl != null) ? new Double(mcl) : null;
 					
 					IMemento dataPeaksMemento = data.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 					ArrayList<CalibrationPeak> dataPeakList = new ArrayList<CalibrationPeak>();
@@ -341,7 +352,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				}
 				
 				ncdCalibrationSourceProvider.putCalibrationResult(crb);
-				updateCalibrationResults(crb);
 			}
 			
 			IMemento roiMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ROI);
@@ -541,7 +551,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						crb.putCalibrationResult(currentMode, calibrationFunction,
 								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale.toString());
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
-						updateCalibrationResults(crb);
 
 						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
 						
@@ -621,14 +630,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		return null;
 	}
 	
-	public static void setCalibrationResultsBean(CalibrationResultsBean crb) {
-		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		NcdCalibrationSourceProvider calibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-		
-		calibrationSourceProvider.putCalibrationResult(crb);
-	}
-	
 	public void updateResults(String detector) {
 		GuiBean guiinfo;
 		try {
@@ -644,7 +645,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						CalibrationResultsBean crb = (CalibrationResultsBean) bd;
 						if (crb.keySet().contains(detector)) {
 							currentMode = detector;
-							updateCalibrationResults(crb);
+							ncdCalibrationSourceProvider.putCalibrationResult(crb);
 						}
 					}
 				}
