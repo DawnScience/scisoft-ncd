@@ -42,8 +42,10 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
 import org.eclipse.ui.IViewPart;
+import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
@@ -262,6 +264,12 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		}
 	};
 
+	@Override
+	public void init(IViewSite site, IMemento memento) throws PartInitException {
+		this.memento = memento;
+		super.init(site, memento);
+	}
+	
 	@Override
 	public void saveState(IMemento memento) {
 		
