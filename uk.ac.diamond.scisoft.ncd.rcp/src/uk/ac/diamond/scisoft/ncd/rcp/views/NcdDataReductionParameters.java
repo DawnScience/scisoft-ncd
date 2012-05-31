@@ -28,6 +28,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -101,7 +103,17 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
 	private Double getEnergy() {
-		return Double.valueOf(energy.getText());
+		String input = energy.getText();
+		if (input!= null) {
+			try {
+				Double val = Double.valueOf(energy.getText());  
+				return val;
+			} catch (Exception e) {
+				String msg = "SCISOFT NCD: energy was not set";
+				logger.info(msg);
+			}
+		}
+		return null;
 	}
 
 	private Double getAbsScale() {
@@ -854,9 +866,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			energy = new Text(g, SWT.BORDER);
 			energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			energy.setToolTipText("Set the energy used in data collection");
-			energy.addSelectionListener(new SelectionAdapter() {
+			energy.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					ncdEnergySourceProvider.setEnergy(getEnergy());
 				}
 			});
