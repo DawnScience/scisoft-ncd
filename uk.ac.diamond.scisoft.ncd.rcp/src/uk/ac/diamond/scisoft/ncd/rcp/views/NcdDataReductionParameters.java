@@ -69,7 +69,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	private IMemento memento;
 
-	private Spinner normChan;
+	private static Spinner normChan;
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
 	private Text bgFile, drFile, bgScale, absScale;
 
@@ -96,7 +96,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
-	private Combo calList;
+	private static Combo calList;
 	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 

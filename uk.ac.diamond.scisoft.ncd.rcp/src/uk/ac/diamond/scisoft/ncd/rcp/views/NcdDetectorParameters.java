@@ -23,10 +23,13 @@ import java.util.Map.Entry;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
@@ -74,90 +77,18 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
 	
-	private Button[] dimWaxs, dimSaxs;
-	protected HashMap<String, Button> unitSel;
+	private static Button[] dimWaxs, dimSaxs;
+	protected static HashMap<String, Button> unitSel;
 
-	private Button detTypeWaxs, detTypeSaxs, inputQAxis;
-	private Text pxWaxs, pxSaxs, qGradient, qIntercept;
-	private Combo detListWaxs, detListSaxs;
+	private static Button detTypeWaxs, detTypeSaxs, inputQAxis;
+	private static Text pxWaxs, pxSaxs, qGradient, qIntercept;
+	private static Combo detListWaxs, detListSaxs;
 	private Label pxSaxsLabel, pxWaxsLabel;
 	private Label qGradientLabel, qInterceptLabel;
 	
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
-			detListSaxs.removeAll();
-			detListWaxs.removeAll();
-			if (sourceValue instanceof HashMap<?, ?>) {
-				for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
-					if (settings instanceof NcdDetectorSettings) {
-						
-						NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
-						
-						if (detSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
-							detListSaxs.add(detSettings.getName());
-							continue;
-						}
-						
-						if (detSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
-							detListWaxs.add(detSettings.getName());
-							continue;
-						}
-					}
-				}
-			}
-			
-			if (detListSaxs.getItemCount() > 0) {
-				detListSaxs.select(0);
-				ncdSaxsDetectorSourceProvider.setSaxsDetector(detListSaxs.getItem(0));
-			}
-			
-			if (detListWaxs.getItemCount() > 0) {
-				detListWaxs.select(0);
-				ncdWaxsDetectorSourceProvider.setSaxsDetector(detListWaxs.getItem(0));
-			}
-		}
-		
-		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
-			if (sourceValue instanceof String) {
-				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
-				if (detSettings != null) {
-					int idxDim = detSettings.getDimmension() - 1;
-					for (Button btn : dimSaxs) btn.setSelection(false);
-					dimSaxs[idxDim].setSelection(true);
-					
-					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null)
-						pxSaxs.setText(String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER)));
-				}
-			}
-		}
-		
-		if (sourceName.equals(NcdProcessingSourceProvider.WAXSDETECTOR_STATE)) {
-			if (sourceValue instanceof String) {
-				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
-				if (detSettings != null) {
-					int idxDim = detSettings.getDimmension() - 1;
-					for (Button btn : dimWaxs) btn.setSelection(false);
-					dimWaxs[idxDim].setSelection(true);
-					
-					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null)
-						pxWaxs.setText(String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER)));
-				}
-			}
-		}
-	}
-
-	private Double getSaxsPixel(boolean scale) {
+	private Double getSaxsPixel() {
 		try {
 			Double val = Double.valueOf(pxSaxs.getText());  
-			if (scale)
-				return val / 1000.0;
 			return val;
 		}
 		catch (Exception e) {
@@ -167,11 +98,9 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		}
 	}
 	
-	private Double getWaxsPixel(boolean scale) {
+	private Double getWaxsPixel() {
 		try {
 			Double val = Double.valueOf(pxWaxs.getText());  
-			if (scale)
-				return val / 1000.0;
 			return val;
 		}
 		catch (Exception e) {
@@ -471,36 +400,24 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		
 		pxWaxsLabel = new Label(gpSelectMode, SWT.NONE);
 		pxWaxsLabel.setText("pixel (mm)");
+		pxWaxsLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
 		pxWaxs = new Text(gpSelectMode, SWT.BORDER);
-		pxWaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		pxWaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 		pxWaxs.setToolTipText("Set detector pixel size");
-		
-		Button pxSave =  new Button(gpSelectMode, SWT.NONE);
-		pxSave.setText("Save");
-		pxSave.setToolTipText("Save detector information");
-		pxSave.setLayoutData(new GridData(GridData.CENTER, SWT.FILL, false, true, 1, 2));
-		pxSave.addSelectionListener(new SelectionAdapter() {
+		pxWaxs.addModifyListener(new ModifyListener() {
 			@Override
-			public void widgetSelected(SelectionEvent e) {
+			public void modifyText(ModifyEvent e) {
 				if (detTypeWaxs.isEnabled()) {
 					String waxsDetector = ncdWaxsDetectorSourceProvider.getWaxsDetector();
 					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
 					if (detSettings != null) {
-						detSettings.setPxSize(Amount.valueOf(getWaxsPixel(false), SI.MILLIMETER));
-						ncdDetectorSourceProvider.addNcdDetector(detSettings);
-					}
-				}
-				if (detTypeSaxs.isEnabled()) {
-					String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
-					if (detSettings != null) {
-						detSettings.setPxSize(Amount.valueOf(getSaxsPixel(false), SI.MILLIMETER));
-						ncdDetectorSourceProvider.addNcdDetector(detSettings);
+						Double waxsPixel = getWaxsPixel();
+						if (waxsPixel != null)
+							detSettings.setPxSize(Amount.valueOf(waxsPixel, SI.MILLIMETER));
 					}
 				}
 			}
 		});
-
 		
 		if (ncdWaxsSourceProvider.isEnableWaxs()) detTypeWaxs.setSelection(true);
 		else detTypeWaxs.setSelection(false);
@@ -571,9 +488,25 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		
 		pxSaxsLabel = new Label(gpSelectMode, SWT.NONE);
 		pxSaxsLabel.setText("pixel (mm)");
+		pxSaxsLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
 		pxSaxs = new Text(gpSelectMode, SWT.BORDER);
-		pxSaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		pxSaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 		pxSaxs.setToolTipText("Set detector pixel size");
+		pxSaxs.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				if (detTypeSaxs.isEnabled()) {
+					String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
+					if (detSettings != null) {
+						Double saxsPixel = getSaxsPixel();
+						if (saxsPixel != null)
+							detSettings.setPxSize(Amount.valueOf(saxsPixel, SI.MILLIMETER));
+					}
+				}
+			}
+		});
 		
 		if (ncdSaxsSourceProvider.isEnableSaxs()) detTypeSaxs.setSelection(true);
 		else detTypeSaxs.setSelection(false);
@@ -686,6 +619,100 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		ncdDetectorSourceProvider.addSourceProviderListener(this);
 		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
 		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
+		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
+			
+			int idxSaxs = detListSaxs.getSelectionIndex();
+			String saveDetSaxs = null;
+			if (idxSaxs != -1)
+				saveDetSaxs = detListSaxs.getItem(idxSaxs);
+			
+			int idxWaxs = detListWaxs.getSelectionIndex();
+			String saveDetWaxs = null;
+			if (idxWaxs != -1)
+				saveDetWaxs = detListWaxs.getItem(idxWaxs);
+			
+			detListSaxs.removeAll();
+			detListWaxs.removeAll();
+			if (sourceValue instanceof HashMap<?, ?>) {
+				for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
+					if (settings instanceof NcdDetectorSettings) {
+						
+						NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
+						
+						if (detSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
+							detListSaxs.add(detSettings.getName());
+							continue;
+						}
+						
+						if (detSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
+							detListWaxs.add(detSettings.getName());
+							continue;
+						}
+					}
+				}
+			}
+			
+			// Restore saved detector selection
+			// If no detector was selected, select first one in the list
+			// If saved detector selection isn't available in the updated list, select first one
+			if (detListSaxs.getItemCount() > 0) {
+				idxSaxs = (idxSaxs != -1) ? ArrayUtils.indexOf(detListSaxs.getItems(), saveDetSaxs) : 0;
+				idxSaxs = (idxSaxs == -1) ? 0 : idxSaxs;
+				detListSaxs.select(idxSaxs);
+				ncdSaxsDetectorSourceProvider.setSaxsDetector(detListSaxs.getItem(idxSaxs));
+			}
+			
+			if (detListWaxs.getItemCount() > 0) {
+				idxWaxs = (idxWaxs != -1) ? ArrayUtils.indexOf(detListWaxs.getItems(), saveDetWaxs) : 0;
+				idxWaxs = (idxWaxs == -1) ? 0 : idxWaxs;
+				detListWaxs.select(idxWaxs);
+				ncdWaxsDetectorSourceProvider.setWaxsDetector(detListWaxs.getItem(idxWaxs));
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
+			if (sourceValue instanceof String) {
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				if (detSettings != null) {
+					int idxDim = detSettings.getDimmension() - 1;
+					for (Button btn : dimSaxs) btn.setSelection(false);
+					dimSaxs[idxDim].setSelection(true);
+					
+					Amount<Length> pxSize = detSettings.getPxSize();
+					if (pxSize != null) {
+						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
+						if (!(pxText.equals(pxSaxs.getText())))
+							pxSaxs.setText(pxText);
+					}
+				}
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.WAXSDETECTOR_STATE)) {
+			if (sourceValue instanceof String) {
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				if (detSettings != null) {
+					int idxDim = detSettings.getDimmension() - 1;
+					for (Button btn : dimWaxs) btn.setSelection(false);
+					dimWaxs[idxDim].setSelection(true);
+					
+					Amount<Length> pxSize = detSettings.getPxSize();
+					if (pxSize != null) {
+						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
+						if (!(pxText.equals(pxWaxs.getText())))
+							pxWaxs.setText(pxText);
+					}
+				}
+			}
+		}
 	}
 
 	@Override
