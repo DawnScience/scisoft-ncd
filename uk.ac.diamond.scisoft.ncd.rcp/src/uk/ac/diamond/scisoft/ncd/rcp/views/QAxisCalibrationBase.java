@@ -77,12 +77,12 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	
 	private Unit<Length> NANOMETER = SI.NANO(SI.METER);
 	
-	private CalibrationTable calTable;
+	private static CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
 
 	protected LinkedHashMap<String, LinkedHashMap<HKL, Amount<Length>> > cal2peaks;
 	
-	protected Combo standard;
+	protected static Combo standard;
 	protected Button beamRefineButton;
 	protected Group gpSelectMode, calibrationControls;
 
@@ -92,16 +92,16 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected ArrayList<IPeak> peaks = new ArrayList<IPeak>();
 
 	private Button calibrateButton;
-	protected Text gradient,intercept;
-	protected Button inputQAxis;
-	protected Text cameralength, cameralengthErr;
+	protected static Text gradient,intercept;
+	protected static Button inputQAxis;
+	protected static Label cameralength, cameralengthErr;
 
 	protected Double disttobeamstop;
 
 	protected Button[] detTypes;
 
-	protected HashMap<String, Unit<Length>> unitScale;
-	protected HashMap<String, Button> unitSel;
+	protected static HashMap<String, Unit<Length>> unitScale;
+	protected static HashMap<String, Button> unitSel;
 
 	protected String currentMode = NcdConstants.detChoices[0];
 	
@@ -330,26 +330,27 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		Group gpCameraDistance = new Group(calibrationResultsComposite, SWT.NONE);
 		gpCameraDistance.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-		gpCameraDistance.setLayout(new GridLayout(5, false));
+		gpCameraDistance.setLayout(new GridLayout(4, false));
 		gpCameraDistance.setText("Camera Length");
 
-		Label disLab = new Label(gpCameraDistance, SWT.NONE);
-		disLab.setText("Camera Distance");
-
-		cameralength = new Text(gpCameraDistance, SWT.READ_ONLY | SWT.FILL | SWT.CENTER);
+		cameralength = new Label(gpCameraDistance, SWT.NONE);
+		cameralength.setAlignment(SWT.CENTER);
 		cameralength.setText("--");
-		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 1, 2));
 
-		disLab = new Label(gpCameraDistance, SWT.NONE);
+		Label disLab = new Label(gpCameraDistance, SWT.NONE);
 		disLab.setText("+/-");
+		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true, 1, 2));
 
-		cameralengthErr = new Text(gpCameraDistance, SWT.READ_ONLY | SWT.FILL | SWT.CENTER);
+		cameralengthErr = new Label(gpCameraDistance, SWT.NONE);
+		cameralengthErr.setAlignment(SWT.CENTER);
 		cameralengthErr.setText("--");
-		cameralengthErr.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		cameralengthErr.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 2));
 		
 		disLab = new Label(gpCameraDistance, SWT.NONE);
 		disLab.setText("m");
-
+		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true, 1, 2));
+		
 		calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
 		calibrationControls.setLayout(new GridLayout(3, false));
 		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
