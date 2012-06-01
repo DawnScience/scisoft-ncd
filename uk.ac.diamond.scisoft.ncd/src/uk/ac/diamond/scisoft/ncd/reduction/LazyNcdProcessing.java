@@ -16,14 +16,11 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
-import java.text.ParseException;
-import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
-import javax.measure.unit.UnitFormat;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -40,6 +37,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
@@ -67,8 +65,8 @@ public class LazyNcdProcessing {
 	private SectorROI intSector;
 	private Double slope;
 	private Double intercept;
-	private Double cameraLength;
-	private String qaxisUnit;
+	private Amount<Length> cameraLength;
+	private Unit<Length> qaxisUnit;
 	private BooleanDataset mask;
 
 	private CalibrationResultsBean crb;
@@ -236,24 +234,17 @@ public class LazyNcdProcessing {
 		this.intercept = intercept;
 	}
 
-	public void setCameraLength(Double cameraLength) {
+	public void setCameraLength(Amount<Length> cameraLength) {
 		this.cameraLength = cameraLength;
 	}
 
-	public void setUnit(String unit) {
+	public void setUnit(Unit<Length> unit) {
 		if (unit == null) {
 			this.qaxisUnit = null;
 			return;
 		}
-		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-		Unit<? extends Quantity> unitObject;
-		try {
-			// q-axis units need to be inverse of the linear dimension units
-			unitObject = unitFormat.parseSingleUnit(unit, new ParsePosition(0)).inverse();
-			this.qaxisUnit = unitFormat.format(unitObject);
-		} catch (ParseException e) {
-			e.printStackTrace();
-		}
+		// q-axis units need to be inverse of the linear dimension units
+		this.qaxisUnit = (Unit<Length>) unit.inverse();
 	}
 
 	

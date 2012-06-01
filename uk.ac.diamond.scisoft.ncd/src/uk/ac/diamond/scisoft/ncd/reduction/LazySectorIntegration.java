@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -23,6 +26,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -36,7 +40,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private SectorROI intSector;
 	private AbstractDataset[] areaData;
 	private AbstractDataset mask;
-	private Double gradient, intercept, cameraLength;
+	private Double gradient, intercept;
+	Amount<Length> cameraLength;
 	
 	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
@@ -83,9 +88,9 @@ public class LazySectorIntegration extends LazyDataReduction {
 			this.intercept =  new Double(intercept);
 	}
 
-	public void setCameraLength(Double cameraLength) {
+	public void setCameraLength(Amount<Length> cameraLength) {
 		if (cameraLength != null)
-			this.cameraLength = new Double(cameraLength);
+			this.cameraLength = cameraLength;
 	}
 
 	public AbstractDataset[] execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id, ILock lock) {
@@ -142,7 +147,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		int type = H5.H5Dget_type(cameralength_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(cameralength_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.doubleValue()});
+		H5.H5Dwrite(cameralength_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.doubleValue(SI.MILLIMETER)});
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
@@ -220,16 +225,17 @@ public class LazySectorIntegration extends LazyDataReduction {
 		
 		// add unit attribute
 		{
+			String unitString = qaxisUnit.toString();
 			int attrspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
-			H5.H5Tset_size(attrtype_id, qaxisUnit.length());
+			H5.H5Tset_size(attrtype_id, unitString.length());
 			
 			int attr_id = H5.H5Acreate(qcalibration_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 			if (attr_id < 0)
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
 			
-			int write_id = H5.H5Awrite(attr_id, attrtype_id, qaxisUnit.getBytes());
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, unitString .getBytes());
 			if (write_id < 0)
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			

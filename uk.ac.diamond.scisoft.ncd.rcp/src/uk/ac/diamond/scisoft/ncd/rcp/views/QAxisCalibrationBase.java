@@ -75,7 +75,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
 	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
 	
-	private Unit<Length> NANOMETER = SI.NANO(SI.METER);
+	protected Unit<Length> NANOMETER = SI.NANO(SI.METER);
 	
 	private static CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
@@ -94,14 +94,13 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	private Button calibrateButton;
 	protected static Text gradient,intercept;
 	protected static Button inputQAxis;
-	protected static Label cameralength, cameralengthErr;
+	protected static Label cameralength;
 
 	protected Double disttobeamstop;
 
 	protected Button[] detTypes;
 
-	protected static HashMap<String, Unit<Length>> unitScale;
-	protected static HashMap<String, Button> unitSel;
+	protected static HashMap<Unit<Length>, Button> unitSel;
 
 	protected String currentMode = NcdConstants.detChoices[0];
 	
@@ -186,8 +185,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		return null;
 	}
 	
-	protected String getUnit() {
-		for (Entry<String, Button> unitBtn : unitSel.entrySet())
+	protected Unit<Length> getUnit() {
+		for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
 				return unitBtn.getKey();
 		return null;
@@ -284,10 +283,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		hkl2peaks.put(new HKL(6, 4, 2), Amount.valueOf(0.07257, NANOMETER));		
 		cal2peaks.put("Silicon", (LinkedHashMap<HKL, Amount<Length>>) hkl2peaks.clone()); // WAXS
 		hkl2peaks.clear();
-		
-		unitScale = new HashMap<String, Unit<Length>>(2);
-		unitScale.put(NcdConstants.unitChoices[0], NonSI.ANGSTROM);
-		unitScale.put(NcdConstants.unitChoices[1], NANOMETER);
 	}
 
 	@Override
@@ -330,7 +325,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		Group gpCameraDistance = new Group(calibrationResultsComposite, SWT.NONE);
 		gpCameraDistance.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-		gpCameraDistance.setLayout(new GridLayout(4, false));
+		gpCameraDistance.setLayout(new GridLayout(2, false));
 		gpCameraDistance.setText("Camera Length");
 
 		cameralength = new Label(gpCameraDistance, SWT.NONE);
@@ -339,15 +334,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 1, 2));
 
 		Label disLab = new Label(gpCameraDistance, SWT.NONE);
-		disLab.setText("+/-");
-		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true, 1, 2));
-
-		cameralengthErr = new Label(gpCameraDistance, SWT.NONE);
-		cameralengthErr.setAlignment(SWT.CENTER);
-		cameralengthErr.setText("--");
-		cameralengthErr.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 2));
-		
-		disLab = new Label(gpCameraDistance, SWT.NONE);
 		disLab.setText("m");
 		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true, 1, 2));
 		
@@ -395,16 +381,18 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		unitGrp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 		unitGrp.setToolTipText("Select q-axis calibration units");
 		
-		unitSel = new HashMap<String, Button>(2);
-		unitSel.put(NcdConstants.unitChoices[0], new Button(unitGrp, SWT.RADIO));
-		unitSel.get(NcdConstants.unitChoices[0]).setText(NcdConstants.unitChoices[0]);
-		unitSel.get(NcdConstants.unitChoices[0]).setToolTipText("calibrate q-axis in Ångstroms");
-		unitSel.get(NcdConstants.unitChoices[0]).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		unitSel = new HashMap<Unit<Length>, Button>(2);
+		Button unitButton = new Button(unitGrp, SWT.RADIO);
+		unitButton.setText(NonSI.ANGSTROM.toString());
+		unitButton.setToolTipText("calibrate q-axis in Ångstroms");
+		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		unitSel.put(NonSI.ANGSTROM, unitButton);
 		
-		unitSel.put(NcdConstants.unitChoices[1], new Button(unitGrp, SWT.RADIO));
-		unitSel.get(NcdConstants.unitChoices[1]).setText(NcdConstants.unitChoices[1]);
-		unitSel.get(NcdConstants.unitChoices[1]).setToolTipText("calibrate q-axis in nanometers");
-		unitSel.get(NcdConstants.unitChoices[1]).setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		unitButton = new Button(unitGrp, SWT.RADIO);
+		unitButton.setText(NANOMETER.toString());
+		unitButton.setToolTipText("calibrate q-axis in nanometers");
+		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		unitSel.put(NANOMETER, unitButton);
 		
 		inputQAxis = new Button(group, SWT.NONE);
 		inputQAxis.setText("Override");
@@ -492,13 +480,12 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		gradient.setText("--");
 		intercept.setText("--");
 		cameralength.setText("--");
-		cameralengthErr.setText("--");
 		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentMode)) {
 			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentMode);
 			if (peakList != null)
 				calibrationPeakList.addAll(peakList);
 			
-			final String units = ncdCalibrationSourceProvider.getUnit(currentMode);
+			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentMode);
 			if (ncdCalibrationSourceProvider.getFunction(currentMode) != null) {
 
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
@@ -507,10 +494,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 					public void run() {
 						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(0)));
 						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(1)));
-						Double mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentMode);
+						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentMode);
 						if (mcl != null) {
-							final double dist = mcl  / 1000;
-							cameralength.setText(String.format("%3.3f",dist));
+							cameralength.setText(String.format("%3.3f", mcl.doubleValue(SI.MILLIMETER)));
 						}
 						for (Button unitBtn : unitSel.values())
 							unitBtn.setSelection(false);
@@ -531,9 +517,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 	
 	protected Unit<Length> getUnitScale() {
-		for (Entry<String,Button> unitBtn : unitSel.entrySet())
+		for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
-				return unitScale.get(unitBtn.getKey());
+				return unitBtn.getKey();
 		return null;
 	}
 

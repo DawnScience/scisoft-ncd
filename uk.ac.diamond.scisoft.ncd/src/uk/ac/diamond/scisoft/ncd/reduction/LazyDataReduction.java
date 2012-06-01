@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -30,7 +33,7 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 public abstract class LazyDataReduction {
 
 	protected AbstractDataset qaxis;
-	protected String qaxisUnit;
+	protected Unit<Length> qaxisUnit;
 	protected String detector;
 	protected String calibration;
 	protected int normChannel;
@@ -50,7 +53,7 @@ public abstract class LazyDataReduction {
 		this.normChannel = normChannel;
 	}
 
-	public void setQaxis(AbstractDataset qaxis, String unit) {
+	public void setQaxis(AbstractDataset qaxis, Unit<Length> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}
@@ -60,7 +63,7 @@ public abstract class LazyDataReduction {
 	public void writeQaxisData(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape, new int[] { 1 },
-				1, qaxisUnit);
+				1, qaxisUnit.toString());
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
 		int type_id = H5.H5Dget_type(qaxis_id);

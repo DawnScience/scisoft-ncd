@@ -20,27 +20,41 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+
+import org.jscience.physics.amount.Amount;
+
 import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 
 class CalibrationResultsData implements Serializable {
 	private AFunction fuction;
 	private ArrayList<CalibrationPeak> peakList;
-	private Double meanCameraLength;
-	private String unit;
+	private Amount<Length> meanCameraLength;
+	private Unit<Length> unit;
 	
-	public CalibrationResultsData(AFunction calibrationFunction, String unit) {
+	public CalibrationResultsData(AFunction calibrationFunction, Unit<Length> unit) {
 		super();
 		this.fuction= calibrationFunction;
 		this.unit = unit;
 	}
 
-	CalibrationResultsData(AFunction calibrationFunction, List<CalibrationPeak> peaks, double meanCameraLength, String unit) {
+	CalibrationResultsData(AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		super();
 		this.fuction= calibrationFunction;
-		this.peakList = new ArrayList<CalibrationPeak>();
-		for(CalibrationPeak p : peaks)
-			peakList.add(p);
-		this.meanCameraLength = meanCameraLength;
+		
+		if (peaks != null) {
+			this.peakList = new ArrayList<CalibrationPeak>();
+			for(CalibrationPeak p : peaks)
+				peakList.add(p);
+		} else 
+			this.peakList = null;
+		
+		if (meanCameraLength != null)
+			this.meanCameraLength = meanCameraLength.copy();
+		else 
+			this.meanCameraLength = null;
+		
 		this.unit = unit;
 	}
 	
@@ -52,11 +66,11 @@ class CalibrationResultsData implements Serializable {
 		return peakList;
 	}
 
-	public Double getMeanCameraLength() {
+	public Amount<Length> getMeanCameraLength() {
 		return meanCameraLength;
 	}
 	
-	public String getUnit() {
+	public Unit<Length> getUnit() {
 		return unit;
 	}
 }

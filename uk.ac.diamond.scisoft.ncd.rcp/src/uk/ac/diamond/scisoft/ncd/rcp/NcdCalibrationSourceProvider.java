@@ -23,8 +23,12 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -72,8 +76,8 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		for (String experiment : crb.keySet()) {
 			AFunction calibrationFunction = crb.getFunction(experiment);
 			List<CalibrationPeak> peaks = crb.getPeakList(experiment);
-			Double meanCameraLength = crb.getMeanCameraLength(experiment);
-			String unit = crb.getUnit(experiment);
+			Amount<Length> meanCameraLength = crb.getMeanCameraLength(experiment);
+			Unit<Length> unit = crb.getUnit(experiment);
 			calibrationResults.putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit);
 		}
 		
@@ -84,7 +88,7 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		return calibrationResults.getFunction(experiment);
 	}
 	
-	public Double getMeanCameraLength(String experiment) {
+	public Amount<Length> getMeanCameraLength(String experiment) {
 		return calibrationResults.getMeanCameraLength(experiment);
 	}
 	
@@ -92,7 +96,7 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		return calibrationResults.getPeakList(experiment);
 	}
 	
-	public String getUnit(String experiment) {
+	public Unit<Length> getUnit(String experiment) {
 		return calibrationResults.getUnit(experiment);
 	}
 

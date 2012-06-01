@@ -22,6 +22,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
+
+import org.jscience.physics.amount.Amount;
+
 import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
 
 public class CalibrationResultsBean implements Serializable {
@@ -32,25 +37,13 @@ public class CalibrationResultsBean implements Serializable {
 		results = new HashMap<String, CalibrationResultsData>();
 	}
 	
-	public CalibrationResultsBean(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, double meanCameraLength, String unit) {
-		
+	public CalibrationResultsBean(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		results = new HashMap<String, CalibrationResultsData>();
-		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit); 
-		results.put(experiment, newData);
+		putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit); 
 	}
 	
-	public void putCalibrationResult(String experiment, AFunction calibrationFunction, String unit) {
-		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, unit); 
-		results.put(experiment, newData);
-	}
-	
-	public void putCalibrationResult(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Double meanCameraLength, String unit) {
-		CalibrationResultsData newData; 
-		if (peaks != null && meanCameraLength != null)
-			newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit);
-		else 
-			newData = new CalibrationResultsData(calibrationFunction, unit);
-		
+	public void putCalibrationResult(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit);	
 		results.put(experiment, newData);
 	}
 	
@@ -66,13 +59,13 @@ public class CalibrationResultsBean implements Serializable {
 		return null;
 	}
 
-	public Double getMeanCameraLength(String experiment) {
+	public Amount<Length> getMeanCameraLength(String experiment) {
 		if (results.containsKey(experiment))
 			return results.get(experiment).getMeanCameraLength();
 		return null;
 	}
 	
-	public String getUnit(String experiment) {
+	public Unit<Length> getUnit(String experiment) {
 		if (results.containsKey(experiment))
 			return results.get(experiment).getUnit();
 		return null;

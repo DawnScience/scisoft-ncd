@@ -91,7 +91,6 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 
@@ -170,7 +169,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						Parameter gradient = new Parameter(newGradient);
 						Parameter intercept = new Parameter(newIntercept);
 						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-						crb.putCalibrationResult(det, calibrationFunction, getUnit());
+						crb.putCalibrationResult(det, calibrationFunction, null, null, getUnit());
 					}
 					ncdCalibrationSourceProvider.putCalibrationResult(crb);
 					break;
@@ -198,10 +197,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
 			Unit<Length> selUnit = SI.NANO(SI.METER);
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
+			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
-					memento.putString(CalibrationPreferences.QAXIS_UNITS, unitBtn.getKey());
-					selUnit = (Unit<Length>) Unit.valueOf(unitBtn.getKey());
+					selUnit = unitBtn.getKey();
+					memento.putString(CalibrationPreferences.QAXIS_UNITS, selUnit.toString());
 					break;
 				}
 			
@@ -228,9 +227,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getFunction(key).getParameterValue(0));
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getFunction(key).getParameterValue(1));
 
-					Double mcl = crb.getMeanCameraLength(key);
+					Amount<Length> mcl = crb.getMeanCameraLength(key);
 					if (mcl != null)
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.floatValue());
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH, (float) mcl.doubleValue(SI.MILLIMETER));
 					
 					ArrayList<CalibrationPeak> calPeaks = crb.getPeakList(key);
 					if (calPeaks != null) {
@@ -300,16 +299,16 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_STANDARD);
 			if (val != null) standard.select(val);
 			
+			Unit<Length> selUnit = NANOMETER;
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
-			if (units == null) units = NcdConstants.DEFAULT_UNIT;
+			if (units != null) 
+				selUnit = (Unit<Length>) Unit.valueOf(units);
 			
-			Unit<Length> selUnit = (Unit<Length>) Unit.valueOf(units);
-			for (Entry<String, Button> unitBtn : unitSel.entrySet())
-				if (unitBtn.getKey().equals(units)) {
+			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
+				if (unitBtn.getKey().equals(selUnit))
 					unitBtn.getValue().setSelection(true);
-					
-				}
-				else unitBtn.getValue().setSelection(false);
+				else
+					unitBtn.getValue().setSelection(false);
 			
 			IMemento calibrationPeaksMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 			if (calibrationPeaksMemento != null) {
@@ -342,7 +341,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					Parameter gradient = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_GRADIENT));
 					Parameter intercept = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT));
 					Float mcl = data.getFloat(CalibrationPreferences.QAXIS_CAMERALENGTH);
-					Double meanCameraLength = (mcl != null) ? new Double(mcl) : null;
+					Amount<Length> meanCameraLength = (mcl != null) ? Amount.valueOf(mcl, SI.MILLIMETER) : null;
 					
 					IMemento dataPeaksMemento = data.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 					ArrayList<CalibrationPeak> dataPeakList = new ArrayList<CalibrationPeak>();
@@ -359,7 +358,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						}
 					}
 					
-					crb.putCalibrationResult(key, new StraightLine(new Parameter[]{gradient, intercept}), dataPeakList, meanCameraLength, units);
+					crb.putCalibrationResult(key, new StraightLine(new Parameter[]{gradient, intercept}), dataPeakList, meanCameraLength, selUnit);
 				}
 				
 				ncdCalibrationSourceProvider.putCalibrationResult(crb);
@@ -555,12 +554,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
 						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
 						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-						double meanCameraLength = calibrationMethod.getMeanCameraLength();
-						double stdCameraLength = calibrationMethod.getStdCameraLength() / 1e3;
-						cameralengthErr.setText(String.format("%3.3f", stdCameraLength));
+						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength();
+						cameralength.setText(String.format("%3.3f", meanCameraLength.doubleValue(SI.MILLIMETER)));
 
 						crb.putCalibrationResult(currentMode, calibrationFunction,
-								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale.toString());
+								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale);
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 
 						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());

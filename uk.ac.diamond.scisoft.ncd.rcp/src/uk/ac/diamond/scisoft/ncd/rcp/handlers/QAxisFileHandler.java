@@ -20,7 +20,7 @@ import java.io.File;
 import java.text.ParsePosition;
 import java.util.ArrayList;
 
-import javax.measure.quantity.Quantity;
+import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
@@ -38,6 +38,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -103,21 +104,19 @@ public class QAxisFileHandler extends AbstractHandler {
 								UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 								String units = unitFormat.format(SI.NANO(SI.METER));
 								HDF5Attribute unitsAttr = node.getAttribute("unit");
+								Unit<Length> inv_units = null;
 								if (unitsAttr != null) {
 									units = unitsAttr.getFirstElement();
-									Unit<? extends Quantity> inv_units = unitFormat.parseProductUnit(units,
-											new ParsePosition(0)).inverse();
-									units = unitFormat.format(inv_units);
+									inv_units = (Unit<Length>) unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse();
 								}
-								double cameraLength = Double.NaN;
+								Amount<Length> cameraLength = null;
 								nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
 								if (nodeLink != null) {
 									node = nodeLink.getDestination();
 									if (node instanceof HDF5Dataset)
-										cameraLength = ((HDF5Dataset)node).getDataset().getSlice().getDouble(0);
+										cameraLength = Amount.valueOf(((HDF5Dataset)node).getDataset().getSlice().getDouble(0), SI.MILLIMETER);
 								}
-								
-								crb  = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, units);
+								crb  = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[]{gradient, intercept}), new ArrayList<CalibrationPeak>(), cameraLength, inv_units);
 								ncdCalibrationSourceProvider.putCalibrationResult(crb);
 							}
 						}
