@@ -161,13 +161,19 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				case 0: 
 					CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCalibrationResults();
 					String det = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					Parameter gradient = new Parameter(getGradient());
-					Parameter intercept = new Parameter(getIntercept());
-					StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-					crb.putCalibrationResult(det, calibrationFunction, getUnit());
+					Double newGradient = getGradient();
+					Double newIntercept = getIntercept();
+					if (newGradient == null || newIntercept == null) {
+						if (crb.containsKey(det))
+							crb.clearData(det);
+					} else {
+						Parameter gradient = new Parameter(newGradient);
+						Parameter intercept = new Parameter(newIntercept);
+						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+						crb.putCalibrationResult(det, calibrationFunction, getUnit());
+					}
 					ncdCalibrationSourceProvider.putCalibrationResult(crb);
 					break;
-					
 				case 1:
 					String saxsDet = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 					ncdSaxsDetectorSourceProvider.setSaxsDetector(saxsDet);
