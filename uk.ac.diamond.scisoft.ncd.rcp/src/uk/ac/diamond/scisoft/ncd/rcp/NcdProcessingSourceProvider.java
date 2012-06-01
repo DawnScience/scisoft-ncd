@@ -56,10 +56,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public final static String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
 	public final static String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
 	
-	public final static String QGRADIENT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.qGradient";
-	public final static String QINTERCEPT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.qIntercept";
-	public final static String QUNIT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.qUnit";
-	
 	private boolean enableAverage = false;
 	private boolean enableBackground = false;
 	private boolean enableDetectorResponse = false;
@@ -79,8 +75,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
 	private Integer normChannel;
 	private Double bgScaling, absScaling;
-	private Double energy, qGradient, qIntercept;
-	private String qUnit;
+	private Double energy;
 
 	public NcdProcessingSourceProvider() {
 	}
@@ -117,9 +112,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(BKGSCALING_STATE, bgScaling);
 		currentState.put(ABSSCALING_STATE, absScaling);
 		currentState.put(WORKINGDIR_STATE, workingDir);
-		currentState.put(QGRADIENT_STATE, qGradient);
-		currentState.put(QINTERCEPT_STATE, qIntercept);
-		currentState.put(QUNIT_STATE, qUnit);
 		
 		return currentState;
 	}
@@ -151,10 +143,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     GRIDAVERAGE_STATE,
 		                     BKGSCALING_STATE,
 		                     ABSSCALING_STATE,
-		                     WORKINGDIR_STATE,
-		                     QGRADIENT_STATE,
-		                     QINTERCEPT_STATE,
-		                     QUNIT_STATE};
+		                     WORKINGDIR_STATE};
 	}
 
 	public void setEnableAverage(boolean enableAverage) {
@@ -282,21 +271,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
 	}
 
-	public void setQGradient(Double qGradient) {
-		this.qGradient = new Double(qGradient);
-		fireSourceChanged(ISources.WORKBENCH, QGRADIENT_STATE, this.qGradient);
-	}
-
-	public void setQIntercept(Double qIntercept) {
-		this.qIntercept = new Double(qIntercept);
-		fireSourceChanged(ISources.WORKBENCH, QINTERCEPT_STATE, this.qIntercept);
-	}
-
-	public void setQUnit(String qUnit) {
-		this.qUnit = new String(qUnit);
-		fireSourceChanged(ISources.WORKBENCH, QUNIT_STATE, this.qUnit);
-	}
-
 	public boolean isEnableAverage() {
 		return enableAverage;
 	}
@@ -395,17 +369,5 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 
 	public Double getEnergy() {
 		return energy;
-	}
-
-	public Double getQGradient() {
-		return qGradient;
-	}
-
-	public Double getQIntercept() {
-		return qIntercept;
-	}
-
-	public String getQUnit() {
-		return qUnit;
 	}
 }

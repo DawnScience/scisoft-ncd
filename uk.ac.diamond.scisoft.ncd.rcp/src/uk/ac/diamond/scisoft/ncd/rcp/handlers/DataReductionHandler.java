@@ -144,10 +144,6 @@ public class DataReductionHandler extends AbstractHandler {
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		
-		ncdQGradientSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QGRADIENT_STATE);
-		ncdQInterceptSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QINTERCEPT_STATE);
-		ncdQUnitSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.QUNIT_STATE);
-		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 	}
 	
@@ -425,10 +421,6 @@ public class DataReductionHandler extends AbstractHandler {
 		if (gridAverageSlice != null)
 			gridAverage = gridAverageSlice.getAdvancedSlice();
 		
-		Double qGradient = ncdQGradientSourceProvider.getQGradient();
-		Double qIntercept = ncdQInterceptSourceProvider.getQIntercept();
-		String qUnit = ncdQUnitSourceProvider.getQUnit();
-		
 		String bgFile = null;
 		Double bgScaling = null;
 		if (flags.isEnableBackground()) {
@@ -502,10 +494,6 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setGridAverageSelection(gridAverage);
 		processing.setCalibration(calibration);
 		processing.setNormChannel(normChannel);
-		processing.setSlope(qGradient);
-		processing.setIntercept(qIntercept);
-		processing.setUnit(qUnit);
-		
 	}
 	
 	private String generateDateTimeStamp() {
