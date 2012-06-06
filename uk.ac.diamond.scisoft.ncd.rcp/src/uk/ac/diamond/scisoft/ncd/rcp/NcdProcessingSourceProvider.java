@@ -207,67 +207,67 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	public void setScaler(String scaler) {
-		this.scaler = new String(scaler);
+		this.scaler = (scaler != null) ? new String(scaler) : null;
 		fireSourceChanged(ISources.WORKBENCH, SCALER_STATE, this.scaler);
 	}
 	
 	public void setSaxsDetector(String saxsDetector) {
-		this.saxsDetector = new String(saxsDetector);
+		this.saxsDetector = (saxsDetector != null) ? new String(saxsDetector) : null;
 		fireSourceChanged(ISources.WORKBENCH, SAXSDETECTOR_STATE, this.saxsDetector);
 	}
 	
 	public void setWaxsDetector(String waxsDetector) {
-		this.waxsDetector = new String(waxsDetector);
+		this.waxsDetector = (waxsDetector != null) ? new String(waxsDetector) : null;
 		fireSourceChanged(ISources.WORKBENCH, WAXSDETECTOR_STATE, this.waxsDetector);
 	}
 	
 	public void setEnergy(Double energy) {
-		this.energy = new Double(energy);
+		this.energy = (energy != null) ? new Double(energy) : null;
 		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
 	}
 
 	public void setNormChannel(Integer normChannel) {
-		this.normChannel = new Integer(normChannel);
+		this.normChannel = (normChannel != null) ? new Integer(normChannel) : null;
 		fireSourceChanged(ISources.WORKBENCH, NORMCHANNEL_STATE, this.normChannel);
 	}
 
 	public void setDataSlice(SliceInput dataSlice) {
-		this.dataSlice = new SliceInput(dataSlice);
+		this.dataSlice = (dataSlice != null) ? new SliceInput(dataSlice) : null;
 		fireSourceChanged(ISources.WORKBENCH, DATASLICE_STATE, this.dataSlice);
 	}
 
 	public void setBkgSlice(SliceInput bkgSlice) {
-		this.bkgSlice = bkgSlice != null ? new SliceInput(bkgSlice) : null;
+		this.bkgSlice = (bkgSlice != null) ? new SliceInput(bkgSlice) : null;
 		fireSourceChanged(ISources.WORKBENCH, BKGSLICE_STATE, this.bkgSlice);
 	}
 
 	public void setBgFile(String bgFile) {
-		this.bgFile = new String(bgFile);
+		this.bgFile = (bgFile != null) ? new String(bgFile) : null;
 		fireSourceChanged(ISources.WORKBENCH, BKGFILE_STATE, this.bgFile);
 	}
 
 	public void setDrFile(String drFile) {
-		this.drFile = new String(drFile);
+		this.drFile = (drFile != null) ? new String(drFile) : null;
 		fireSourceChanged(ISources.WORKBENCH, DRFILE_STATE, this.drFile);
 	}
 
 	public void setGrigAverage(SliceInput gridAverage) {
-		this.gridAverage = new SliceInput(gridAverage.getAdvancedSlice());
+		this.gridAverage = (gridAverage != null) ? new SliceInput(gridAverage.getAdvancedSlice()) : null;
 		fireSourceChanged(ISources.WORKBENCH, GRIDAVERAGE_STATE, this.gridAverage);
 	}
 
 	public void setBgScaling(Double bgScaling) {
-		this.bgScaling = new Double(bgScaling);
+		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 		fireSourceChanged(ISources.WORKBENCH, BKGSCALING_STATE, this.bgScaling);
 	}
 
 	public void setAbsScaling(Double absScaling) {
-		this.absScaling = new Double(absScaling);
+		this.absScaling = (absScaling != null) ? new Double(absScaling) : null;
 		fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
 	}
 
 	public void setWorkingDir(String workingDir) {
-		this.workingDir = new String(workingDir);
+		this.workingDir = (workingDir != null) ? new String(workingDir): null;
 		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
 	}
 
