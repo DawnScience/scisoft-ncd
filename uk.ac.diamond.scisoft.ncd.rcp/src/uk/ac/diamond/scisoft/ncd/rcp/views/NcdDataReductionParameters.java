@@ -290,7 +290,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			memento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChan.getSelection());
 			
-			memento.putString(NcdPreferences.NCD_ENERGY, energy.getText());
+			Double energy = getEnergy();
+			if (energy != null)
+				memento.putFloat(NcdPreferences.NCD_ENERGY, energy.floatValue());
 			memento.putString(NcdPreferences.NCD_DIRECTORY, inputDirectory);
 		}
 	}
@@ -425,10 +427,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				ncdDrFileSourceProvider.setDrFile(tmp);
 			}
 			
-			tmp = memento.getString(NcdPreferences.NCD_ENERGY);
-			if (tmp != null) {
-				energy.setText(tmp);
-				ncdEnergySourceProvider.setEnergy(getEnergy());
+			flt = memento.getFloat(NcdPreferences.NCD_ENERGY);
+			if (flt != null) {
+				energy.setText(String.format("%.3f", flt));
+				ncdEnergySourceProvider.setEnergy(new Double(flt));
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_DIRECTORY);
