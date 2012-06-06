@@ -553,6 +553,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
 			}		
 		});
 
@@ -616,6 +617,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
 			}		
 		});
 
@@ -759,6 +761,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
 			}		
 		});
 
@@ -851,6 +854,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
 			}		
 		});
 
@@ -933,6 +937,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
 				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
 			}		
 		});
 
