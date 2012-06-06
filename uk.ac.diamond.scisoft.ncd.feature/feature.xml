@@ -41,19 +41,19 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          id="uk.ac.diamond.scisoft.ncd.rcp"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="2.0.0"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="2.0.0"/>
 
    <plugin
          id="uk.ac.diamond.scisoft.ncd.rcp.contributions"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="2.0.0"
          fragment="true"
          unpack="false"/>
 
@@ -61,7 +61,7 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          id="uk.ac.diamond.scisoft.ncd.actors"
          download-size="0"
          install-size="0"
-         version="0.0.0"
+         version="2.0.0"
          unpack="false"/>
 
    <plugin
@@ -72,9 +72,10 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="uk.ac.diamond.sda.jscience"
+         id="uk.ac.diamond.org.jscience"
          download-size="0"
          install-size="0"
-         version="0.0.0"/>
+         version="4.3.1"
+         unpack="false"/>
 
 </feature>

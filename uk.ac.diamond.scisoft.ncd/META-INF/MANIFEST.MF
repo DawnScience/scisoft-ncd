@@ -17,7 +17,7 @@ Require-Bundle: org.eclipse.core.runtime,
  uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0",
  uk.ac.diamond.org.uncommons.maths;bundle-version="1.0.0",
  org.apache.commons.math;bundle-version="[3.0.0,4.0.0)",
- uk.ac.diamond.sda.jscience;bundle-version="1.0.0";visibility:=reexport
+ uk.ac.diamond.org.jscience;bundle-version="[4.3.1,5.0.0)"
 Import-Package: ncsa.hdf.hdf5lib,
  ncsa.hdf.hdf5lib.exceptions,
  org.apache.commons.beanutils,
@@ -25,4 +25,4 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.apache.commons.lang,
  org.slf4j;version="[1.5.0,2.0.0)",
  uk.ac.gda.monitor
-Bundle-Vendor: Diamond Light Source Ltd.
+Bundle-Vendor: Diamond Light Source

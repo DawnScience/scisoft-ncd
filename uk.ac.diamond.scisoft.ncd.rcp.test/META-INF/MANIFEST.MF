@@ -12,4 +12,4 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.apache.commons.io,
  org.apache.commons.lang,
  org.apache.commons.math.util;version="[2.2.0,3.0.0)"
-Bundle-Vendor: Diamond Light Souce Ltd.
+Bundle-Vendor: Diamond Light Souce
