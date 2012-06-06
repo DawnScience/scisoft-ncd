@@ -78,4 +78,18 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="com.springsource.org.apache.commons.beanutils"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="com.springsource.org.apache.commons.lang"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
