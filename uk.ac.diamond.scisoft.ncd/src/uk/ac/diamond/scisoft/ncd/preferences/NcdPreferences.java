@@ -46,7 +46,6 @@ public class NcdPreferences {
 	public static final String NCD_DIM = "ncd.detector.dimension";
 	public static final String NCD_MAXCHANNEL = "ncd.norm.maxchannel";
 	public static final String NCD_MAXCHANNEL_INDEX = "ncd.norm.maxchannel.index";
-	public static final String NCD_ENERGY = "ncd.energy";
 	
 	public static final String NCD_DIRECTORY = "ncd.directory";
 	public static final String NCD_BGFIRSTFRAME = "ncd.bgfirstframe";

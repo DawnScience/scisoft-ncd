@@ -38,6 +38,8 @@ import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.workbench.plotting.tools.FittingTool;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -82,6 +84,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected LinkedHashMap<String, LinkedHashMap<HKL, Amount<Length>> > cal2peaks;
 	
+	protected static Text energy;
 	protected static Combo standard;
 	protected Button beamRefineButton;
 	protected Group gpSelectMode, calibrationControls;
@@ -155,6 +158,20 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		public IDataset getStoredDataset() {
 			return dataset;
 		}
+	}
+
+	protected Double getEnergy() {
+		String input = energy.getText();
+		if (input!= null) {
+			try {
+				Double val = Double.valueOf(energy.getText());  
+				return val;
+			} catch (Exception e) {
+				String msg = "SCISOFT NCD: energy was not set";
+				logger.info(msg);
+			}
+		}
+		return null;
 	}
 
 	protected Double getGradient() {
@@ -317,26 +334,12 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		calibrationResultsComposite.setLayout(new GridLayout(2, true));
 
 		Group gpCalibrationResultsComposite = new Group(calibrationResultsComposite, SWT.NONE);
-		gpCalibrationResultsComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-		gpCalibrationResultsComposite.setLayout(new GridLayout(4, false));
+		gpCalibrationResultsComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
+		gpCalibrationResultsComposite.setLayout(new GridLayout(7, false));
 		gpCalibrationResultsComposite.setText("Calibration Function");
 
 		calibrationResultsDisplay(gpCalibrationResultsComposite);
 
-		Group gpCameraDistance = new Group(calibrationResultsComposite, SWT.NONE);
-		gpCameraDistance.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-		gpCameraDistance.setLayout(new GridLayout(2, false));
-		gpCameraDistance.setText("Camera Length");
-
-		cameralength = new Label(gpCameraDistance, SWT.NONE);
-		cameralength.setAlignment(SWT.CENTER);
-		cameralength.setText("--");
-		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 1, 2));
-
-		Label disLab = new Label(gpCameraDistance, SWT.NONE);
-		disLab.setText("m");
-		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true, 1, 2));
-		
 		calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
 		calibrationControls.setLayout(new GridLayout(3, false));
 		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
@@ -376,9 +379,34 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		intercept.setText("--");
 		intercept.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		
+		Label cmlab = new Label(group, SWT.NONE);
+		cmlab.setText("Camera Length");
+		cmlab.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+
+		cameralength = new Label(group, SWT.NONE);
+		cameralength.setAlignment(SWT.CENTER);
+		cameralength.setText("--");
+		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+
+		Label disLab = new Label(group, SWT.NONE);
+		disLab.setText("m");
+		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+		
+		new Label(group, SWT.NONE).setText("Energy (keV)");
+		energy = new Text(group, SWT.BORDER);
+		energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3 ,1));
+		energy.setToolTipText("Set the energy used in data collection");
+		energy.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				ncdEnergySourceProvider.setEnergy(getEnergy());
+			}
+		});
+		
 		Group unitGrp = new Group(group, SWT.NONE);
 		unitGrp.setLayout(new GridLayout(2, false));
-		unitGrp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+		unitGrp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		unitGrp.setToolTipText("Select q-axis calibration units");
 		
 		unitSel = new HashMap<Unit<Length>, Button>(2);

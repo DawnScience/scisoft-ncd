@@ -28,8 +28,6 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -75,7 +73,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
 	private Text bgFile, drFile, bgScale, absScale;
 
-	private Text location, energy;
+	private Text location;
 	
 	private Button browse;
 	private String inputDirectory = "/tmp";
@@ -88,7 +86,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
-	private NcdProcessingSourceProvider ncdEnergySourceProvider, ncdMaskSourceProvider;
+	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
@@ -101,20 +99,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private static Combo calList;
 	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
-
-	private Double getEnergy() {
-		String input = energy.getText();
-		if (input!= null) {
-			try {
-				Double val = Double.valueOf(energy.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: energy was not set";
-				logger.info(msg);
-			}
-		}
-		return null;
-	}
 
 	private Double getAbsScale() {
 		String input = absScale.getText();
@@ -290,9 +274,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			memento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChan.getSelection());
 			
-			Double energy = getEnergy();
-			if (energy != null)
-				memento.putFloat(NcdPreferences.NCD_ENERGY, energy.floatValue());
 			memento.putString(NcdPreferences.NCD_DIRECTORY, inputDirectory);
 		}
 	}
@@ -427,12 +408,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				ncdDrFileSourceProvider.setDrFile(tmp);
 			}
 			
-			flt = memento.getFloat(NcdPreferences.NCD_ENERGY);
-			if (flt != null) {
-				energy.setText(String.format("%.3f", flt));
-				ncdEnergySourceProvider.setEnergy(new Double(flt));
-			}
-			
 			tmp = memento.getString(NcdPreferences.NCD_DIRECTORY);
 			if (tmp != null) {
 				location.setText(tmp);
@@ -524,7 +499,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		g = new Group(c, SWT.BORDER);
 		g.setText("Sector Integration Parameters");
-		gl = new GridLayout(3, false);
+		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		g.setLayout(gl);
 		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
@@ -558,6 +533,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdFastIntSourceProvider.setEnableFastIntegration(fastIntButton.getSelection());
 				}
 
+			});
+			
+			useMask = new Button(g, SWT.CHECK);
+			useMask.setText("Apply detector mask");
+			useMask.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+			useMask.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
+				}
 			});
 		}
 
@@ -860,34 +845,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		
 		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(4, false));
-		g.setText("Experiment Parameters");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
-		{
-			new Label(g, SWT.NONE).setText("Energy (keV)");
-			energy = new Text(g, SWT.BORDER);
-			energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			energy.setToolTipText("Set the energy used in data collection");
-			energy.addModifyListener(new ModifyListener() {
-				
-				@Override
-				public void modifyText(ModifyEvent e) {
-					ncdEnergySourceProvider.setEnergy(getEnergy());
-				}
-			});
-			
-			useMask = new Button(g, SWT.CHECK);
-			useMask.setText("Apply detector mask");
-			useMask.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
-			useMask.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
-				}
-			});
-		}
-
-		g = new Group(c, SWT.NONE);
 		g.setLayout(new GridLayout(3, false));
 		g.setText("Results directory");
 		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
@@ -959,7 +916,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		
-		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
 		
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);

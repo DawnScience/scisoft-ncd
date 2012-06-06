@@ -126,6 +126,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
 		beamRefineButton.setText("Refine Beam Position");
 		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
+		beamRefineButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 		
 		restoreState();
 		
@@ -204,6 +205,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					break;
 				}
 			
+			Double energy = getEnergy();
+			if (energy != null)
+				memento.putFloat(CalibrationPreferences.QAXIS_ENERGY, energy.floatValue());
+			
 			if (!(calibrationPeakList.isEmpty())) {
 				IMemento calibrationPeaksMemento = memento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 				for (CalibrationPeak peak: calibrationPeakList) {
@@ -280,6 +285,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		if (this.memento != null) {
 			String tmp;
 			Integer val;
+			Float flt;
 			
 			tmp = this.memento.getString(CalibrationPreferences.QAXIS_CURRENTMODE);
 			if (tmp != null) currentMode = tmp;
@@ -309,6 +315,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					unitBtn.getValue().setSelection(true);
 				else
 					unitBtn.getValue().setSelection(false);
+			
+			flt = memento.getFloat(CalibrationPreferences.QAXIS_ENERGY);
+			if (flt != null) {
+				energy.setText(String.format("%.3f", flt));
+				ncdEnergySourceProvider.setEnergy(new Double(flt));
+			}
 			
 			IMemento calibrationPeaksMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 			if (calibrationPeaksMemento != null) {
