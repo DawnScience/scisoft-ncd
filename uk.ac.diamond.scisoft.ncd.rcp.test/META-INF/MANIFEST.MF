@@ -8,8 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit4;bundle-version="4.8.1"
 Import-Package: ncsa.hdf.hdf5lib,
  ncsa.hdf.object.h5,
- org.apache.commons.beanutils,
+ org.apache.commons.beanutils;version="[1.8.0,2.0.0)",
  org.apache.commons.io,
- org.apache.commons.lang,
  org.apache.commons.math.util;version="[2.2.0,3.0.0)"
 Bundle-Vendor: Diamond Light Souce
