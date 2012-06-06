@@ -25,8 +25,7 @@ import org.osgi.framework.FrameworkUtil;
 import uk.ac.diamond.scisoft.analysis.rcp.views.DatasetInspectorView;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
-import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
-//import uk.ac.diamond.scisoft.ncd.rcp.views.WaxsQAxisCalibration;
+import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
 
 
 public class NcdPerspective implements IPerspectiveFactory {
@@ -35,9 +34,7 @@ public class NcdPerspective implements IPerspectiveFactory {
 	
 	static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdperspective";
 	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
-	static final String QAxisFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.qaxisfolder";
 	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
-	static final String ToolPageView1Dand2D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D_and_2D";
 	
 	// Currently defined in uk.ac.diamond.sda.navigator.views class 
 	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
@@ -45,34 +42,31 @@ public class NcdPerspective implements IPerspectiveFactory {
 	@Override
 	public void createInitialLayout(IPageLayout layout) {
 
-		layout.addView(NcdDataReductionParameters.ID, IPageLayout.BOTTOM, 0.5f, IPageLayout.ID_EDITOR_AREA);
-		
-		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.2f, IPageLayout.ID_EDITOR_AREA);
+		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.15f, IPageLayout.ID_EDITOR_AREA);
 		String explorer = ProjectExplorer.VIEW_ID;
 		projectFolderLayout.addView(explorer);
 		if (layout.getViewLayout(explorer) != null)
 			layout.getViewLayout(explorer).setCloseable(false);
 		projectFolderLayout.addView(FileView_ID);
 
-		String plot = PlotView.ID + "DP";
-		layout.addView(plot, IPageLayout.RIGHT, 0.3f, IPageLayout.ID_EDITOR_AREA);
-		if (layout.getViewLayout(plot) != null)
-			layout.getViewLayout(plot).setCloseable(false);
-		
-		layout.addView(ToolPageView2D_ID, IPageLayout.RIGHT, 0.5f, plot);
+		layout.addView(ToolPageView2D_ID, IPageLayout.RIGHT, 0.65f, IPageLayout.ID_EDITOR_AREA);
 		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
-		layout.addView(ToolPageView1Dand2D_ID, IPageLayout.BOTTOM, 0.5f, ToolPageView2D_ID);
-		layout.getViewLayout(ToolPageView1Dand2D_ID).setCloseable(false);
+		layout.addView(NcdDataReductionParameters.ID, IPageLayout.BOTTOM, 0.65f, ToolPageView2D_ID);
 		
-		IFolderLayout qaxisFolderLayout = layout.createFolder(QAxisFolder_ID, IPageLayout.RIGHT, 0.35f, NcdDataReductionParameters.ID);
-		qaxisFolderLayout.addView(SaxsQAxisCalibration.ID);
-		//qaxisFolderLayout.addView(WaxsQAxisCalibration.ID);
-
+		
 		String inspector = DatasetInspectorView.ID;
-		layout.addView(inspector, IPageLayout.RIGHT, 0.55f, QAxisFolder_ID);
+		layout.addView(inspector, IPageLayout.BOTTOM, 0.7f, IPageLayout.ID_EDITOR_AREA);
 		if (layout.getViewLayout(inspector) != null)
 			layout.getViewLayout(inspector).setCloseable(false);
 
+		String plot = PlotView.ID + "DP";
+		layout.addView(plot, IPageLayout.RIGHT, 0.45f, IPageLayout.ID_EDITOR_AREA);
+		if (layout.getViewLayout(plot) != null)
+			layout.getViewLayout(plot).setCloseable(false);
+		
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.8f, IPageLayout.ID_EDITOR_AREA);
+		
+		
 	}
 
 }
