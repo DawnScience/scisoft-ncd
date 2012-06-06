@@ -49,6 +49,9 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.forms.events.ExpansionAdapter;
+import org.eclipse.ui.forms.events.ExpansionEvent;
+import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
@@ -426,14 +429,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		final Composite c = new Composite(sc, SWT.NONE);
 		GridLayout grid = new GridLayout(3, false);
 		c.setLayout(grid);
-
-		Group g = new Group(c, SWT.BORDER);
-		g.setText("Data reduction pipeline");
 		GridLayout gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		g.setLayout(gl);
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 		{
+			Group g = new Group(c, SWT.BORDER);
+			g.setText("Data reduction pipeline");
+			g.setLayout(gl);
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			
 			normButton = new Button(g, SWT.CHECK);
 			normButton.setText("1. Normalisation");
 			normButton.setToolTipText("Enable normalisation step");
@@ -497,13 +500,67 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 		}
 
-		g = new Group(c, SWT.BORDER);
-		g.setText("Sector Integration Parameters");
+		{
+			Group g = new Group(c, SWT.NONE);
+			g.setLayout(new GridLayout(3, false));
+			g.setText("Results directory");
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			
+			new Label(g, SWT.NONE).setText("Directory:");
+			location = new Text(g, SWT.BORDER);
+			location.setText(inputDirectory);
+			location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+			location.setToolTipText("Location of NCD data reduction results directory");
+			location.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetDefaultSelected(SelectionEvent e) {
+					File dir = new File(location.getText());
+					if (dir.exists()) {
+						inputDirectory = dir.getPath();
+					} else {
+						location.setText(inputDirectory);
+					}
+					ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
+				}
+			});
+
+			browse = new Button(g, SWT.NONE);
+			browse.setText("...");
+			browse.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					DirectoryDialog dChooser = new DirectoryDialog(getViewSite().getShell());
+					dChooser.setText("Select working directory for NCD data reduction");
+					dChooser.setFilterPath(inputDirectory);
+					final File dir = new File(dChooser.open());
+					if (dir.exists()) {
+						inputDirectory = dir.toString();
+						location.setText(inputDirectory);
+					}
+				}
+			});
+
+		}
+		
+		ExpandableComposite ecomp = new ExpandableComposite(c, SWT.NONE);
+		ecomp.setText("Sector Integration Parameters");
+		ecomp.setToolTipText("Select Sector Integration options");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		g.setLayout(gl);
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+		ecomp.setLayout(gl);
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.addExpansionListener(new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+			}		
+		});
+
 		{
+			Composite g = new Composite(ecomp, SWT.NONE);
+			g.setLayout(gl);
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
 			radialButton = new Button(g, SWT.CHECK);
 			radialButton.setText("Radial Profile");
 			radialButton.setToolTipText("Activate radial profile calculation");
@@ -544,13 +601,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
 				}
 			});
+			ecomp.setClient(g);
 		}
+		ecomp.setExpanded(false);
+		
+		ecomp = new ExpandableComposite(c, SWT.NONE);
+		ecomp.setText("Reference data");
+		ecomp.setToolTipText("Set options for NCD data reduction");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		ecomp.setLayout(gl);
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.addExpansionListener(new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+			}		
+		});
 
-		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(6, false));
-		g.setText("Reference data");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 		{
+			Composite g = new Composite(ecomp, SWT.NONE);
+			g.setLayout(new GridLayout(6, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
 			calListLabel = new Label(g, SWT.NONE);
 			calListLabel.setText("Normalisation Data");
 			calList = new Combo(g, SWT.NONE);
@@ -671,13 +744,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					}
 				}
 			});
+			ecomp.setClient(g);
 		}
+		ecomp.setExpanded(false);
 
-		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(4, false));
-		g.setText("Background frame selection");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		ecomp = new ExpandableComposite(c, SWT.NONE);
+		ecomp.setText("Background frame selection");
+		ecomp.setToolTipText("Set background data slicing parameters");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		ecomp.setLayout(gl);
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.addExpansionListener(new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+			}		
+		});
+
 		{
+			Composite g = new Composite(ecomp, SWT.NONE);
+			g.setLayout(new GridLayout(4, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+			
 			bgFramesStartLabel = new Label(g, SWT.NONE);
 			bgFramesStartLabel.setText("First");
 			bgFramesStart = new Text(g, SWT.BORDER);
@@ -747,13 +836,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			bgAdvancedButton.setSelection(false);
+			ecomp.setClient(g);
 		}
+		ecomp.setExpanded(false);
+		
+		ecomp = new ExpandableComposite(c, SWT.NONE);
+		ecomp.setText("Data frame selection");
+		ecomp.setToolTipText("Set data slicing parameters");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		ecomp.setLayout(gl);
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.addExpansionListener(new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+			}		
+		});
 
-		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(4, false));
-		g.setText("Data frame selection");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 		{
+			Composite g = new Composite(ecomp, SWT.NONE);
+			g.setLayout(new GridLayout(4, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+			
 			detFramesStartLabel = new Label(g, SWT.NONE);
 			detFramesStartLabel.setText("First");
 			detFramesStart = new Text(g, SWT.BORDER);
@@ -813,13 +918,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdDataSliceSourceProvider.setDataSlice(tmpDetSlice);
 				}
 			});
+			ecomp.setClient(g);
 		}
+		ecomp.setExpanded(false);
 		
-		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(1, false));
-		g.setText("Grid data averaging");
-		g.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, true));
+		ecomp = new ExpandableComposite(c, SWT.NONE);
+		ecomp.setText("Grid data averaging");
+		ecomp.setToolTipText("Specify dimensions for averaging");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		ecomp.setLayout(gl);
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.addExpansionListener(new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+			}		
+		});
+
 		{
+			Composite g = new Composite(ecomp, SWT.NONE);
+			g.setLayout(new GridLayout(1, false));
+			g.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, true));
+			
 			gridAverageButton = new Button(g, SWT.CHECK);
 			gridAverageButton.setText("Average dimensions");
 			gridAverageButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -842,48 +963,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
 				}
 			});
+			ecomp.setClient(g);
 		}
-		
-		g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(3, false));
-		g.setText("Results directory");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		{
-			new Label(g, SWT.NONE).setText("Directory:");
-			location = new Text(g, SWT.BORDER);
-			location.setText(inputDirectory);
-			location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			location.setToolTipText("Location of NCD data reduction results directory");
-			location.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetDefaultSelected(SelectionEvent e) {
-					File dir = new File(location.getText());
-					if (dir.exists()) {
-						inputDirectory = dir.getPath();
-					} else {
-						location.setText(inputDirectory);
-					}
-					ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
-				}
-			});
-
-			browse = new Button(g, SWT.NONE);
-			browse.setText("...");
-			browse.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					DirectoryDialog dChooser = new DirectoryDialog(getViewSite().getShell());
-					dChooser.setText("Select working directory for NCD data reduction");
-					dChooser.setFilterPath(inputDirectory);
-					final File dir = new File(dChooser.open());
-					if (dir.exists()) {
-						inputDirectory = dir.toString();
-						location.setText(inputDirectory);
-					}
-				}
-			});
-
-		}
+		ecomp.setExpanded(false);
 
 		sc.setContent(c);
 		sc.setExpandVertical(true);
