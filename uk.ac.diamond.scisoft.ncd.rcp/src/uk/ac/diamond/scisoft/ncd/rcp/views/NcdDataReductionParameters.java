@@ -28,6 +28,8 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.graphics.Rectangle;
@@ -511,16 +513,17 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			location.setText(inputDirectory);
 			location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			location.setToolTipText("Location of NCD data reduction results directory");
-			location.addSelectionListener(new SelectionAdapter() {
+			location.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetDefaultSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					File dir = new File(location.getText());
 					if (dir.exists()) {
 						inputDirectory = dir.getPath();
+						ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 					} else {
-						location.setText(inputDirectory);
+						ncdWorkingDirSourceProvider.setWorkingDir(null);
 					}
-					ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 				}
 			});
 
@@ -681,10 +684,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgFile = new Text(g, SWT.BORDER);
 			bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
 			bgFile.setToolTipText("File with the background measurments");
-			bgFile.addSelectionListener(new SelectionAdapter() {
+			bgFile.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
-					ncdBgFileSourceProvider.setBgFile(bgFile.getText());
+				public void modifyText(ModifyEvent e) {
+					File tmpBgFile = new File(bgFile.getText());
+					if (tmpBgFile.exists())
+						ncdBgFileSourceProvider.setBgFile(tmpBgFile.getAbsolutePath());
+					else
+						ncdBgFileSourceProvider.setBgFile(null);
 				}
 			});
 
@@ -723,10 +731,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			drFile = new Text(g, SWT.BORDER);
 			drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 4, 1));
 			drFile.setToolTipText("File with the detector response frame");
-			drFile.addSelectionListener(new SelectionAdapter() {
+			drFile.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
-					ncdDrFileSourceProvider.setDrFile(drFile.getText());
+				public void modifyText(ModifyEvent e) {
+					File tmpDrFile = new File(drFile.getText());
+					if (tmpDrFile.exists())
+						ncdDrFileSourceProvider.setDrFile(tmpDrFile.getAbsolutePath());
+					else
+						ncdDrFileSourceProvider.setDrFile(null);
 				}
 			});
 
