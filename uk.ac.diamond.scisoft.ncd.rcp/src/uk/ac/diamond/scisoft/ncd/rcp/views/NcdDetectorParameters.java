@@ -64,7 +64,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 public class NcdDetectorParameters extends ViewPart implements ISourceProviderListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdDetectorSettings.class);
-	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorSettings";
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters";
 	
 	private IMemento memento;
 	
@@ -257,20 +257,10 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		
 		final ScrolledComposite sc = new ScrolledComposite(parent, SWT.VERTICAL);
 		final Composite c = new Composite(sc, SWT.NONE);
-		GridLayout grid = new GridLayout(3, false);
+		GridLayout grid = new GridLayout(7, false);
 		c.setLayout(grid);
 
-		Group g = new Group(c, SWT.NONE);
-		g.setLayout(new GridLayout(4, false));
-		g.setText("Experiment Parameters");
-		g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
-		
-		Group gpSelectMode = new Group(g, SWT.NONE);
-		gpSelectMode.setLayout(new GridLayout(7, false));
-		gpSelectMode.setText("Detectors");
-		gpSelectMode.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 4, 1));
-
-		detTypeWaxs = new Button(gpSelectMode, SWT.CHECK);
+		detTypeWaxs = new Button(c, SWT.CHECK);
 		detTypeWaxs.setText("WAXS");
 		detTypeWaxs.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 		detTypeWaxs.addSelectionListener(modeSelectionListenerWaxs);
@@ -282,7 +272,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		});
 
 		
-		detListWaxs = new Combo(gpSelectMode, SWT.NONE);
+		detListWaxs = new Combo(c, SWT.NONE);
 		GridData gridData = new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1);
 		detListWaxs.setLayoutData(gridData);
 		detListWaxs.setToolTipText("Select the WAXS detector used in data collection");
@@ -297,7 +287,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			}
 		});
 		
-		Group gpDimWaxs = new Group(gpSelectMode, SWT.NONE);
+		Group gpDimWaxs = new Group(c, SWT.NONE);
 		gpDimWaxs.setLayout(new GridLayout(2, false));
 		gpDimWaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 		gpDimWaxs.setToolTipText("Select the WAXS detector dimensionality");
@@ -326,10 +316,10 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			});
 		}
 		
-		pxWaxsLabel = new Label(gpSelectMode, SWT.NONE);
+		pxWaxsLabel = new Label(c, SWT.NONE);
 		pxWaxsLabel.setText("pixel (mm)");
 		pxWaxsLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
-		pxWaxs = new Text(gpSelectMode, SWT.BORDER);
+		pxWaxs = new Text(c, SWT.BORDER);
 		pxWaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 		pxWaxs.setToolTipText("Set detector pixel size");
 		pxWaxs.addModifyListener(new ModifyListener() {
@@ -351,7 +341,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		else detTypeWaxs.setSelection(false);
 		modeSelectionListenerWaxs.widgetSelected(null);
 		
-		detTypeSaxs = new Button(gpSelectMode, SWT.CHECK);
+		detTypeSaxs = new Button(c, SWT.CHECK);
 		detTypeSaxs.setText("SAXS");
 		detTypeSaxs.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 		detTypeSaxs.addSelectionListener(modeSelectionListenerSaxs);
@@ -362,7 +352,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			}
 		});
 		
-		detListSaxs = new Combo(gpSelectMode, SWT.NONE);
+		detListSaxs = new Combo(c, SWT.NONE);
 		gridData = new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1);
 		detListSaxs.setLayoutData(gridData);
 		detListSaxs.setToolTipText("Select the SAXS detector used in data collection");
@@ -378,7 +368,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		});
 		
 		
-		Group gpDimSaxs = new Group(gpSelectMode, SWT.NONE);
+		Group gpDimSaxs = new Group(c, SWT.NONE);
 		gpDimSaxs.setLayout(new GridLayout(2, false));
 		gpDimSaxs.setToolTipText("Select the SAXS detector dimensionality");
 		gpDimSaxs.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
@@ -407,10 +397,10 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			});
 		}
 		
-		pxSaxsLabel = new Label(gpSelectMode, SWT.NONE);
+		pxSaxsLabel = new Label(c, SWT.NONE);
 		pxSaxsLabel.setText("pixel (mm)");
 		pxSaxsLabel.setLayoutData(new GridData(GridData.END, SWT.CENTER, true, false));
-		pxSaxs = new Text(gpSelectMode, SWT.BORDER);
+		pxSaxs = new Text(c, SWT.BORDER);
 		pxSaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 2, 1));
 		pxSaxs.setToolTipText("Set detector pixel size");
 		pxSaxs.addModifyListener(new ModifyListener() {
