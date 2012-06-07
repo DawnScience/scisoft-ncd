@@ -340,12 +340,6 @@
             commandId="uk.ac.diamond.scisoft.ncd.rcp.setSectorIntegration">
          <enabledWhen>
             <and>
-                  <with
-                        variable="uk.ac.diamond.scisoft.ncd.rcp.enableSectorIntegration">
-                     <equals
-                           value="true">
-                     </equals>
-                  </with>
                <with
                   variable="activeMenuSelection">
                <count
