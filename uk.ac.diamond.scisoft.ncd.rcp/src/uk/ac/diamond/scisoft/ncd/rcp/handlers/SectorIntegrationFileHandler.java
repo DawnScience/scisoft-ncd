@@ -16,23 +16,33 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import org.dawb.common.ui.util.EclipseUtils;
+import java.io.File;
+
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
-import uk.ac.diamond.scisoft.analysis.rcp.editors.HDF5TreeEditor;
-import uk.ac.diamond.scisoft.analysis.rcp.inspector.DatasetSelection.InspectorType;
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class SectorIntegrationFileHandler extends AbstractHandler {
@@ -45,6 +55,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		Shell shell = window.getShell();
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
@@ -54,22 +65,42 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 				try {
 					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 					if (detectorSaxs != null) {
-						HDF5TreeEditor editor = (HDF5TreeEditor)EclipseUtils.openExternalEditor(((IFile)sel).getLocation().toString());
-						HDF5NodeLink node = editor.getHDF5Tree().findNodeLink("/entry1/"+detectorSaxs+"/data");
-
-						editor.getHDF5TreeExplorer().selectHDF5Node(node, InspectorType.IMAGE);
-
+						String dataFilename;
+						if (sel instanceof IFile)
+							dataFilename = ((IFile)sel).getLocation().toString();
+						else 
+							dataFilename = ((File)sel).getAbsolutePath();
+						HDF5File qaxisFile = new HDF5Loader(dataFilename).loadTree();
+						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"/data").getDestination();
+						if (node == null) {
+							String msg = "No data found in "+ dataFilename;
+							return DataLoadErrorDialog(shell, msg, null);
+						}
+						
+						AbstractDataset data = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice().squeeze().clone();
+						
+						AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						if (activePlotSystem != null)
+							activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
+						
 						return Status.OK_STATUS;
 					} 
 					return Status.CANCEL_STATUS;
 
 				} catch (Exception e) {
-					logger.error("File "+((IFile)sel).getLocation().toString()+" does not open with " + HDF5TreeEditor.ID, e);
+					logger.error("Can not load Nexus tree from "+((IFile)sel).getLocation().toString()+" file", e);
 					return Status.CANCEL_STATUS;
 				}
 			}
 
 		}
 		return null;
+	}
+	
+	private IStatus DataLoadErrorDialog(Shell shell, String msg, Exception e) {
+		logger.error(msg, e);
+		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
+		ErrorDialog.openError(shell, "Image loading error", "Error loading calibration image", status);
+		return Status.CANCEL_STATUS;
 	}
 }

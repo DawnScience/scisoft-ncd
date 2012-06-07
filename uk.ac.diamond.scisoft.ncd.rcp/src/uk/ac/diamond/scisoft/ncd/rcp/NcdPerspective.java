@@ -42,7 +42,7 @@ public class NcdPerspective implements IPerspectiveFactory {
 	@Override
 	public void createInitialLayout(IPageLayout layout) {
 
-		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.15f, IPageLayout.ID_EDITOR_AREA);
+		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.2f, IPageLayout.ID_EDITOR_AREA);
 		String explorer = ProjectExplorer.VIEW_ID;
 		projectFolderLayout.addView(explorer);
 		if (layout.getViewLayout(explorer) != null)

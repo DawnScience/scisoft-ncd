@@ -16,13 +16,13 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp;
 
-import org.dawb.common.ui.views.PlotDataView;
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.osgi.framework.FrameworkUtil;
 
+import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
@@ -45,24 +45,25 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 
 		layout.addView(ToolPageView2D_ID, IPageLayout.RIGHT, 0.7f, IPageLayout.ID_EDITOR_AREA);
 		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
-		layout.addView(ToolPageView1Dand2D_ID, IPageLayout.BOTTOM, 0.7f, ToolPageView2D_ID);
+		layout.addView(ToolPageView1Dand2D_ID, IPageLayout.BOTTOM, 0.6f, ToolPageView2D_ID);
 		layout.getViewLayout(ToolPageView1Dand2D_ID).setCloseable(false);
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1Dand2D_ID);
 		
 		layout.addView(SaxsQAxisCalibration.ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
 		
-		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.2f, IPageLayout.ID_EDITOR_AREA);
+		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.3f, IPageLayout.ID_EDITOR_AREA);
 		String explorer = ProjectExplorer.VIEW_ID;
 		projectFolderLayout.addView(explorer);
 		if (layout.getViewLayout(explorer) != null)
 			layout.getViewLayout(explorer).setCloseable(false);
 		projectFolderLayout.addView(FileView_ID);
 		
-		layout.addView(PlotDataView.ID, IPageLayout.LEFT, 0.4f, IPageLayout.ID_EDITOR_AREA);
-		if (layout.getViewLayout(PlotDataView.ID) != null)
-			layout.getViewLayout(PlotDataView.ID).setCloseable(false);
+		String plot = PlotView.ID + "DP";
+		layout.addView(plot, IPageLayout.LEFT, 0.4f, IPageLayout.ID_EDITOR_AREA);
+		if (layout.getViewLayout(plot) != null)
+			layout.getViewLayout(plot).setCloseable(false);
 		
-		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.8f, PlotDataView.ID);
-		
+		layout.setEditorAreaVisible(false);
 	}
 
 }
