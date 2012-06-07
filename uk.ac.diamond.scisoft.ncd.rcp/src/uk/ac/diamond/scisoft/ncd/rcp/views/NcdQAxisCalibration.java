@@ -566,8 +566,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
 						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
 						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength();
-						cameralength.setText(String.format("%3.3f", meanCameraLength.doubleValue(SI.MILLIMETER)));
+						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
+						cameralength.setText(meanCameraLength.toString());
 
 						crb.putCalibrationResult(currentMode, calibrationFunction,
 								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale);

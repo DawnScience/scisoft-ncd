@@ -336,7 +336,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		Group gpCalibrationResultsComposite = new Group(calibrationResultsComposite, SWT.NONE);
 		gpCalibrationResultsComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
-		gpCalibrationResultsComposite.setLayout(new GridLayout(7, false));
+		gpCalibrationResultsComposite.setLayout(new GridLayout(6, false));
 		gpCalibrationResultsComposite.setText("Calibration Function");
 
 		calibrationResultsDisplay(gpCalibrationResultsComposite);
@@ -389,10 +389,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		cameralength.setText("--");
 		cameralength.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-		Label disLab = new Label(group, SWT.NONE);
-		disLab.setText("m");
-		disLab.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
-		
 		new Label(group, SWT.NONE).setText("Energy (keV)");
 		energy = new Text(group, SWT.BORDER);
 		energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3 ,1));
@@ -425,7 +421,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		
 		inputQAxis = new Button(group, SWT.NONE);
 		inputQAxis.setText("Override");
-		inputQAxis.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+		inputQAxis.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 	}
 
 	public void runCalibration() {
@@ -524,9 +520,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(0)));
 						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(1)));
 						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentMode);
-						if (mcl != null) {
-							cameralength.setText(String.format("%3.3f", mcl.doubleValue(SI.MILLIMETER)));
-						}
+						if (mcl != null)
+							cameralength.setText(mcl.to(SI.METER).toString());
 						for (Button unitBtn : unitSel.values())
 							unitBtn.setSelection(false);
 						if (units == null) 
