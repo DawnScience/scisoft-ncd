@@ -129,7 +129,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		public StoredPlottingObject() {
 			try {
-				AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+				String activeFile = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().getActiveEditor().getTitle();
+				AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(activeFile);
 				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
 				dataset = trace.getData();
 				mask = (BooleanDataset) trace.getMask();
