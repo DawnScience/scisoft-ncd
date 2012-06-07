@@ -18,6 +18,7 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
+import javax.measure.unit.UnitFormat;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -225,7 +226,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 		
 		// add unit attribute
 		{
-			String unitString = qaxisUnit.toString();
+			UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+			String unitString = unitFormat.format(qaxisUnit); 
 			int attrspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(attrtype_id, unitString.length());
