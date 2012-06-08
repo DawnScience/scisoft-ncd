@@ -16,7 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
-import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
@@ -29,12 +28,13 @@ import org.apache.commons.beanutils.ConvertUtils;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 
 	protected AbstractDataset qaxis;
-	protected Unit<Length> qaxisUnit;
+	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
 	protected String calibration;
 	protected int normChannel;
@@ -54,7 +54,7 @@ public abstract class LazyDataReduction {
 		this.normChannel = normChannel;
 	}
 
-	public void setQaxis(AbstractDataset qaxis, Unit<Length> unit) {
+	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}

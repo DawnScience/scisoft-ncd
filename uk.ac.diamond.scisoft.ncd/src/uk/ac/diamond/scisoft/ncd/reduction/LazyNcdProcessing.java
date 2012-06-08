@@ -52,6 +52,7 @@ import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -66,7 +67,7 @@ public class LazyNcdProcessing {
 	private Double slope;
 	private Double intercept;
 	private Amount<Length> cameraLength;
-	private Unit<Length> qaxisUnit;
+	private Unit<ScatteringVector> qaxisUnit;
 	private BooleanDataset mask;
 
 	private CalibrationResultsBean crb;
@@ -244,7 +245,7 @@ public class LazyNcdProcessing {
 			return;
 		}
 		// q-axis units need to be inverse of the linear dimension units
-		this.qaxisUnit = unit.inverse().asType(Length.class);
+		this.qaxisUnit = unit.inverse().asType(ScatteringVector.class);
 	}
 
 	
