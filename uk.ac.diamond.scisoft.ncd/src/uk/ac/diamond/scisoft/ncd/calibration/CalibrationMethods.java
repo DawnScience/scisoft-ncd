@@ -144,6 +144,7 @@ public class CalibrationMethods {
    		return regression.getSumSquaredErrors();
 	}
 	
+	@SuppressWarnings("unused")
 	private Amount<Length> estimateCameraLength(LinkedHashMap<IPeak, HKL> indexedPeaks) {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
 		CombinationGenerator<Entry<IPeak,HKL>> combinations = new CombinationGenerator<Entry<IPeak,HKL>>(indexedPeaks.entrySet(), 2);

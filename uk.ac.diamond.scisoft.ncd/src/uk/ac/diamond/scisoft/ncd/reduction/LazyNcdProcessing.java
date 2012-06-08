@@ -244,7 +244,7 @@ public class LazyNcdProcessing {
 			return;
 		}
 		// q-axis units need to be inverse of the linear dimension units
-		this.qaxisUnit = (Unit<Length>) unit.inverse();
+		this.qaxisUnit = unit.inverse().asType(Length.class);
 	}
 
 	

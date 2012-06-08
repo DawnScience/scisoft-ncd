@@ -308,7 +308,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			Unit<Length> selUnit = NANOMETER;
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units != null) 
-				selUnit = (Unit<Length>) Unit.valueOf(units);
+				selUnit = Unit.valueOf(units).asType(Length.class);
 			
 			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getKey().equals(selUnit))

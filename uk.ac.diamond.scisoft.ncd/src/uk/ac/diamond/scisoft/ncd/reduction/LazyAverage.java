@@ -27,7 +27,6 @@ import org.apache.commons.lang.ArrayUtils;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
-import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;

@@ -455,7 +455,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	}
 
 	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
+	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
 	}
 
 	@Override

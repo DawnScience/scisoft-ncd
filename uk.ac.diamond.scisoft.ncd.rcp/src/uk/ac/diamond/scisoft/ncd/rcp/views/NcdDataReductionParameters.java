@@ -1132,7 +1132,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 	
 	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
+	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
 	}
 
 	@Override

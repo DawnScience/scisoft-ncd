@@ -107,7 +107,7 @@ public class QAxisFileHandler extends AbstractHandler {
 								Unit<Length> inv_units = null;
 								if (unitsAttr != null) {
 									units = unitsAttr.getFirstElement();
-									inv_units = (Unit<Length>) unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse();
+									inv_units = unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse().asType(Length.class);
 								}
 								Amount<Length> cameraLength = null;
 								nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/camera length");
