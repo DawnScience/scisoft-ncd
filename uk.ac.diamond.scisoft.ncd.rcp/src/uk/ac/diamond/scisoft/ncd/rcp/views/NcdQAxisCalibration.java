@@ -234,7 +234,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 					Amount<Length> mcl = crb.getMeanCameraLength(key);
 					if (mcl != null)
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_CAMERALENGTH, (float) mcl.doubleValue(SI.MILLIMETER));
+						crbDataMemento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.to(SI.METER).toString());
 					
 					ArrayList<CalibrationPeak> calPeaks = crb.getPeakList(key);
 					if (calPeaks != null) {
@@ -352,8 +352,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					
 					Parameter gradient = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_GRADIENT));
 					Parameter intercept = new Parameter(data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT));
-					Float mcl = data.getFloat(CalibrationPreferences.QAXIS_CAMERALENGTH);
-					Amount<Length> meanCameraLength = (mcl != null) ? Amount.valueOf(mcl, SI.MILLIMETER) : null;
+					tmp = data.getString(CalibrationPreferences.QAXIS_CAMERALENGTH);
+					Amount<Length> meanCameraLength = null;
+					if (tmp != null) {
+						// JScience can't parse brackets
+						tmp = tmp.replace("(", "").replace(")", "");
+						meanCameraLength = Amount.valueOf(tmp).to(SI.METER);
+					}
 					
 					IMemento dataPeaksMemento = data.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
 					ArrayList<CalibrationPeak> dataPeakList = new ArrayList<CalibrationPeak>();

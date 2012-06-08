@@ -163,7 +163,7 @@ public class CalibrationMethods {
 	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
 	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
 	    
-	    logger.info("Camera length: {} +/- {} mm", mcl, std);
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
    	    return meanCameraLength;
 	}
 	
@@ -180,7 +180,7 @@ public class CalibrationMethods {
 	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
 	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
 	    
-	    logger.info("Camera length: {} +/- {} mm", mcl, std);
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
    	    return meanCameraLength;
 	}
 	
