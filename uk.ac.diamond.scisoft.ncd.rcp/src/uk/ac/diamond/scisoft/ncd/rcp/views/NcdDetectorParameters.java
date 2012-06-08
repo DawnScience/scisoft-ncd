@@ -461,66 +461,69 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
 		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
-			
-			int idxSaxs = detListSaxs.getSelectionIndex();
-			String saveDetSaxs = null;
-			if (idxSaxs != -1)
-				saveDetSaxs = detListSaxs.getItem(idxSaxs);
-			
-			int idxWaxs = detListWaxs.getSelectionIndex();
-			String saveDetWaxs = null;
-			if (idxWaxs != -1)
-				saveDetWaxs = detListWaxs.getItem(idxWaxs);
-			
-			detListSaxs.removeAll();
-			detListWaxs.removeAll();
-			if (sourceValue instanceof HashMap<?, ?>) {
-				for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
-					if (settings instanceof NcdDetectorSettings) {
-						
-						NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
-						
-						if (detSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
-							detListSaxs.add(detSettings.getName());
-							continue;
-						}
-						
-						if (detSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
-							detListWaxs.add(detSettings.getName());
-							continue;
+			if ((detListSaxs != null) && (detListWaxs != null) &&
+					!(detListSaxs.isDisposed())	&& !(detListWaxs.isDisposed())) {
+				int idxSaxs = detListSaxs.getSelectionIndex();
+				String saveDetSaxs = null;
+				if (idxSaxs != -1)
+					saveDetSaxs = detListSaxs.getItem(idxSaxs);
+
+				int idxWaxs = detListWaxs.getSelectionIndex();
+				String saveDetWaxs = null;
+				if (idxWaxs != -1)
+					saveDetWaxs = detListWaxs.getItem(idxWaxs);
+
+				detListSaxs.removeAll();
+				detListWaxs.removeAll();
+				if (sourceValue instanceof HashMap<?, ?>) {
+					for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
+						if (settings instanceof NcdDetectorSettings) {
+
+							NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
+
+							if (detSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
+								detListSaxs.add(detSettings.getName());
+								continue;
+							}
+
+							if (detSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
+								detListWaxs.add(detSettings.getName());
+								continue;
+							}
 						}
 					}
 				}
-			}
-			
-			// Restore saved detector selection
-			// If no detector was selected, select first one in the list
-			// If saved detector selection isn't available in the updated list, select first one
-			if (detListSaxs.getItemCount() > 0) {
-				idxSaxs = (idxSaxs != -1) ? ArrayUtils.indexOf(detListSaxs.getItems(), saveDetSaxs) : 0;
-				idxSaxs = (idxSaxs == -1) ? 0 : idxSaxs;
-				detListSaxs.select(idxSaxs);
-				ncdSaxsDetectorSourceProvider.setSaxsDetector(detListSaxs.getItem(idxSaxs));
-			}
-			
-			if (detListWaxs.getItemCount() > 0) {
-				idxWaxs = (idxWaxs != -1) ? ArrayUtils.indexOf(detListWaxs.getItems(), saveDetWaxs) : 0;
-				idxWaxs = (idxWaxs == -1) ? 0 : idxWaxs;
-				detListWaxs.select(idxWaxs);
-				ncdWaxsDetectorSourceProvider.setWaxsDetector(detListWaxs.getItem(idxWaxs));
+
+				// Restore saved detector selection
+				// If no detector was selected, select first one in the list
+				// If saved detector selection isn't available in the updated list, select first one
+				if (detListSaxs.getItemCount() > 0) {
+					idxSaxs = (idxSaxs != -1) ? ArrayUtils.indexOf(detListSaxs.getItems(), saveDetSaxs) : 0;
+					idxSaxs = (idxSaxs == -1) ? 0 : idxSaxs;
+					detListSaxs.select(idxSaxs);
+					ncdSaxsDetectorSourceProvider.setSaxsDetector(detListSaxs.getItem(idxSaxs));
+				}
+
+				if (detListWaxs.getItemCount() > 0) {
+					idxWaxs = (idxWaxs != -1) ? ArrayUtils.indexOf(detListWaxs.getItems(), saveDetWaxs) : 0;
+					idxWaxs = (idxWaxs == -1) ? 0 : idxWaxs;
+					detListWaxs.select(idxWaxs);
+					ncdWaxsDetectorSourceProvider.setWaxsDetector(detListWaxs.getItem(idxWaxs));
+				}
 			}
 		}
-		
+
 		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
 			if (sourceValue instanceof String) {
 				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 				if (detSettings != null) {
 					int idxDim = detSettings.getDimmension() - 1;
-					for (Button btn : dimSaxs) btn.setSelection(false);
-					dimSaxs[idxDim].setSelection(true);
-					
+					if (dimSaxs != null && !(dimSaxs[idxDim].isDisposed())) {
+						for (Button btn : dimSaxs) btn.setSelection(false);
+						dimSaxs[idxDim].setSelection(true);
+					}
 					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null) {
+					if (pxSize != null && pxSaxs != null && !(pxSaxs.isDisposed())) {
 						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
 						if (!(pxText.equals(pxSaxs.getText())))
 							pxSaxs.setText(pxText);
@@ -534,11 +537,12 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 				if (detSettings != null) {
 					int idxDim = detSettings.getDimmension() - 1;
-					for (Button btn : dimWaxs) btn.setSelection(false);
-					dimWaxs[idxDim].setSelection(true);
-					
+					if (dimWaxs != null && !(dimWaxs[idxDim].isDisposed())) {
+						for (Button btn : dimWaxs) btn.setSelection(false);
+						dimWaxs[idxDim].setSelection(true);
+					}
 					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null) {
+					if (pxSize != null && pxWaxs != null && !(pxWaxs.isDisposed())) {
 						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
 						if (!(pxText.equals(pxWaxs.getText())))
 							pxWaxs.setText(pxText);

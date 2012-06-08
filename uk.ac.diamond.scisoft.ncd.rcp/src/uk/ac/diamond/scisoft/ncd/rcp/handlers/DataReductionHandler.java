@@ -104,7 +104,6 @@ public class DataReductionHandler extends AbstractHandler {
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 
-	private NcdProcessingSourceProvider ncdQGradientSourceProvider, ncdQInterceptSourceProvider, ncdQUnitSourceProvider;
 	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
