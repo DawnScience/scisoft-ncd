@@ -433,7 +433,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			return;
 		}
 
-		final ArrayList<IPeak> initPeaks = (ArrayList<IPeak>) peaks.clone();
+		final ArrayList<IPeak> initPeaks = new ArrayList<IPeak>(peaks);
 		final MultivariateFunction beamOffset = new MultivariateFunction() {
 
 			private IJobManager jobManager = Job.getJobManager();

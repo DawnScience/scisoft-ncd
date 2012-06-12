@@ -561,8 +561,9 @@ public class LazyNcdProcessing {
 			input_ids.setIDs(sec_group_id, sec_data_id);
 		}
 
-		if (flags.isEnableBackground())
-			if (!Arrays.equals(bgFrames_int, frames_int)) {
+		final int[] final_bgFrames_int;
+		if (flags.isEnableBackground() && bgFrames != null && bgFrames_int != null) {
+			if (Arrays.equals(bgFrames_int, frames_int)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
 				for (int i = 0; i < (rank - dim); i++)
 					if (bgFrames[i] != frames[i] && bgFrames[i] != 1) {
@@ -582,8 +583,10 @@ public class LazyNcdProcessing {
 					bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 				}
 			}
+			final_bgFrames_int = Arrays.copyOf(bgFrames_int, bgFrames_int.length);
+		} else
+			final_bgFrames_int = null;
 		
-		final int[] final_bgFrames_int = flags.isEnableBackground() ? Arrays.copyOf(bgFrames_int, bgFrames_int.length) : null;
 		ArrayList<DataReductionJob> processingJobList = new ArrayList<DataReductionJob>();
 		ArrayList<DataReductionJob> runningJobList = new ArrayList<DataReductionJob>();
 		
