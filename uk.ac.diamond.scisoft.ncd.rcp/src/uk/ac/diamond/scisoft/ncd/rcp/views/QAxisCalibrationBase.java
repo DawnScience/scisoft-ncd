@@ -34,7 +34,6 @@ import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.tool.IToolPage;
 import org.dawb.common.ui.plot.trace.IImageTrace;
-import org.dawb.workbench.plotting.tools.FittingTool;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -406,13 +405,18 @@ public class QAxisCalibrationBase extends ViewPart {
 	private void storePeaks() {
 		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Radial Profile");
 		IToolPage fittingTool = plotSystem.getToolPage("org.dawb.workbench.plotting.tools.fittingTool");
-		if (fittingTool != null && fittingTool instanceof FittingTool) {
-			List<? extends IPeak> fittedPeaks = ((FittingTool) fittingTool).getFittedPeaks().getPeaks();
-			Collections.sort(fittedPeaks, new Compare());
-			if (peaks != null && peaks.size() > 0)
-				peaks.clear();
-			for (IPeak peak : fittedPeaks) {
-				peaks.add(peak);
+		if (fittingTool != null) {
+			// Use adapters to avoid direct link which is weak.
+			// TODO Check that this works ok for Irakli...
+			List<IPeak> fittedPeaks = (List<IPeak>)fittingTool.getAdapter(IPeak.class);
+			
+			if (fittedPeaks!=null) {
+				Collections.sort(fittedPeaks, new Compare());
+				if (peaks != null && peaks.size() > 0)
+					peaks.clear();
+				for (IPeak peak : fittedPeaks) {
+					peaks.add(peak);
+				}
 			}
 		}
 	}
