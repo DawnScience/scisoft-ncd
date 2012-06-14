@@ -105,6 +105,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
+	private ExpandableComposite secEcomp, refEcomp, bgEcomp, aveEcomp;
+	private ExpansionAdapter expansionAdapter;
+	
 	private Double getAbsScale() {
 		String input = absScale.getText();
 		if (input!= null) {
@@ -433,6 +436,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		c.setLayout(grid);
 		GridLayout gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
+		
+		expansionAdapter = new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				c.layout();
+				sc.notifyListeners(SWT.Resize, null);
+			}		
+		};
+		
 		{
 			Group g = new Group(c, SWT.BORDER);
 			g.setText("Data reduction pipeline");
@@ -545,23 +557,17 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		}
 		
-		ExpandableComposite ecomp = new ExpandableComposite(c, SWT.NONE);
-		ecomp.setText("Sector Integration Parameters");
-		ecomp.setToolTipText("Select Sector Integration options");
+		secEcomp = new ExpandableComposite(c, SWT.NONE);
+		secEcomp.setText("Sector Integration Parameters");
+		secEcomp.setToolTipText("Select Sector Integration options");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		ecomp.setLayout(gl);
-		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		ecomp.addExpansionListener(new ExpansionAdapter() {
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				c.layout();
-				sc.notifyListeners(SWT.Resize, null);
-			}		
-		});
+		secEcomp.setLayout(gl);
+		secEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		secEcomp.addExpansionListener(expansionAdapter);
 
 		{
-			Composite g = new Composite(ecomp, SWT.NONE);
+			Composite g = new Composite(secEcomp, SWT.NONE);
 			g.setLayout(gl);
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 			
@@ -605,27 +611,21 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
 				}
 			});
-			ecomp.setClient(g);
+			secEcomp.setClient(g);
 		}
-		ecomp.setExpanded(false);
+		secEcomp.setExpanded(false);
 		
-		ecomp = new ExpandableComposite(c, SWT.NONE);
-		ecomp.setText("Reference data");
-		ecomp.setToolTipText("Set options for NCD data reduction");
+		refEcomp = new ExpandableComposite(c, SWT.NONE);
+		refEcomp.setText("Reference data");
+		refEcomp.setToolTipText("Set options for NCD data reduction");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		ecomp.setLayout(gl);
-		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		ecomp.addExpansionListener(new ExpansionAdapter() {
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				c.layout();
-				sc.notifyListeners(SWT.Resize, null);
-			}		
-		});
+		refEcomp.setLayout(gl);
+		refEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		refEcomp.addExpansionListener(expansionAdapter);
 
 		{
-			Composite g = new Composite(ecomp, SWT.NONE);
+			Composite g = new Composite(refEcomp, SWT.NONE);
 			g.setLayout(new GridLayout(7, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 			
@@ -759,27 +759,21 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					}
 				}
 			});
-			ecomp.setClient(g);
+			refEcomp.setClient(g);
 		}
-		ecomp.setExpanded(false);
+		refEcomp.setExpanded(false);
 
-		ecomp = new ExpandableComposite(c, SWT.NONE);
-		ecomp.setText("Background frame selection");
-		ecomp.setToolTipText("Set background data slicing parameters");
+		bgEcomp = new ExpandableComposite(c, SWT.NONE);
+		bgEcomp.setText("Background frame selection");
+		bgEcomp.setToolTipText("Set background data slicing parameters");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		ecomp.setLayout(gl);
-		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		ecomp.addExpansionListener(new ExpansionAdapter() {
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				c.layout();
-				sc.notifyListeners(SWT.Resize, null);
-			}		
-		});
+		bgEcomp.setLayout(gl);
+		bgEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		bgEcomp.addExpansionListener(expansionAdapter);
 
 		{
-			Composite g = new Composite(ecomp, SWT.NONE);
+			Composite g = new Composite(bgEcomp, SWT.NONE);
 			g.setLayout(new GridLayout(4, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 			
@@ -788,9 +782,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgFramesStart = new Text(g, SWT.BORDER);
 			bgFramesStart.setToolTipText("First frame to select from the background data");
 			bgFramesStart.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			bgFramesStart.addSelectionListener(new SelectionAdapter() {
+			bgFramesStart.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					Integer bgStartInt = getBgFirstFrame();
 					Integer bgStopInt = getBgLastFrame();
 					SliceInput tmpBkgSlice = new SliceInput(bgStartInt, bgStopInt);
@@ -803,9 +798,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgFramesStop = new Text(g, SWT.BORDER);
 			bgFramesStop.setToolTipText("Last frame to select from the background data");
 			bgFramesStop.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			bgFramesStop.addSelectionListener(new SelectionAdapter() {
+			bgFramesStop.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					Integer bgStartInt = getBgFirstFrame();
 					Integer bgStopInt = getBgLastFrame();
 					SliceInput tmpBkgSlice = new SliceInput(bgStartInt, bgStopInt);
@@ -817,9 +813,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgAdvanced.setToolTipText("Formatting string for advanced data selection");
 			bgAdvanced.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3, 1));
 			bgAdvanced.setEnabled(false);
-			bgAdvanced.addSelectionListener(new SelectionAdapter() {
+			bgAdvanced.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					SliceInput tmpBkgSlice = new SliceInput(getBgAdvancedSelection());
 					ncdBkgSliceSourceProvider.setBkgSlice(tmpBkgSlice);
 				}
@@ -852,24 +849,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			bgAdvancedButton.setSelection(false);
-			ecomp.setClient(g);
+			bgEcomp.setClient(g);
 		}
-		ecomp.setExpanded(false);
+		bgEcomp.setExpanded(false);
 		
-		ecomp = new ExpandableComposite(c, SWT.NONE);
+		ExpandableComposite ecomp = new ExpandableComposite(c, SWT.NONE);
 		ecomp.setText("Data frame selection");
 		ecomp.setToolTipText("Set data slicing parameters");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		ecomp.setLayout(gl);
 		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		ecomp.addExpansionListener(new ExpansionAdapter() {
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				c.layout();
-				sc.notifyListeners(SWT.Resize, null);
-			}		
-		});
+		ecomp.addExpansionListener(expansionAdapter);
 
 		{
 			Composite g = new Composite(ecomp, SWT.NONE);
@@ -881,9 +872,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			detFramesStart = new Text(g, SWT.BORDER);
 			detFramesStart.setToolTipText("First frame to select from the data file ");
 			detFramesStart.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			detFramesStart.addSelectionListener(new SelectionAdapter() {
+			detFramesStart.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					Integer detStartInt = getDetFirstFrame();
 					Integer detStopInt = getDetLastFrame();
 					SliceInput tmpDetSlice = new SliceInput(detStartInt, detStopInt);
@@ -896,9 +888,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			detFramesStop = new Text(g, SWT.BORDER);
 			detFramesStop.setToolTipText("Last frame to select from the data file ");
 			detFramesStop.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			detFramesStop.addSelectionListener(new SelectionAdapter() {
+			detFramesStop.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					Integer detStartInt = getDetFirstFrame();
 					Integer detStopInt = getDetLastFrame();
 					SliceInput tmpDetSlice = new SliceInput(detStartInt, detStopInt);
@@ -911,6 +904,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			detAdvanced.setToolTipText("Formatting string for advanced data selection");
 			detAdvanced.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3, 1));
 			detAdvanced.setEnabled(false);
+			detAdvanced.addModifyListener(new ModifyListener() {
+				
+				@Override
+				public void modifyText(ModifyEvent e) {
+					SliceInput tmpDetSlice = new SliceInput(getDetAdvancedSelection());
+					ncdDataSliceSourceProvider.setBkgSlice(tmpDetSlice);
+				}
+			});
+			
 			detAdvancedButton = new Button(g, SWT.CHECK);
 			detAdvancedButton.setText("Advanced");
 			detAdvancedButton.setLayoutData(new GridData(SWT.BEGINNING, SWT.CENTER, false, false));
@@ -939,24 +941,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		ecomp.setExpanded(false);
 		
-		ecomp = new ExpandableComposite(c, SWT.NONE);
-		ecomp.setText("Grid data averaging");
-		ecomp.setToolTipText("Specify dimensions for averaging");
+		aveEcomp = new ExpandableComposite(c, SWT.NONE);
+		aveEcomp.setText("Grid data averaging");
+		aveEcomp.setToolTipText("Specify dimensions for averaging");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
-		ecomp.setLayout(gl);
-		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		ecomp.addExpansionListener(new ExpansionAdapter() {
-			@Override
-			public void expansionStateChanged(ExpansionEvent e) {
-				c.layout();
-				sc.notifyListeners(SWT.Resize, null);
-			}		
-		});
+		aveEcomp.setLayout(gl);
+		aveEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		aveEcomp.addExpansionListener(expansionAdapter);
 
 		{
-			Composite g = new Composite(ecomp, SWT.NONE);
-			g.setLayout(new GridLayout(1, false));
+			Composite g = new Composite(aveEcomp, SWT.NONE);
+			g.setLayout(new GridLayout(2, false));
 			g.setLayoutData(new GridData(SWT.END, SWT.CENTER, false, true));
 			
 			gridAverageButton = new Button(g, SWT.CHECK);
@@ -973,17 +969,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			gridAverage = new Text(g, SWT.BORDER);
 			gridAverage.setToolTipText("Comma-separated list of grid dimensions to average");
-			gridAverage.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			gridAverage.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			gridAverage.setEnabled(false);
-			gridAverage.addSelectionListener(new SelectionAdapter() {
+			gridAverage.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
 				}
 			});
-			ecomp.setClient(g);
+			aveEcomp.setClient(g);
 		}
-		ecomp.setExpanded(false);
+		aveEcomp.setExpanded(false);
 
 		sc.setContent(c);
 		sc.setExpandVertical(true);
@@ -1050,6 +1047,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 
 	private void updateNormalisationWidgets(boolean selection) {
+		if (refEcomp != null && !(refEcomp.isDisposed())) {
+			if (!selection && !(drButton.getSelection()) && !(bgButton.getSelection())) {
+				refEcomp.setExpanded(selection);
+				refEcomp.setEnabled(selection);
+			} else {
+				refEcomp.setExpanded(true);
+				refEcomp.setEnabled(true);
+			}
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+		}
 		if (normButton != null && !(normButton.isDisposed()))
 			normButton.setSelection(selection);
 		if (calList != null && !(calList.isDisposed()))
@@ -1067,6 +1074,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 
 	private void updateSectorIntegrationWidgets(boolean selection) {
+		if (secEcomp != null && !(secEcomp.isDisposed())) {
+			secEcomp.setExpanded(selection);
+			secEcomp.setEnabled(selection);
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(secEcomp, selection));
+		}
 		if (secButton != null && !(secButton.isDisposed()))
 			secButton.setSelection(selection);
 		if (radialButton != null && !(radialButton.isDisposed()))
@@ -1080,6 +1092,22 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 
 	private void updateBackgroundSubtractionWidgets(boolean selection) {
+		if (refEcomp != null && !(refEcomp.isDisposed())) {
+			if (!selection && !(drButton.getSelection()) && !(normButton.getSelection())) {
+				refEcomp.setExpanded(selection);
+				refEcomp.setEnabled(selection);
+			} else {
+				refEcomp.setExpanded(true);
+				refEcomp.setEnabled(true);
+			}
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+		}
+		if (bgEcomp != null && !(bgEcomp.isDisposed())) {
+			bgEcomp.setEnabled(selection);
+			if (!selection)
+				bgEcomp.setExpanded(selection);
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(bgEcomp, selection));
+		}
 		if (bgButton != null && !(bgButton.isDisposed()))
 			bgButton.setSelection(selection);
 		if (bgLabel != null && !(bgLabel.isDisposed()))
@@ -1110,6 +1138,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 	
 	private void updateDetectorResponseWidgets(boolean selection) {
+		if (refEcomp != null && !(refEcomp.isDisposed())) {
+			if (!selection && !(bgButton.getSelection()) && !(normButton.getSelection())) {
+				refEcomp.setExpanded(selection);
+				refEcomp.setEnabled(selection);
+			} else {
+				refEcomp.setExpanded(true);
+				refEcomp.setEnabled(true);
+			}
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+		}
 		if (drButton != null && !(drButton.isDisposed()))
 			drButton.setSelection(selection);
 		if (drLabel != null && !(drLabel.isDisposed()))
@@ -1121,6 +1159,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 	
 	private void updateAverageWidgets(boolean selection) {
+		if (aveEcomp != null && !(aveEcomp.isDisposed())) {
+			aveEcomp.setEnabled(selection);
+			if (!selection)
+				aveEcomp.setExpanded(selection);
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+		}
 		if (aveButton != null && !(aveButton.isDisposed()))
 			aveButton.setSelection(selection);
 		if (gridAverage != null && !(gridAverage.isDisposed()))
