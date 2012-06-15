@@ -292,5 +292,26 @@
             name="NCD Data Reduction Tutorials">
       </cheatsheet>
    </extension>
+	<extension point="org.eclipse.ui.navigator.navigatorContent">
+    <commonFilter
+        description="Hides HDF5 files"
+        id="uk.ac.diamond.scisoft.ncd.rcp.hide.h5"
+        name="*.h5 HDF5 files"
+        activeByDefault="false">
+        <filterExpression>
+                <adapt type="org.eclipse.core.resources.IResource">
+                    <test property="org.eclipse.core.resources.name" value="*.h5"/>
+                </adapt>
+        </filterExpression>
+    </commonFilter>
+	</extension>
+	<extension point="org.eclipse.ui.navigator.viewer">
+    <viewerContentBinding
+          viewerId="org.eclipse.ui.navigator.ProjectExplorer">
+          <includes>
+            <contentExtension pattern="uk.ac.diamond.scisoft.ncd.rcp.hide.h5"/> 
+          </includes>
+    </viewerContentBinding>
+	</extension>
 
 </fragment>
