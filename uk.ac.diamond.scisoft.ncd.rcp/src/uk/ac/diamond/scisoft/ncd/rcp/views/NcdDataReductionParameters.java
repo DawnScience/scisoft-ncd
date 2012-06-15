@@ -965,6 +965,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					boolean sel = gridAverageButton.getSelection();
 					boolean aveSel = aveButton.getSelection();
 					gridAverage.setEnabled(sel && aveSel);
+					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
 				}
 			});
 			gridAverage = new Text(g, SWT.BORDER);
