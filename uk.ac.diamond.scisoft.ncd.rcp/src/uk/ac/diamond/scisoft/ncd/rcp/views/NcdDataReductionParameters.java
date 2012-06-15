@@ -909,7 +909,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				@Override
 				public void modifyText(ModifyEvent e) {
 					SliceInput tmpDetSlice = new SliceInput(getDetAdvancedSelection());
-					ncdDataSliceSourceProvider.setBkgSlice(tmpDetSlice);
+					ncdDataSliceSourceProvider.setDataSlice(tmpDetSlice);
 				}
 			});
 			
