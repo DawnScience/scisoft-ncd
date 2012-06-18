@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
+import java.util.Arrays;
 
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
@@ -77,7 +78,14 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 							return DataLoadErrorDialog(shell, msg, null);
 						}
 						
-						AbstractDataset data = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice().squeeze().clone();
+						// Open first frame if dataset has miltiple images
+						int[] shape = ((HDF5Dataset) node).getDataset().squeeze().getShape();
+						int[] start = new int[shape.length];
+						int[] stop = Arrays.copyOf(shape, shape.length);
+						Arrays.fill(start, 0, shape.length, 0);
+						if (shape.length > 2)
+							Arrays.fill(stop, 0, shape.length - 2, 1);
+						AbstractDataset data = (AbstractDataset) ((HDF5Dataset) node).getDataset().squeeze().getSlice(start, stop, null).clone();
 						
 						AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						if (activePlotSystem != null)
