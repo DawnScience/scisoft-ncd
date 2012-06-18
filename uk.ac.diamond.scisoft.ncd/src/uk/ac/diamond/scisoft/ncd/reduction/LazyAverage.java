@@ -78,9 +78,10 @@ public class LazyAverage extends LazyDataReduction {
 			int dimCounter = 1;
 			for (int idx = (frames.length - 1 - dim); idx >= 0; idx--) {
 				if (ArrayUtils.contains(averageIndices, idx + 1)) {
+					sliceDim = idx;
+					sliceSize = frames_int[idx];
 					dimCounter *= frames[idx];
 					if (dimCounter >= frameBatch) {
-						sliceDim = idx;
 						sliceSize = frameBatch * frames_int[idx] / dimCounter;
 						break;
 					}
@@ -88,7 +89,7 @@ public class LazyAverage extends LazyDataReduction {
 			}
 		}
 		
-		// This look iterates over the output averaged dataset image by image
+		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
 			
 			int[] currentFrame = iter.getPos();

@@ -286,6 +286,19 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		}
 		
+		if(flags.isEnableNormalisation()) {
+			DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, calibration);
+			
+			int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
+			long[] calFrames = new long[rankCal];
+			H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, calFrames, null);
+			
+			for (int i = 0; i < frames.length - dim; i++)
+				if (frames[i] != calFrames[i])
+					frames[i] = Math.min(frames[i], calFrames[i]);
+			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
+		}
+		
 	    final int sec_group_id;
 	    final int sec_data_id;
 	    final int az_data_id;
@@ -445,7 +458,7 @@ public class LazyNcdProcessing {
 			if (dimCounter.getSize() > frameBatch) {
 				int[] sliceIdx = dimCounter.getCounts(frameBatch);
 				for (int i = sliceIdx.length - 1; i >= 0; i--) {
-					if (sliceIdx[i] != frames_int[i]) {
+					if (sliceIdx[i] != (frames_int[i] - 1)) {
 						sliceDim = i;
 						break;
 					}
@@ -525,17 +538,30 @@ public class LazyNcdProcessing {
 				
 			}
 			
+			monitor.beginTask("Running Sector Integration Stage", sectorJobList.size());
 			for (Job job : sectorJobList) {
 				while (runningJobList.size() >= cores) {
 					try {
 						runningJobList.get(0).join();
 						runningJobList.remove(0);
+						monitor.worked(1);
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 					}
 				}
 				job.schedule();
 				runningJobList.add(job);
+				
+				if (monitor.isCanceled()) {
+					sectorJobList.clear();
+					for (Job runningJob : runningJobList) {
+						try {
+							runningJob.join();
+						} catch (InterruptedException e) {
+							e.printStackTrace();
+						}
+					}
+				}
 			}
 			
 			for (Job job : sectorJobList) {
@@ -545,6 +571,7 @@ public class LazyNcdProcessing {
 					e.printStackTrace();
 				}
 			}
+			monitor.done();
 			
 			dim = 1;
 			rank = secRank;
