@@ -58,4 +58,9 @@ public class NcdPreferences {
 	public static final String NCD_DATAADVANCED = "ncd.dataadvanced";
 	public static final String NCD_GRIDAVERAGESELECTION = "ncd.gridaverageselection";
 	public static final String NCD_GRIDAVERAGE = "ncd.gridaverage";
+	
+	public static final String CMAESlambda = "CMAESlambda";
+	public static final String CMAESsigma = "CMAESsigma";
+	public static final String CMAESmaxiteration = "CMAESmaxiteration";
+	public static final String CMAESchecker = "CMAESchecker";
 }

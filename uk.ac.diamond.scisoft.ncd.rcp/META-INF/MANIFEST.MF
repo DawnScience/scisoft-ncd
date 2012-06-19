@@ -31,3 +31,4 @@ Import-Package: ncsa.hdf.hdf5lib,
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
 Bundle-Vendor: Diamond Light Souce Ltd.
+Bundle-Activator: uk.ac.diamond.scisoft.ncd.rcp.Activator

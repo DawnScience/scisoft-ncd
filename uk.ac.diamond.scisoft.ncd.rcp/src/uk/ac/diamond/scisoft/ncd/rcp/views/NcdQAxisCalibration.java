@@ -91,6 +91,8 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 
@@ -584,6 +586,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					beamOffset.setMmpp(mmpp);
 					beamOffset.setUnitScale(unitScale);
 					
+					cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
+					double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
+					cmaesInputSigma = new double[] {cmaesInputSigmaPref, cmaesInputSigmaPref};
+					cmaesMaxIterations = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESmaxiteration);
+					int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
+					cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1.0 / cmaesCheckerPref);
+							
 					CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(cmaesLambda, cmaesInputSigma, cmaesMaxIterations, 0.0, true,
 							0, cmaesCheckFeasableCount, new Well19937a(), false, cmaesChecker);
 					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(cmaesChecker);
