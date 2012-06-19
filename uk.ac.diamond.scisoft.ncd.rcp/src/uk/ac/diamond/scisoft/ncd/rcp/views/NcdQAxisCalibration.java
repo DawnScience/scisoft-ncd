@@ -635,6 +635,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 								newBean = new GuiBean();
 							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
 							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
+							
+							AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+							plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(twoDData.getROI());
 						} catch (Exception e) {
 							logger.error("SCISOFT NCD: Error running q-axis calibration procedure", e);
 							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
