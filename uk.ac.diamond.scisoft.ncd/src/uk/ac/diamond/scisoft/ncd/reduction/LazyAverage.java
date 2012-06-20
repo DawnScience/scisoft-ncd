@@ -24,6 +24,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -37,12 +39,18 @@ public class LazyAverage extends LazyDataReduction {
 	public static String name = "Average";
 	private int[] averageIndices;
 	
+	IProgressMonitor monitor = new NullProgressMonitor();
+	
 	public int[] getAverageIndices() {
 		return averageIndices;
 	}
 
 	public void setAverageIndices(int[] averageIndices) {
 		this.averageIndices = averageIndices;
+	}
+
+	public void setMonitor(IProgressMonitor monitor) {
+		this.monitor = monitor;
 	}
 
 	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids) throws NullPointerException, HDF5Exception {
@@ -92,6 +100,9 @@ public class LazyAverage extends LazyDataReduction {
 		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
 			
+			if (monitor.isCanceled())
+				return;
+			
 			int[] currentFrame = iter.getPos();
 			int[] data_stop = Arrays.copyOf(currentFrame, currentFrame.length);
 			long[] data_iter_array = Arrays.copyOf(frames, frames.length);
@@ -126,9 +137,16 @@ public class LazyAverage extends LazyDataReduction {
 			int totalFrames = 0;
 	    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
 			while (data_iter.hasNext()) {
+				
+				if (monitor.isCanceled())
+					return;
+				
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
 				int data_slice_rank = data_slice.getRank();
+				
+				if (monitor.isCanceled())
+					return;
 				
 				int totalFramesBatch = 1;
 				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--)
@@ -139,6 +157,10 @@ public class LazyAverage extends LazyDataReduction {
 				totalFrames += totalFramesBatch;
 				ave_frame = ave_frame.iadd(data_slice);
 			}
+			
+			if (monitor.isCanceled())
+				return;
+			
 			ave_frame =  ave_frame.idivide(totalFrames);
 			
 			int filespace_id = H5.H5Dget_space(ave_data_id);
@@ -147,6 +169,9 @@ public class LazyAverage extends LazyDataReduction {
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 			long[] ave_count_data = new long[frames.length];
 			Arrays.fill(ave_count_data, 1);
+			
+			if (monitor.isCanceled())
+				return;
 			
 			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,

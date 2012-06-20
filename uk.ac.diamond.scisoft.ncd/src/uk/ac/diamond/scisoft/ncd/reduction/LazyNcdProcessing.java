@@ -89,11 +89,11 @@ public class LazyNcdProcessing {
     private long maxMemory;
     
 	private int nxsfile_handle, entry_group_id, processing_group_id;
-    private int dr_group_id, dr_data_id;
-    private int sec_group_id, sec_data_id, az_data_id;
-    private int norm_group_id, norm_data_id;
-    private int bg_group_id, bg_data_id; 
-    private int inv_group_id, inv_data_id;
+	private int dr_group_id, dr_data_id;
+	private int sec_group_id, sec_data_id, az_data_id;
+	private int norm_group_id, norm_data_id;
+	private int bg_group_id, bg_data_id;
+	private int inv_group_id, inv_data_id;
 	private int result_group_id;
 	private DataSliceIdentifiers input_ids;
 	
@@ -173,22 +173,23 @@ public class LazyNcdProcessing {
 		input_ids = null;
 		
 		dr_group_id = -1;
-	    dr_data_id = -1;
-	    
-	    sec_group_id = -1;
-	    sec_data_id = -1;
-	    az_data_id = -1;
-	    
-	    norm_group_id = -1;
-	    norm_data_id = -1;
-	    
-	    bg_group_id = -1; 
-	    bg_data_id = -1;
-	    
-	    inv_group_id = -1;
-	    inv_data_id = -1;
-	    
+		dr_data_id = -1;
+		
+		sec_group_id = -1;
+		sec_data_id = -1;
+		az_data_id = -1;
+		
+		norm_group_id = -1;
+		norm_data_id = -1;
+		
+		bg_group_id = -1;
+		bg_data_id = -1;
+		
+		inv_group_id = -1;
+		inv_data_id = -1;
+		
 		result_group_id =  -1;
+		
 		lock = Job.getJobManager().newLock();
 	}
 
@@ -757,27 +758,33 @@ public class LazyNcdProcessing {
 		}
 		
 		if(flags.isEnableAverage()) {
-			monitor.setTaskName(monitorFile + " : Averaging  datasets");
+			monitor.beginTask(monitorFile + " : Averaging  datasets", 1);
 			int[] averageIndices = new int[] {frames.length - dim};
 			if (gridAverage != null)
 				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
 			
 			LazyAverage lazyAverage = new LazyAverage();
 			lazyAverage.setAverageIndices(averageIndices);
+			lazyAverage.setMonitor(monitor);
 			lazyAverage.execute(dim, frames_int, processing_group_id, frameBatch, input_ids);
+			
+			if (monitor.isCanceled()) {
+				closeHDF5Identifiers();
+				return;
+			}
 			
 			if (qaxis != null) {
 				lazyAverage.setQaxis(qaxis, qaxisUnit);
 				lazyAverage.writeQaxisData(input_ids.datagroup_id);
 			}
 			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
+			monitor.done();
 		}
 		
 	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
 	    H5.H5Lcreate_hard(input_ids.datagroup_id, "./data", result_group_id, "./data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-	    if (qaxis != null) {
+	    if (qaxis != null)
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-	    }
 	    
 	    closeHDF5Identifiers();
 	}
