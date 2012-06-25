@@ -23,7 +23,12 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 public class DataSliceIdentifiers {
 	
-	public int datagroup_id, dataset_id, dataspace_id, dataclass_id, datatype_id, datasize_id;
+	public int datagroup_id = -1;
+	public int dataset_id = -1;
+	public int dataspace_id = -1;
+	public int dataclass_id = -1;
+	public int datatype_id = -1;
+	public int datasize_id = -1;
 	public long[] start, stride, count, block;
 	
 	

@@ -821,7 +821,7 @@ public class LazyNcdProcessing {
 		if (inv_group_id != -1)
 	    	H5.H5Gclose(inv_group_id);
 	    
-	    if (input_ids != null) {
+	    if (input_ids != null && flags.isEnableAverage()) {
 		    if (input_ids.dataset_id != -1)
 		    	H5.H5Dclose(input_ids.dataset_id);
 		    if (input_ids.datagroup_id != -1)
