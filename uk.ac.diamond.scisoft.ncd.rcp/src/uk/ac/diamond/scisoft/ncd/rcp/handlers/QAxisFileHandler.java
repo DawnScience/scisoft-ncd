@@ -25,6 +25,10 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -124,7 +128,7 @@ public class QAxisFileHandler extends AbstractHandler {
 						SectorROI roiData = new SectorROI();
 						roiData.setPlot(true);
 						roiData.setClippingCompensation(true);
-						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam center");
+						nodeLink = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/beam centre");
 						if (nodeLink != null) {
 							node = nodeLink.getDestination();
 							if (node instanceof HDF5Dataset) {
@@ -167,6 +171,16 @@ public class QAxisFileHandler extends AbstractHandler {
 								((PlotView)activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
 								if (crb != null)
 									((PlotView)activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
+								
+								AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+								IRegion sector = plotSystem.getRegion("Calibration");
+								if (sector == null) {
+									sector = plotSystem.createRegion("Calibration", RegionType.SECTOR);
+									plotSystem.addRegion(sector);
+								}
+								sector.setROI(roiData.copy());
+								sector.setUserRegion(true);
+								sector.setVisible(true);
 							}
 
 							IViewPart saxsView = page.findView(SaxsQAxisCalibration.ID);

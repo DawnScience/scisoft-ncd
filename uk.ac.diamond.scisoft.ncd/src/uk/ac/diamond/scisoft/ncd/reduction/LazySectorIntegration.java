@@ -129,7 +129,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 
 	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam center", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2}, false, "pixels");
+		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {2}, false, "pixels");
 		int filespace_id = H5.H5Dget_space(beamcenter_id);
 		int type = H5.H5Dget_type(beamcenter_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
