@@ -6,7 +6,11 @@ Bundle-Version: 2.0.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Eclipse-BuddyPolicy: registered
 Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
-Export-Package: uk.ac.diamond.scisoft.ncd,
+Export-Package: org.apache.commons.validator,
+ org.apache.commons.validator.routines,
+ org.apache.commons.validator.routines.checkdigit,
+ org.apache.commons.validator.util,
+ uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.calibration,
  uk.ac.diamond.scisoft.ncd.data,
  uk.ac.diamond.scisoft.ncd.hdf5,
@@ -26,3 +30,5 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.slf4j;version="[1.5.0,2.0.0)",
  uk.ac.gda.monitor
 Bundle-Vendor: Diamond Light Source Ltd.
+Bundle-ClassPath: commons-validator-1.4.0.jar,
+ .
