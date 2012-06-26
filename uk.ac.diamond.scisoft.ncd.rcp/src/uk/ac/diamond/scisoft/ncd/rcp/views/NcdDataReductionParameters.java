@@ -24,6 +24,8 @@ import java.util.Map.Entry;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
+import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -57,8 +59,6 @@ import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
@@ -69,7 +69,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(NcdDataReductionParameters.class);
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"; //$NON-NLS-1$
 
 	private IMemento memento;
@@ -108,59 +107,30 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private ExpandableComposite secEcomp, refEcomp, bgEcomp, aveEcomp;
 	private ExpansionAdapter expansionAdapter;
 	
+	private IntegerValidator integerValidator = IntegerValidator.getInstance();
+	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
+	
 	private Double getAbsScale() {
 		String input = absScale.getText();
-		if (input!= null) {
-			try {
-				Double val = Double.valueOf(absScale.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Absolute intensity scaling factor was not set";
-				logger.info(msg);
-			}
-		}
-		return null;
+		return doubleValidator.validate(input);
 	}
 	
 	private Double getBgScale() {
 		String input = bgScale.getText();
-		if (input!= null) {
-			try {
-				Double val = Double.valueOf(bgScale.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Background scaling factor was not set";
-				logger.info(msg);
-			}
-		}
-		return null;
+		return doubleValidator.validate(input);
 	}
 	
 	private Integer getBgFirstFrame() {
 		String input = bgFramesStart.getText();
-		if (input!=null && bgFramesStart.isEnabled()) {
-			try {
-				Integer val = Integer.valueOf(bgFramesStart.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Starting from the first background frame";
-				logger.info(msg);
-			}
-		}
+		if (bgFramesStart.isEnabled())
+			return integerValidator.validate(input);
 		return null;
 	}
 	
 	private Integer getBgLastFrame() {
 		String input = bgFramesStop.getText();
-		if (input!=null &&  detFramesStop.isEnabled()) {
-			try {
-				Integer val = Integer.valueOf(bgFramesStop.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Including the last background frame";
-				logger.info(msg);
-			}
-		}
+		if (bgFramesStop.isEnabled())
+			return integerValidator.validate(input);
 		return null;
 	}
 	
@@ -172,29 +142,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Integer getDetFirstFrame() {
 		String input = detFramesStart.getText();
-		if (input!=null && detFramesStart.isEnabled()) {
-			try {
-				Integer val = Integer.valueOf(detFramesStart.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Starting from the first data frame";
-				logger.info(msg);
-			}
-		}
+		if (detFramesStart.isEnabled())
+			return integerValidator.validate(input);
 		return null;
 	}
 	
 	private Integer getDetLastFrame() {
 		String input = detFramesStop.getText();
-		if (input!=null  && detFramesStop.isEnabled()) {
-			try {
-				Integer val = Integer.valueOf(detFramesStop.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Including the last data frame";
-				logger.info(msg);
-			}
-		}
+		if (detFramesStop.isEnabled())
+			return integerValidator.validate(input);
 		return null;
 	}
 	

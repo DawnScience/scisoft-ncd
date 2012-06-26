@@ -30,6 +30,7 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
+import org.apache.commons.validator.routines.DoubleValidator;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
@@ -106,6 +107,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected String currentMode = NcdConstants.detChoices[0];
 	
+	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
+	
 	private static class Compare implements Comparator<IPeak> {
 
 		@Override
@@ -161,44 +164,17 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected Double getEnergy() {
 		String input = energy.getText();
-		if (input!= null) {
-			try {
-				Double val = Double.valueOf(energy.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: energy was not set";
-				logger.info(msg);
-			}
-		}
-		return null;
+		return doubleValidator.validate(input);
 	}
 
 	protected Double getGradient() {
 		String input = gradient.getText();
-		if (input != null) {
-			try {
-				Double val = Double.valueOf(gradient.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Error reading q-axis calibration gradient";
-				logger.error(msg);
-			}
-		}
-		return null;
+		return doubleValidator.validate(input);
 	}
 	
 	protected Double getIntercept() {
 		String input = intercept.getText();
-		if (input != null) {
-			try {
-				Double val = Double.valueOf(intercept.getText());  
-				return val;
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Error reading q-axis calibration intercept";
-				logger.error(msg);
-			}
-		}
-		return null;
+		return doubleValidator.validate(input);
 	}
 	
 	protected Unit<Length> getUnit() {

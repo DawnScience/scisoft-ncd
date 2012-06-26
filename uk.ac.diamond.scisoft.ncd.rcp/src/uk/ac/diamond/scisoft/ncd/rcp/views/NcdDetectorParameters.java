@@ -24,6 +24,7 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.validator.routines.DoubleValidator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -51,8 +52,6 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
@@ -63,7 +62,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDetectorParameters extends ViewPart implements ISourceProviderListener {
 
-	private static final Logger logger = LoggerFactory.getLogger(NcdDetectorSettings.class);
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters";
 	
 	private IMemento memento;
@@ -81,28 +79,16 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private static Combo detListWaxs, detListSaxs;
 	private Label pxSaxsLabel, pxWaxsLabel;
 	
+	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
+	
 	private Double getSaxsPixel() {
-		try {
-			Double val = Double.valueOf(pxSaxs.getText());  
-			return val;
-		}
-		catch (Exception e) {
-			String msg = "SCISOFT NCD: Error reading SAXS detector pixel size";
-			logger.error(msg, e);
-			return null;
-		}
+		String input = pxSaxs.getText();
+		return doubleValidator.validate(input);
 	}
 	
 	private Double getWaxsPixel() {
-		try {
-			Double val = Double.valueOf(pxWaxs.getText());  
-			return val;
-		}
-		catch (Exception e) {
-			String msg = "SCISOFT NCD: Error reading WAXS detector pixel size";
-			logger.error(msg, e);
-			return null;
-		}
+		String input = pxWaxs.getText();
+		return doubleValidator.validate(input);
 	}
 	
 	private SelectionListener modeSelectionListenerWaxs = new SelectionAdapter() {
