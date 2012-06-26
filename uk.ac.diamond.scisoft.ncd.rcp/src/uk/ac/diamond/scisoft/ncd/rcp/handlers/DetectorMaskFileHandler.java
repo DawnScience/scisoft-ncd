@@ -28,16 +28,15 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,7 +44,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
@@ -66,7 +65,6 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
 				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-				Shell shell = window.getShell();
 				try {
 					ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 					NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
@@ -78,13 +76,13 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 						else 
 							maskFilename = ((File)sel).getAbsolutePath();
 						HDF5File qaxisFile = new HDF5Loader(maskFilename).loadTree();
-						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/mask").getDestination();
+						HDF5NodeLink node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/mask");
 						if (node == null) {
 							String msg = "No mask data found in "+ maskFilename;
-							return DetectorMaskErrorDialog(shell, msg, null);
+							return DetectorMaskErrorDialog(msg, null);
 						}
 						
-						mask = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
 						
 						IWorkbenchPage page = window.getActivePage();
 						IViewPart activePlot = page.findView(PlotView.ID + "DP");
@@ -98,11 +96,11 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 						return Status.OK_STATUS;
 					} 
 					String msg = "SCISOFT NCD: No SAXS detector is selected";
-					return DetectorMaskErrorDialog(shell, msg, null);
+					return DetectorMaskErrorDialog(msg, null);
 
 				} catch (Exception e) {
 					String msg = "SCISOFT NCD: Failed to read detector mask from "+((IFile)sel).getLocation().toString();
-					return DetectorMaskErrorDialog(shell, msg, e);
+					return DetectorMaskErrorDialog(msg, e);
 				}
 			}
 
@@ -111,10 +109,10 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		return null;
 	}
 
-	private IStatus DetectorMaskErrorDialog(Shell shell, String msg, Exception e) {
+	private IStatus DetectorMaskErrorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
-		ErrorDialog.openError(shell, "Mask loading error", "Error loading detector mask", status);
+		StatusManager.getManager().handle(status, StatusManager.SHOW);
 		return Status.CANCEL_STATUS;
 	}
 }
