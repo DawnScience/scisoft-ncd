@@ -706,29 +706,4 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		// Override in subclass to return the appropriate pixel size
 		return null;
 	}
-	
-	public void updateResults(String detector) {
-		GuiBean guiinfo;
-		try {
-			IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-			IViewPart activePlot = page.findView(ACTIVE_PLOT);
-			if (activePlot != null) {
-				guiinfo = ((PlotView)activePlot).getGUIInfo();
-
-				if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
-					Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
-
-					if (bd != null && bd instanceof CalibrationResultsBean) {
-						CalibrationResultsBean crb = (CalibrationResultsBean) bd;
-						if (crb.keySet().contains(detector)) {
-							currentMode = detector;
-							ncdCalibrationSourceProvider.putCalibrationResult(crb);
-						}
-					}
-				}
-			}
-		} catch (Exception e) {
-			logger.info("No GUI bean information available");
-		}
-	}
 }
