@@ -30,6 +30,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -47,6 +48,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
@@ -61,55 +63,52 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
 		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1) {
 
-				final Object sel = ((IStructuredSelection)selection).getFirstElement();
-				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-				try {
-					ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-					NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					if (detectorSaxs != null) {
-						String maskFilename;
-						if (sel instanceof IFile)
-							maskFilename = ((IFile)sel).getLocation().toString();
-						else 
-							maskFilename = ((File)sel).getAbsolutePath();
-						HDF5File qaxisFile = new HDF5Loader(maskFilename).loadTree();
-						HDF5NodeLink node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/mask");
-						if (node == null) {
-							String msg = "No mask data found in "+ maskFilename;
-							return DetectorMaskErrorDialog(msg, null);
-						}
-						
-						mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
-						
-						IWorkbenchPage page = window.getActivePage();
-						IViewPart activePlot = page.findView(PlotView.ID + "DP");
-						if (activePlot instanceof PlotView) {
-							AbstractPlottingSystem activePlotSystem = PlottingFactory
-									.getPlottingSystem(((PlotView) activePlot).getPartName());
-							ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
-							if (imageTrace != null && imageTrace instanceof IImageTrace)
-								((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
-						}
-						return Status.OK_STATUS;
-					} 
-					String msg = "SCISOFT NCD: No SAXS detector is selected";
-					return DetectorMaskErrorDialog(msg, null);
+			final Object sel = ((IStructuredSelection) selection).getFirstElement();
+			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+			NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service
+					.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+			String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			if (detectorSaxs == null)
+				return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
 
-				} catch (Exception e) {
-					String msg = "SCISOFT NCD: Failed to read detector mask from "+((IFile)sel).getLocation().toString();
-					return DetectorMaskErrorDialog(msg, e);
+			String maskFileName;
+			if (sel instanceof IFile)
+				maskFileName = ((IFile) sel).getLocation().toString();
+			else
+				maskFileName = ((File) sel).getAbsolutePath();
+
+			try {
+				HDF5File dataTree = new HDF5Loader(maskFileName).loadTree();
+				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs	+ "_processing/SectorIntegration/mask");
+				if (node == null)
+					return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), null);
+
+				mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
+
+				IWorkbenchPage page = window.getActivePage();
+				IViewPart activePlot = page.findView(PlotView.ID + "DP");
+				if (activePlot instanceof PlotView) {
+					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
+							.getPartName());
+					ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+					if (imageTrace != null && imageTrace instanceof IImageTrace)
+						((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
 				}
+				
+				return Status.OK_STATUS;
+				
+			} catch (Exception e) {
+				return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), e);
 			}
-
+			
 		}
-
+		
 		return null;
 	}
 
-	private IStatus DetectorMaskErrorDialog(String msg, Exception e) {
+	private IStatus ErrorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
