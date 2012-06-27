@@ -97,7 +97,6 @@ public class QAxisFileHandler extends AbstractHandler {
 				try {
 					
 					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					
 					if (detectorSaxs == null)
 						return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
 
