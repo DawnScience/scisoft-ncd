@@ -185,7 +185,6 @@ public class QAxisFileHandler extends AbstractHandler {
 					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 					IViewPart activePlot = page.findView(PlotView.ID + "DP");
 					if (activePlot instanceof PlotView) {
-						((PlotView) activePlot).putGUIInfo(GuiParameters.ROIDATA, roiData);
 						if (crb != null)
 							((PlotView) activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
 

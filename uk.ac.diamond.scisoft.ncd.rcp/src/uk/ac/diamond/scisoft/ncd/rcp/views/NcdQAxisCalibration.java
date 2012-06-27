@@ -16,8 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
@@ -36,6 +36,7 @@ import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
 import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.trace.ILineTrace;
 import org.dawb.common.ui.plot.trace.ILineTrace.PointStyle;
@@ -60,9 +61,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
-import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
-import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
@@ -71,7 +70,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
-import uk.ac.diamond.scisoft.analysis.PlotServerProvider;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
@@ -81,9 +79,7 @@ import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
-import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
@@ -207,12 +203,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
-						GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
-						if (newBean == null)
-							newBean = new GuiBean();
-						newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
-						PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
-						
 						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
 						
@@ -394,28 +384,21 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					}
 				}
 			}
-			
-			try {
-				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-				IViewPart activePlot = page.findView(ACTIVE_PLOT);
-				if (activePlot instanceof PlotView) {
-					GuiBean guiinfo = ((PlotView)page.showView(ACTIVE_PLOT)).getGUIInfo();
 
-					if (guiinfo.containsKey(GuiParameters.ROIDATA)) {
-						if (guiinfo.get(GuiParameters.ROIDATA) instanceof SectorROI) {
-							SectorROI intSector = (SectorROI)guiinfo.get(GuiParameters.ROIDATA);
-							IMemento roiMemento = memento.createChild(CalibrationPreferences.QAXIS_ROI);
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROISR, (float) intSector.getRadius(0));
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIER, (float) intSector.getRadius(1));
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROISP, (float) intSector.getAngle(0));
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIEP, (float) intSector.getAngle(1));
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTX, (float) intSector.getPoint()[0]);
-							roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTY, (float) intSector.getPoint()[1]);
-						}
-					}
+			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
+				ROIBase intBase = sectorRegions.iterator().next().getROI();
+				if (intBase instanceof SectorROI) {
+					SectorROI intSector = (SectorROI) intBase;
+					IMemento roiMemento = memento.createChild(CalibrationPreferences.QAXIS_ROI);
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROISR, (float) intSector.getRadius(0));
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIER, (float) intSector.getRadius(1));
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROISP, (float) intSector.getAngle(0));
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIEP, (float) intSector.getAngle(1));
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTX, (float) intSector.getPoint()[0]);
+					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTY, (float) intSector.getPoint()[1]);
 				}
-			} catch (PartInitException e) {
-				logger.error("SCISOFT NCD Q-Axis Calibration: cannot save GUI bean information", e);
 			}
 		}
 	}
@@ -525,21 +508,23 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			if (roiMemento != null) {
 				roiData = new SectorROI();
 				roiData.setPlot(true);
-				roiData.setAngles(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROISP), 
+				roiData.setAngles(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROISP),
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIEP));
-				roiData.setRadii(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROISR), 
+				roiData.setRadii(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROISR),
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIER));
-				roiData.setPoint(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTX), 
+				roiData.setPoint(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTX),
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
-			}
-			try {
-				GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
-				if (newBean == null)
-					newBean = new GuiBean();
-				newBean.put(GuiParameters.ROIDATA, roiData);
-				PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
-			} catch (Exception e) {
-				logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
+				try {
+					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					plotSystem.setDefaultPlotType(PlotType.IMAGE);
+					IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
+					sector.setROI(roiData.copy());
+					sector.setUserRegion(true);
+					sector.setVisible(true);
+					plotSystem.addRegion(sector);
+				} catch (Exception e) {
+					logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
+				}
 			}
 
 		}
@@ -629,13 +614,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
 						
 						try {
-
-							GuiBean newBean = PlotServerProvider.getPlotServer().getGuiState(GUI_PLOT_NAME);
-							if (newBean == null)
-								newBean = new GuiBean();
-							newBean.put(GuiParameters.ROIDATA, twoDData.getROI());
-							PlotServerProvider.getPlotServer().updateGui(GUI_PLOT_NAME, newBean);
-							
 							AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 							plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(twoDData.getROI());
 						} catch (Exception e) {

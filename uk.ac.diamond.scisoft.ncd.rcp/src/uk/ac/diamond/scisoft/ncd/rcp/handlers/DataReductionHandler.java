@@ -20,6 +20,7 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 
 import javax.measure.unit.SI;
@@ -34,6 +35,8 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.commands.AbstractHandler;
@@ -54,16 +57,14 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -403,7 +404,7 @@ public class DataReductionHandler extends AbstractHandler {
 		
 	}
 
-	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws PartInitException {
+	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) {
 
 		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
 		Integer firstFrame = null;
@@ -445,7 +446,6 @@ public class DataReductionHandler extends AbstractHandler {
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		IViewPart activePlot = page.findView(PlotView.ID + "DP");
 		if (activePlot instanceof PlotView) {
-			GuiBean guiinfo = ((PlotView)page.showView(PlotView.ID + "DP")).getGUIInfo();
 			BooleanDataset mask = null;
 			if (enableMask) {
 				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
@@ -460,13 +460,16 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			SectorROI intSector = null;
-			if (guiinfo.containsKey(GuiParameters.ROIDATA)) {
-				if (guiinfo.get(GuiParameters.ROIDATA) instanceof SectorROI) {
-					intSector = (SectorROI)guiinfo.get(GuiParameters.ROIDATA);
-				}
+			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+			if (sectorRegions == null || sectorRegions.isEmpty())
+				flags.setEnableSector(false);
+			else {
+				ROIBase intBase = sectorRegions.iterator().next().getROI();
+				if (intBase instanceof SectorROI)
+					intSector = (SectorROI) intBase;
 				else flags.setEnableSector(false);
 			}
-			else flags.setEnableSector(false);
 
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
