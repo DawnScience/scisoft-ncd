@@ -185,9 +185,6 @@ public class QAxisFileHandler extends AbstractHandler {
 					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 					IViewPart activePlot = page.findView(PlotView.ID + "DP");
 					if (activePlot instanceof PlotView) {
-						if (crb != null)
-							((PlotView) activePlot).putGUIInfo(GuiParameters.CALIBRATIONFUNCTIONNCD, crb);
-
 						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						plotSystem.setDefaultPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.getRegion("Calibration");

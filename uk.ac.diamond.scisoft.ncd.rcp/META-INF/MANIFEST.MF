@@ -15,7 +15,6 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  org.apache.commons.math;bundle-version="[3.0.0,4.0.0)",
  uk.ac.diamond.org.jscience;bundle-version="[4.3.1,5.0.0)",
  uk.ac.diamond.scisoft.analysis;bundle-version="1.0.0",
- uk.ac.gda.common.rcp;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.analysis.rcp;bundle-version="1.0.0",
  uk.ac.diamond.scisoft.ncd;bundle-version="1.0.0",
  org.dawb.common.ui;bundle-version="1.0.0"
@@ -26,7 +25,8 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.apache.commons.lang,
  org.eclipse.draw2d,
  org.slf4j;version="[1.5.0,2.0.0)",
- org.uncommons.maths.combinatorics
+ org.uncommons.maths.combinatorics,
+ uk.ac.gda.monitor
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
 Bundle-Vendor: Diamond Light Souce Ltd.
