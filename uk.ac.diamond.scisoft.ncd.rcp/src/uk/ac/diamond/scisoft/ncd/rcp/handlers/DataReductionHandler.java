@@ -329,9 +329,9 @@ public class DataReductionHandler extends AbstractHandler {
 			ncdJob.setUser(true);
 			ncdJob.schedule();				
 
-		} else
-			return Boolean.FALSE;
-		return Boolean.TRUE;
+		}
+		
+		return null;
 	}
 	
 	public void readDataReductionStages(NcdReductionFlags flags) {

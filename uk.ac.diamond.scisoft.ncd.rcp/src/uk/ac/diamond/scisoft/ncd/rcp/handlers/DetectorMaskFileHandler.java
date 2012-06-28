@@ -81,7 +81,8 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 
 			try {
 				HDF5File dataTree = new HDF5Loader(maskFileName).loadTree();
-				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs	+ "_processing/SectorIntegration/mask");
+				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/mask");
 				if (node == null)
 					return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), null);
 
@@ -96,15 +97,13 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					if (imageTrace != null && imageTrace instanceof IImageTrace)
 						((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
 				}
-				
-				return Status.OK_STATUS;
-				
+
 			} catch (Exception e) {
 				return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), e);
 			}
-			
+
 		}
-		
+
 		return null;
 	}
 
@@ -112,6 +111,6 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
-		return Status.CANCEL_STATUS;
+		return null;
 	}
 }

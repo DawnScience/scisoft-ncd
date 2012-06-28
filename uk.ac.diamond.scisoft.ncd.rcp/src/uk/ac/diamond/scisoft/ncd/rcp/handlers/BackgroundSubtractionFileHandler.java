@@ -86,6 +86,6 @@ public class BackgroundSubtractionFileHandler extends AbstractHandler {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
-		return Status.CANCEL_STATUS;
+		return null;
 	}
 }

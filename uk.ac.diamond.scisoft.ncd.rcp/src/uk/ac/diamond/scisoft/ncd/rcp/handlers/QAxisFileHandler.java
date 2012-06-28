@@ -59,7 +59,6 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -196,8 +195,6 @@ public class QAxisFileHandler extends AbstractHandler {
 						plotSystem.addRegion(sector);
 					}
 
-					return Status.OK_STATUS;
-
 				} catch (Exception e) {
 					return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 				}
@@ -212,6 +209,6 @@ public class QAxisFileHandler extends AbstractHandler {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
-		return Status.CANCEL_STATUS;
+		return null;
 	}
 }

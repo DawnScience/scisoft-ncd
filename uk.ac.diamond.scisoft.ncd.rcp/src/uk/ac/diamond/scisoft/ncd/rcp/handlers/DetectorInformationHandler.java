@@ -96,7 +96,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 					
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-					return Boolean.FALSE;
+					return null;
 				}
 			}
 			

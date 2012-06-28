@@ -93,7 +93,6 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					if (activePlotSystem != null)
 						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 
-					return Status.OK_STATUS;
 				} catch (Exception e) {
 					return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), e);
 				}
@@ -107,6 +106,6 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
-		return Status.CANCEL_STATUS;
+		return null;
 	}
 }
