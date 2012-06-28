@@ -11,7 +11,7 @@
       </perspective>
       <perspective
             class="uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationPerspective"
-            icon="icons/ncd_icon.png"
+            icon="icons/ncd_calibration.png"
             id="uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective"
             name="NCD Calibration">
       </perspective>
