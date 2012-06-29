@@ -3,37 +3,31 @@
       title="Using Detector Mask">
    <intro>
       <description>
-         This tutorial explains how to create detector mask and use it in NCD data reduction
+         Some detectors have inactive areas or damaged pixels. Masking tool allows us to mark these regions to ignore them in sector integration calculations.
       </description>
    </intro>
    <item
-         title="Open detector image">
+         title="Open Masking Tool page">
       <description>
-         Open image file from &quot;Project Explorer&quot; and plot it in the &quot;Dataset plot&quot; view in 2D image mode.
-      </description>
-   </item>
-   <item
-         title="Open mask creation sideplot">
-      <description>
-         Select &quot;Switch sideplot into mask creation mode&quot; button in the &quot;Dataset plot&quot; toolbar.
+         Select &quot;Masking Tool&quot; option from &quot;Image Tools&quot; button from the toolbar in &quot;Dataset plot&quot; view.
       </description>
    </item>
    <item
          title="Setting masked intensity thresholds">
       <description>
-         &quot;Mask above&quot; and &quot;Mask below&quot; checkboxes activate thresholds for masking pixels with the intensities above or below the levels set in the adjacent spinner controls, respectively.
+         &quot;Enable lower mask&quot; and &quot;Enable upper mask&quot; checkboxes activate thresholds for masking pixels with the intensities above or below the levels set in the adjacent spinner controls, respectively.
       </description>
    </item>
    <item
-         title="Using mask drawing tool">
+         title="Using mask drawing tools">
       <description>
-         &quot;Pen properties&quot; panel holds settings for drawing pen size, shape and a switch between draw and erase modes. &quot;Clear&quot; button deletes current mask and &quot;Undo/Redo&quot; button reverts last mask change. 
+         &quot;Enable masking using regions&quot; checkbox adding masked regions using free hand drawing tool and other regions accessible from the toolbar underneath. 
       </description>
    </item>
    <item
          title="Applying detector mask in data reduction">
       <description>
-         Selecting &quot;Apply detector mask&quot; checkbox in &quot;Experimental Parameters&quot; panel of &quot;NCD data reduction parameters&quot; view will apply active mask in data reduction process. 
+         Masking thresholds and regions can be applied clicking &quot;Apply&quot; button or removed with &quot;Reset&quot; button. 
       </description>
    </item>
 </cheatsheet>

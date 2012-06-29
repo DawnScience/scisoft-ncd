@@ -15,10 +15,10 @@
          label="Select processing results file with q-axis data in &quot;Project Explorer&quot; and right-click on it to select &quot;NCD &gt; Load QAxis Calibration&quot; from popup menu.">
       </subitem>   
       <subitem
-         label="Values of Gradient, Intercept and Camera Length should be initialised in &quot;SAXS Q-axis calibration&quot; view">
+         label="Values of Gradient, Intercept and Camera Length should be initialised in &quot;SAXS Q-axis Calibration&quot; view">
       </subitem>   
       <subitem
-         label="Values of Gradient and Intercept can be also manually entered in &quot;Experimental Parameters&quot; panel when &quot;Override qaxis calibration&quot; checkbox is selected. These values override any other q-axis data that is available for data reduction.">
+         label="Values of Gradient and Intercept can be also manually edited. Updated values can be saved for using in data reduction with &quot;Override&quot; button.">
       </subitem>   
    </item>
    <item
@@ -30,6 +30,6 @@
          label="Select processing results file with detector mask data in &quot;Project Explorer&quot; and right-click on it to select &quot;NCD &gt; Load Detector Mask&quot; from popup menu.">
       </subitem>   
       <subitem
-         label="Switch to 2D image mode in &quot;Dataset Plot&quot; view and select &quot;Switch sideplot into mask creating mode&quot; button to inspect loaded mask.">
+         label="Select &quot;Masking Tool&quot; option from &quot;Image Tools&quot; button from the toolbar in &quot;Dataset Plot&quot; view to modify the loaded mask.">
       </subitem>   
    </item></cheatsheet>

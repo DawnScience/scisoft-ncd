@@ -4,7 +4,7 @@
 		skip="false">
 	<intro>
 		This is compilation of tutorials on various tasks related to NCD data
-		reduction in SDA.
+		reduction in DAWN.
 	</intro>
 		<taskGroup kind="set" name="Setup for NCD Data Reduction"
 			skip="true">
@@ -36,12 +36,21 @@
 					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.detectorinfo" />
 			</task>
 		</taskGroup>
-		<taskGroup kind="set" name="Running NCD Data Reduction"
+		<taskGroup kind="set" name="Configuring NCD Data Reduction"
 			skip="true">
 			<intro>
 				This group of tasks describes procedures for calibrating SAXS
-				detector, creating detector mask and running data reduction process
+				detector and creating detector mask
 			</intro>
+			<task kind="cheatsheet" name="Setting Detector Mask" skip="true">
+				<intro>
+					Pilatus2M has inactive grid area where pixels are assigned
+					value of -1. Masking tool allows us to disregard such pixels for 1D
+					profile calculations.
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.masking" />
+			</task>
 			<task kind="cheatsheet" name="Calibrating SAXS detector" skip="true">
 				<intro>
 					These tutorials present SAXS detector calibration procedure.
@@ -55,14 +64,39 @@
 				<param name="id"
 					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.saxscalibration" />
 			</task>
-			<task kind="cheatsheet" name="Setting Detector Mask" skip="true">
+			<task kind="cheatsheet" name="Restoring Data from Processing Results"
+				skip="true">
 				<intro>
-					Pilatus2M has inactive grid area where pixels are assigned
-					value of -1. Masking tool allows us to disregard such pixels for 1D
-					profile calculations.
+					Results file that has q-axis calibration and/or mask information
+					can be used to load this data back into NCD perspective for
+					processing data.
+					<br />
+					<b>results_Pilatus2M_050112_154741_i22-34774.nxs</b>
+					- Example of processing results file for frames 50-60 with q-axis
+					calibration and detector mask data.
 				</intro>
 				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.masking" />
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.restoredata" />
+			</task>
+		</taskGroup>
+		<taskGroup kind="set" name="Running NCD Data Reduction"
+			skip="true">
+			<intro>
+				This group of tasks describes procedures for calibrating SAXS
+				detector, creating detector mask and running data reduction process
+			</intro>
+			<task kind="cheatsheet" name="Inspect Calibration Results (Recommended)" skip="true">
+				<intro>
+					After completing calibration procedure it is strongly recommended to run sector integration stage on the calibration image and fit resulting peak positions on the q-axis. 
+					Following files will be needed to complete these task:
+					<br />
+					<b>i22-34820.nxs</b>
+					- Ag Behenate calibration file. It has four circles that correspond
+					to first four calibration peaks.
+					<br />
+				</intro>
+				<param name="id"
+					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.inspectcalibration" />
 			</task>
 			<task kind="cheatsheet" name="Basic NCD Data Reduction" skip="true">
 				<intro>
@@ -83,26 +117,6 @@
 				</intro>
 				<param name="id"
 					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction" />
-			</task>
-		</taskGroup>
-		<taskGroup kind="set" name="Other Features" skip="true">
-			<intro>
-				These tutorials present some other features that could be
-				useful for NCD data processing.
-			</intro>
-			<task kind="cheatsheet" name="Restoring Data from Processing Results"
-				skip="true">
-				<intro>
-					Results file that has q-axis calibration and/or mask information
-					can be used to load this data back into NCD perspective for
-					processing data.
-					<br />
-					<b>results_Pilatus2M_050112_154741_i22-34774.nxs</b>
-					- Example of processing results file for frames 50-60 with q-axis
-					calibration and detector mask data.
-				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.restoredata" />
 			</task>
 			<task kind="cheatsheet" name="Advanced Slicing and Averaging Techniques"
 				skip="true">

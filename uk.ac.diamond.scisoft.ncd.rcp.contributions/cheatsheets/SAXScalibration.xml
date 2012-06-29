@@ -7,57 +7,98 @@
       </description>
    </intro>
    <item
-         title="Specifying integration region">
+         title="Open NCD Calibration perspective">
       <description>
-         We need to open image with scattering data from a calibration sample.
+         Tools for calibration of SAXS detector are available in NCD Calibration perspective. Once calibration procedure is completed cailbration parameters will be applied to calculate scattering vector values in subsequent data reduction runs. 
       </description>
       <subitem
-         label="Select &quot;4. Sector Integration&quot; stage in &quot;Data reduction pipeline&quot; panel.">
+         label="Open &quot;Window &gt; Open Perspective &gt; Other...&quot; menu option.">
       </subitem>   
+      <subitem
+         label="Select &quot;NCD Calibration&quot; from the list of the available perspectives.">
+      </subitem>   
+   </item>
+   <item
+         title="Loading calibration image">
+      <description>
+         We need to open image with scattering data from a calibration sample. Make sure that SAXS checkbox is selected in NCD Detector parameters view, appropriate detector is selected in the adjacent combo,
+         2D option is selected and pixel size specified. 
+      </description>
       <subitem
          label="Select file with calibration image in the &quot;Project explorer&quot; view.">
       </subitem>   
       <subitem
-         label="Right-click on the file and select &quot;NCD &gt; Load Calibration Image&quot; menu option. This option is only active if &quot;4. Sector Integration&quot; stage is selected. Calibration image should appear in the &quot;Dataset plot&quot; view.">
+         label="Right-click on the file and select &quot;NCD &gt; Load Calibration Image&quot; menu option. Calibration image should appear in the &quot;Dataset Plot&quot; view.">
+      </subitem>   
+   </item>
+   <item
+         title="Setting detector mask">
+      <description>
+		Some detectors have inactive areas or damaged pixels. Masking tool allows us to mark these regions to ignore them in sector integration calculations.
+      </description>
+      <subitem
+         label="Select &quot;Masking Tool&quot; option from &quot;Image Tools&quot; button from the toolbar in &quot;Dataset plot&quot; view.">
       </subitem>   
       <subitem
-         label="Select &quot;Switch sideplot to sector profile mode&quot; button from the toolbar in &quot;Dataset plot&quot; view.">
+         label="&quot;Enable lower mask&quot; and &quot;Enable upper mask&quot; checkboxes activate thresholds for masking pixels with the intensities above or below the levels set in the adjacent spinner controls, respectively.">
+      </subitem>   
+      <subitem
+         label="&quot;Enable masking using regions&quot; checkbox adding masked regions using free hand drawing tool and other regions accessible from the toolbar underneath.">
+      </subitem>   
+      <subitem
+         label="Masking thresholds and regions can be applied clicking &quot;Apply&quot; button or removed with &quot;Reset&quot; button.">
+      </subitem>   
+   </item>
+   <item
+         title="Specifying integration region">
+      <description>
+         We need to open image with scattering data from a calibration sample. Make sure that SAXS checkbox is selected in NCD Detector parameters view, appropriate detector is selected in the adjacent combo,
+         2D option is selected and pixel size specified. 
+      </description>
+      <subitem
+         label="Select &quot;Radial Profile&quot; option from &quot;Image Tools&quot; button from the toolbar in &quot;Dataset plot&quot; view.">
       </subitem>   
       <subitem
          label="Click on the image to position the centre of the integration sector.">
       </subitem>   
       <subitem
-         label="Move corners of the sector to adjust size and move centre to adjust the position.">
+         label="Click on the image again at the position of top left corner of the sector.">
       </subitem>   
       <subitem
-         label="Controls in &quot;Side: Dataset Plot&quot; view provide setting for more accurate positioning of the sector.">
+         label="Click on the image again at the position of bottom right corner of the sector.">
+      </subitem>   
+       <subitem
+         label="You can use square red points on the sector to adjust position and size.">
       </subitem>   
       <subitem
-         label="Select &quot;Lock centre&quot; checkbox in the &quot;Side: Dataset Plot&quot; view to prevent accidental shift of the sector position before proceeding further. Calibration procedure needs to be repeated if integration sector position is changed. Integration sector dimensions can be changed without recalibration.">
+         label="Parameters of the sector region can be reviewed from &quot;Regions&quot; tab in the &quot;Configure Graph Settings&quot; dialog available from &quot;Configure Settings...&quot; button on the toolbar in &quot;Dataset Plot&quot; window.">
+      </subitem>   
+      <subitem
+         label="Calibration procedure needs to be repeated if integration sector position is changed. Integration sector dimensions can be changed without recalibration.">
       </subitem>   
    </item>
    <item
          title="Fitting calibration peaks">
       <description>
-         We need to integrate data in specified sector to fit calibration peak positions.
+         After selection sector area on the image radial profile will be plotted in &quot;Radial Profile&quot; view. We need to select peak positions on this plot to run calibration procedure.
       </description>
       <subitem
-         label="Press &quot;1D Fitting&quot; button in &quot;SAXS Q-axis calibration&quot; view. &quot;Dataset plot&quot; should present 1D plot of integrated intensity profile.">
+         label="In &quot;Radial Profile&quot; view toolbar select &quot;Peak Fitting&quot; under &quot;Plotting Tools&quot; button.">
       </subitem>   
       <subitem
-         label="Click on the intensity profile image in &quot;Dataset plot&quot; and drag mouse over the region with calibration peaks.">
+         label="On the &quot;Radial Profile&quot; click and drag mouse over the region with calibrant peaks.">
       </subitem>   
       <subitem
-         label="Select number of peaks to fit from the popup dialog.">
+         label="Select number of peaks to fit from the corresponding button on the toolbar in &quot;Peak Fitting&quot; view.">
       </subitem>   
       <subitem
-         label="Fitted peaks will be highlighted in the &quot;Dataset plot&quot; view. &quot;Side: Dataset plot&quot; view will have list of the fitted peaks in the table.">
+         label="To add more peaks to the list select existing peaks on the list and press &quot;Save peak&quot; button on the toolbar to store them. Than select &quot;Peak Fitting&quot; again in &quot;Radial Profile&quot; view and select another area containing extra peaks..">
       </subitem>   
       <subitem
-         label="To remove misfitted peaks select corresponding entry in the list of peaks, right-click and select &quot;Delete&quot; from the popup menu.">
+         label="To remove misfitted peaks select corresponding entry in the list of peaks and press &quot;Delete&quot; button on the &quot;Peak Fitting&quot; toolbar.">
       </subitem>   
       <subitem
-         label="Repeat peak fitting procedure on different region if necessary.">
+         label="Repeat peak fitting procedure until all required calibration peaks are appropriatelly fitted.">
       </subitem>   
    </item>
    <item
@@ -66,40 +107,25 @@
          Calibration procedure tries to index selected peaks and identify gradient and intercept parameters for linear calibration function.
       </description>
       <subitem
-         label="Make sure that correct detector is selected in &quot;NCD Data reduction parameters&quot; view and correct values for pixel size and energy are specified.">
+         label="Make sure that correct detector is selected in &quot;NCD Detector Parameters&quot; view and correct values for pixel size are specified.">
       </subitem>   
       <subitem
-         label="Select appropriate calibration standard in the &quot;Standard&quot; drop-down list in &quot;SAXS Q-axis calibration&quot; view.">
+         label="Specify x-ray energy used for data collection in &quot;Energy&quot; field in &quot;SAXS Q-axis calibration&quot; view.">
       </subitem>   
       <subitem
-         label="Select maximal value for reflection index in &quot;Maximum reflection index&quot; spinner control. Reflections with hkl index values exceeding the spinner setting will not be used in the calibration process.">
+         label="Select desired units (Angstrom or nanometer) in the adjacent box.">
       </subitem>   
       <subitem
-         label="Press &quot;Calibrate&quot; button. If no Jython console is active, popup dialog appears with the available console options. Select &quot;Jython console&quot;.">
+         label="Select appropriate calibration standard in the &quot;Standard&quot; drop-down list in &quot;SAXS Q-axis Calibration&quot; view.">
       </subitem>   
       <subitem
-         label="Calibration script is executed in the console window. Results of calibration are output in &quot;SAXS Q-axis calibration&quot; view. Fitting curve is plotted in &quot;Dataset plot&quot; view.">
+         label="(Experimental) If &quot;Refine beam position&quot; checkbox is selected calibration procedure will try to adjust sctor origing to get more accurate calibration results.">
       </subitem>   
       <subitem
-         label="To close console press &quot;Terminate current console&quot; button in console toolbar.">
-      </subitem>   
-   </item>
-   <item
-         title="Inspect calibration results (recommended)">
-      <description>
-         Running data reduction on the calibration dataset is a good reference of success of calibration procedures.
-      </description>
-      <subitem
-         label="Check that &quot;4. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
+         label="Press &quot;Calibrate&quot; button. (Experimental) If &quot;Refine beam position&quot; checkbox is selected calibration procedure will try to adjust sctor origing to get more accurate calibration results">
       </subitem>   
       <subitem
-         label="Select file with the calibration image in the &quot;Project Explorer&quot; and right-click on it. Select &quot;NCD &gt; Run Data Reduction&quot; from the popup menu.">
-      </subitem>   
-      <subitem
-         label="Plot and inspect data from the results file opened in the editor area after data reduction completes.">
-      </subitem>   
-      <subitem
-         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into SDA workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
+         label="Results of calibration are output in &quot;SAXS Q-axis Calibration&quot; view in the table. Linear calibration fuction is plotted in the adjucent area with points indication positions of the fitted peaks.">
       </subitem>   
    </item>
 </cheatsheet>

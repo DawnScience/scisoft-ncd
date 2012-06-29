@@ -252,6 +252,13 @@
       <cheatsheet
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
             composite="false"
+            contentFile="cheatsheets/InspectCalibration.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.inspectcalibration"
+            name="Inspect Calibration Results (Recomended)">
+      </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
             contentFile="cheatsheets/DataReduction.xml"
             id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction"
             name="Running NCD data reduction">
