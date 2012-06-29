@@ -87,7 +87,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected static Text energy;
 	protected static Combo standard;
 	protected Button beamRefineButton;
-	protected Group gpSelectMode, calibrationControls;
+	protected Group calibrationControls;
 
 
 	protected StoredPlottingObject twoDData;
@@ -101,11 +101,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected Double disttobeamstop;
 
-	protected Button[] detTypes;
-
 	protected static HashMap<Unit<Length>, Button> unitSel;
 
-	protected String currentMode = NcdConstants.detChoices[0];
+	protected String currentDetector;
 	
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 	
@@ -409,22 +407,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		progress.setLayout(new GridLayout(2, true));
 		progress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		gpSelectMode = new Group(progress, SWT.FILL);
-		gpSelectMode.setLayout(new GridLayout(2, true));
-		gpSelectMode.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1));
-
-		detTypes = new Button[NcdConstants.detChoices.length];
-		int i = 0;
-		for (String det : NcdConstants.detChoices) {
-			detTypes[i] = new Button(gpSelectMode, SWT.RADIO);
-			detTypes[i].setText(det);
-			detTypes[i].setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, true));
-			if (i == 0) {
-				detTypes[i].setSelection(true);
-			}
-			i++;
-		}
-
 		calibrateButton = new Button(progress, SWT.NONE);
 		calibrateButton.setText("Calibrate");
 		calibrateButton.setEnabled(true);
@@ -475,7 +457,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected void updateCalibrationResults() {
 		
-		currentMode = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+		currentDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 		
 		calibrationPeakList.clear();
 		
@@ -483,21 +465,21 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		gradient.setText("--");
 		intercept.setText("--");
 		cameralength.setText("--");
-		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentMode)) {
-			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentMode);
+		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentDetector)) {
+			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentDetector);
 			if (peakList != null)
 				calibrationPeakList.addAll(peakList);
 			
-			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentMode);
-			if (ncdCalibrationSourceProvider.getFunction(currentMode) != null) {
+			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
+			if (ncdCalibrationSourceProvider.getFunction(currentDetector) != null) {
 
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(0)));
-						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentMode).getParameterValue(1)));
-						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentMode);
+						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(0)));
+						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(1)));
+						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
 						if (mcl != null)
 							cameralength.setText(mcl.to(SI.METER).toString());
 						for (Button unitBtn : unitSel.values())

@@ -317,7 +317,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		
 		if (memento != null) {
 			
-			memento.putString(CalibrationPreferences.QAXIS_CURRENTMODE, currentMode);
+			memento.putString(CalibrationPreferences.QAXIS_CURRENTMODE, currentDetector);
 			memento.putString(CalibrationPreferences.QAXIS_ACIVEPLOT, ACTIVE_PLOT);
 			
 			memento.putString(CalibrationPreferences.QAXIS_GRADIENT, gradient.getText());
@@ -410,7 +410,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			Float flt;
 			
 			tmp = this.memento.getString(CalibrationPreferences.QAXIS_CURRENTMODE);
-			if (tmp != null) currentMode = tmp;
+			if (tmp != null) currentDetector = tmp;
 			
 			tmp = this.memento.getString(CalibrationPreferences.QAXIS_ACIVEPLOT);
 			if (tmp != null) ACTIVE_PLOT = tmp;
@@ -538,7 +538,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	@Override
 	protected void runJavaCommand() {
-		currentMode = getDetectorName();
+		currentDetector = getDetectorName();
 		calibrant = standard.getText();
 		final boolean runRefinement = beamRefineButton.getSelection();
 
@@ -607,7 +607,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
 						cameralength.setText(meanCameraLength.toString());
 
-						crb.putCalibrationResult(currentMode, calibrationFunction,
+						crb.putCalibrationResult(currentDetector, calibrationFunction,
 								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale);
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 

@@ -32,9 +32,6 @@ public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 
 		super.createPartControl(parent);
 		
-		detTypes[1].setSelection(true);
-		detTypes[0].setSelection(false);
-		gpSelectMode.dispose();
 	}
 
 	@Override

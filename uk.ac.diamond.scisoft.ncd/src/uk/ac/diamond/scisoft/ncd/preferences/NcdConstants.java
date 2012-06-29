@@ -22,7 +22,6 @@ import javax.measure.unit.Unit;
 
 public class NcdConstants {
 	
-	public static String[] detChoices = new String[] { "SAXS", "WAXS" };
 	public static String[] dimChoices = new String[] { "1D", "2D" };
 	public static Unit<Length> DEFAULT_UNIT = SI.NANO(SI.METER);
 }
