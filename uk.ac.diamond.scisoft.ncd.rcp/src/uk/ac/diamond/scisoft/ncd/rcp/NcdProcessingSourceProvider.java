@@ -17,10 +17,11 @@
 package uk.ac.diamond.scisoft.ncd.rcp;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
+
+import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 
 public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
@@ -37,32 +38,55 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public final static String SAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSaxsDataReduction";
 	public final static String MASK_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableMask";
 	
-	static boolean enableAverage = false;
-	static boolean enableBackground = false;
-	static boolean enableDetectorResponse = false;
-	static boolean enableInvariant = false;
-	static boolean enableNormalisation = false;
-	static boolean enableSector = false;
-	static boolean enableRadial = false;
-	static boolean enableAzimuthal = false;
-	static boolean enableFastIntegration = false;
-	static boolean enableWaxs = false;
-	static boolean enableSaxs = false;
-	static boolean enableMask = false;
-
+	public final static String SCALER_STATE = "uk.ac.diamond.scisoft.ncd.rcp.scalerDetector";
+	public final static String SAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.saxsDetector";
+	public final static String WAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.waxsDetector";
+	
+	public final static String ENERGY_STATE = "uk.ac.diamond.scisoft.ncd.rcp.energy";
+	public final static String NORMCHANNEL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.normChannel";
+	
+	public final static String DATASLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.dataSlice";
+	public final static String BKGSLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgSlice";
+	public final static String GRIDAVERAGE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.gridAverage";
+	
+	public final static String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
+	public final static String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
+	
+	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
+	public final static String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
+	public final static String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
+	
+	private boolean enableAverage = false;
+	private boolean enableBackground = false;
+	private boolean enableDetectorResponse = false;
+	private boolean enableInvariant = false;
+	private boolean enableNormalisation = false;
+	private boolean enableSector = false;
+	private boolean enableRadial = false;
+	private boolean enableAzimuthal = false;
+	private boolean enableFastIntegration = false;
+	private boolean enableWaxs = false;
+	private boolean enableSaxs = false;
+	private boolean enableMask = false;
+	
+	private String scaler, saxsDetector, waxsDetector;
+	private String bgFile, drFile, workingDir;
+	private SliceInput dataSlice, bkgSlice, gridAverage;
+	
+	private Integer normChannel;
+	private Double bgScaling, absScaling;
+	private Double energy;
 
 	public NcdProcessingSourceProvider() {
-
 	}
 
 	@Override
 	public void dispose() {
-
 	}
 
 	@Override
-	public Map<String, Boolean> getCurrentState() {
-		Map<String, Boolean> currentState = new HashMap<String, Boolean>(1);
+	public HashMap<String, Object> getCurrentState() {
+		HashMap<String, Object> currentState = new HashMap<String, Object>();
 		currentState.put(AVERAGE_STATE, enableAverage);
 		currentState.put(BACKGROUD_STATE, enableBackground);
 		currentState.put(RESPONSE_STATE, enableDetectorResponse);
@@ -75,6 +99,20 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(WAXS_STATE, enableWaxs);
 		currentState.put(SAXS_STATE, enableSaxs);
 		currentState.put(MASK_STATE, enableMask);
+		currentState.put(SCALER_STATE, scaler);
+		currentState.put(SAXSDETECTOR_STATE, saxsDetector);
+		currentState.put(WAXSDETECTOR_STATE, waxsDetector);
+		currentState.put(ENERGY_STATE, energy);
+		currentState.put(NORMCHANNEL_STATE, normChannel);
+		currentState.put(DATASLICE_STATE, dataSlice);
+		currentState.put(BKGSLICE_STATE, bkgSlice);
+		currentState.put(BKGFILE_STATE, bgFile);
+		currentState.put(DRFILE_STATE, drFile);
+		currentState.put(GRIDAVERAGE_STATE, gridAverage);
+		currentState.put(BKGSCALING_STATE, bgScaling);
+		currentState.put(ABSSCALING_STATE, absScaling);
+		currentState.put(WORKINGDIR_STATE, workingDir);
+		
 		return currentState;
 	}
 
@@ -92,114 +130,244 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     FASTINT_STATE,
 		                     WAXS_STATE,
 		                     SAXS_STATE,
-		                     MASK_STATE};
+		                     MASK_STATE,
+		                     SCALER_STATE,
+		                     SAXSDETECTOR_STATE,
+		                     WAXSDETECTOR_STATE,
+		                     ENERGY_STATE,
+		                     NORMCHANNEL_STATE,
+		                     DATASLICE_STATE,
+		                     BKGSLICE_STATE,
+		                     BKGFILE_STATE,
+		                     DRFILE_STATE,
+		                     GRIDAVERAGE_STATE,
+		                     BKGSCALING_STATE,
+		                     ABSSCALING_STATE,
+		                     WORKINGDIR_STATE};
 	}
 
 	public void setEnableAverage(boolean enableAverage) {
-		NcdProcessingSourceProvider.enableAverage = enableAverage;
+		this.enableAverage = enableAverage;
 		fireSourceChanged(ISources.WORKBENCH, AVERAGE_STATE, enableAverage);
 	}
 
 	public void setEnableBackground(boolean enableBackground) {
-		NcdProcessingSourceProvider.enableBackground = enableBackground;
+		this.enableBackground = enableBackground;
 		fireSourceChanged(ISources.WORKBENCH, BACKGROUD_STATE, enableBackground);
 	}
 
 	public void setEnableDetectorResponse(boolean enableDetectorResponse) {
-		NcdProcessingSourceProvider.enableDetectorResponse = enableDetectorResponse;
+		this.enableDetectorResponse = enableDetectorResponse;
 		fireSourceChanged(ISources.WORKBENCH, RESPONSE_STATE, enableDetectorResponse);
 	}
 
 	public void setEnableInvariant(boolean enableInvariant) {
-		NcdProcessingSourceProvider.enableInvariant = enableInvariant;
+		this.enableInvariant = enableInvariant;
 		fireSourceChanged(ISources.WORKBENCH, INVARIANT_STATE, enableInvariant);
 	}
 
 	public void setEnableNormalisation(boolean enableNormalisation) {
-		NcdProcessingSourceProvider.enableNormalisation = enableNormalisation;
+		this.enableNormalisation = enableNormalisation;
 		fireSourceChanged(ISources.WORKBENCH, NORMALISATION_STATE, enableNormalisation);
 	}
 
 	public void setEnableSector(boolean enableSector) {
-		NcdProcessingSourceProvider.enableSector = enableSector;
+		this.enableSector = enableSector;
 		fireSourceChanged(ISources.WORKBENCH, SECTOR_STATE, enableSector);
 	}
 
 	public void setEnableRadial(boolean enableRadial) {
-		NcdProcessingSourceProvider.enableRadial = enableRadial;
+		this.enableRadial = enableRadial;
 		fireSourceChanged(ISources.WORKBENCH, RADIAL_STATE, enableRadial);
 	}
 
 	public void setEnableAzimuthal(boolean enableAzimuthal) {
-		NcdProcessingSourceProvider.enableAzimuthal = enableAzimuthal;
+		this.enableAzimuthal = enableAzimuthal;
 		fireSourceChanged(ISources.WORKBENCH, AZIMUTH_STATE, enableAzimuthal);
 	}
 
 	public void setEnableFastIntegration(boolean enableFastIntegration) {
-		NcdProcessingSourceProvider.enableFastIntegration = enableFastIntegration;
+		this.enableFastIntegration = enableFastIntegration;
 		fireSourceChanged(ISources.WORKBENCH, FASTINT_STATE, enableFastIntegration);
 	}
 
 	public void setEnableWaxs(boolean enableWaxs) {
-		NcdProcessingSourceProvider.enableWaxs = enableWaxs;
+		this.enableWaxs = enableWaxs;
 		fireSourceChanged(ISources.WORKBENCH, WAXS_STATE, enableWaxs);
 	}
 
 	public void setEnableSaxs(boolean enableSaxs) {
-		NcdProcessingSourceProvider.enableSaxs = enableSaxs;
+		this.enableSaxs = enableSaxs;
 		fireSourceChanged(ISources.WORKBENCH, SAXS_STATE, enableSaxs);
 	}
 
 	public void setEnableMask(boolean enableMask) {
-		NcdProcessingSourceProvider.enableMask = enableMask;
+		this.enableMask = enableMask;
 		fireSourceChanged(ISources.WORKBENCH, MASK_STATE, enableMask);
 	}
 
-	public static boolean isEnableAverage() {
+	public void setScaler(String scaler) {
+		this.scaler = (scaler != null) ? new String(scaler) : null;
+		fireSourceChanged(ISources.WORKBENCH, SCALER_STATE, this.scaler);
+	}
+	
+	public void setSaxsDetector(String saxsDetector) {
+		this.saxsDetector = (saxsDetector != null) ? new String(saxsDetector) : null;
+		fireSourceChanged(ISources.WORKBENCH, SAXSDETECTOR_STATE, this.saxsDetector);
+	}
+	
+	public void setWaxsDetector(String waxsDetector) {
+		this.waxsDetector = (waxsDetector != null) ? new String(waxsDetector) : null;
+		fireSourceChanged(ISources.WORKBENCH, WAXSDETECTOR_STATE, this.waxsDetector);
+	}
+	
+	public void setEnergy(Double energy) {
+		this.energy = (energy != null) ? new Double(energy) : null;
+		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
+	}
+
+	public void setNormChannel(Integer normChannel) {
+		this.normChannel = (normChannel != null) ? new Integer(normChannel) : null;
+		fireSourceChanged(ISources.WORKBENCH, NORMCHANNEL_STATE, this.normChannel);
+	}
+
+	public void setDataSlice(SliceInput dataSlice) {
+		this.dataSlice = (dataSlice != null) ? new SliceInput(dataSlice) : null;
+		fireSourceChanged(ISources.WORKBENCH, DATASLICE_STATE, this.dataSlice);
+	}
+
+	public void setBkgSlice(SliceInput bkgSlice) {
+		this.bkgSlice = (bkgSlice != null) ? new SliceInput(bkgSlice) : null;
+		fireSourceChanged(ISources.WORKBENCH, BKGSLICE_STATE, this.bkgSlice);
+	}
+
+	public void setBgFile(String bgFile) {
+		this.bgFile = (bgFile != null) ? new String(bgFile) : null;
+		fireSourceChanged(ISources.WORKBENCH, BKGFILE_STATE, this.bgFile);
+	}
+
+	public void setDrFile(String drFile) {
+		this.drFile = (drFile != null) ? new String(drFile) : null;
+		fireSourceChanged(ISources.WORKBENCH, DRFILE_STATE, this.drFile);
+	}
+
+	public void setGrigAverage(SliceInput gridAverage) {
+		this.gridAverage = (gridAverage != null) ? new SliceInput(gridAverage.getAdvancedSlice()) : null;
+		fireSourceChanged(ISources.WORKBENCH, GRIDAVERAGE_STATE, this.gridAverage);
+	}
+
+	public void setBgScaling(Double bgScaling) {
+		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
+		fireSourceChanged(ISources.WORKBENCH, BKGSCALING_STATE, this.bgScaling);
+	}
+
+	public void setAbsScaling(Double absScaling) {
+		this.absScaling = (absScaling != null) ? new Double(absScaling) : null;
+		fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
+	}
+
+	public void setWorkingDir(String workingDir) {
+		this.workingDir = (workingDir != null) ? new String(workingDir): null;
+		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
+	}
+
+	public boolean isEnableAverage() {
 		return enableAverage;
 	}
 
-	public static boolean isEnableBackground() {
+	public boolean isEnableBackground() {
 		return enableBackground;
 	}
 
-	public static boolean isEnableDetectorResponse() {
+	public boolean isEnableDetectorResponse() {
 		return enableDetectorResponse;
 	}
 
-	public static boolean isEnableInvariant() {
+	public boolean isEnableInvariant() {
 		return enableInvariant;
 	}
 
-	public static boolean isEnableNormalisation() {
+	public boolean isEnableNormalisation() {
 		return enableNormalisation;
 	}
 
-	public static boolean isEnableSector() {
+	public boolean isEnableSector() {
 		return enableSector;
 	}
 
-	public static boolean isEnableRadial() {
+	public boolean isEnableRadial() {
 		return enableRadial;
 	}
 
-	public static boolean isEnableAzimuthal() {
+	public boolean isEnableAzimuthal() {
 		return enableAzimuthal;
 	}
 
-	public static boolean isEnableFastIntegration() {
+	public boolean isEnableFastIntegration() {
 		return enableFastIntegration;
 	}
 
-	public static boolean isEnableWaxs() {
+	public boolean isEnableWaxs() {
 		return enableWaxs;
 	}
 
-	public static boolean isEnableSaxs() {
+	public boolean isEnableSaxs() {
 		return enableSaxs;
 	}
 
-	public static boolean isEnableMask() {
+	public boolean isEnableMask() {
 		return enableMask;
+	}
+	
+	public String getScaler() {
+		return scaler;
+	}
+	
+	public String getSaxsDetector() {
+		return saxsDetector;
+	}
+	
+	public String getWaxsDetector() {
+		return waxsDetector;
+	}
+
+	public SliceInput getDataSlice() {
+		return dataSlice;
+	}
+
+	public SliceInput getBkgSlice() {
+		return bkgSlice;
+	}
+
+	public String getBgFile() {
+		return bgFile;
+	}
+
+	public String getDrFile() {
+		return drFile;
+	}
+
+	public String getWorkingDir() {
+		return workingDir;
+	}
+
+	public SliceInput getGridAverage() {
+		return gridAverage;
+	}
+
+	public Integer getNormChannel() {
+		return normChannel;
+	}
+
+	public Double getBgScaling() {
+		return bgScaling;
+	}
+
+	public Double getAbsScaling() {
+		return absScaling;
+	}
+
+	public Double getEnergy() {
+		return energy;
 	}
 }

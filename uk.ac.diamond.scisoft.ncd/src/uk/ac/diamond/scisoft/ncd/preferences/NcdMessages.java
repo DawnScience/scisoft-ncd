@@ -16,12 +16,16 @@
 
 package uk.ac.diamond.scisoft.ncd.preferences;
 
-import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import org.eclipse.osgi.util.NLS;
 
-public class NcdConstants {
+public class NcdMessages extends NLS {
 	
-	public static String[] dimChoices = new String[] { "1D", "2D" };
-	public static Unit<Length> DEFAULT_UNIT = SI.NANO(SI.METER);
+	private static final String BUNDLE_NAME = "uk.ac.diamond.scisoft.ncd.preferences.NcdMessages"; //$NON-NLS-1$
+	
+	public static String NO_SAXS_DETECTOR;
+	public static String NO_BG_DATA, NO_DR_DATA, NO_IMAGE_DATA, NO_MASK_DATA, NO_QAXIS_DATA;
+
+	 static {
+		 NLS.initializeMessages(BUNDLE_NAME, NcdMessages.class);
+	 }
 }

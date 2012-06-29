@@ -12,6 +12,9 @@
        	 We need to open &quot;Data Project&quot; wizard to import data into SDA.
       </description>
       <subitem
+            label="On the DAWN Welcome screen select &quot;NCD Data Reduction&quot; perspective.">
+      </subitem>
+      <subitem
             label="Locate &quot;Project Explorer&quot; view on the active perspective.">
       </subitem>
       <subitem

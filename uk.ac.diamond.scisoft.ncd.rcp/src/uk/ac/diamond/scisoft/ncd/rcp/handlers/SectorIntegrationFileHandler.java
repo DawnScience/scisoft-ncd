@@ -16,22 +16,36 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import java.io.File;
+import java.util.Arrays;
+
+import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.PlottingFactory;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
-import uk.ac.diamond.scisoft.analysis.rcp.editors.HDF5TreeEditor;
-import uk.ac.diamond.scisoft.analysis.rcp.inspector.DatasetSelection.InspectorType;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
-import uk.ac.gda.common.rcp.util.EclipseUtils;
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class SectorIntegrationFileHandler extends AbstractHandler {
 
@@ -40,33 +54,58 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
-		final ISelection selection = HandlerUtil.getCurrentSelection(event);
+		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 
+		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
 			if (((IStructuredSelection)selection).toList().size() == 1 && (((IStructuredSelection)selection).getFirstElement() instanceof IFile)) {
 
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
-				try {
+					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+					if (detectorSaxs == null)
+						return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
 
-					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-					if (idxSaxs >= 0) {
-						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-						HDF5TreeEditor editor = (HDF5TreeEditor)EclipseUtils.openExternalEditor(((IFile)sel).getLocation().toString());
-						HDF5NodeLink node = editor.getHDF5Tree().findNodeLink("/entry1/"+detectorSaxs+"/data");
+					String dataFileName;
+					if (sel instanceof IFile)
+						dataFileName = ((IFile) sel).getLocation().toString();
+					else
+						dataFileName = ((File) sel).getAbsolutePath();
+					
+					try {
+					HDF5File dataTree = new HDF5Loader(dataFileName).loadTree();
+					HDF5Node node = dataTree.findNodeLink("/entry1/" + detectorSaxs + "/data").getDestination();
+					if (node == null)
+						return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), null);
 
-						editor.getHDF5TreeExplorer().selectHDF5Node(node, InspectorType.IMAGE);
+					// Open first frame if dataset has miltiple images
+					int[] shape = ((HDF5Dataset) node).getDataset().squeeze().getShape();
+					int[] start = new int[shape.length];
+					int[] stop = Arrays.copyOf(shape, shape.length);
+					Arrays.fill(start, 0, shape.length, 0);
+					if (shape.length > 2)
+						Arrays.fill(stop, 0, shape.length - 2, 1);
+					AbstractDataset data = (AbstractDataset) ((HDF5Dataset) node).getDataset().squeeze()
+							.getSlice(start, stop, null).clone();
 
-						return Status.OK_STATUS;
-					} 
-					return Status.CANCEL_STATUS;
+					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					if (activePlotSystem != null)
+						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 
 				} catch (Exception e) {
-					logger.error("File "+((IFile)sel).getLocation().toString()+" does not open with " + HDF5TreeEditor.ID, e);
-					return Status.CANCEL_STATUS;
+					return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), e);
 				}
 			}
 
 		}
+		return null;
+	}
+	
+	private IStatus ErrorDialog(String msg, Exception e) {
+		logger.error(msg, e);
+		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
+		StatusManager.getManager().handle(status, StatusManager.SHOW);
 		return null;
 	}
 }

@@ -6,7 +6,8 @@ Bundle-Version: 2.0.0.qualifier
 Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="2.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit4;bundle-version="4.8.1"
-Import-Package: ncsa.hdf.hdf5lib,
+Import-Package: gda.util,
+ ncsa.hdf.hdf5lib,
  ncsa.hdf.object.h5,
  org.apache.commons.beanutils;version="[1.8.0,2.0.0)",
  org.apache.commons.io,

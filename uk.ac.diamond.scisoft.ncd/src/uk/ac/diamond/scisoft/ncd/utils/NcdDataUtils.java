@@ -21,6 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.validator.routines.IntegerValidator;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -31,6 +32,8 @@ import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
  *
  */
 public class NcdDataUtils {
+	
+	private static IntegerValidator integerValidator = IntegerValidator.getInstance();
 	
 	/**
 	 * Method for generating all combination of elements supplied in the input array
@@ -108,12 +111,17 @@ public class NcdDataUtils {
 				}
 				
 				String[] tmpFormatDash = tmpFormatComma[j].split("-");
+				String firstValue = tmpFormatDash[0];
+				String lastValue = tmpFormatDash[tmpFormatDash.length-1];
 				int sliceStart = 0;
 				int sliceEnd  = frames[i];
-				if (!(tmpFormatDash[0].isEmpty()))
-					sliceStart = Math.max(0, Integer.valueOf(tmpFormatDash[0]));
-				if (!(tmpFormatDash[tmpFormatDash.length-1].isEmpty()))
-					sliceEnd = Math.min(frames[i],Integer.valueOf(tmpFormatDash[tmpFormatDash.length-1]) + 1);
+				
+				if (!(firstValue.isEmpty()) && integerValidator.isValid(firstValue))
+					sliceStart = Math.max(0, Integer.valueOf(firstValue));
+				
+				if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
+					sliceEnd = Math.min(frames[i],Integer.valueOf(lastValue) + 1);
+				
 				int[] slice = IntegerDataset.arange(sliceStart, sliceEnd, 1).getData();
 				for (int l = 0; l < slice.length; l++)
 					tmpSel.add(slice[l]);
@@ -150,12 +158,17 @@ public class NcdDataUtils {
 			}
 
 			String[] tmpFormatDash = tmpFormatComma[j].split("-");
+			String firstValue = tmpFormatDash[0];
+			String lastValue = tmpFormatDash[tmpFormatDash.length-1];
 			int sliceStart = 1;
 			int sliceEnd  = axes;
-			if (!(tmpFormatDash[0].isEmpty()))
-				sliceStart = Math.max(1, Integer.valueOf(tmpFormatDash[0]));
-			if (!(tmpFormatDash[tmpFormatDash.length-1].isEmpty()))
-				sliceEnd = Math.min(axes,Integer.valueOf(tmpFormatDash[tmpFormatDash.length-1]) + 1);
+			
+			if (!(firstValue.isEmpty()) && integerValidator.isValid(firstValue))
+				sliceStart = Math.max(1, Integer.valueOf(firstValue));
+			
+			if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
+				sliceEnd = Math.min(axes,Integer.valueOf(lastValue) + 1);
+			
 			int[] slice = IntegerDataset.arange(sliceStart, sliceEnd, 1).getData();
 			for (int l = 0; l < slice.length; l++)
 				tmpSel.add(slice[l]);

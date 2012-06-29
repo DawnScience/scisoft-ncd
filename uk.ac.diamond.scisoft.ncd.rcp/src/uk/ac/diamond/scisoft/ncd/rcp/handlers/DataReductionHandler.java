@@ -20,7 +20,10 @@ import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
+
+import javax.measure.unit.SI;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -32,13 +35,13 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.commands.AbstractHandler;
-import org.eclipse.core.commands.Command;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
-import org.eclipse.core.commands.State;
 import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
@@ -54,25 +57,24 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiBean;
-import uk.ac.diamond.scisoft.analysis.plotserver.GuiParameters;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -89,6 +91,61 @@ public class DataReductionHandler extends AbstractHandler {
 	private Integer dimWaxs, dimSaxs;
 	private boolean enableWaxs, enableSaxs, enableBackground;
 	private String workingDir;
+
+	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
+	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
+	private NcdProcessingSourceProvider ncdResponseSourceProvider;
+	private NcdProcessingSourceProvider ncdSectorSourceProvider;
+	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
+	private NcdProcessingSourceProvider ncdAverageSourceProvider;
+	private NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider;
+	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
+	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
+
+	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;
+	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
+	private NcdProcessingSourceProvider ncdMaskSourceProvider;
+	
+	private void ConfigureNcdSourceProviders(IWorkbenchWindow window) {
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		
+		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
+		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
+		
+		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
+		
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		
+		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
+		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
+		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
+		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
+		
+		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
+		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
+		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
+		
+		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
+		
+		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
+		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
+		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
+		
+		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
+		
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+	}
 	
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -96,6 +153,9 @@ public class DataReductionHandler extends AbstractHandler {
 		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
 		final IStructuredSelection sel = (IStructuredSelection)page.getSelection();
+		
+		ConfigureNcdSourceProviders(window);
+		
 		if (sel != null) {
 			
 			final LazyNcdProcessing processing = new LazyNcdProcessing();
@@ -132,9 +192,10 @@ public class DataReductionHandler extends AbstractHandler {
 					bgProcessing.setFlags(bgFlags);
 					bgProcessing.setNcdDetectors(ncdDetectors);
 					
-					Integer bgFirstFrame = NcdDataReductionParameters.getBgFirstFrame();
-					Integer bgLastFrame = NcdDataReductionParameters.getBgLastFrame();
-					String bgFrameSelection = NcdDataReductionParameters.getBgAdvancedSelection();
+					SliceInput bgSliceInput = ncdBkgSliceSourceProvider.getBkgSlice();
+					Integer bgFirstFrame = bgSliceInput.getStartFrame();
+					Integer bgLastFrame = bgSliceInput.getStopFrame();
+					String bgFrameSelection = bgSliceInput.getAdvancedSlice();
 					
 					bgProcessing.setFirstFrame(bgFirstFrame);
 					bgProcessing.setLastFrame(bgLastFrame);
@@ -147,16 +208,16 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			
-			detectorWaxs = ncdDetectors.getDetectorWaxs();
-			detectorSaxs = ncdDetectors.getDetectorSaxs();
-			calibration = NcdDataReductionParameters.getCalList().getItem(NcdDataReductionParameters.getCalList().getSelectionIndex());
+			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			calibration = ncdScalerSourceProvider.getScaler();
 			dimWaxs = ncdDetectors.getDimWaxs();
 			dimSaxs = ncdDetectors.getDimSaxs();
 			enableWaxs = flags.isEnableWaxs();
 			enableSaxs = flags.isEnableSaxs();
 			enableBackground = flags.isEnableBackground();
-			workingDir = NcdDataReductionParameters.getWorkingDirectory();
-			final String bgPath = NcdDataReductionParameters.getBgFile();
+			workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
+			final String bgPath = ncdBgFileSourceProvider.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
 			
 			Job ncdJob = new Job("Running NCD data reduction") {
@@ -268,66 +329,25 @@ public class DataReductionHandler extends AbstractHandler {
 			ncdJob.setUser(true);
 			ncdJob.schedule();				
 
-		} else
-			return Boolean.FALSE;
-		return Boolean.TRUE;
+		}
+		
+		return null;
 	}
 	
 	public void readDataReductionStages(NcdReductionFlags flags) {
-
-		final ICommandService service = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-
-		Boolean enableWaxs = readReductionStage(service, WaxsDataReductionHandler.COMMAND_ID,
-				WaxsDataReductionHandler.STATE_ID);
-
-		Boolean enableSaxs = readReductionStage(service, SaxsDataReductionHandler.COMMAND_ID,
-				SaxsDataReductionHandler.STATE_ID);
+		flags.setEnableWaxs(ncdWaxsDetectorSourceProvider.isEnableWaxs());
+		flags.setEnableSaxs(ncdSaxsDetectorSourceProvider.isEnableSaxs());
 		
-		Boolean enableAverage = readReductionStage(service, AverageHandler.COMMAND_ID,
-				AverageHandler.STATE_ID);
-
-		Boolean enableBackground = readReductionStage(service, BackgroundSubtractionHandler.COMMAND_ID,
-				BackgroundSubtractionHandler.STATE_ID);
-
-		Boolean enableDetectorResponse = readReductionStage(service, DetectorResponseHandler.COMMAND_ID,
-				DetectorResponseHandler.STATE_ID);
+		flags.setEnableNormalisation(ncdNormalisationSourceProvider.isEnableNormalisation());
+		flags.setEnableBackground(ncdBackgroundSourceProvider.isEnableBackground());
+		flags.setEnableDetectorResponse(ncdResponseSourceProvider.isEnableDetectorResponse());
+		flags.setEnableSector(ncdSectorSourceProvider.isEnableSector());
+		flags.setEnableInvariant(ncdInvariantSourceProvider.isEnableInvariant());
+		flags.setEnableAverage(ncdAverageSourceProvider.isEnableAverage());
 		
-		Boolean enableInvariant = readReductionStage(service, InvariantHandler.COMMAND_ID,
-				InvariantHandler.STATE_ID);
-
-		Boolean enableNormalisation = readReductionStage(service, NormalisationHandler.COMMAND_ID,
-				NormalisationHandler.STATE_ID);
-		
-		Boolean enableSector = readReductionStage(service, SectorIntegrationHandler.COMMAND_ID,
-				SectorIntegrationHandler.STATE_ID);
-		
-		Boolean enableRadial = readReductionStage(service, RadialHandler.COMMAND_ID,
-				RadialHandler.STATE_ID);
-		
-		Boolean enableAzimuthal = readReductionStage(service, AzimuthalHandler.COMMAND_ID,
-				AzimuthalHandler.STATE_ID);
-		
-		Boolean enableFastIntegration = readReductionStage(service, FastIntegrationHandler.COMMAND_ID,
-				FastIntegrationHandler.STATE_ID);
-		
-		if (enableWaxs) flags.setEnableWaxs(true);
-		if (enableSaxs) flags.setEnableSaxs(true);
-		if (enableNormalisation) flags.setEnableNormalisation(true);
-		if (enableBackground) flags.setEnableBackground(true);
-		if (enableDetectorResponse) flags.setEnableDetectorResponse(true);
-		if (enableSector) flags.setEnableSector(true);
-		if (enableRadial) flags.setEnableRadial(true);
-		if (enableAzimuthal) flags.setEnableAzimuthal(true);
-		if (enableFastIntegration) flags.setEnableFastintegration(true);
-		if (enableInvariant) flags.setEnableInvariant(true);
-		if (enableAverage) flags.setEnableAverage(true);
-	}
-
-	private Boolean readReductionStage(final ICommandService service, String COMMAND_ID, String STATE_ID) {
-
-		Command command = service.getCommand(COMMAND_ID);
-		State state = command.getState(STATE_ID);
-		return (Boolean)state.getValue();
+		flags.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());
+		flags.setEnableAzimuthal(ncdAzimuthSourceProvider.isEnableAzimuthal());
+		flags.setEnableFastintegration(ncdFastIntSourceProvider.isEnableFastIntegration());
 	}
 
 	private void readDetectorInformation(final NcdReductionFlags flags, NcdDetectors ncdDetectors) throws ExecutionException {
@@ -341,30 +361,26 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		
 		if (flags.isEnableWaxs()) {
-			int idxWaxs = NcdDataReductionParameters.getDetListWaxs().getSelectionIndex();
-			if (idxWaxs >= 0) {
-				detectorWaxs = NcdDataReductionParameters.getDetListWaxs().getItem(idxWaxs);
-				pxWaxs = NcdDataReductionParameters.getWaxsPixel(false);
-				dimWaxs = NcdDataReductionParameters.getDimData(detectorWaxs);
-				if ((detectorWaxs!=null) && (pxWaxs != null)) {
-					ncdDetectors.setDetectorWaxs(detectorWaxs);
-					ncdDetectors.setPxWaxs(pxWaxs);
-					ncdDetectors.setDimWaxs(dimWaxs);
-				}
+			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+			NcdDetectorSettings detWaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorWaxs);
+			pxWaxs = detWaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
+			dimWaxs = detWaxsInfo.getDimmension();
+			if ((detectorWaxs!=null) && (pxWaxs != null)) {
+				ncdDetectors.setDetectorWaxs(detectorWaxs);
+				ncdDetectors.setPxWaxs(pxWaxs);
+				ncdDetectors.setDimWaxs(dimWaxs);
 			}
 		} 
 		
 		if (flags.isEnableSaxs()) {
-			int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-			if (idxSaxs >= 0) {
-				detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-				pxSaxs = NcdDataReductionParameters.getSaxsPixel(false);
-				dimSaxs = NcdDataReductionParameters.getDimData(detectorSaxs);
-				if ((detectorSaxs != null) && (pxSaxs != null)) {
-					ncdDetectors.setDetectorSaxs(detectorSaxs);
-					ncdDetectors.setPxSaxs(pxSaxs);
-					ncdDetectors.setDimSaxs(dimSaxs);
-				}
+			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			NcdDetectorSettings detSaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorSaxs);
+			pxSaxs = detSaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
+			dimSaxs = detSaxsInfo.getDimmension();
+			if ((detectorSaxs != null) && (pxSaxs != null)) {
+				ncdDetectors.setDetectorSaxs(detectorSaxs);
+				ncdDetectors.setPxSaxs(pxSaxs);
+				ncdDetectors.setDimSaxs(dimSaxs);
 			}
 		}
 		
@@ -388,46 +404,48 @@ public class DataReductionHandler extends AbstractHandler {
 		
 	}
 
-	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws PartInitException {
+	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) {
 
-		final ICommandService service = (ICommandService) PlatformUI.getWorkbench().getService(ICommandService.class);
-
-		Integer firstFrame = NcdDataReductionParameters.getDetFirstFrame();
-		Integer lastFrame = NcdDataReductionParameters.getDetLastFrame();
-		String frameSelection = NcdDataReductionParameters.getDetAdvancedSelection();
-		String gridAverage = NcdDataReductionParameters.getGridAverageSelection();
+		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
+		Integer firstFrame = null;
+		Integer lastFrame = null;
+		String frameSelection = null;
+		if (dataSliceInput != null) {
+			firstFrame = dataSliceInput.getStartFrame();
+			lastFrame = dataSliceInput.getStopFrame();
+			frameSelection = dataSliceInput.getAdvancedSlice();
+		}
 		
-		Double qGradient = NcdDataReductionParameters.getQGradient();
-		Double qIntercept = NcdDataReductionParameters.getQIntercept();
-		String qUnit = NcdDataReductionParameters.getQUnit();
+		SliceInput gridAverageSlice = ncdGridAverageSourceProvider.getGridAverage();
+		String gridAverage = null;
+		if (gridAverageSlice != null)
+			gridAverage = gridAverageSlice.getAdvancedSlice();
 		
 		String bgFile = null;
 		Double bgScaling = null;
 		if (flags.isEnableBackground()) {
-			bgFile = NcdDataReductionParameters.getBgFile();
-			bgScaling = NcdDataReductionParameters.getBgScale();
+			bgFile = ncdBgFileSourceProvider.getBgFile();
+			bgScaling = ncdBgScaleSourceProvider.getBgScaling();
 		}
 
 		String drFile = null;
 		if (flags.isEnableDetectorResponse())
-			drFile = NcdDataReductionParameters.getDrFile();
+			drFile = ncdDrFileSourceProvider.getDrFile();
 		
 		int normChannel = -1;
 		String calibration = null;
 		Double absScaling = null;
 		if (flags.isEnableNormalisation()) {
-			normChannel = NcdDataReductionParameters.getNormChan().getSelection();
-			calibration = NcdDataReductionParameters.getCalList().getItem(NcdDataReductionParameters.getCalList().getSelectionIndex());
-			absScaling = NcdDataReductionParameters.getAbsScale();
+			normChannel = ncdNormChannelSourceProvider.getNormChannel();
+			calibration = ncdScalerSourceProvider.getScaler();
+			absScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 		}
 		
-		Boolean enableMask = readReductionStage(service, DetectorMaskHandler.COMMAND_ID,
-				DetectorMaskHandler.STATE_ID);
+		boolean enableMask = ncdMaskSourceProvider.isEnableMask();
 
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 		IViewPart activePlot = page.findView(PlotView.ID + "DP");
 		if (activePlot instanceof PlotView) {
-			GuiBean guiinfo = ((PlotView)page.showView(PlotView.ID + "DP")).getGUIInfo();
 			BooleanDataset mask = null;
 			if (enableMask) {
 				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
@@ -442,18 +460,21 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			SectorROI intSector = null;
-			if (guiinfo.containsKey(GuiParameters.ROIDATA)) {
-				if (guiinfo.get(GuiParameters.ROIDATA) instanceof SectorROI) {
-					intSector = (SectorROI)guiinfo.get(GuiParameters.ROIDATA);
-				}
+			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+			if (sectorRegions == null || sectorRegions.isEmpty())
+				flags.setEnableSector(false);
+			else {
+				ROIBase intBase = sectorRegions.iterator().next().getROI();
+				if (intBase instanceof SectorROI)
+					intSector = (SectorROI) intBase;
 				else flags.setEnableSector(false);
 			}
-			else flags.setEnableSector(false);
 
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-			CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 			//CalibrationResultsBean crb = null;
 			//if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
 			//	Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
@@ -475,10 +496,6 @@ public class DataReductionHandler extends AbstractHandler {
 		processing.setGridAverageSelection(gridAverage);
 		processing.setCalibration(calibration);
 		processing.setNormChannel(normChannel);
-		processing.setSlope(qGradient);
-		processing.setIntercept(qIntercept);
-		processing.setUnit(qUnit);
-		
 	}
 	
 	private String generateDateTimeStamp() {

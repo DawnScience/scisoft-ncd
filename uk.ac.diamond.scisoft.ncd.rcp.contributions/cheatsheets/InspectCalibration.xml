@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Inspect Calibration Results (Recommended)">
+   <intro>
+      <description>
+         Prerequsites: <br/>
+		 <br/>
+         Create project with data<br/>
+         Load detector information
+      </description>
+   </intro>
+   <item
+         title="Inspect calibration results (recommended)">
+      <description>
+         Running data reduction on the calibration dataset is a good reference of success of calibration procedures.
+      </description>
+      <subitem
+         label="Check that &quot;4. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
+      </subitem>   
+      <subitem
+         label="Select file with the calibration image in the &quot;Project Explorer&quot; and right-click on it. Select &quot;NCD &gt; Run Data Reduction&quot; from the popup menu.">
+      </subitem>   
+      <subitem
+         label="Plot and inspect data from the results file opened in the editor area after data reduction completes.">
+      </subitem>   
+      <subitem
+         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into SDA workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
+      </subitem>   
+   </item>
+   <item
+         title="Specify experiment type">
+      <description>
+         Select SAXS checkboxes in &quot;NCD Detector parameters&quot; view to process SAXS data.
+         Select 2D switch for detector dimension and specify pixel size (if not preloaded).  
+      </description>
+   </item>
+   <item
+         title="Specifying data processing results directory">
+      <description>
+         Specify directory where data processing results will be stored in the &quot;Directory&quot; field in the &quot;NCD Data Reduction Parameters&quot; view. This directory can be selected by pressing adjacent &quot;...&quot; button and selecting the directory from the dialog. 
+      </description>
+   </item>
+   <item
+         title="Select Sector Integration stage">
+      <description>
+         &quot;Sector Integration&quot; pipeline stages can be selected with the corresponding checkbox in &quot;Data Reduction Pipeline&quot; panel. 
+      </description>
+   </item>
+   <item
+         title="Specifying Sector Integration parameters">
+      <description>
+         Under &quot;Sector Integration Parameters&quot; select following options 
+      </description>
+      <subitem
+         label="Enable calculation of radial profile select corresponding checkbox.">
+      </subitem>   
+      <subitem
+         label="If detector mask is avaliable, select &quot;Apply Detector Mask&quot; checkbox.">
+      </subitem>   
+   </item>
+   <item
+         title="Run sector integration stage">
+      <description>
+         Select data file with calibration image in &quot;Project Explorer&quot; view, right-click on it and select &quot;NCD  &gt; Run Data Reduction&quot; menu option. 
+      </description>
+   </item>
+   <item
+         title="Inspect sector integration result">
+      <description>
+         Data reduction results are stored in output directory in results_detectorname_DDMMYY_HHMMSS_inputfilename.nxs file under &quot;/entry1/detectorname_result/data&quot; node.
+         Double-click on this node to plot it in the &quot;Dataset Plot&quot; view. Using &quot;Peak Fitting&quot; tool from &quot;Plotting Tools&quot; button on the toolbar fit calibration peak position and compare with reference values. 
+      </description>
+   </item>
+</cheatsheet>

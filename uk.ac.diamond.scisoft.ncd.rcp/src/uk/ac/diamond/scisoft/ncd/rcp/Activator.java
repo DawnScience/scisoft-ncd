@@ -14,14 +14,29 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.preferences;
+package uk.ac.diamond.scisoft.ncd.rcp;
 
-import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import org.eclipse.ui.plugin.AbstractUIPlugin;
+import org.osgi.framework.BundleContext;
 
-public class NcdConstants {
+public class Activator extends AbstractUIPlugin {
+
+	private static Activator plugin;
+
+	@Override
+	public void start(BundleContext context) throws Exception {
+		super.start(context);
+		plugin = this;
+ 
+	}
 	
-	public static String[] dimChoices = new String[] { "1D", "2D" };
-	public static Unit<Length> DEFAULT_UNIT = SI.NANO(SI.METER);
+	@Override 
+	public void stop(BundleContext context) throws Exception {
+		plugin = null;
+		super.stop(context);
+	}
+
+	public static Activator getDefault() {
+		return plugin;
+	}
 }

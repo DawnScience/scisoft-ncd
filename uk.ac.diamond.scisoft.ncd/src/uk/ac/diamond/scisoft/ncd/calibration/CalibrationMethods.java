@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -48,7 +49,8 @@ public class CalibrationMethods {
 	private double pixelSize;
 	private Unit<Length> unit;
 	
-    private double meanCameraLength, stdCameraLength;
+    Amount<Length> meanCameraLength;
+
     private double[] fitResult;
     private List<CalibrationPeak> indexedPeakList;
     
@@ -77,13 +79,8 @@ public class CalibrationMethods {
 	}
 
 
-	public double getMeanCameraLength() {
+	public Amount<Length> getMeanCameraLength() {
 		return meanCameraLength;
-	}
-
-
-	public double getStdCameraLength() {
-		return stdCameraLength;
 	}
 
 	/**
@@ -147,7 +144,8 @@ public class CalibrationMethods {
    		return regression.getSumSquaredErrors();
 	}
 	
-	private double[] estimateCameraLength(LinkedHashMap<IPeak, HKL> indexedPeaks) {
+	@SuppressWarnings("unused")
+	private Amount<Length> estimateCameraLength(LinkedHashMap<IPeak, HKL> indexedPeaks) {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
 		CombinationGenerator<Entry<IPeak,HKL>> combinations = new CombinationGenerator<Entry<IPeak,HKL>>(indexedPeaks.entrySet(), 2);
 		for (List<Entry<IPeak, HKL>> comb : combinations) {
@@ -162,14 +160,15 @@ public class CalibrationMethods {
 		    //logger.info("Camera length from " + indexedPeaks.get(peak2).toString() + " and " + indexedPeaks.get(peak1).toString() + "is {} mm", dist);
 		}
 		double[] cameraLenArray = ArrayUtils.toPrimitive(cameraLen.toArray(new Double[] {}));
-	    meanCameraLength = StatUtils.mean(cameraLenArray);
-	    stdCameraLength = Math.sqrt(StatUtils.variance(cameraLenArray));
+	    double mcl = StatUtils.mean(cameraLenArray);
+	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
+	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
 	    
-	    logger.info("Camera length: {} +/- {} mm", meanCameraLength, stdCameraLength);
-   	    return new double[] {meanCameraLength, stdCameraLength};
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
+   	    return meanCameraLength;
 	}
 	
-	private double[] estimateCameraLengthSingle(LinkedHashMap<IPeak, HKL> indexedPeaks) {
+	private Amount<Length> estimateCameraLengthSingle(LinkedHashMap<IPeak, HKL> indexedPeaks) {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
 		for (Entry<IPeak, HKL> peak : indexedPeaks.entrySet()) {
 			double peakPos = peak.getKey().getPosition();
@@ -178,11 +177,12 @@ public class CalibrationMethods {
 			cameraLen.add(dist);
 		}
 		double[] cameraLenArray = ArrayUtils.toPrimitive(cameraLen.toArray(new Double[] {}));
-	    meanCameraLength = StatUtils.mean(cameraLenArray);
-	    stdCameraLength = Math.sqrt(StatUtils.variance(cameraLenArray));
+	    double mcl = StatUtils.mean(cameraLenArray);
+	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
+	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
 	    
-	    logger.info("Camera length: {} +/- {} mm", meanCameraLength, stdCameraLength);
-   	    return new double[] {meanCameraLength, stdCameraLength};
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
+   	    return meanCameraLength;
 	}
 	
 	public double performCalibration(boolean intercept) {

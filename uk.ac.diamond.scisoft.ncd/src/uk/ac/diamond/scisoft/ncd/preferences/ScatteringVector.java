@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2012 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.hdf5;
+package uk.ac.diamond.scisoft.ncd.preferences;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import javax.measure.quantity.Quantity;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
-public class HDF5Average extends HDF5ReductionDetector {
-
-	private static final Logger logger = LoggerFactory.getLogger(HDF5Average.class);
-
-	public HDF5Average(String name, String key) {
-		super(name, key);
-	}
+public interface ScatteringVector extends Quantity {
+	
+	public final static Unit<? extends Quantity> UNIT = Unit.ONE.divide(SI.METER);    	
 }

@@ -28,15 +28,16 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.swt.widgets.Shell;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
+import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,11 +45,12 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class DetectorMaskFileHandler extends AbstractHandler {
 
@@ -61,48 +63,43 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
 		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1) {
 
-				final Object sel = ((IStructuredSelection)selection).getFirstElement();
-				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-				Shell shell = window.getShell();
-				try {
+			final Object sel = ((IStructuredSelection) selection).getFirstElement();
+			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+			ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+			NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service
+					.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+			String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			if (detectorSaxs == null)
+				return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
 
-					int idxSaxs = NcdDataReductionParameters.getDetListSaxs().getSelectionIndex();
-					if (idxSaxs >= 0) {
-						String detectorSaxs = NcdDataReductionParameters.getDetListSaxs().getItem(idxSaxs);
-						String maskFilename;
-						if (sel instanceof IFile)
-							maskFilename = ((IFile)sel).getLocation().toString();
-						else 
-							maskFilename = ((File)sel).getAbsolutePath();
-						HDF5File qaxisFile = new HDF5Loader(maskFilename).loadTree();
-						HDF5Node node = qaxisFile.findNodeLink("/entry1/"+detectorSaxs+"_processing/SectorIntegration/mask").getDestination();
-						if (node == null) {
-							String msg = "No mask data found in "+ maskFilename;
-							return DetectorMaskErrorDialog(shell, msg, null);
-						}
-						
-						mask = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-						
-						IWorkbenchPage page = window.getActivePage();
-						IViewPart activePlot = page.findView(PlotView.ID + "DP");
-						if (activePlot instanceof PlotView) {
-							AbstractPlottingSystem activePlotSystem = PlottingFactory
-									.getPlottingSystem(((PlotView) activePlot).getPartName());
-							ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
-							if (imageTrace != null && imageTrace instanceof IImageTrace)
-								((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
-						}
-						return Status.OK_STATUS;
-					} 
-					String msg = "SCISOFT NCD: No SAXS detector is selected";
-					return DetectorMaskErrorDialog(shell, msg, null);
+			String maskFileName;
+			if (sel instanceof IFile)
+				maskFileName = ((IFile) sel).getLocation().toString();
+			else
+				maskFileName = ((File) sel).getAbsolutePath();
 
-				} catch (Exception e) {
-					String msg = "SCISOFT NCD: Failed to read detector mask from "+((IFile)sel).getLocation().toString();
-					return DetectorMaskErrorDialog(shell, msg, e);
+			try {
+				HDF5File dataTree = new HDF5Loader(maskFileName).loadTree();
+				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/mask");
+				if (node == null)
+					return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), null);
+
+				mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
+
+				IWorkbenchPage page = window.getActivePage();
+				IViewPart activePlot = page.findView(PlotView.ID + "DP");
+				if (activePlot instanceof PlotView) {
+					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
+							.getPartName());
+					ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+					if (imageTrace != null && imageTrace instanceof IImageTrace)
+						((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
 				}
+
+			} catch (Exception e) {
+				return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), e);
 			}
 
 		}
@@ -110,10 +107,10 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		return null;
 	}
 
-	private IStatus DetectorMaskErrorDialog(Shell shell, String msg, Exception e) {
+	private IStatus ErrorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
-		ErrorDialog.openError(shell, "Mask loading error", "Error loading detector mask", status);
-		return Status.CANCEL_STATUS;
+		StatusManager.getManager().handle(status, StatusManager.SHOW);
+		return null;
 	}
 }

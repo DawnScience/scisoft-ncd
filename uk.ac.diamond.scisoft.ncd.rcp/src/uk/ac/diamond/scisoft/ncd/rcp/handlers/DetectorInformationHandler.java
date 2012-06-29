@@ -17,10 +17,11 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
+
+import javax.measure.unit.SI;
 
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -29,7 +30,10 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,7 +45,8 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 
 public class DetectorInformationHandler extends AbstractHandler {
 	
@@ -50,9 +55,13 @@ public class DetectorInformationHandler extends AbstractHandler {
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		
-		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		IWorkbenchPage page = window.getActivePage();
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection();
 		IWorkbenchPart part = page.getActivePart();
+		
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		
 		if (sel != null) {
 			
@@ -87,7 +96,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 					
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-					return Boolean.FALSE;
+					return null;
 				}
 			}
 			
@@ -99,22 +108,15 @@ public class DetectorInformationHandler extends AbstractHandler {
 		        	detInfo.remove(detName.getKey());
 		        }
 		    }
-    		updateDetectorInformation(detInfo);
+    		updateDetectorInformation(detInfo, ncdDetectorSourceProvider);
 		}
 		
 		page.activate(part);
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors) {
-		
-    	HashMap<String, Integer> detDims = new HashMap<String, Integer>();
-    	HashMap<String, Double> pixels = new HashMap<String, Double>();
-    	HashMap<String, Integer> maxChannel = new HashMap<String, Integer>();
-    	ArrayList<String> calList = new ArrayList<String>();
-    	ArrayList<String> detListWaxs = new ArrayList<String>();
-    	ArrayList<String> detListSaxs = new ArrayList<String>();
-    	
+	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, NcdCalibrationSourceProvider ncdDetectorSourceProvider) {
+	    ncdDetectorSourceProvider.getNcdDetectors().clear();
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Entry<String, HDF5Group> detector = it.next();
@@ -124,40 +126,31 @@ public class DetectorInformationHandler extends AbstractHandler {
 				try {
 					String type = ((AbstractDataset)((HDF5Dataset)sasTree.getDestination()).getDataset()).getString(0);
 					
-		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR))
-		        			calList.add(detName);
-		        	
-		        	if (type.equals(DetectorTypes.WAXS_DETECTOR)) {
-		        		detListWaxs.add(detName);
-		        		detDims.put(detName, 1);
+		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);
+		    			HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
+		    	        if (dataNode != null) {
+		    				int[] dims = ((HDF5Dataset)dataNode.getDestination()).getDataset().getShape();
+		    				tmpDet.setMaxChannel(dims[dims.length - 1] - 1);
+		    	        }
+		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
 		        	}
-				    if (type.equals(DetectorTypes.SAXS_DETECTOR)) {
-	        			detListSaxs.add(detName);
-		        		detDims.put(detName, 2);
-				    }
 		        	
+				    if (type.equals(DetectorTypes.WAXS_DETECTOR) || type.equals(DetectorTypes.SAXS_DETECTOR)) {
+		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);
+		        		if (type.equals(DetectorTypes.SAXS_DETECTOR))
+		        			tmpDet.setDimmension(2);
+		    	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
+		    	        if (pixelData != null) {
+		    				double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
+		    				tmpDet.setPxSize(Amount.valueOf(pxSize * 1000, SI.MILLIMETER));
+		    	        }
+		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
+				    }
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading sas_type information in " + detName + " detector", e);
 				}
 	        }
-	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
-	        if (pixelData != null) {
-					double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
-					pixels.put(detName, pxSize*1000);
-	        }
-	        
-			HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
-	        if (dataNode != null) {
-				int[] dims = ((HDF5Dataset)dataNode.getDestination()).getDataset().getShape();
-				maxChannel.put(detName, dims[dims.length - 1] - 1);
-	        }
 	    }
-	    
-	    NcdDataReductionParameters.setDimData(detDims);
-	    NcdDataReductionParameters.setChannelData(maxChannel);
-	    NcdDataReductionParameters.setPixelData(pixels);
-	    NcdDataReductionParameters.setNormalisationDetectors(calList);
-	    NcdDataReductionParameters.setWaxsDetectors(detListWaxs);
-	    NcdDataReductionParameters.setSaxsDetectors(detListSaxs);
 	}
 }

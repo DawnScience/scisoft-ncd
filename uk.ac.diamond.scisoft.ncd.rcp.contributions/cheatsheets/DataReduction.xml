@@ -12,15 +12,14 @@
    <item
          title="Specify experiment type">
       <description>
-         Select SAXS/WAXS checkboxes in Experiment Parameters panel to process SAXS/WAXS data, respectively.
-         For each detector select dimension (1D/2D) and specify pixel size. &quot;Sector integration&quot; and
-         &quot;Invariant&quot; stages are enabled only when 2D detector is present.  
+         Select SAXS and/or WAXS checkboxes in &quot;NCD Detector parameters&quot; view to process SAXS and/or WAXS data, respectively.
+         For each detector select dimension (1D/2D) and specify pixel size (if not preloaded).  
       </description>
    </item>
    <item
          title="Specifying data processing results directory">
       <description>
-         Specify directory where data processing results will be stored in the &quot;Directory&quot; field in the &quot;Results directory&quot; panel. This directory can be selected by pressing adjacent &quot;...&quot; button and selecting the directory from the dialog. 
+         Specify directory where data processing results will be stored in the &quot;Directory&quot; field in the &quot;NCD Data Reduction Parameters&quot; view. This directory can be selected by pressing adjacent &quot;...&quot; button and selecting the directory from the dialog. 
       </description>
    </item>
    <item
@@ -30,9 +29,33 @@
       </description>
    </item>
    <item
+         title="Specifying Detector Response parameters">
+      <description>
+         If &quot;1. Detector Response&quot; stage is enabled we need to specify detector response parameters under &quot;Reference Data&quot; group. 
+      </description>
+      <subitem
+         label="Reference to the file with detector response data needs to be specified in &quot;Detector Response File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Detector Response File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog. Detector response file should contain only single frame.">
+      </subitem>   
+   </item>
+   <item
+         title="Specifying Sector Integration parameters">
+      <description>
+         If &quot;2. Sector Integration&quot; stage is enabled we need to specify parameters under the &quot;Sector Integration Parameters&quot; group. 
+      </description>
+      <subitem
+         label="To enable calculation of radial and azimuthal profiles select corresponding checkboxes.">
+      </subitem>   
+      <subitem
+         label="&quot;Fast Integration&quot; checkbox activates faster but less accurate algorithm for sector integration.">
+      </subitem>   
+      <subitem
+         label="&quot;Apply Detector Mask&quot; checkbox adds detector mask into inrtegrated profile calculations.">
+      </subitem>   
+   </item>
+   <item
          title="Specifying Normalisation parameters">
       <description>
-         If &quot;1. Normalisation&quot; stage is enabled we need to specify normalisation parameters in &quot;Reference Data&quot; panel. 
+         If &quot;3. Normalisation&quot; stage is enabled we need to specify normalisation parameters under &quot;Reference Data&quot; group. 
       </description>
       <subitem
          label="Select detector name holding normalisation values from &quot;Normalisation Data&quot; drop-down list.">
@@ -47,7 +70,7 @@
    <item
          title="Specifying Background Subtraction parameters">
       <description>
-         If &quot;2. Background Subtraction&quot; stage is enabled we need to specify background subtraction parameters in &quot;Reference Data&quot; panel. 
+         If &quot;4. Background Subtraction&quot; stage is enabled we need to specify background subtraction parameters in &quot;Reference Data&quot; group. 
       </description>
       <subitem
          label="Reference to the file with background data needs to be specified in &quot;Background Subtraction File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Background Subtraction File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog.">
@@ -57,24 +80,22 @@
       </subitem>   
    </item>
    <item
-         title="Specifying Detector Response parameters">
-      <description>
-         If &quot;3. Detector Response&quot; stage is enabled we need to specify detector response parameters in &quot;Reference Data&quot; panel. 
-      </description>
-      <subitem
-         label="Reference to the file with detector response data needs to be specified in &quot;Detector Response File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Detector Response File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog. Detector response file should contain only single frame.">
-      </subitem>   
-   </item>
-   <item
          title="Slicing input data (optional)">
       <description>
-         If only part of the input or background data needs to be used the corresponding frame interval can be specified in &quot;Data frame selection&quot; and &quot;Background frame selection&quot; panels. If &quot;First&quot; frame is omitted, data will be selected from the first frame in the dataset. If &quot;Last&quot; frame is omitted, data will be selected until the last frame in the dataset. 
+         If only part of the input or background data needs to be used the corresponding frame interval can be specified in &quot;Data frame selection&quot; and &quot;Background frame selection&quot; groups. If &quot;First&quot; frame is omitted, data will be selected from the first frame in the dataset. If &quot;Last&quot; frame is omitted, data will be selected until the last frame in the dataset. 
       </description>
    </item>
    <item
          title="Running data reduction">
       <description>
          Select single file or multiple files (by holding SHIFT or CTRL) for data reduction in &quot;Project Explorer&quot; view, right-click on them and select &quot;NCD  &gt; Run Data Reduction&quot; menu option. 
+      </description>
+   </item>
+   <item
+         title="Data reduction results">
+      <description>
+         Data reduction results are stored in output directory in results_detectorname_DDMMYY_HHMMSS_inputfilename.nxs file under &quot;/entry1/detectorname_processing/&quot; node. Every data reduction stage has separate subnode with output result stored under data subnode.
+         Output dataset of NCD data reduction is stored in &quot;/entry1/dtectorname_result/data&quot; node.
       </description>
    </item>
 </cheatsheet>

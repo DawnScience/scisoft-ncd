@@ -46,7 +46,6 @@ public class NcdPreferences {
 	public static final String NCD_DIM = "ncd.detector.dimension";
 	public static final String NCD_MAXCHANNEL = "ncd.norm.maxchannel";
 	public static final String NCD_MAXCHANNEL_INDEX = "ncd.norm.maxchannel.index";
-	public static final String NCD_ENERGY = "ncd.energy";
 	
 	public static final String NCD_DIRECTORY = "ncd.directory";
 	public static final String NCD_BGFIRSTFRAME = "ncd.bgfirstframe";
@@ -59,8 +58,9 @@ public class NcdPreferences {
 	public static final String NCD_DATAADVANCED = "ncd.dataadvanced";
 	public static final String NCD_GRIDAVERAGESELECTION = "ncd.gridaverageselection";
 	public static final String NCD_GRIDAVERAGE = "ncd.gridaverage";
-	public static final String NCD_QGRADIENT = "ncd.qgradient";
-	public static final String NCD_QINTERCEPT = "ncd.qintercept";
-	public static final String NCD_QUNIT = "ncd.qunit";
-	public static final String NCD_QOVERRIDE = "ncd.qoverride";
+	
+	public static final String CMAESlambda = "CMAESlambda";
+	public static final String CMAESsigma = "CMAESsigma";
+	public static final String CMAESmaxiteration = "CMAESmaxiteration";
+	public static final String CMAESchecker = "CMAESchecker";
 }

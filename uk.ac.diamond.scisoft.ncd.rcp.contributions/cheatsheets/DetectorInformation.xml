@@ -24,7 +24,7 @@
          label="Select NCD &gt; Read Detector Information option from the pop-up menu.">
       </subitem>   
       <subitem
-         label="Inspect detector names added into Normalisation Data, WAXS and SAXS combo boxes in NCD data reduction parameters view.">
+         label="Inspect detector names added into WAXS and SAXS combo boxes in &quot;NCD Detector Parameters&quot; view and into Normalisation Data combo box under &quot;Reference data&quot; field in &quot;NCD Data Reduction Parameters&quot; view.">
       </subitem>   
    </item>
 </cheatsheet>
