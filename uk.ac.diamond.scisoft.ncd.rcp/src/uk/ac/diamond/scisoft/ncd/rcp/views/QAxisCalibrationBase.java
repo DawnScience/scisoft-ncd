@@ -314,26 +314,37 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		calibrationResultsDisplay(gpCalibrationResultsComposite);
 
 		calibrationControls = new Group(calibrationResultsComposite, SWT.NONE);
-		calibrationControls.setLayout(new GridLayout(3, false));
-		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		calibrationControls.setLayout(new GridLayout(4, false));
+		calibrationControls.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 2, 1));
 		calibrationControls.setText("Calibration Controls");
 
 		Label lblStandard = new Label(calibrationControls, SWT.NONE);
-		lblStandard.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, true));
+		lblStandard.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, false, false));
 		lblStandard.setText("Standard");
 
 		standard = new Combo(calibrationControls, SWT.NONE);
-		standard.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+		standard.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-		Group progress = new Group(calibrationResultsComposite, SWT.NONE);
-		progress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, false, 1, 1));
-		progress.setLayout(new GridLayout(1, false));
-		progress.setText("Progress");
+		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
+		beamRefineButton.setText("Refine Beam Position");
+		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
+		beamRefineButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
+		
+		calibrateButton = new Button(calibrationControls, SWT.NONE);
+		calibrateButton.setText("Calibrate");
+		calibrateButton.setEnabled(true);
+		calibrateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		calibrateButton.addSelectionListener(new SelectionAdapter() {
 
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				runCalibration();
+			}
+		});
+		
 		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
 		ncdCalibrationSourceProvider.addSourceProviderListener(this);
 		
-		displayControlButtons(progress);
 		setupGUI();
 	}
 
@@ -401,23 +412,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		storePeaks();
 		
 		runJavaCommand();
-	}
-
-	private void displayControlButtons(Group progress) {
-		progress.setLayout(new GridLayout(2, true));
-		progress.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-
-		calibrateButton = new Button(progress, SWT.NONE);
-		calibrateButton.setText("Calibrate");
-		calibrateButton.setEnabled(true);
-		calibrateButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 2, 1));
-		calibrateButton.addSelectionListener(new SelectionAdapter() {
-
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				runCalibration();
-			}
-		});
 	}
 
 	private void storePeaks() {

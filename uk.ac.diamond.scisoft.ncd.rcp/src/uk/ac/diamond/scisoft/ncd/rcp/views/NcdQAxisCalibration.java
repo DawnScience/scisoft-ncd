@@ -251,12 +251,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 
 		super.createPartControl(parent);
 		
-		calibrationControls.setLayout(new GridLayout(2, false));
-		beamRefineButton = new Button(calibrationControls, SWT.CHECK);
-		beamRefineButton.setText("Refine Beam Position");
-		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
-		beamRefineButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
-		
 		restoreState();
 		
 		try {
