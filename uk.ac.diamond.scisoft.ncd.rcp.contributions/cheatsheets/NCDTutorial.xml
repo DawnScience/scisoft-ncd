@@ -19,8 +19,8 @@
 					<b>/dls/sci-scratch/ExampleData/NCDExamples</b>
 					directory.
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.importdata" />
+				<param name="path"
+					value="ImportData.xml" />
 			</task>
 			<task kind="cheatsheet" name="Loading Detector Information"
 				skip="true">
@@ -32,8 +32,8 @@
 					<b>Scaler</b>
 					as detector for data normalisation.
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.detectorinfo" />
+				<param name="path"
+					value="DetectorInformation.xml" />
 			</task>
 		</taskGroup>
 		<taskGroup kind="set" name="Configuring NCD Data Reduction"
@@ -48,8 +48,8 @@
 					value of -1. Masking tool allows us to disregard such pixels for 1D
 					profile calculations.
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.masking" />
+				<param name="path"
+					value="Masking.xml" />
 			</task>
 			<task kind="cheatsheet" name="Calibrating SAXS detector" skip="true">
 				<intro>
@@ -61,8 +61,8 @@
 					to first four calibration peaks.
 					<br />
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.saxscalibration" />
+				<param name="path"
+					value="SAXScalibration.xml" />
 			</task>
 			<task kind="cheatsheet" name="Restoring Data from Processing Results"
 				skip="true">
@@ -75,8 +75,8 @@
 					- Example of processing results file for frames 50-60 with q-axis
 					calibration and detector mask data.
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.restoredata" />
+				<param name="path"
+					value="RestoringData.xml" />
 			</task>
 		</taskGroup>
 		<taskGroup kind="set" name="Running NCD Data Reduction"
@@ -95,8 +95,8 @@
 					to first four calibration peaks.
 					<br />
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.inspectcalibration" />
+				<param name="path"
+					value="InspectCalibration.xml" />
 			</task>
 			<task kind="cheatsheet" name="Basic NCD Data Reduction" skip="true">
 				<intro>
@@ -115,8 +115,8 @@
 					dataset can take 10-15min.
 					<br />
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.datareduction" />
+				<param name="path"
+					value="DataReduction.xml" />
 			</task>
 			<task kind="cheatsheet" name="Advanced Slicing and Averaging Techniques"
 				skip="true">
@@ -126,8 +126,8 @@
 					only a subset of available data and average it over multiple
 					dimensions.
 				</intro>
-				<param name="id"
-					value="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.sliceaverage" />
+				<param name="path"
+					value="SliceAverage.xml" />
 			</task>
 		</taskGroup>
 	</taskGroup>
