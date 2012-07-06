@@ -44,8 +44,8 @@
 			</intro>
 			<task kind="cheatsheet" name="Setting Detector Mask" skip="true">
 				<intro>
-					Pilatus2M has inactive grid area where pixels are assigned
-					value of -1. Masking tool allows us to disregard such pixels for 1D
+					Pilatus2M has an inactive grid area where pixels are assigned
+					a value of -1. The masking tool allows us to disregard such pixels for 1D
 					profile calculations.
 				</intro>
 				<param name="path"
