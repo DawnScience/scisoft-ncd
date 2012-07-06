@@ -9,7 +9,7 @@
    <item
       title="Selecting data files">
       <description>
-         Select single file or multiple files by holding SHIFT or CTRL keys in the project explorer view. Detectors present in all the selected files will only be loaded into NCD data reduction panel.
+         Select single file or multiple files by holding SHIFT or CTRL keys in the project explorer view. Detectors present only in all the selected files will be loaded into the relevant fields in NCD Detector Parameters and NCD Data Reduction Parameters views.
       </description>
    </item>
    <item
