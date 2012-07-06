@@ -242,7 +242,7 @@
             id="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
             name="NCD Data Reduction Tutorials">
       </category>
-      <!--cheatsheet
+      <cheatsheet
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
             composite="false"
             contentFile="cheatsheets/ImportData.xml"
@@ -297,7 +297,7 @@
             contentFile="cheatsheets/SliceAverage.xml"
             id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.sliceaverage"
             name="Advanced Slicing and Averaging Techniques">
-      </cheatsheet-->
+      </cheatsheet>
       <cheatsheet
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
             composite="true"
