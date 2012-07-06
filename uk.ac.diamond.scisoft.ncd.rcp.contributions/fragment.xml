@@ -228,6 +228,13 @@
             id="uk.ac.diamond.scisoft.ncd.rcp.intro.ncdperspective"
             name="(Pre-release) NCD Data Reduction">
       </introPageRegister>
+      <introPageRegister
+            class="uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationPerspectiveLaunch"
+            description="Opens the perspective for calibration of non-crystalline diffraction data"
+            icon="icons/ncd_calibration_intro.png"
+            id="uk.ac.diamond.scisoft.ncd.rcp.intro.ncdcailbrationperspective"
+            name="(Pre-release) NCD Calibration">
+      </introPageRegister>
    </extension>
    <extension
          point="org.eclipse.ui.cheatsheets.cheatSheetContent">
