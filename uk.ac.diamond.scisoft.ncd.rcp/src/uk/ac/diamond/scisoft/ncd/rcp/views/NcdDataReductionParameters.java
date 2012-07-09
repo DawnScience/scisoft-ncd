@@ -628,9 +628,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absScale = new Text(g, SWT.BORDER);
 			absScale.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
-			absScale.addSelectionListener(new SelectionAdapter() {
+			absScale.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale());
 				}
 			});
@@ -675,9 +676,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgScale = new Text(g, SWT.BORDER);
 			bgScale.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
 			bgScale.setToolTipText("Scaling values for background data");
-			bgScale.addSelectionListener(new SelectionAdapter() {
+			bgScale.addModifyListener(new ModifyListener() {
+				
 				@Override
-				public void widgetSelected(SelectionEvent e) {
+				public void modifyText(ModifyEvent e) {
 					ncdBgScaleSourceProvider.setBgScaling(getBgScale());
 				}
 			});
