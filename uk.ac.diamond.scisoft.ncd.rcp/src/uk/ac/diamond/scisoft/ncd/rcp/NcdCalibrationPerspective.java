@@ -35,7 +35,7 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
 	static final String QAxisFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.qaxisfolder";
 	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
-	static final String ToolPageView1Dand2D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D_and_2D";
+	static final String ToolPageView1D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D";
 	
 	// Currently defined in uk.ac.diamond.sda.navigator.views class 
 	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
@@ -45,9 +45,9 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 
 		layout.addView(ToolPageView2D_ID, IPageLayout.RIGHT, 0.7f, IPageLayout.ID_EDITOR_AREA);
 		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
-		layout.addView(ToolPageView1Dand2D_ID, IPageLayout.BOTTOM, 0.6f, ToolPageView2D_ID);
-		layout.getViewLayout(ToolPageView1Dand2D_ID).setCloseable(false);
-		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1Dand2D_ID);
+		layout.addView(ToolPageView1D_ID, IPageLayout.BOTTOM, 0.6f, ToolPageView2D_ID);
+		layout.getViewLayout(ToolPageView1D_ID).setCloseable(false);
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1D_ID);
 		
 		layout.addView(SaxsQAxisCalibration.ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
 		
