@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cheatsheet
-      title="Importing data into SDA workbench">
+      title="Importing data into DAWN workbench">
    <intro>
       <description>
          This tutorial explains how to import data files to start NCD data reduction
@@ -9,7 +9,7 @@
    <item
       title="Open Data Project wizard">
       <description>
-       	 We need to open &quot;Data Project&quot; wizard to import data into SDA.
+       	 We need to open &quot;Data Project&quot; wizard to import data into DAWN.
       </description>
       <subitem
             label="On the DAWN Welcome screen select &quot;NCD Data Reduction&quot; perspective.">

@@ -24,7 +24,7 @@
          label="Plot and inspect data from the results file opened in the editor area after data reduction completes.">
       </subitem>   
       <subitem
-         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into SDA workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
+         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into DAWN workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
       </subitem>   
    </item>
    <item

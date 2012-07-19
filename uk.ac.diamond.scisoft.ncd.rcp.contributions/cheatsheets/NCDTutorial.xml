@@ -12,7 +12,7 @@
 				This group of tasks we import data into NCD perspective and
 				configure detector settings.
 			</intro>
-			<task kind="cheatsheet" name="Importing data into SDA workbench"
+			<task kind="cheatsheet" name="Importing data into DAWN workbench"
 				skip="true">
 				<intro>
 					In this section We need to create a data project pointing to
