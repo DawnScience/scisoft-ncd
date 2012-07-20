@@ -97,6 +97,9 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
 					if (imageTrace != null && imageTrace instanceof IImageTrace) {
 						BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
+						BooleanDataset savedMask = MaskingTool.getSavedMask();
+						if (savedMask != null)
+							boolMask = boolMask.imultiply(savedMask);
 						((IImageTrace) imageTrace).setMask(boolMask);
 						MaskingTool.setSavedMask(boolMask, true);
 					}
