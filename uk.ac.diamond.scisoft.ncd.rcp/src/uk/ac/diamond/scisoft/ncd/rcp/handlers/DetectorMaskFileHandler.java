@@ -22,6 +22,7 @@ import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
+import org.dawb.workbench.plotting.tools.MaskingTool;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -40,8 +41,8 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
@@ -94,8 +95,11 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
 							.getPartName());
 					ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
-					if (imageTrace != null && imageTrace instanceof IImageTrace)
-						((IImageTrace) imageTrace).setMask(DatasetUtils.cast(mask, AbstractDataset.BOOL));
+					if (imageTrace != null && imageTrace instanceof IImageTrace) {
+						BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
+						((IImageTrace) imageTrace).setMask(boolMask);
+						MaskingTool.setSavedMask(boolMask, true);
+					}
 				}
 
 			} catch (Exception e) {
