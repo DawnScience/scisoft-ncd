@@ -63,11 +63,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
@@ -258,8 +260,10 @@ public class DataReductionHandler extends AbstractHandler {
 							inputfileExtension = FilenameUtils.getExtension(inputfilePath);
 							inputfileName = FilenameUtils.getName(inputfilePath);
 						}
-						if (!inputfileExtension.equals("nxs"))
+						
+						if (ignoreInputFile(inputfilePath, inputfileExtension))
 							continue;
+						
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
 							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
@@ -323,6 +327,31 @@ public class DataReductionHandler extends AbstractHandler {
 
 					monitor.done();
 					return Status.OK_STATUS;
+				}
+
+				private boolean ignoreInputFile(String inputfilePath, String inputfileExtension) {
+					if (!inputfileExtension.equals("nxs"))
+						return true;
+					HDF5File dataTree;
+					try {
+						dataTree = new HDF5Loader(inputfilePath).loadTree();
+					} catch (Exception e) {
+						logger.info("Error loading Nexus tree from {}", inputfilePath);
+						return true;
+					}
+					if (enableWaxs) {
+						HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorWaxs	+ "/data");
+						if (node == null)
+							return true;
+					}
+					
+					if (enableSaxs) {
+						HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
+						if (node == null)
+							return true;
+					}
+					
+					return false;
 				}
 			};
 			
@@ -503,7 +532,7 @@ public class DataReductionHandler extends AbstractHandler {
 		Date date = new Date();
 
 		SimpleDateFormat format =
-			new SimpleDateFormat("ddMMyy_HHmmss_");
+			new SimpleDateFormat("ddMMyy_HHmmss");
 
 		return format.format(date);
 	}
@@ -511,11 +540,11 @@ public class DataReductionHandler extends AbstractHandler {
 	private String createResultsFile(String inputfileName, String inputfilePath, String prefix) throws HDF5Exception, URISyntaxException {
 		String datetime = generateDateTimeStamp();
 		String detNames = "_" + ((enableWaxs) ? detectorWaxs : "") + ((enableSaxs) ? detectorSaxs : "") + "_";
-		final String filename = workingDir + File.separator + prefix + detNames + datetime + inputfileName;
+		final String filename = workingDir + File.separator + prefix + "_" + FilenameUtils.getBaseName(inputfileName) + detNames + datetime + ".nxs";
 		
 		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
-		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,fapl);  
+		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);  
 		H5.H5Pclose(fapl);
 		
 		int[] libversion = new int[3];
@@ -550,11 +579,16 @@ public class DataReductionHandler extends AbstractHandler {
 	}
 
 	private void createDetectorNode(String detector, int entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
+		
 		int detector_id = NcdNexusUtils.makegroup(entry_id, detector, NXDataClassName);
-		DataSliceIdentifiers dataIDs = NcdNexusUtils.readDataId(inputfilePath, detector);
-		boolean isNAPImount = H5.H5Aexists(dataIDs.dataset_id, "napimount");
+		
+		int file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		boolean isNAPImount = H5.H5Aexists(input_data_id, "napimount");
 		if (isNAPImount) {
-			int attr_id = H5.H5Aopen(dataIDs.dataset_id, "napimount", HDF5Constants.H5P_DEFAULT);
+			int attr_id = H5.H5Aopen(input_data_id, "napimount", HDF5Constants.H5P_DEFAULT);
 			int type_id = H5.H5Aget_type(attr_id);
 			int size = H5.H5Tget_size(type_id);
 			byte[] link = new byte[size];
@@ -588,6 +622,11 @@ public class DataReductionHandler extends AbstractHandler {
 		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detector + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		
 		H5.H5Gclose(detector_id);
+		
+		H5.H5Dclose(input_data_id);
+		H5.H5Gclose(detector_group_id);
+		H5.H5Gclose(entry_group_id);
+		H5.H5Fclose(file_handle);
 	}
 	
 	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {

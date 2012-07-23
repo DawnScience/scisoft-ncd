@@ -88,14 +88,19 @@ public class LazyNcdProcessing {
 	private int cores;
     private long maxMemory;
     
-	private int nxsfile_handle, entry_group_id, processing_group_id;
+	private int nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id;
+	private int calibration_group_id, input_calibration_id;
 	private int dr_group_id, dr_data_id;
 	private int sec_group_id, sec_data_id, az_data_id;
 	private int norm_group_id, norm_data_id;
 	private int bg_group_id, bg_data_id;
 	private int inv_group_id, inv_data_id;
 	private int result_group_id;
-	private DataSliceIdentifiers input_ids;
+	
+	private int background_file_handle, background_entry_group_id, background_detector_group_id, background_input_data_id;
+	
+	private DataSliceIdentifiers input_ids, calibration_ids;
+	private int fapl;
 	
     private abstract class DataReductionJob extends Job {
 
@@ -169,8 +174,19 @@ public class LazyNcdProcessing {
 		nxsfile_handle = -1;
 		entry_group_id = -1;
 		processing_group_id = -1;
+		detector_group_id = -1;
+		input_data_id = -1;
+		
+		background_file_handle = -1;
+		background_entry_group_id = -1;
+		background_detector_group_id = -1;
+		background_input_data_id = -1;
 				
+		calibration_group_id = -1;
+		input_calibration_id = -1;
+		
 		input_ids = null;
+		calibration_ids = null;		
 		
 		dr_group_id = -1;
 		dr_data_id = -1;
@@ -190,6 +206,7 @@ public class LazyNcdProcessing {
 		
 		result_group_id =  -1;
 		
+		fapl = -1;
 		lock = Job.getJobManager().newLock();
 	}
 
@@ -286,12 +303,17 @@ public class LazyNcdProcessing {
 	public void execute(String detector, int dim, String filename, final IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
-		final String monitorFile = tmpName[tmpName.length - 1];
+		final String monitorFile = tmpName[1];
 		
-		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
+		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
 		entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		
-		input_ids = NcdNexusUtils.readDataId(filename, detector);
+		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		input_ids.setIDs(detector_group_id, input_data_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_ids.dataspace_id);
 		long[] frames = new long[rank];
@@ -320,18 +342,24 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		}
 		
+		int rankCal;
+		final long[] framesCal;
 		if(flags.isEnableNormalisation()) {
-			DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, calibration);
+			calibration_group_id = H5.H5Gopen(entry_group_id, calibration, HDF5Constants.H5P_DEFAULT);
+			input_calibration_id = H5.H5Dopen(calibration_group_id, "data", HDF5Constants.H5P_DEFAULT);
+			calibration_ids = new DataSliceIdentifiers();
+			calibration_ids.setIDs(calibration_group_id, input_calibration_id);
 			
-			int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
-			long[] calFrames = new long[rankCal];
-			H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, calFrames, null);
+			rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
+			framesCal = new long[rankCal];
+			H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, framesCal, null);
 			
 			for (int i = 0; i < frames.length - dim; i++)
-				if (frames[i] != calFrames[i])
-					frames[i] = Math.min(frames[i], calFrames[i]);
+				if (frames[i] != framesCal[i])
+					frames[i] = Math.min(frames[i], framesCal[i]);
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
-		}
+		} else
+			framesCal = null;
 		
 	    final AbstractDataset[] areaData;
 		int secRank = rank - dim + 1;
@@ -388,11 +416,6 @@ public class LazyNcdProcessing {
 		}
 		
 		
-		DataSliceIdentifiers calibration_ids = null;
-		
-		int rankCal;
-		final long[] framesCal;
-		
 		final LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, detector);
 		if(flags.isEnableDetectorResponse()) {
 		    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
@@ -410,12 +433,6 @@ public class LazyNcdProcessing {
 			norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
-			calibration_ids = NcdNexusUtils.readDataId(filename, calibration);
-			
-			rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
-			framesCal = new long[rankCal];
-			H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, framesCal, null);
-			
 			lazyNormalisation.setAbsScaling(absScaling);
 			lazyNormalisation.setNormChannel(normChannel);
 			
@@ -424,8 +441,8 @@ public class LazyNcdProcessing {
 				lazyNormalisation.writeQaxisData(norm_group_id);
 			}
 			lazyNormalisation.writeNcdMetadata(norm_group_id);
-		} else
-		    framesCal = null;
+		}
+		    
 		
 	    int bgRank;
 	    DataSliceIdentifiers bgIds = null;
@@ -438,7 +455,13 @@ public class LazyNcdProcessing {
 			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
-		    bgIds = NcdNexusUtils.readDataId(bgFile, bgDetector);
+			background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+			background_entry_group_id = H5.H5Gopen(background_file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+			background_detector_group_id = H5.H5Gopen(background_entry_group_id, bgDetector, HDF5Constants.H5P_DEFAULT);
+			background_input_data_id = H5.H5Dopen(background_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+			bgIds = new DataSliceIdentifiers();
+			bgIds.setIDs(background_detector_group_id, background_input_data_id);
+		    
 		    bgRank = H5.H5Sget_simple_extent_ndims(bgIds.dataspace_id);
 			bgFrames = new long[bgRank];
 			H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgFrames, null);
@@ -790,6 +813,9 @@ public class LazyNcdProcessing {
 	}
 	
 	private void closeHDF5Identifiers() throws HDF5LibraryException {
+		if (fapl != -1)
+			H5.H5Pclose(fapl);
+			
 		if (result_group_id != -1)
 			H5.H5Gclose(result_group_id);
 
@@ -828,6 +854,24 @@ public class LazyNcdProcessing {
 		    	H5.H5Gclose(input_ids.datagroup_id);
 	    }
 	    
+		if (input_calibration_id != -1)
+			H5.H5Dclose(input_calibration_id);
+		if (calibration_group_id != -1)
+			H5.H5Gclose(calibration_group_id);
+		
+		if (background_input_data_id != -1)
+			H5.H5Dclose(background_input_data_id);
+		if (background_detector_group_id != -1)
+			H5.H5Gclose(background_detector_group_id);
+		if (background_entry_group_id != -1)
+			H5.H5Gclose(background_entry_group_id);
+		if (background_file_handle != -1)
+			H5.H5Fclose(background_file_handle);
+		
+		if (input_data_id != -1)
+			H5.H5Dclose(input_data_id);
+		if (detector_group_id != -1)
+			H5.H5Gclose(detector_group_id);
 		if (processing_group_id != -1)
 			H5.H5Gclose(processing_group_id);
 		if (entry_group_id != -1)
