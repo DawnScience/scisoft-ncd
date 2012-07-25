@@ -89,6 +89,7 @@ public class LazyNcdProcessing {
     private long maxMemory;
     
 	private int nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id;
+	private int inputfile_handle;
 	private int calibration_group_id, input_calibration_id;
 	private int dr_group_id, dr_data_id;
 	private int sec_group_id, sec_data_id, az_data_id;
@@ -170,6 +171,8 @@ public class LazyNcdProcessing {
 		
 		cores = Runtime.getRuntime().availableProcessors();
 		maxMemory = Runtime.getRuntime().maxMemory();
+		
+		inputfile_handle = -1;
 		
 		nxsfile_handle = -1;
 		entry_group_id = -1;
@@ -309,7 +312,9 @@ public class LazyNcdProcessing {
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
 		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
 		entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		
+		inputfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		detector_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + detector, HDF5Constants.H5P_DEFAULT);
 		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		
 		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
@@ -345,7 +350,7 @@ public class LazyNcdProcessing {
 		int rankCal;
 		final long[] framesCal;
 		if(flags.isEnableNormalisation()) {
-			calibration_group_id = H5.H5Gopen(entry_group_id, calibration, HDF5Constants.H5P_DEFAULT);
+			calibration_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + calibration, HDF5Constants.H5P_DEFAULT);
 			input_calibration_id = H5.H5Dopen(calibration_group_id, "data", HDF5Constants.H5P_DEFAULT);
 			calibration_ids = new DataSliceIdentifiers();
 			calibration_ids.setIDs(calibration_group_id, input_calibration_id);
@@ -878,6 +883,9 @@ public class LazyNcdProcessing {
 			H5.H5Gclose(entry_group_id);
 		if (nxsfile_handle != -1)
 			H5.H5Fclose(nxsfile_handle);
+			
+		if (inputfile_handle != -1)
+			H5.H5Fclose(inputfile_handle);
 	}
 	
 	private void estimateFrameBatchSize(int dim, long[] frames) {
