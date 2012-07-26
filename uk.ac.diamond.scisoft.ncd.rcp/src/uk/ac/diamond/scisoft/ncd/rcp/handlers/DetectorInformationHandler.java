@@ -78,22 +78,24 @@ public class DetectorInformationHandler extends AbstractHandler {
 				
 				try {
 					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
-					HDF5Group node = (HDF5Group) tmpfile.findNodeLink("/entry1/instrument").getDestination();
-					Iterator<String> iterator = node.getNodeNameIterator();
-				    
-				    while (iterator.hasNext ()) {
-				    	String tmpName = iterator.next();
-				    	HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
-				    	if (tmpTree instanceof HDF5Group) {
-					    	if (detNames.containsKey(tmpName))
-					    		detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
-					    	else {
-					    		detNames.put(tmpName, new Integer(1));
-					    		detInfo.put(tmpName, (HDF5Group) tmpTree);
-					    	}
-				    	}
-				    }
-					
+					HDF5NodeLink nodeLink = tmpfile.findNodeLink("/entry1/instrument");
+					if (nodeLink != null) {
+						HDF5Group node = (HDF5Group) nodeLink.getDestination();
+						Iterator<String> iterator = node.getNodeNameIterator();
+
+						while (iterator.hasNext()) {
+							String tmpName = iterator.next();
+							HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
+							if (tmpTree instanceof HDF5Group) {
+								if (detNames.containsKey(tmpName))
+									detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
+								else {
+									detNames.put(tmpName, new Integer(1));
+									detInfo.put(tmpName, (HDF5Group) tmpTree);
+								}
+							}
+						}
+					}
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
 					return null;
