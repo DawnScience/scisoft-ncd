@@ -17,6 +17,8 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -48,6 +50,7 @@ import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.core.filesystem.URIUtil;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -73,6 +76,7 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
@@ -210,15 +214,22 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			
-			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-			calibration = ncdScalerSourceProvider.getScaler();
-			dimWaxs = ncdDetectors.getDimWaxs();
-			dimSaxs = ncdDetectors.getDimSaxs();
 			enableWaxs = flags.isEnableWaxs();
 			enableSaxs = flags.isEnableSaxs();
 			enableBackground = flags.isEnableBackground();
-			workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
+			
+			if (enableWaxs) {
+				detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+				dimWaxs = ncdDetectors.getDimWaxs();
+			}
+			if (enableSaxs) {
+				detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+				dimSaxs = ncdDetectors.getDimSaxs();
+			}
+			
+			if (flags.isEnableNormalisation())
+				calibration = ncdScalerSourceProvider.getScaler();
+			
 			final String bgPath = ncdBgFileSourceProvider.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
 			
@@ -433,8 +444,17 @@ public class DataReductionHandler extends AbstractHandler {
 		
 	}
 
-	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) {
+	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws FileNotFoundException, IOException {
 
+		workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
+		if (workingDir == null || workingDir.isEmpty())
+			throw new IllegalArgumentException(NcdMessages.NO_WORKING_DIR);
+		File testDir = new File(workingDir);
+		if (!(testDir.isDirectory()))
+			throw new FileNotFoundException(NLS.bind(NcdMessages.NO_WORKINGDIR_DATA, testDir.getCanonicalPath()));
+		if (!(testDir.canWrite()))
+			throw new IllegalArgumentException(NcdMessages.NO_WORKINGDIR_WRITE);
+		
 		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
 		Integer firstFrame = null;
 		Integer lastFrame = null;
@@ -455,11 +475,28 @@ public class DataReductionHandler extends AbstractHandler {
 		if (flags.isEnableBackground()) {
 			bgFile = ncdBgFileSourceProvider.getBgFile();
 			bgScaling = ncdBgScaleSourceProvider.getBgScaling();
+			
+			if (bgFile == null)
+				throw new IllegalArgumentException(NcdMessages.NO_BG_FILE);
+			File testFile = new File(bgFile);
+			if (!(testFile.isFile()))
+				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_BG_DATA, testFile.getCanonicalPath()));
+			if (!(testFile.canRead()))
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_BG_READ, testFile.getCanonicalPath()));
 		}
 
 		String drFile = null;
-		if (flags.isEnableDetectorResponse())
+		if (flags.isEnableDetectorResponse()) {
 			drFile = ncdDrFileSourceProvider.getDrFile();
+			
+			if (drFile == null)
+				throw new IllegalArgumentException(NcdMessages.NO_DR_FILE);
+			File testFile = new File(drFile);
+			if (!(testFile.isFile()))
+				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_DR_DATA, testFile.getCanonicalPath()));
+			if (!(testFile.canRead()))
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_DR_READ, testFile.getCanonicalPath()));
+		}
 		
 		int normChannel = -1;
 		String calibration = null;
