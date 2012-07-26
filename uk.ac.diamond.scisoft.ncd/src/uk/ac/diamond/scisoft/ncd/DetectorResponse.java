@@ -36,7 +36,7 @@ public class DetectorResponse {
 	}
 
 	public void setResponse(AbstractDataset response) {
-		this.response = (FloatDataset) response.cast(AbstractDataset.FLOAT32);
+		this.response = (FloatDataset) response.cast(AbstractDataset.FLOAT32).squeeze();
 	}
 
 	
