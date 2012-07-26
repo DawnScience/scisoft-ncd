@@ -51,7 +51,7 @@ public class DetectorResponse {
 		int dataLength = 1;
 		for (int i = 1; i < dimensions.length; i++) {
 			if (dimensions[i] != response.getShape()[i - 1]) {
-				logger.error("dimensions do not match");
+				logger.error("detector response dataset and image dimensions do not match");
 			}
 			dataLength *= dimensions[i];
 		}
