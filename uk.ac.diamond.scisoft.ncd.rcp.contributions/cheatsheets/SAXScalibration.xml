@@ -76,6 +76,9 @@
       <subitem
          label="Calibration procedure needs to be repeated if integration sector position is changed. Integration sector dimensions can be changed without recalibration.">
       </subitem>   
+      <subitem
+         label="If there are several sector regions on the image (e.g. after using sectors in Masking Tool), leave only one sector removing the rest to avoid confusion. Select &quot;Remove Region...&quot; button on the plot toolbar to delete unnecessary regions.">
+      </subitem>   
    </item>
    <item
          title="Fitting calibration peaks">
