@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -33,9 +34,13 @@ import javax.measure.unit.Unit;
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.tool.IToolPage;
 import org.dawb.common.ui.plot.trace.IImageTrace;
+import org.dawb.common.ui.plot.trace.ITrace;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ModifyEvent;
@@ -55,6 +60,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -68,6 +74,7 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class QAxisCalibrationBase extends ViewPart implements ISourceProviderListener {
@@ -408,10 +415,50 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 
 	public void runCalibration() {
-		twoDData = new StoredPlottingObject();
-		storePeaks();
-		
-		runJavaCommand();
+		if (checkCalibrationObjectInput()) {
+			twoDData = new StoredPlottingObject();
+			storePeaks();
+			runJavaCommand();
+		}
+	}
+
+	private IStatus ErrorDialog(String msg, Exception e) {
+		logger.error(msg, e);
+		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
+		StatusManager.getManager().handle(status, StatusManager.SHOW);
+		return null;
+	}
+	
+	private boolean checkCalibrationObjectInput() {
+		try {
+			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			
+			Collection<ITrace> traces = plotSystem.getTraces();
+			if (traces == null || traces.isEmpty()) {
+				String msg = "Please load calibration image into Dataset Plot view.";
+				IllegalArgumentException e =  new IllegalArgumentException(msg); 
+				logger.error(msg, e);
+				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure", e);
+				return false;
+			}
+			
+			Collection<IRegion> regions = plotSystem.getRegions(RegionType.SECTOR);
+			if (regions == null || regions.size() != 1) {
+				String msg = "Please specify single sector region in the Dataset Plot view.";
+				IllegalArgumentException e =  new IllegalArgumentException(msg); 
+				logger.error(msg, e);
+				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure",e);
+				return false;
+			}
+			
+			return true;
+			
+		} catch (Exception e) {
+			String msg = "Error reading object parameters from Dataset Plot view. Try clearing existing regions an reload calibration image.";
+			logger.error(msg, e);
+			ErrorDialog(msg, e);
+			return false;
+		}
 	}
 
 	private void storePeaks() {

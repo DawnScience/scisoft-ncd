@@ -589,6 +589,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				Display.getDefault().syncExec(new Runnable() {
 					@Override
 					public void run() {
+						if (peaks.size() < 2) {
+							logger.error("SCISOFT NCD: Error running q-axis calibration procedure");
+							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
+									"Insuffcient number of calibration peaks.");
+							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
+							return;
+						}
 						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
 						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
