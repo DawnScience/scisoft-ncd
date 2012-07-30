@@ -49,7 +49,9 @@
          label="&quot;Fast Integration&quot; checkbox activates faster but less accurate algorithm for sector integration.">
       </subitem>   
       <subitem
-         label="&quot;Apply Detector Mask&quot; checkbox adds detector mask into inrtegrated profile calculations.">
+         label="&quot;Apply Detector Mask&quot; checkbox uses detector mask in integrated profile calculations.
+         
+         Important!!! Make sure that mask in visible on the image plot. See &quot;Configuraing NCD Data Reduction &gt; Setting Detector Mask&quot; section for further information on loading and saving mask data.">
       </subitem>   
    </item>
    <item

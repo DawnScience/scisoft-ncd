@@ -27,7 +27,14 @@
    <item
          title="Applying detector mask in data reduction">
       <description>
-         Masking thresholds and regions can be applied clicking &quot;Apply&quot; button or removed with &quot;Reset&quot; button. 
+         Masking thresholds and regions can be applied clicking &quot;Apply&quot; button or removed with &quot;Reset&quot; button.
+      </description>
+   </item>
+   <item
+         title="Important!!!">
+      <description>
+         Active mask is erased if plot window switches from 2D image to a different (e.g. 1D) plot mode. To save mask in the internal buffer make sure that &quot;autosave mask to the buffer if it changes&quot; button in the masking tool toolbar is selected.
+         This saves mask into internal buffer allowing to load it with &quot;Merge with previously saved mask from buffer...&quot; button if mask gets erased. <b>Mask needs to be visible on the plot before running data reduction</b>.   
       </description>
    </item>
 </cheatsheet>
