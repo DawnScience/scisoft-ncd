@@ -33,9 +33,13 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.dawb.common.util.io.IFileUtils;
 import org.dawb.passerelle.common.actors.AbstractDataMessageTransformer;
+import org.dawb.passerelle.common.actors.AbstractPassModeTransformer;
 import org.dawb.passerelle.common.message.DataMessageComponent;
 import org.dawb.passerelle.common.message.MessageUtils;
+import org.dawb.passerelle.common.parameter.ParameterUtils;
+import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 
 import ptolemy.data.expr.Parameter;
@@ -51,9 +55,12 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.LongDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ShortDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.UnsignedShortDataset;
 
 import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
+import com.isencia.passerelle.workbench.util.ResourceUtils;
 
 public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 
@@ -62,8 +69,9 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	private Parameter         detectorName;
 	private ResourceParameter filePathParam;
 	private String            detector;
-	private String            filePath;
-	
+
+	private IResource resource;
+
 	public NcdNexusTreeTransformer(CompositeEntity container, String name) throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 		
@@ -87,9 +95,6 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		if (attribute == detectorName) {
 			detector = detectorName.getExpression();
 		}
-		else if (attribute == filePathParam) {
-			filePath = filePathParam.getExpression();
-		}
 		super.attributeChanged(attribute);
 	}
 
@@ -101,6 +106,8 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			final Map<String,String> scalar = MessageUtils.getScalar(cache);
 			final String fileName = scalar!=null ? scalar.get("file_name") : null;
 			//final File  output = new File(scalar.get("file_path"));
+			
+			final String filePath = getDirectoryPath();
 			fileFullPath = filePath + File.separator + FilenameUtils.getBaseName(fileName) + ".nxs";
 			
 			final DataMessageComponent comp = new DataMessageComponent();
@@ -125,10 +132,39 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			throw createDataMessageException("Cannot write to "+filePath, ne);
+			throw createDataMessageException("Cannot write to "+fileFullPath, ne);
 		} 
 	}
 
+	private String getDirectoryPath() throws Exception {
+		try {
+			String dir  = ParameterUtils.getSubstituedValue(filePathParam, cache);
+			try {
+				final File d = new File(dir);
+				if (d.exists()) return d.getAbsolutePath();
+			} catch (Throwable ignored) {
+				// parse as a resource
+			}
+			
+			this.resource = ResourceUtils.getResource(dir);
+			if (resource==null) { // This call 
+				resource = IFileUtils.getContainer(dir, getProject().getName(), "output");
+			}
+			return resource.getLocation().toOSString();
+			
+		} catch (Exception ne) {
+			throw createDataMessageException("Cannot get folder path!", ne);
+		}
+	}
+	
+	public void doWrapUp() throws TerminationException {
+		super.doWrapUp();
+		if (resource!=null) {
+			AbstractPassModeTransformer.refreshResource(resource);
+			resource = null;
+		}
+	}
+	
 	private void writeNxsFile(String filePath, List<DataMessageComponent> cache, DataMessageComponent comp) throws NullPointerException, HDF5Exception {
 		
 		final List<IDataset>        sets = MessageUtils.getDatasets(cache);
@@ -159,16 +195,19 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		int detector_group_id = makegroup(instrument_group_id, detector, "NXdetector");
 		
 		int datatype = -1;
-		if (data instanceof ShortDataset)
+		if (data instanceof ShortDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_SHORT;
-		if (data instanceof IntegerDataset)
+		} else if (data instanceof UnsignedShortDataset) {
+			datatype = HDF5Constants.H5T_NATIVE_USHORT;
+		} else if (data instanceof IntegerDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_INT;
-		if (data instanceof LongDataset)
+		} else if (data instanceof LongDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_LONG;
-		if (data instanceof FloatDataset)
+		} else if (data instanceof FloatDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_FLOAT;
-		if (data instanceof DoubleDataset)
+		} else if (data instanceof DoubleDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_DOUBLE;
+		}
 		
 		int input_data_id = makedata(detector_group_id, "data", datatype, data);
 		putattr(input_data_id, "signal", 1);
