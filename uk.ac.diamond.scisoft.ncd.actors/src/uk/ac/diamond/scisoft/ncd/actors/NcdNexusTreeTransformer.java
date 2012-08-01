@@ -39,7 +39,6 @@ import org.dawb.passerelle.common.actors.AbstractPassModeTransformer;
 import org.dawb.passerelle.common.message.DataMessageComponent;
 import org.dawb.passerelle.common.message.MessageUtils;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
-import org.eclipse.core.resources.IContainer;
 import org.eclipse.core.resources.IResource;
 
 import ptolemy.data.expr.Parameter;
