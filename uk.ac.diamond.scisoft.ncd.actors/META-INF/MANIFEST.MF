@@ -20,4 +20,5 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
 Import-Package: com.isencia.passerelle.workbench.util,
  org.apache.commons.io,
- org.dawb.common.util.io
+ org.dawb.common.util.io,
+ org.slf4j;version="1.5.6"

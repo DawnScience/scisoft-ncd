@@ -54,12 +54,14 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.LongDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ShortDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.UnsignedShortDataset;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
 import com.isencia.passerelle.workbench.util.ResourceUtils;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 
@@ -195,11 +197,14 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		
 		int datatype = -1;
 		if (data instanceof ShortDataset) {
-			datatype = HDF5Constants.H5T_NATIVE_SHORT;
-		} else if (data instanceof UnsignedShortDataset) {
-			datatype = HDF5Constants.H5T_NATIVE_USHORT;
+			datatype = HDF5Constants.H5T_NATIVE_SHORT;			
 		} else if (data instanceof IntegerDataset) {
-			datatype = HDF5Constants.H5T_NATIVE_INT;
+			final IntegerDataset id = (IntegerDataset)data;
+			if (isUnsignedShort(id)) {
+				datatype = HDF5Constants.H5T_NATIVE_USHORT;
+			} else {
+			    datatype = HDF5Constants.H5T_NATIVE_INT;
+			}
 		} else if (data instanceof LongDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_LONG;
 		} else if (data instanceof FloatDataset) {
@@ -222,6 +227,17 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		H5.H5Gclose(link_group_id);
 		H5.H5Gclose(entry_group_id);
 		H5.H5Fclose(nxsfile_handle);
+	}
+
+	private static final Logger logger = LoggerFactory.getLogger(NcdNexusTreeTransformer.class);
+	
+	private boolean isUnsignedShort(IntegerDataset id) {
+		try {
+			return "true".equals(id.getMetadata().getMetaValue("unsigned.short.data"));
+		} catch (Exception e) {
+			logger.error("Cannot read meta data!");
+			return false;
+		}
 	}
 
 	private int makegroup(int handle, String name, String nxclass) throws NullPointerException, HDF5Exception {
