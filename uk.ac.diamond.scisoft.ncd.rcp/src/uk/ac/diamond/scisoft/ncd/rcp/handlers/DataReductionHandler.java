@@ -193,7 +193,6 @@ public class DataReductionHandler extends AbstractHandler {
 					readDetectorInformation(bgFlags, bgDetectors);
 					readDataReductionOptions(bgFlags, bgProcessing);
 					
-					bgFlags.setEnableInvariant(false);
 					bgFlags.setEnableBackground(false);
 					bgProcessing.setFlags(bgFlags);
 					bgProcessing.setNcdDetectors(ncdDetectors);
