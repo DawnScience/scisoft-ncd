@@ -493,8 +493,8 @@ public class LazyNcdProcessing {
 			MultidimensionalCounter dimCounter = new MultidimensionalCounter(Arrays.copyOfRange(frames_int, 0, rank - dim));
 			if (dimCounter.getSize() > frameBatch) {
 				int[] sliceIdx = dimCounter.getCounts(frameBatch);
-				for (int i = sliceIdx.length - 1; i >= 0; i--) {
-					if (sliceIdx[i] != (frames_int[i] - 1)) {
+				for (int i = 0; i < sliceIdx.length; i++) {
+					if (sliceIdx[i] != 0) {
 						sliceDim = i;
 						break;
 					}
