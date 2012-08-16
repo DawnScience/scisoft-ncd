@@ -695,7 +695,7 @@ public class LazyNcdProcessing {
 						}
 
 						if (flags.isEnableBackground()) {
-							monitor.setTaskName(monitorFile + " : Correct for detector response");
+							monitor.setTaskName(monitorFile + " : Subtracting background");
 
 							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
 							int[] bgStart = new int[finalSliceDim + 1];
@@ -710,7 +710,7 @@ public class LazyNcdProcessing {
 							remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], tmp_ids, lock);
 
 							// restore original axis order in output dataset
-							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[3].getBuffer());
+							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[2].getBuffer());
 						}
 
 						if (flags.isEnableInvariant()) {
