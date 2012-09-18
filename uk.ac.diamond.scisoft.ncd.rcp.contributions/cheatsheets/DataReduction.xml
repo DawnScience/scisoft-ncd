@@ -9,6 +9,11 @@
          Load detector information
       </description>
    </intro>
+  <item title="Watch demo online">
+     <description>Click on the link below to watch data reduction demo in a browser</description>
+     <command serialization=
+        "org.eclipse.ui.browser.openBrowser(url=http://www.youtube.com/watch?v=lpLIzDNim-w)"/>
+  </item>
    <item
          title="Specify experiment type">
       <description>
