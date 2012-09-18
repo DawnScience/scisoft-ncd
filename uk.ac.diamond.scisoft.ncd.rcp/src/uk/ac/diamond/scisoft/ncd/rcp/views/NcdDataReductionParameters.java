@@ -406,7 +406,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		
 		ConfigureNcdSourceProviders();
 		
-		final ScrolledComposite sc = new ScrolledComposite(parent, SWT.VERTICAL);
+		final ScrolledComposite sc = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL);
 		final Composite c = new Composite(sc, SWT.NONE);
 		GridLayout grid = new GridLayout(3, false);
 		c.setLayout(grid);
@@ -621,7 +621,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			calListLabel = new Label(g, SWT.NONE);
 			calListLabel.setText("Normalisation Data");
 			calList = new Combo(g, SWT.NONE);
-			GridData gridData = new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1);
+			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false);
 			calList.setLayoutData(gridData);
 			calList.setToolTipText("Select the detector with calibration data");
 			String tmpScaler = ncdScalerSourceProvider.getScaler();
@@ -1026,7 +1026,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			@Override
 			public void controlResized(ControlEvent e) {
 				Rectangle r = sc.getClientArea();
-				sc.setMinSize(c.computeSize(r.width, SWT.DEFAULT));
+				sc.setMinHeight(c.computeSize(r.width, SWT.DEFAULT).y);
+				sc.setMinWidth(c.computeSize(SWT.DEFAULT, r.height).x);
 			}
 		});
 		
