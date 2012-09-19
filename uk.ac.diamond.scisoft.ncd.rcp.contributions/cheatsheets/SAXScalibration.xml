@@ -6,11 +6,6 @@
          This tutorial describes procedure for calibrating SAXS detector pixel positions in terms of scattering vector values.
       </description>
    </intro>
-  <item title="Watch demo online">
-     <description>Click on the link below to watch calibration demo in a browser</description>
-     <command serialization=
-        "org.eclipse.ui.browser.openBrowser(url=http://www.youtube.com/watch?v=LFcRJvLwHp8)"/>
-  </item>
    <item
          title="Open NCD Calibration perspective">
       <description>

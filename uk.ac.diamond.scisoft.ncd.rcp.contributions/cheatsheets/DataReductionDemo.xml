@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Data Reduction Demo">
+   <intro>
+      <description>
+      </description>
+   </intro>
+  <item title="Watch demo online">
+     <description>Click on the link below to watch data reduction demo in a browser</description>
+     <command serialization=
+        "org.eclipse.ui.browser.openBrowser(url=http://www.youtube.com/watch?v=lpLIzDNim-w)"/>
+  </item>
+</cheatsheet>

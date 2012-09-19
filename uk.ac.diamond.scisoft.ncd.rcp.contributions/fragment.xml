@@ -305,6 +305,13 @@
             id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.ncdtutorial"
             name="NCD Data Reduction Tutorials">
       </cheatsheet>
+      <cheatsheet
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.ncdtutorial"
+            composite="false"
+            contentFile="cheatsheets/NCDVideos.xml"
+            id="uk.ac.diamond.scisoft.ncd.rcp.contributions.cheatsheet.ncdvideos"
+            name="NCD Data Reduction Videos">
+      </cheatsheet>
    </extension>
 	<extension point="org.eclipse.ui.navigator.navigatorContent">
     <commonFilter
