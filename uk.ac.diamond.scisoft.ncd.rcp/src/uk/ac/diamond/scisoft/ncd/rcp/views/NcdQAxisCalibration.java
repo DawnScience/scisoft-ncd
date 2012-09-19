@@ -546,7 +546,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					"Failed to read energy or detector pixel size parameter from NCD Q axis calibration view.");
 			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
 					"Input parameter error",
-					"Please check that energy and detector pixel size parameters are properly set.", status);
+					"Please check that energy and detector pixel size parameters are properly set and try to reload detector information.", status);
 			return;
 		}
 
