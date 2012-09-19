@@ -384,9 +384,13 @@ public class DataReductionHandler extends AbstractHandler {
 		flags.setEnableInvariant(ncdInvariantSourceProvider.isEnableInvariant());
 		flags.setEnableAverage(ncdAverageSourceProvider.isEnableAverage());
 		
-		flags.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());
-		flags.setEnableAzimuthal(ncdAzimuthSourceProvider.isEnableAzimuthal());
-		flags.setEnableFastintegration(ncdFastIntSourceProvider.isEnableFastIntegration());
+		if (flags.isEnableSector()) {
+			flags.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());
+			flags.setEnableAzimuthal(ncdAzimuthSourceProvider.isEnableAzimuthal());
+			flags.setEnableFastintegration(ncdFastIntSourceProvider.isEnableFastIntegration());
+			if (!flags.isEnableRadial() && !flags.isEnableAzimuthal())
+				throw new IllegalArgumentException(NcdMessages.NO_SEC_INT);
+		}
 	}
 
 	private void readDetectorInformation(final NcdReductionFlags flags, NcdDetectors ncdDetectors) throws ExecutionException {
@@ -526,16 +530,16 @@ public class DataReductionHandler extends AbstractHandler {
 			}
 			SectorROI intSector = null;
 			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
-			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-			if (sectorRegions == null || sectorRegions.isEmpty())
-				flags.setEnableSector(false);
-			else {
+			if (flags.isEnableSector()) {
+				Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+				if (sectorRegions == null || sectorRegions.isEmpty())
+					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
 				ROIBase intBase = sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI)
 					intSector = (SectorROI) intBase;
-				else flags.setEnableSector(false);
+				else
+					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
 			}
-
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
