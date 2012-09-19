@@ -62,6 +62,8 @@ public class CalibrationTable {
 	}
 
 	final public void setInput(ArrayList<CalibrationPeak> cpl) {
+		if (tViewer == null || tViewer.getControl().isDisposed())
+			return;
 		if (cpl.size() > 0) {
 			nameList[2] = String.format("d Spacing (%s)",cpl.get(0).getDSpacing().getUnit().toString());
 			tViewer.getTable().getColumn(2).setText(nameList[2]);
@@ -73,6 +75,8 @@ public class CalibrationTable {
 	 * Refresh table viewer
 	 */
 	final public void refresh() {
+		if (tViewer == null || tViewer.getControl().isDisposed())
+			return;
 		tViewer.refresh();
 	}
 }

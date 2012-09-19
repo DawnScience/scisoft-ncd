@@ -498,6 +498,10 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected void updateCalibrationResults() {
 		
+		// Check if the view was disposed
+		if (gradient == null || gradient.isDisposed())
+			return;
+		
 		currentDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 		
 		calibrationPeakList.clear();
