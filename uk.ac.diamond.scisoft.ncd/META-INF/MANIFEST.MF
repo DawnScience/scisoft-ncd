@@ -2,15 +2,11 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: Ncd
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd
-Bundle-Version: 2.0.0.qualifier
+Bundle-Version: 2.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Eclipse-BuddyPolicy: registered
 Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
-Export-Package: org.apache.commons.validator,
- org.apache.commons.validator.routines,
- org.apache.commons.validator.routines.checkdigit,
- org.apache.commons.validator.util,
- uk.ac.diamond.scisoft.ncd,
+Export-Package: uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.calibration,
  uk.ac.diamond.scisoft.ncd.data,
  uk.ac.diamond.scisoft.ncd.hdf5,
@@ -18,7 +14,8 @@ Export-Package: org.apache.commons.validator,
  uk.ac.diamond.scisoft.ncd.reduction,
  uk.ac.diamond.scisoft.ncd.utils
 Require-Bundle: org.eclipse.core.runtime,
- uk.ac.diamond.scisoft.analysis;bundle-version="[1.2.0,1.3.0)",
+ org.apache.commons.validator;bundle-version="[1.4.0,2.0.0)",
+ uk.ac.diamond.scisoft.analysis;bundle-version="[1.3.0,1.4.0)",
  uk.ac.diamond.org.uncommons.maths;bundle-version="1.0.0",
  org.apache.commons.math;bundle-version="[3.0.0,4.0.0)",
  uk.ac.diamond.org.jscience;bundle-version="[4.3.1,5.0.0)",
@@ -30,5 +27,4 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.slf4j;version="[1.5.0,2.0.0)",
  uk.ac.gda.monitor
 Bundle-Vendor: Diamond Light Source
-Bundle-ClassPath: commons-validator-1.4.0.jar,
- .
+Bundle-ClassPath: .

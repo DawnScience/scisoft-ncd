@@ -2,7 +2,7 @@
 <feature
       id="uk.ac.diamond.scisoft.ncd.feature"
       label="Feature"
-      version="2.0.0.qualifier"
+      version="2.1.0.qualifier"
       provider-name="Diamond Light Source">
 
    <description>
@@ -97,6 +97,13 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          download-size="0"
          install-size="0"
          version="3.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.commons.validator"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
          unpack="false"/>
 
 </feature>

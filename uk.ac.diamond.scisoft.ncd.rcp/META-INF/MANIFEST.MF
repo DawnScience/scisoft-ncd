@@ -2,7 +2,7 @@ Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: NCD RCP plug-ins for SDA
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.rcp;singleton:=true
-Bundle-Version: 2.0.0.qualifier
+Bundle-Version: 2.1.0.qualifier
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Eclipse-BuddyPolicy: registered
 Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
@@ -14,9 +14,10 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  org.eclipse.ui.navigator.resources;bundle-version="3.4.2",
  com.springsource.org.apache.commons.lang;bundle-version="[2.5.0,3.0.0)",
  org.apache.commons.math;bundle-version="[3.0.0,4.0.0)",
- uk.ac.diamond.scisoft.analysis;bundle-version="[1.2.0,1.3.0)",
- uk.ac.diamond.scisoft.analysis.rcp;bundle-version="[1.2.0,1.3.0)",
- uk.ac.diamond.scisoft.ncd;bundle-version="[2.0.0,2.1.0)",
+ org.apache.commons.validator;bundle-version="[1.4.0,2.0.0)",
+ uk.ac.diamond.scisoft.analysis;bundle-version="[1.3.0,1.4.0)",
+ uk.ac.diamond.scisoft.analysis.rcp;bundle-version="[1.3.0,1.4.0)",
+ uk.ac.diamond.scisoft.ncd;bundle-version="[2.1.0,2.2.0)",
  org.dawb.common.ui;bundle-version="1.2.0",
  uk.ac.diamond.org.jscience;bundle-version="[4.3.1,5.0.0)",
  org.dawb.workbench.plotting;bundle-version="1.1.0"
@@ -30,5 +31,5 @@ Import-Package: ncsa.hdf.hdf5lib,
  uk.ac.gda.monitor
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
-Bundle-Vendor: Diamond Light Souce
+Bundle-Vendor: Diamond Light Source
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.rcp.Activator
