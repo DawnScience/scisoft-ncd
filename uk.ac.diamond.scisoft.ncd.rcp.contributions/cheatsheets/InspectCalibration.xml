@@ -15,7 +15,7 @@
          Running data reduction on the calibration dataset is a good reference of success of calibration procedures.
       </description>
       <subitem
-         label="Check that &quot;4. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
+         label="Check that &quot;2. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
       </subitem>   
       <subitem
          label="Select file with the calibration image in the &quot;Project Explorer&quot; and right-click on it. Select &quot;NCD &gt; Run Data Reduction&quot; from the popup menu.">
