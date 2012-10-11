@@ -535,8 +535,10 @@ public class DataReductionHandler extends AbstractHandler {
 				if (sectorRegions == null || sectorRegions.isEmpty())
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
 				ROIBase intBase = sectorRegions.iterator().next().getROI();
-				if (intBase instanceof SectorROI)
+				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
+					processing.setIntSector(intSector.copy());
+				}
 				else
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
 			}
@@ -551,7 +553,6 @@ public class DataReductionHandler extends AbstractHandler {
 			//	if (bd != null && bd instanceof CalibrationResultsBean)
 			//		crb = (CalibrationResultsBean) bd;
 			//}
-			processing.setIntSector(intSector);
 			processing.setCrb(crb);
 		}
 		
