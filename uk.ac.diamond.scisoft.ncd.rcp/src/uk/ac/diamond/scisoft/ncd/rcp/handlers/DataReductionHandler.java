@@ -534,10 +534,16 @@ public class DataReductionHandler extends AbstractHandler {
 				Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 				if (sectorRegions == null || sectorRegions.isEmpty())
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
+				if (sectorRegions.size() > 1)
+					throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
 				ROIBase intBase = sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
-					processing.setIntSector(intSector.copy());
+					int sym = intSector.getSymmetry(); 
+					if ((sym == SectorROI.NONE) || (sym == SectorROI.FULL))
+						processing.setIntSector(intSector.copy());
+					else
+						throw new IllegalArgumentException(NcdMessages.NO_SEC_SYM);
 				}
 				else
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);

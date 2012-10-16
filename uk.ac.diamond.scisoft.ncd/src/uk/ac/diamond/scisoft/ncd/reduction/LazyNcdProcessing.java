@@ -52,6 +52,7 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
@@ -385,7 +386,7 @@ public class LazyNcdProcessing {
 			if (intSector.getSymmetry() == SectorROI.FULL)
 				angles[1] = angles[0] + 2 * Math.PI;
 			if (intSector.getSymmetry() != SectorROI.NONE && intSector.getSymmetry() != SectorROI.FULL) {
-				 throw new IllegalArgumentException("Using symmetry related sectors in SectorIntegration stage is currently is not supported.");
+				 throw new IllegalArgumentException(NcdMessages.NO_SEC_SYM);
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
