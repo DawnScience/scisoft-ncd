@@ -518,14 +518,17 @@ public class DataReductionHandler extends AbstractHandler {
 			BooleanDataset mask = null;
 			if (enableMask) {
 				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
-				ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+				Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
+				if (imageTraces == null || imageTraces.isEmpty())
+					throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
+				ITrace imageTrace = imageTraces.iterator().next();
 				if (imageTrace != null && imageTrace instanceof IImageTrace)
 					mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
 				if (mask != null) {
 					processing.setMask(new BooleanDataset(mask));
 					processing.setEnableMask(true);
 				} else {
-					processing.setEnableMask(false);
+					throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
 				}
 			}
 			SectorROI intSector = null;
