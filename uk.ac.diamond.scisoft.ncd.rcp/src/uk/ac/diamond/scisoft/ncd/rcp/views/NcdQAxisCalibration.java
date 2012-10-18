@@ -86,6 +86,7 @@ import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.HKL;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
@@ -616,11 +617,18 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						
 						try {
 							AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-							plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(twoDData.getROI());
+							Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+							if (sectorRegions == null || sectorRegions.isEmpty())
+								throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
+							if (sectorRegions.size() > 1)
+								throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
+							IRegion intBase = sectorRegions.iterator().next();
+							if (intBase.getROI() instanceof SectorROI)
+								intBase.setROI(twoDData.getROI());
 						} catch (Exception e) {
 							logger.error("SCISOFT NCD: Error running q-axis calibration procedure", e);
 							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
-									"Error running q-axis calibration procedure.");
+									e.getMessage(), e.getCause());
 							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
 									"Q-axis calibration error", "Q-axis calibration procedure has failed.", status);
 							return;
