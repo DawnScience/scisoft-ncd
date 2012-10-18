@@ -220,7 +220,7 @@
       -->
    </extension>
    <extension
-         point="uk.ac.diamond.scisoft.introRegister">
+         point="org.dawnsci.introRegister">
       <introPageRegister
             class="uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch"
             description="Opens the perspective for non-crystalline diffraction data processing"
