@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
+import java.util.Collection;
 
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
@@ -94,7 +95,10 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				if (activePlot instanceof PlotView) {
 					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
 							.getPartName());
-					ITrace imageTrace = activePlotSystem.getTraces(IImageTrace.class).iterator().next();
+					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
+					if (imageTraces == null || imageTraces.isEmpty())
+						throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
+					ITrace imageTrace = imageTraces.iterator().next();
 					if (imageTrace != null && imageTrace instanceof IImageTrace) {
 						BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
 						BooleanDataset savedMask = MaskingTool.getSavedMask();
