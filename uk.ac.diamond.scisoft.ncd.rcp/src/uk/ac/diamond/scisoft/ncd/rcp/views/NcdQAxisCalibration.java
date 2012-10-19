@@ -510,7 +510,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 				try {
 					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-					plotSystem.setDefaultPlotType(PlotType.IMAGE);
+					plotSystem.setPlotType(PlotType.IMAGE);
 					IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
 					sector.setROI(roiData.copy());
 					sector.setUserRegion(true);

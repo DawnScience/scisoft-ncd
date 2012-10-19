@@ -184,7 +184,7 @@ public class QAxisFileHandler extends AbstractHandler {
 					IViewPart activePlot = page.findView(PlotView.ID + "DP");
 					if (activePlot instanceof PlotView) {
 						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-						plotSystem.setDefaultPlotType(PlotType.IMAGE);
+						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.getRegion("Calibration");
 						if (sector == null) {
 							sector = plotSystem.createRegion("Calibration", RegionType.SECTOR);
