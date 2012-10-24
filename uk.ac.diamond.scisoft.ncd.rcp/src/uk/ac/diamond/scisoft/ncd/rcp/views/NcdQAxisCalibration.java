@@ -266,7 +266,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		plot.setLayout(new FillLayout());
 		try {
 	        IActionBars wrapper = this.getViewSite().getActionBars();
-			plottingSystem.createPlotPart(plot, "Calibration Plot", wrapper, PlotType.PT1D, this);
+			plottingSystem.createPlotPart(plot, "Calibration Plot", wrapper, PlotType.XY, this);
 
 		} catch (Exception e) {
 			logger.error("Error creating plot part.", e);
