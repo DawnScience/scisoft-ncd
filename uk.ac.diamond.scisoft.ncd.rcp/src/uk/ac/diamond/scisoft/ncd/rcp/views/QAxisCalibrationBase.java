@@ -359,14 +359,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		Label mlab = new Label(group, SWT.NONE);
 		mlab.setText("Gradient");
 
-		gradient = new Text(group, SWT.CENTER);
+		gradient = new Text(group, SWT.BORDER);
 		gradient.setText("--");
 		gradient.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
 		Label clab = new Label(group, SWT.NONE);
 		clab.setText("Intercept");
 
-		intercept = new Text(group, SWT.CENTER);
+		intercept = new Text(group, SWT.BORDER);
 		intercept.setText("--");
 		intercept.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		
