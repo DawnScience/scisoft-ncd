@@ -199,12 +199,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		if (data instanceof ShortDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_SHORT;			
 		} else if (data instanceof IntegerDataset) {
-			final IntegerDataset id = (IntegerDataset)data;
-			if (isUnsignedShort(id)) {
-				datatype = HDF5Constants.H5T_NATIVE_USHORT;
-			} else {
-			    datatype = HDF5Constants.H5T_NATIVE_INT;
-			}
+		    datatype = HDF5Constants.H5T_NATIVE_INT;
 		} else if (data instanceof LongDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_LONG;
 		} else if (data instanceof FloatDataset) {
