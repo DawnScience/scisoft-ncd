@@ -256,7 +256,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		try {
 	        this.plottingSystem = PlottingFactory.createPlottingSystem();
 	        plottingSystem.setColorOption(ColorOption.NONE);
-	        plottingSystem.setDatasetChoosingRequired(false);
 		} catch (Exception e) {
 			logger.error("Cannot locate any plotting systems!", e);
 		}
