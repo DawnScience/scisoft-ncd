@@ -1081,7 +1081,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	@Override
 	public void setFocus() {
-
+		getViewSite().getShell().setFocus();
 	}
 
 	private void updateNormalisationWidgets(boolean selection) {

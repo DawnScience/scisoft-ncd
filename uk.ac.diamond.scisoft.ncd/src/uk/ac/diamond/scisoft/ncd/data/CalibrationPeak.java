@@ -23,6 +23,8 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
+
 public class CalibrationPeak implements Serializable {
 	private double peakPos;
 	private double twoTheta;

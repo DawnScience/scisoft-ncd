@@ -540,6 +540,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 
 	@Override
 	public void setFocus() {
+		getViewSite().getShell().setFocus();
 	}
 
 }
