@@ -25,7 +25,6 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.optimization.ConvergenceChecker;
 import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.PointValuePair;
@@ -44,7 +43,6 @@ import org.dawb.common.ui.plot.trace.ILineTrace.TraceType;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -63,24 +61,17 @@ import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.progress.UIJob;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.uncommons.maths.combinatorics.CombinationGenerator;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.Gaussian;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
-import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
 import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
-import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -95,7 +86,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	
 	private IMemento memento;
-	private String calibrant;
+	String calibrant;
 	
 	private int cmaesLambda = 5;
 	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
@@ -107,143 +98,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	protected String ACTIVE_PLOT = "Dataset Plot";
 	private AbstractPlottingSystem plottingSystem;
 
-	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
+	static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
 	
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
 	 this.memento = memento;
 	 super.init(site, memento);
-	}
-	
-	private class MultivariateFunctionWithMonitor implements MultivariateFunction {
-		
-		private IProgressMonitor monitor;
-		private IJobManager jobManager;
-		private ArrayList<IPeak> initPeaks;
-
-		private double lambda;
-		private double mmpp;
-		private Unit<Length> unitScale;
-
-		public void setInitPeaks(ArrayList<IPeak> initPeaks) {
-			this.initPeaks = initPeaks;
-		}
-
-		public void setLambda(double lambda) {
-			this.lambda = lambda;
-		}
-
-		public void setMmpp(double mmpp) {
-			this.mmpp = mmpp;
-		}
-
-		public void setUnitScale(Unit<Length> unitScale) {
-			this.unitScale = unitScale;
-		}
-
-		public MultivariateFunctionWithMonitor(IProgressMonitor monitor) {
-			super();
-			this.monitor = monitor;
-			jobManager = Job.getJobManager();
-		}
-
-		@Override
-		public double value(double[] beamxy) {
-			
-			if (monitor.isCanceled())
-				return Double.NaN;
-			
-			final SectorROI sroi = twoDData.getROI();
-			sroi.setPoint(beamxy);
-			sroi.setDpp(1.0);
-			AbstractDataset[] intresult = ROIProfile.sector((AbstractDataset) twoDData.getStoredDataset(),
-					twoDData.getMask(), sroi, true, false, true);
-			AbstractDataset axis = DatasetUtils.linSpace(sroi.getRadius(0), sroi.getRadius(1),
-					intresult[0].getSize(), AbstractDataset.INT32);
-			double error = 0.0;
-			for (int idx = 0; idx < peaks.size(); idx++) {
-				IPeak peak = initPeaks.get(idx);
-				// logger.info("idx {} peak start position {}", idx, peak.getParameterValues());
-				double pos = peak.getPosition();
-				double fwhm = peak.getFWHM() / 2.0;
-				int startIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos - fwhm);
-				int stopIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos + fwhm) + 1;
-
-				AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
-				AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
-						null);
-				try {
-					CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
-							new Gaussian(peak.getParameters()));
-					//CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
-					//		new PseudoVoigt(peak.getParameters()));
-					peak.setParameterValues(peakFit.getParameterValues());
-					//logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
-					peaks.set(idx, peak);
-					error += Math.log(1.0 + peak.getHeight() / peak.getFWHM());
-					//error += (Double) peakSlice.max();// peak.getHeight();// / peak.getFWHM();
-				} catch (Exception e) {
-					logger.error("Peak fitting failed", e);
-					return Double.NaN;
-				}
-
-			}
-			if (checkPeakOverlap(peaks))
-				return Double.NaN;
-			logger.info("Beam position distance error for postion {}", new double[] { error, beamxy[0], beamxy[1] });
-
-			final String jobName = "Sector plot";
-			UIJob plotingJob = new UIJob(jobName) {
-				
-				@Override
-				public boolean belongsTo(Object family) {
-					return family == jobName;
-				}
-			      
-				@Override
-				public IStatus runInUIThread(IProgressMonitor monitor) {
-					try {
-						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-						plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
-						
-						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks,
-						cal2peaks.get(calibrant), lambda, mmpp, unitScale);
-						calibrationMethod.performCalibration(true);
-						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
-						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
-						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept});
-						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
-
-						return Status.OK_STATUS;
-						
-					} catch (Exception e) {
-						logger.error("Error updating plot view", e);
-						return Status.CANCEL_STATUS;
-					}
-				}
-			};
-			
-			jobManager.cancel(jobName);
-			plotingJob.schedule();
-
-			return error;
-		}
-		
-		private boolean checkPeakOverlap(ArrayList<IPeak> peaks) {
-			if (peaks.size() < 2)
-				return false;
-			CombinationGenerator<IPeak> peakPair = new CombinationGenerator<IPeak>(peaks, peaks.size());
-			for (List<IPeak> pair : peakPair) {
-				IPeak peak1 = pair.get(0);
-				IPeak peak2 = pair.get(1);
-				double dist = Math.abs(peak2.getPosition() - peak1.getPosition());
-				double fwhm1 = peak1.getFWHM();
-				double fwhm2 = peak2.getFWHM();
-				if (dist < (fwhm1 + fwhm2) / 2.0)
-					return true;
-			}
-			return false;
-		}
 	}
 	
 	@Override
@@ -420,7 +280,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_STANDARD);
 			if (val != null) standard.select(val);
 			
-			Unit<Length> selUnit = NANOMETER;
+			Unit<Length> selUnit = SI.NANO(SI.METER);
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units != null) 
 				selUnit = Unit.valueOf(units).asType(Length.class);
@@ -564,6 +424,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					beamOffset.setMmpp(mmpp);
 					beamOffset.setUnitScale(unitScale);
 					
+					beamOffset.twoDData = twoDData;
+					beamOffset.peaks = peaks;
+					beamOffset.calibrant = calibrant;
+					
 					cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
 					double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
 					cmaesInputSigma = new double[] {cmaesInputSigmaPref, cmaesInputSigmaPref};
@@ -597,7 +461,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
 							return;
 						}
-						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cal2peaks.get(calibrant), lambda, mmpp, unitScale);
+						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, CalibrationStandards.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
 						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
 
