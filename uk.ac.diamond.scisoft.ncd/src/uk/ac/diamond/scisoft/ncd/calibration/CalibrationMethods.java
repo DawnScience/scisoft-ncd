@@ -33,6 +33,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -42,7 +43,7 @@ public class CalibrationMethods {
 	private static final Logger logger = LoggerFactory.getLogger(CalibrationMethods.class);
 	
 	private ArrayList<IPeak> peaks;
-	private LinkedHashMap<HKL, Amount<Length>> spacing;
+	private CalibrantSpacing spacing;
 	private double wavelength;
 	private double pixelSize;
 	private Unit<Length> unit;
@@ -54,7 +55,7 @@ public class CalibrationMethods {
     
 	SimpleRegression regression;
 
-	public CalibrationMethods(ArrayList<IPeak> peaks, LinkedHashMap<HKL, Amount<Length>> spacing, double wavelength,
+	public CalibrationMethods(ArrayList<IPeak> peaks, CalibrantSpacing spacing, double wavelength,
 			double pixelSize, Unit<Length> unit) {
 		
 		this.peaks = peaks;
@@ -87,9 +88,8 @@ public class CalibrationMethods {
 	 */
 	private LinkedHashMap<HKL, Double> twoThetaAngles() {
 		LinkedHashMap<HKL, Double> twoTheta = new LinkedHashMap<HKL, Double>();
-	    for ( Entry<HKL, Amount<Length>> val : spacing.entrySet()) {
-			HKL idx = val.getKey();
-	    	double d = val.getValue().doubleValue(unit);
+	    for ( HKL idx : spacing.getHKLs()) {
+	    	double d = idx.getD().doubleValue(unit);
             double x = (wavelength / (2 * d));
             if (x > 1) continue; // can't scatter beyond pi/2 as beyond resolution limit
             twoTheta.put(idx, 2.0 * Math.asin(x));
@@ -122,7 +122,7 @@ public class CalibrationMethods {
 			double position = peak.getKey().getPosition();
 			HKL idx = peak.getValue();
 			Double angle = twoTheta.get(idx);
-			indexedPeakList.add(new CalibrationPeak(position, angle, spacing.get(idx), idx.getIndices()));
+			indexedPeakList.add(new CalibrationPeak(position, angle, idx.getD(), idx.getIndices()));
 		}
 		
 		return indexedPeaks;
@@ -134,7 +134,7 @@ public class CalibrationMethods {
 			regression.addData(0.0, 0.0);
 		for (Entry<IPeak, HKL> peak : peaks.entrySet()) {
 			double position = peak.getKey().getPosition();
-	        double qVal = 2.0 * Math.PI / spacing.get(peak.getValue()).doubleValue(unit);
+	        double qVal = 2.0 * Math.PI / peak.getValue().getD().doubleValue(unit);
    			regression.addData(position, qVal);
 		}
    		regression.regress();
@@ -151,8 +151,8 @@ public class CalibrationMethods {
 			Entry<IPeak, HKL> peak2 = comb.get(1);
 			//double q1 = regression.predict(peak1.getPosition());
 			//double q2 = regression.predict(peak2.getPosition());
-	        double q1 = 2.0 * Math.PI / spacing.get(peak1.getValue()).doubleValue(unit);
-	        double q2 = 2.0 * Math.PI / spacing.get(peak2.getValue()).doubleValue(unit);
+	        double q1 = 2.0 * Math.PI / peak1.getValue().getD().doubleValue(unit);
+	        double q2 = 2.0 * Math.PI / peak2.getValue().getD().doubleValue(unit);
 			double dist = (peak2.getKey().getPosition() - peak1.getKey().getPosition()) * pixelSize * 2.0 * Math.PI / ((q2 - q1) * wavelength);
 			cameraLen.add(dist);
 		    //logger.info("Camera length from " + indexedPeaks.get(peak2).toString() + " and " + indexedPeaks.get(peak1).toString() + "is {} mm", dist);
