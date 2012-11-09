@@ -21,7 +21,9 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Angle;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
@@ -196,7 +198,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				for (CalibrationPeak peak: calibrationPeakList) {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta());
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
 					HKL idx = peak.getReflection();
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
@@ -226,7 +228,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS,
 									(float) peak.getPeakPos());
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA,
-									(float) peak.getTwoTheta());
+									(float) peak.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING,
 									(float) peak.getDSpacing().doubleValue(selUnit));
 							HKL idx = peak.getReflection();
@@ -303,7 +305,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				calibrationPeakList = new ArrayList<CalibrationPeak>();
 				for (IMemento peak: peaks) {
 					Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
-					Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
+					Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
 					Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
@@ -341,7 +343,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						IMemento peaks[] = dataPeaksMemento.getChildren(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 						for (IMemento peak: peaks) {
 							Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
-							Float tTheta = peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA);
+							Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
 							Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
@@ -383,10 +385,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		}
 	}
 
-	protected Double getLambda() {
+	protected Amount<Length> getLambda() {
 		Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
 				/ ncdEnergySourceProvider.getEnergy(), SI.NANO(SI.METER));
-		return lambdaDim.doubleValue(getUnitScale());
+		return lambdaDim;
 	}
 	
 	@Override
@@ -396,7 +398,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		final boolean runRefinement = beamRefineButton.getSelection();
 
 		final Unit<Length> unitScale = getUnitScale();
-		final Double lambda, mmpp;
+		final Amount<Length> lambda, mmpp;
 		try {
 			lambda = getLambda();
 			mmpp = getPixel(false);
@@ -511,7 +513,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		
 		plottingSystem.clear();
 		
-		double px = getPixel(false);
+		double px = getPixel(false).doubleValue(SI.MILLIMETER);
 		AbstractDataset xAxis = AbstractDataset.arange(twoDData.getROI().getIntRadius(1), AbstractDataset.FLOAT32);
 		xAxis.imultiply(px);
 		AbstractDataset qvalues = calibrationFunction.makeDataset(xAxis);
@@ -552,7 +554,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	}
 
 	@SuppressWarnings("unused")
-	protected Double getPixel(boolean b) {
+	protected Amount<Length> getPixel(boolean b) {
 		// Override in subclass to return the appropriate pixel size
 		return null;
 	}

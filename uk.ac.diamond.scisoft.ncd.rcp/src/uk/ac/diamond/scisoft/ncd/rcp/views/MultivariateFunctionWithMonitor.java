@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.ui.progress.UIJob;
+import org.jscience.physics.amount.Amount;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
@@ -63,19 +64,18 @@ class MultivariateFunctionWithMonitor implements MultivariateFunction {
 	StoredPlottingObject twoDData;
 	String calibrant;
 	
-	private double lambda;
-	private double mmpp;
+	private Amount<Length> lambda, mmpp;
 	private Unit<Length> unitScale;
 
 	public void setInitPeaks(ArrayList<IPeak> initPeaks) {
 		this.initPeaks = initPeaks;
 	}
 
-	public void setLambda(double lambda) {
+	public void setLambda(Amount<Length> lambda) {
 		this.lambda = lambda;
 	}
 
-	public void setMmpp(double mmpp) {
+	public void setMmpp(Amount<Length> mmpp) {
 		this.mmpp = mmpp;
 	}
 

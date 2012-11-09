@@ -16,9 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import javax.measure.unit.SI;
+import javax.measure.quantity.Length;
 
 import org.eclipse.swt.widgets.Composite;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 
@@ -40,9 +41,9 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 	}
 
 	@Override
-	protected Double getPixel(boolean scale) {
+	protected Amount<Length> getPixel(boolean scale) {
 		NcdDetectorSettings detector = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
-		return detector.getPxSize().doubleValue(SI.MILLIMETER);
+		return detector.getPxSize();
 	}
 	
 }

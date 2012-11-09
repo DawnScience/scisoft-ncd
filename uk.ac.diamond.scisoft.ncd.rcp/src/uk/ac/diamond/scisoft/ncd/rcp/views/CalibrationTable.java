@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 import java.util.ArrayList;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
 import javax.measure.unit.Unit;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
@@ -123,7 +124,7 @@ class CalibrationLabelProvider implements ITableLabelProvider {
 				msg = String.format("%.2f",cal.getPeakPos());
 				break;
 			case 1:
-				msg = String.format("%.2f",cal.getTwoTheta()*(180/Math.PI));
+				msg = String.format("%.2f",cal.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
 				break;
 			case 2:
 				Unit<Length> unit = cal.getDSpacing().getUnit();
