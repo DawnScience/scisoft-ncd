@@ -149,8 +149,8 @@ class MultivariateFunctionWithMonitor implements MultivariateFunction {
 					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
 					
-					CalibrationMethods calibrationMethod = new CalibrationMethods(peaks,
-					CalibrationStandards.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
+					CalibrationStandards cs = CalibrationStandards.getInstance();
+					CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 					calibrationMethod.performCalibration(true);
 					Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
 					Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
