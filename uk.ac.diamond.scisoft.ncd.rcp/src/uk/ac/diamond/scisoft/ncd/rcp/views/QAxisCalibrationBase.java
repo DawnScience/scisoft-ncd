@@ -36,7 +36,6 @@ import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.tool.IToolPage;
-import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -66,10 +65,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
-import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
-import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
@@ -92,9 +88,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected static Combo standard;
 	protected Button beamRefineButton;
 	protected Group calibrationControls;
-
-
-	protected StoredPlottingObject twoDData;
 
 	protected ArrayList<IPeak> peaks = new ArrayList<IPeak>();
 
@@ -124,44 +117,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			return 0;
 		}
 
-	}
-
-	protected class StoredPlottingObject {
-		private IDataset dataset;
-		private BooleanDataset mask;
-		private SectorROI sroi;
-
-		public StoredPlottingObject() {
-			try {
-				AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-				dataset = trace.getData();
-				mask = (BooleanDataset) trace.getMask();
-				sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
-			} catch (Exception e) {
-				logger.error("Error reading input data", e);
-			}
-		}
-
-		public BooleanDataset getMask() {
-			return mask;
-		}
-		
-		public void setMask(BooleanDataset mask) {
-			this.mask = (BooleanDataset) mask.clone();
-		}
-		
-		public SectorROI getROI() {
-			return sroi;
-		}
-		
-		public void setROI(SectorROI sroi) {
-			this.sroi = sroi.copy();
-		}
-		
-		public IDataset getStoredDataset() {
-			return dataset;
-		}
 	}
 
 	protected Double getEnergy() {
@@ -323,7 +278,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	public void runCalibration() {
 		if (checkCalibrationObjectInput()) {
-			twoDData = new StoredPlottingObject();
 			storePeaks();
 			runJavaCommand();
 		}

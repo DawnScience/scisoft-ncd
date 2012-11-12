@@ -19,76 +19,51 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
-
 import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
-import org.dawb.common.ui.plot.PlottingFactory;
-import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.eclipse.core.runtime.IProgressMonitor;
-import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobManager;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.ui.progress.UIJob;
-import org.jscience.physics.amount.Amount;
+import org.eclipse.ui.services.ISourceProviderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
-import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Gaussian;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.optimize.GeneticAlg;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
-import uk.ac.diamond.scisoft.ncd.rcp.views.QAxisCalibrationBase.StoredPlottingObject;
 
-class MultivariateFunctionWithMonitor implements MultivariateFunction {
+public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 	
-	/**
-	 * 
-	 */
-	//private final NcdQAxisCalibration ncdQAxisCalibration;
 	private IProgressMonitor monitor;
-	private IJobManager jobManager;
 	private ArrayList<IPeak> initPeaks;
 	
-	ArrayList<IPeak> peaks;
-	StoredPlottingObject twoDData;
-	String calibrant;
+	private ArrayList<IPeak> peaks;
 	
-	private Amount<Length> lambda, mmpp;
-	private Unit<Length> unitScale;
+	private AbstractDataset dataset, mask;
+	private SectorROI sroi;
 
+	private static final Logger logger = LoggerFactory.getLogger(MultivariateFunctionWithMonitor.class);
+	
+	private MultivariateFunctionSourceProvider beamxySourceProvider, peaksSourceProvider;
+	
 	public void setInitPeaks(ArrayList<IPeak> initPeaks) {
 		this.initPeaks = initPeaks;
+		peaks = new ArrayList<IPeak>(initPeaks);
 	}
 
-	public void setLambda(Amount<Length> lambda) {
-		this.lambda = lambda;
-	}
-
-	public void setMmpp(Amount<Length> mmpp) {
-		this.mmpp = mmpp;
-	}
-
-	public void setUnitScale(Unit<Length> unitScale) {
-		this.unitScale = unitScale;
-	}
-
-	public MultivariateFunctionWithMonitor(IProgressMonitor monitor) {
+	public MultivariateFunctionWithMonitor(AbstractDataset dataset, AbstractDataset mask, SectorROI sroi, ISourceProviderService service, IProgressMonitor monitor) {
 		super();
-		//this.ncdQAxisCalibration = ncdQAxisCalibration;
+		this.dataset = dataset;
+		this.mask = mask;
+		this.sroi = sroi;
 		this.monitor = monitor;
-		jobManager = Job.getJobManager();
+		
+		beamxySourceProvider = (MultivariateFunctionSourceProvider) service.getSourceProvider(MultivariateFunctionSourceProvider.SECTORREFINEMENT_STATE);
+		peaksSourceProvider = (MultivariateFunctionSourceProvider) service.getSourceProvider(MultivariateFunctionSourceProvider.PEAKREFINEMENT_STATE);
 	}
 
 	@Override
@@ -97,11 +72,9 @@ class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		if (monitor.isCanceled())
 			return Double.NaN;
 		
-		final SectorROI sroi = twoDData.getROI();
 		sroi.setPoint(beamxy);
 		sroi.setDpp(1.0);
-		AbstractDataset[] intresult = ROIProfile.sector((AbstractDataset) twoDData.getStoredDataset(),
-				twoDData.getMask(), sroi, true, false, true);
+		AbstractDataset[] intresult = ROIProfile.sector(dataset, mask, sroi, true, false, true);
 		AbstractDataset axis = DatasetUtils.linSpace(sroi.getRadius(0), sroi.getRadius(1),
 				intresult[0].getSize(), AbstractDataset.INT32);
 		double error = 0.0;
@@ -127,50 +100,16 @@ class MultivariateFunctionWithMonitor implements MultivariateFunction {
 				error += Math.log(1.0 + peak.getHeight() / peak.getFWHM());
 				//error += (Double) peakSlice.max();// peak.getHeight();// / peak.getFWHM();
 			} catch (Exception e) {
-				NcdQAxisCalibration.logger.error("Peak fitting failed", e);
+				logger.error("Peak fitting failed", e);
 				return Double.NaN;
 			}
 
 		}
 		if (checkPeakOverlap(peaks))
 			return Double.NaN;
-		NcdQAxisCalibration.logger.info("Error value for beam postion ({}, {}) is {}", new Object[] { beamxy[0], beamxy[1], error });
-
-		final String jobName = "Sector plot";
-		UIJob plotingJob = new UIJob(jobName) {
-			
-			@Override
-			public boolean belongsTo(Object family) {
-				return family == jobName;
-			}
-		      
-			@Override
-			public IStatus runInUIThread(IProgressMonitor monitor) {
-				try {
-					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-					plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
-					
-					CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
-					CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
-					calibrationMethod.performCalibration(true);
-					Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
-					Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
-					StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept});
-					
-					//TODO: Set up listeners to update GUI elements
-					//NcdQAxisCalibration.plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
-
-					return Status.OK_STATUS;
-					
-				} catch (Exception e) {
-					NcdQAxisCalibration.logger.error("Error updating plot view", e);
-					return Status.CANCEL_STATUS;
-				}
-			}
-		};
-		
-		jobManager.cancel(jobName);
-		plotingJob.schedule();
+		beamxySourceProvider.putBeamPosition(beamxy);
+		peaksSourceProvider.putPeaks(peaks);
+		logger.info("Error value for beam postion ({}, {}) is {}", new Object[] { beamxy[0], beamxy[1], error });
 
 		return error;
 	}

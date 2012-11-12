@@ -256,6 +256,17 @@
                priorityLevel="workbench">
          </variable>
       </sourceProvider>
+      <sourceProvider
+            provider="uk.ac.diamond.scisoft.ncd.rcp.views.MultivariateFunctionSourceProvider">
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.beamxy"
+               priorityLevel="workbench">
+         </variable>
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.peaks"
+               priorityLevel="workbench">
+         </variable>
+      </sourceProvider>
    </extension>
    <extension
          point="org.eclipse.ui.handlers">

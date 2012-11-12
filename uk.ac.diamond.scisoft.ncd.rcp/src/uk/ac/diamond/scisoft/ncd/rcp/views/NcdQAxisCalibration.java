@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Angle;
@@ -39,12 +40,14 @@ import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ILineTrace;
 import org.dawb.common.ui.plot.trace.ILineTrace.PointStyle;
 import org.dawb.common.ui.plot.trace.ILineTrace.TraceType;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.jface.dialogs.ErrorDialog;
@@ -60,9 +63,13 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.ISourceProviderListener;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
@@ -87,10 +94,12 @@ import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 
-public class NcdQAxisCalibration extends QAxisCalibrationBase {
+public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISourceProviderListener{
 	
 	private IMemento memento;
 	String calibrant;
+	
+	private IJobManager jobManager;
 	
 	private int cmaesLambda = 5;
 	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
@@ -102,12 +111,17 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	protected String ACTIVE_PLOT = "Dataset Plot";
 	private AbstractPlottingSystem plottingSystem;
 
-	static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
+	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
+	
+	private MultivariateFunctionSourceProvider beamxySourceProvider, peaksSourceProvider;
+	private ISourceProviderService service;
 	
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
-	 this.memento = memento;
-	 super.init(site, memento);
+		this.memento = memento;
+		super.init(site, memento);
+
+		jobManager = Job.getJobManager();
 	}
 	
 	@Override
@@ -167,6 +181,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 				}
 			}
 		});
+		
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		beamxySourceProvider = (MultivariateFunctionSourceProvider) service.getSourceProvider(MultivariateFunctionSourceProvider.SECTORREFINEMENT_STATE);
+		peaksSourceProvider = (MultivariateFunctionSourceProvider) service.getSourceProvider(MultivariateFunctionSourceProvider.PEAKREFINEMENT_STATE);
+		beamxySourceProvider.addSourceProviderListener(this);
+		peaksSourceProvider.addSourceProviderListener(this);
 	}
 
 	@Override
@@ -415,22 +436,20 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		}
 
 		final ArrayList<IPeak> initPeaks = new ArrayList<IPeak>(peaks);
-		logger.info("Beam position before fit {}", twoDData.getROI().getPoint());
+		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+		IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
+		final AbstractDataset dataset = trace.getData();
+		final AbstractDataset mask = trace.getMask();
+		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
+		logger.info("Beam position before fit {}", sroi.getPoint());
 		Job job = new Job("Beam Position Refinement") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				
 				if (runRefinement) {
 					
-					final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(monitor);
+					final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi, service, monitor);
 					beamOffset.setInitPeaks(initPeaks);
-					beamOffset.setLambda(lambda);
-					beamOffset.setMmpp(mmpp);
-					beamOffset.setUnitScale(unitScale);
-					
-					beamOffset.twoDData = twoDData;
-					beamOffset.peaks = peaks;
-					beamOffset.calibrant = calibrant;
 					
 					cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
 					double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
@@ -445,11 +464,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(1e-6, 1e-4);
 					//beamPosOptimizer.setSimplex(new MultiDirectionalSimplex(cmaesInputSigma));
 					final PointValuePair newBeamPos = beamPosOptimizer.optimize(cmaesMaxIterations, beamOffset, GoalType.MAXIMIZE,
-							twoDData.getROI().getPoint());
+							sroi.getPoint());
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
-							twoDData.getROI().setPoint(newBeamPos.getPoint());
+							sroi.setPoint(newBeamPos.getPoint());
 						}
 					});
 				}
@@ -468,7 +487,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
-						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
+						logger.info("Beam position after fit {}", sroi.getPoint());
 
 						CalibrationResultsBean crb = new CalibrationResultsBean();
 						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
@@ -492,7 +511,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 								throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
 							IRegion intBase = sectorRegions.iterator().next();
 							if (intBase.getROI() instanceof SectorROI)
-								intBase.setROI(twoDData.getROI());
+								intBase.setROI(sroi);
 						} catch (Exception e) {
 							logger.error("SCISOFT NCD: Error running q-axis calibration procedure", e);
 							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
@@ -517,7 +536,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 		plottingSystem.clear();
 		
 		double px = getPixel(false).doubleValue(SI.MILLIMETER);
-		AbstractDataset xAxis = AbstractDataset.arange(twoDData.getROI().getIntRadius(1), AbstractDataset.FLOAT32);
+		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
+		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
 		xAxis.imultiply(px);
 		AbstractDataset qvalues = calibrationFunction.makeDataset(xAxis);
 		
@@ -560,5 +581,79 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	protected Amount<Length> getPixel(boolean b) {
 		// Override in subclass to return the appropriate pixel size
 		return null;
+	}
+	
+	@Override
+	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
+		super.sourceChanged(sourcePriority, sourceValuesByName);
+	}
+
+	@Override
+	public void sourceChanged(int sourcePriority, String sourceName, final Object sourceValue) {
+		super.sourceChanged(sourcePriority, sourceName, sourceValue);
+
+		if (sourceName.equals(MultivariateFunctionSourceProvider.SECTORREFINEMENT_STATE)) {
+			final String jobName = "Sector plot";
+			UIJob plotingJob = new UIJob(jobName) {
+
+				@Override
+				public boolean belongsTo(Object family) {
+					return family == jobName;
+				}
+
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					try {
+						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI().setPoint((double[]) sourceValue);
+						plotSystem.repaint();
+
+						return Status.OK_STATUS;
+
+					} catch (Exception e) {
+						logger.error("Error updating plot view", e);
+						return Status.CANCEL_STATUS;
+					}
+				}
+			};
+
+			jobManager.cancel(jobName);
+			plotingJob.schedule();
+		}
+		
+		if (sourceName.equals(MultivariateFunctionSourceProvider.PEAKREFINEMENT_STATE)) {
+			final String jobName = "Peak plot";
+			UIJob plotingJob = new UIJob(jobName) {
+
+				@Override
+				public boolean belongsTo(Object family) {
+					return family == jobName;
+				}
+
+				@Override
+				public IStatus runInUIThread(IProgressMonitor monitor) {
+					try {
+						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
+						CalibrationMethods calibrationMethod = new CalibrationMethods((ArrayList<IPeak>) sourceValue,
+								cs.getCalibrationPeakMap(calibrant), getLambda(), getPixel(false), getUnitScale());
+						calibrationMethod.performCalibration(true);
+						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
+						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
+						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+
+						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
+
+						return Status.OK_STATUS;
+
+					} catch (Exception e) {
+						logger.error("Error updating plot view", e);
+						return Status.CANCEL_STATUS;
+					}
+				}
+			};
+
+			jobManager.cancel(jobName);
+			plotingJob.schedule();
+		}
 	}
 }
