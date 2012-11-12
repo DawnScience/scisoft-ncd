@@ -155,9 +155,10 @@ public class CalibrationMethods {
 			Entry<IPeak, HKL> peak2 = comb.get(1);
 			//double q1 = regression.predict(peak1.getPosition());
 			//double q2 = regression.predict(peak2.getPosition());
-			Amount<ScatteringVector> q1 = (Amount<ScatteringVector>) Constants.two_π.divide(peak1.getValue().getD());
-			Amount<ScatteringVector> q2 = (Amount<ScatteringVector>) Constants.two_π.divide(peak2.getValue().getD());
-			Amount<Length> dist = (Amount<Length>) pixelSize.times(peak2.getKey().getPosition()-peak1.getKey().getPosition()).times(Constants.two_π).divide(wavelength.times(q2.minus(q1)));
+			Amount<ScatteringVector> q1 = Constants.two_π.divide(peak1.getValue().getD()).to(ScatteringVector.UNIT);
+			Amount<ScatteringVector> q2 = Constants.two_π.divide(peak2.getValue().getD()).to(ScatteringVector.UNIT);
+			Amount<Length> dist = pixelSize.times(peak2.getKey().getPosition() - peak1.getKey().getPosition())
+					.times(Constants.two_π).divide(wavelength.times(q2.minus(q1))).to(Length.UNIT);
 			cameraLen.add(dist.doubleValue(SI.MILLIMETER));
 		    //logger.info("Camera length from " + indexedPeaks.get(peak2).toString() + " and " + indexedPeaks.get(peak1).toString() + "is {} mm", dist);
 		}
@@ -174,9 +175,10 @@ public class CalibrationMethods {
 	    ArrayList<Double> cameraLen = new ArrayList<Double>();
 		for (Entry<IPeak, HKL> peak : indexedPeaks.entrySet()) {
 			double peakPos = peak.getKey().getPosition();
-			Amount<ScatteringVector> q = (Amount<ScatteringVector>) Amount.valueOf(regression.predict(peakPos), unit.inverse());
-			//double dist = (peakPos * pixelSize * 2.0 * Math.PI / (q * wavelength));
-			Amount<Length> dist = (Amount<Length>) pixelSize.times(peakPos).times(Constants.two_π).divide(wavelength.times(q));
+			Amount<ScatteringVector> q = Amount.valueOf(regression.predict(peakPos), unit.inverse())
+					.to(ScatteringVector.UNIT);
+			Amount<Length> dist = pixelSize.times(peakPos).times(Constants.two_π).divide(wavelength.times(q))
+					.to(Length.UNIT);
 			cameraLen.add(dist.doubleValue(SI.MILLIMETER));
 		}
 		double[] cameraLenArray = ArrayUtils.toPrimitive(cameraLen.toArray(new Double[] {}));

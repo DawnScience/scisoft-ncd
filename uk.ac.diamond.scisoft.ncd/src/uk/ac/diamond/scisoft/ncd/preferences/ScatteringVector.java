@@ -17,10 +17,12 @@
 package uk.ac.diamond.scisoft.ncd.preferences;
 
 import javax.measure.quantity.Quantity;
+import javax.measure.unit.ProductUnit;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 public interface ScatteringVector extends Quantity {
 	
-	public final static Unit<? extends Quantity> UNIT = Unit.ONE.divide(SI.METER);    	
+    public final static Unit<ScatteringVector> UNIT 
+         = new ProductUnit<ScatteringVector>(Unit.ONE.divide(SI.METER));
 }
