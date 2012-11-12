@@ -464,7 +464,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
 							return;
 						}
-						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, CalibrationStandards.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
+						CalibrationStandards cs = CalibrationStandards.getInstance();
+						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
 						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
 

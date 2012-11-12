@@ -389,7 +389,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 	
 	private void setupGUI() {
-		for (String calibrant : CalibrationStandards.getCalibrantList()) {
+		final CalibrationStandards cs = CalibrationStandards.getInstance();
+		for (String calibrant : cs.getCalibrantList()) {
 			standard.add(calibrant);
 		}
 		standard.select(0);
