@@ -40,6 +40,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
 import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -54,7 +55,6 @@ import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 

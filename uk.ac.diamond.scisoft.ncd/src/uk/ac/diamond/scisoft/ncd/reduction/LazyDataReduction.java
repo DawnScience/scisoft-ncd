@@ -26,9 +26,9 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {

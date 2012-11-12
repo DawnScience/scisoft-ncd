@@ -37,9 +37,9 @@ import org.uncommons.maths.combinatorics.CombinationGenerator;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
-import uk.ac.diamond.scisoft.ncd.preferences.ScatteringVector;
 
 public class CalibrationMethods {
 	
