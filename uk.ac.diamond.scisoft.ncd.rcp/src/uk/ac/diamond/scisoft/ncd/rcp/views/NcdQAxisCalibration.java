@@ -387,8 +387,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	}
 
 	protected Amount<Length> getLambda() {
-		Amount<Length> lambdaDim = (Amount<Length>) Constants.ℎ.times(Constants.c).divide(
-				Amount.valueOf(ncdEnergySourceProvider.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT)));
+		Amount<Length> lambdaDim = Constants.ℎ.times(Constants.c).divide(
+				Amount.valueOf(ncdEnergySourceProvider.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT);
 		return lambdaDim;
 	}
 	
