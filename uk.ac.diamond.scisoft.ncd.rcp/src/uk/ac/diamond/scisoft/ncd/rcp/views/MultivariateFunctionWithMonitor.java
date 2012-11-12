@@ -35,6 +35,7 @@ import org.eclipse.ui.progress.UIJob;
 import org.jscience.physics.amount.Amount;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -149,7 +150,7 @@ class MultivariateFunctionWithMonitor implements MultivariateFunction {
 					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					plotSystem.getRegions(RegionType.SECTOR).iterator().next().setROI(sroi);
 					
-					CalibrationStandards cs = CalibrationStandards.getInstance();
+					CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 					CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 					calibrationMethod.performCalibration(true);
 					Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);

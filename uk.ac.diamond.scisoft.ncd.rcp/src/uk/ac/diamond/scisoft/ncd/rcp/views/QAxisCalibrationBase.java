@@ -64,6 +64,7 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
@@ -389,7 +390,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 	
 	private void setupGUI() {
-		final CalibrationStandards cs = CalibrationStandards.getInstance();
+		final CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 		for (String calibrant : cs.getCalibrantList()) {
 			standard.add(calibrant);
 		}

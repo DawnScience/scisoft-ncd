@@ -68,6 +68,7 @@ import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
@@ -464,7 +465,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
 							return;
 						}
-						CalibrationStandards cs = CalibrationStandards.getInstance();
+						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
 						calibrationMethod.performCalibration(true);
 						logger.info("Beam position after fit {}", twoDData.getROI().getPoint());
