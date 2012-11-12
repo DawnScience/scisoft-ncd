@@ -64,6 +64,7 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.jscience.physics.amount.Amount;
+import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -386,8 +387,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase {
 	}
 
 	protected Amount<Length> getLambda() {
-		Amount<Length> lambdaDim = Amount.valueOf(1e-3 * 1e9 * 4.13566733e-15 * 299792458
-				/ ncdEnergySourceProvider.getEnergy(), SI.NANO(SI.METER));
+		Amount<Length> lambdaDim = (Amount<Length>) Constants.ℎ.times(Constants.c).divide(
+				Amount.valueOf(ncdEnergySourceProvider.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT)));
 		return lambdaDim;
 	}
 	
