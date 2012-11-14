@@ -28,12 +28,8 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import org.apache.commons.math3.optimization.ConvergenceChecker;
-import org.apache.commons.math3.optimization.GoalType;
 import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
-import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
-import org.apache.commons.math3.random.Well19937a;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
 import org.dawb.common.ui.plot.PlotType;
@@ -60,7 +56,6 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
@@ -97,15 +92,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISourceProviderListener{
 	
 	private IMemento memento;
-	String calibrant;
 	
 	private IJobManager jobManager;
-	
-	private int cmaesLambda = 5;
-	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
-	private int cmaesMaxIterations = 1000;
-	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2);
 	
 	protected String GUI_PLOT_NAME = "Dataset Plot";
 	protected String ACTIVE_PLOT = "Dataset Plot";
@@ -417,118 +405,42 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	@Override
 	protected void runJavaCommand() {
 		currentDetector = getDetectorName();
-		calibrant = standard.getText();
 		final boolean runRefinement = beamRefineButton.getSelection();
 
-		final Unit<Length> unitScale = getUnitScale();
-		final Amount<Length> lambda, mmpp;
-		try {
-			lambda = getLambda();
-			mmpp = getPixel(false);
-		} catch (Exception e) {
-			logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
-					"Failed to read energy or detector pixel size parameter from NCD Q axis calibration view.");
-			ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
-					"Input parameter error",
-					"Please check that energy and detector pixel size parameters are properly set and try to reload detector information.", status);
-			return;
-		}
-
-		final ArrayList<IPeak> initPeaks = new ArrayList<IPeak>(peaks);
 		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-		IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-		final AbstractDataset dataset = trace.getData();
-		final AbstractDataset mask = trace.getMask();
-		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
-		logger.info("Beam position before fit {}", sroi.getPoint());
-		Job job = new Job("Beam Position Refinement") {
-			@Override
-			protected IStatus run(IProgressMonitor monitor) {
-				
-				if (runRefinement) {
-					
-					final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi, service, monitor);
-					beamOffset.setInitPeaks(initPeaks);
-					
-					cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
-					double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
-					cmaesInputSigma = new double[] {cmaesInputSigmaPref, cmaesInputSigmaPref};
-					cmaesMaxIterations = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESmaxiteration);
-					int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
-					cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1.0 / cmaesCheckerPref);
-							
-					CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(cmaesLambda, cmaesInputSigma, cmaesMaxIterations, 0.0, true,
-							0, cmaesCheckFeasableCount, new Well19937a(), false, cmaesChecker);
-					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(cmaesChecker);
-					//SimplexOptimizer beamPosOptimizer = new SimplexOptimizer(1e-6, 1e-4);
-					//beamPosOptimizer.setSimplex(new MultiDirectionalSimplex(cmaesInputSigma));
-					final PointValuePair newBeamPos = beamPosOptimizer.optimize(cmaesMaxIterations, beamOffset, GoalType.MAXIMIZE,
-							sroi.getPoint());
-					Display.getDefault().syncExec(new Runnable() {
-						@Override
-						public void run() {
-							sroi.setPoint(newBeamPos.getPoint());
-						}
-					});
-				}
+		Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+		if (sectorRegions == null || sectorRegions.isEmpty())
+			throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
+		if (sectorRegions.size() > 1)
+			throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
+		final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
+		if (runRefinement) {
+			IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
+			final AbstractDataset dataset = trace.getData();
+			final AbstractDataset mask = trace.getMask();
+			
+			final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi);
+			beamOffset.registerListeners(service);
 
-				Display.getDefault().syncExec(new Runnable() {
-					@Override
-					public void run() {
-						if (peaks.size() < 2) {
-							logger.error("SCISOFT NCD: Error running q-axis calibration procedure");
-							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
-									"Insuffcient number of calibration peaks.");
-							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
-									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
-							return;
-						}
-						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
-						CalibrationMethods calibrationMethod = new CalibrationMethods(peaks, cs.getCalibrationPeakMap(calibrant), lambda, mmpp, unitScale);
-						calibrationMethod.performCalibration(true);
-						logger.info("Beam position after fit {}", sroi.getPoint());
+			int cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
+			double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
+			double[] cmaesInputSigma = new double[] { cmaesInputSigmaPref, cmaesInputSigmaPref };
+			int cmaesMaxIterations = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESmaxiteration);
+			int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
+			SimplePointChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1.0 / cmaesCheckerPref);
+			beamOffset.configureOptimizer(cmaesLambda == 0 ? null : cmaesLambda,
+					cmaesInputSigmaPref == 0 ? null	: cmaesInputSigma,
+					cmaesMaxIterations == 0 ? null : cmaesMaxIterations,
+					null,
+					cmaesCheckerPref == 0 ? null : cmaesChecker);
+			
+			final ArrayList<IPeak> initPeaks = new ArrayList<IPeak>(peaks);
+			beamOffset.setInitPeaks(initPeaks);
+			
+			beamOffset.optimize(sroi.getPoint());
+		} else 
+			peaksSourceProvider.putPeaks(peaks);
 
-						CalibrationResultsBean crb = new CalibrationResultsBean();
-						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
-						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
-						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
-						cameralength.setText(meanCameraLength.toString());
-
-						crb.putCalibrationResult(currentDetector, calibrationFunction,
-								calibrationMethod.getIndexedPeakList(), meanCameraLength, unitScale);
-						ncdCalibrationSourceProvider.putCalibrationResult(crb);
-
-						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
-						
-						try {
-							AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-							Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-							if (sectorRegions == null || sectorRegions.isEmpty())
-								throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
-							if (sectorRegions.size() > 1)
-								throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
-							IRegion intBase = sectorRegions.iterator().next();
-							if (intBase.getROI() instanceof SectorROI)
-								intBase.setROI(sroi);
-						} catch (Exception e) {
-							logger.error("SCISOFT NCD: Error running q-axis calibration procedure", e);
-							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
-									e.getMessage(), e.getCause());
-							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
-									"Q-axis calibration error", "Q-axis calibration procedure has failed.", status);
-							return;
-						}
-
-					}
-				});
-
-				return Status.OK_STATUS;
-			}
-		};
-
-		job.schedule();
 	}
 
 	private void plotCalibrationResults(StraightLine calibrationFunction, List<CalibrationPeak> list) {
@@ -632,19 +544,36 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
+					ArrayList<IPeak> newPeaks = (ArrayList<IPeak>) sourceValue;
 					try {
+						if (newPeaks.size() < 2) {
+							logger.error("SCISOFT NCD: Error running q-axis calibration procedure");
+							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
+									"Insuffcient number of calibration peaks.");
+							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
+									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);
+							return Status.CANCEL_STATUS;
+						}
+						
 						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
-						CalibrationMethods calibrationMethod = new CalibrationMethods((ArrayList<IPeak>) sourceValue,
+						String calibrant = standard.getText();
+						CalibrationMethods calibrationMethod = new CalibrationMethods(newPeaks,
 								cs.getCalibrationPeakMap(calibrant), getLambda(), getPixel(false), getUnitScale());
 						calibrationMethod.performCalibration(true);
+
+						CalibrationResultsBean crb = new CalibrationResultsBean();
 						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
 						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
 						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
+						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
+						cameralength.setText(meanCameraLength.toString());
+
+						crb.putCalibrationResult(currentDetector, calibrationFunction, calibrationMethod.getIndexedPeakList(),
+								meanCameraLength, getUnitScale());
+						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 
 						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
-
 						return Status.OK_STATUS;
-
 					} catch (Exception e) {
 						logger.error("Error updating plot view", e);
 						return Status.CANCEL_STATUS;
