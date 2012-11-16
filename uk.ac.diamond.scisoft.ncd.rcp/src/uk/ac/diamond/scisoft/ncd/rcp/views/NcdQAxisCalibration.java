@@ -42,6 +42,8 @@ import org.dawb.common.ui.plot.trace.ILineTrace.PointStyle;
 import org.dawb.common.ui.plot.trace.ILineTrace.TraceType;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
@@ -404,7 +406,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	@Override
 	protected void runJavaCommand() {
-		currentDetector = getDetectorName();
 		final boolean runRefinement = beamRefineButton.getSelection();
 
 		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
@@ -420,7 +421,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			final AbstractDataset mask = trace.getMask();
 			
 			final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi);
-			beamOffset.registerListeners(service);
+			beamOffset.addSourceProviders(service);
 
 			int cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
 			double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
@@ -434,8 +435,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					null,
 					cmaesCheckerPref == 0 ? null : cmaesChecker);
 			
-			final ArrayList<IPeak> initPeaks = new ArrayList<IPeak>(peaks);
-			beamOffset.setInitPeaks(initPeaks);
+			beamOffset.setInitPeaks(peaks);
 			
 			beamOffset.optimize(sroi.getPoint());
 		} else 
@@ -517,8 +517,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
 						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-						plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI().setPoint((double[]) sourceValue);
-						plotSystem.repaint();
+						
+						 
+						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();
+						
+						ROIBase roi = sector.getROI();
+						roi.setPoint((double[]) sourceValue);
+						sector.setROI(roi);
 
 						return Status.OK_STATUS;
 
@@ -530,6 +535,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			};
 
 			jobManager.cancel(jobName);
+			try {
+				jobManager.join(jobName, new NullProgressMonitor());
+			} catch (OperationCanceledException e) {
+				logger.error(jobName + " job is interrupted", e);
+			} catch (InterruptedException e) {
+				logger.error(jobName + " job is interrupted", e);
+			}
 			plotingJob.schedule();
 		}
 		
@@ -568,7 +580,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
 						cameralength.setText(meanCameraLength.toString());
 
-						crb.putCalibrationResult(currentDetector, calibrationFunction, calibrationMethod.getIndexedPeakList(),
+						crb.putCalibrationResult(getDetectorName(), calibrationFunction, calibrationMethod.getIndexedPeakList(),
 								meanCameraLength, getUnitScale());
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 
@@ -582,6 +594,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			};
 
 			jobManager.cancel(jobName);
+			try {
+				jobManager.join(jobName, new NullProgressMonitor());
+			} catch (OperationCanceledException e) {
+				logger.error(jobName + " job is interrupted", e);
+			} catch (InterruptedException e) {
+				logger.error(jobName + " job is interrupted", e);
+			}
 			plotingJob.schedule();
 		}
 	}
