@@ -32,6 +32,9 @@ public class NcdPerspective implements IPerspectiveFactory {
 	
 	public static final String PLUGIN_ID = FrameworkUtil.getBundle(NcdPerspective.class).getSymbolicName();
 	
+	/**
+	 * String used elsewhere, do not change
+	 */
 	static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdperspective";
 	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
 	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
