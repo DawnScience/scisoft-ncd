@@ -19,7 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.Arrays;
 
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
@@ -89,7 +89,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					AbstractDataset data = (AbstractDataset) ((HDF5Dataset) node).getDataset().squeeze()
 							.getSlice(start, stop, null).clone();
 
-					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					if (activePlotSystem != null)
 						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 

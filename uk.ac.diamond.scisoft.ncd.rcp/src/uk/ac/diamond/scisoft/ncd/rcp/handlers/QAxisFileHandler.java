@@ -25,7 +25,7 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
@@ -183,7 +183,7 @@ public class QAxisFileHandler extends AbstractHandler {
 					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 					IViewPart activePlot = page.findView(PlotView.ID + "DP");
 					if (activePlot instanceof PlotView) {
-						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.getRegion("Calibration");
 						if (sector == null) {

@@ -35,7 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
@@ -48,15 +48,15 @@ import org.eclipse.core.filesystem.EFS;
 import org.eclipse.core.filesystem.IFileStore;
 import org.eclipse.core.filesystem.IFileSystem;
 import org.eclipse.core.filesystem.URIUtil;
-import org.eclipse.jface.dialogs.ErrorDialog;
-import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.osgi.util.NLS;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.viewers.IStructuredSelection;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -517,7 +517,7 @@ public class DataReductionHandler extends AbstractHandler {
 		if (activePlot instanceof PlotView) {
 			BooleanDataset mask = null;
 			if (enableMask) {
-				AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+				IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 				Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
 				if (imageTraces == null || imageTraces.isEmpty())
 					throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
@@ -532,7 +532,7 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			SectorROI intSector = null;
-			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 			if (flags.isEnableSector()) {
 				Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 				if (sectorRegions == null || sectorRegions.isEmpty())

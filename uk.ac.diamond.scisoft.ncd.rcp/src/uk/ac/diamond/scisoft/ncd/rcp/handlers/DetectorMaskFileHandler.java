@@ -19,7 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.Collection;
 
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
@@ -42,6 +42,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -93,7 +94,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				IWorkbenchPage page = window.getActivePage();
 				IViewPart activePlot = page.findView(PlotView.ID + "DP");
 				if (activePlot instanceof PlotView) {
-					AbstractPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
+					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot)
 							.getPartName());
 					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
 					if (imageTraces == null || imageTraces.isEmpty())

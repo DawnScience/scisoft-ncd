@@ -32,6 +32,7 @@ import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
 import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.AbstractPlottingSystem.ColorOption;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
@@ -253,7 +254,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				}
 			}
 
-			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
 				ROIBase intBase = sectorRegions.iterator().next().getROI();
@@ -383,7 +384,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				roiData.setPoint(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTX),
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 				try {
-					AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					plotSystem.setPlotType(PlotType.IMAGE);
 					IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
 					sector.setROI(roiData.copy());
@@ -408,7 +409,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	protected void runJavaCommand() {
 		final boolean runRefinement = beamRefineButton.getSelection();
 
-		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 		Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 		if (sectorRegions == null || sectorRegions.isEmpty())
 			throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
@@ -448,7 +449,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		plottingSystem.clear();
 		
 		double px = getPixel(false).doubleValue(SI.MILLIMETER);
-		AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
 		xAxis.imultiply(px);
@@ -516,7 +517,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
-						AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						
 						 
 						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();

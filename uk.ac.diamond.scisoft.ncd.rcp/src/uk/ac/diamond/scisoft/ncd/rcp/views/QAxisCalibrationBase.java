@@ -31,7 +31,7 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import org.apache.commons.validator.routines.DoubleValidator;
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
+import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
@@ -293,7 +293,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	
 	private boolean checkCalibrationObjectInput() {
 		try {
-			AbstractPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 			
 			Collection<ITrace> traces = plotSystem.getTraces();
 			if (traces == null || traces.isEmpty()) {
@@ -324,7 +324,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 
 	private void storePeaks() {
-		IToolPage radialTool = PlottingFactory.getPlottingSystem("Dataset Plot").getToolPage(
+		IToolPage radialTool = PlottingFactory.getToolSystem("Dataset Plot").getToolPage(
 				"org.dawb.workbench.plotting.tools.radialProfileTool");
 		IToolPage fittingTool = ((IToolPageSystem)radialTool.getToolPlottingSystem()).getToolPage(
 				"org.dawb.workbench.plotting.tools.fittingTool");
