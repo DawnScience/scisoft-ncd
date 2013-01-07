@@ -41,7 +41,7 @@ public class LazySelection extends LazyDataReduction {
 	private int[] frames;
 	
 	public LazySelection(int[] frames) {
-		this.frames = frames;
+		this.frames = Arrays.copyOf(frames, frames.length);
 	}
 
 	public void setFormat(String format) {
@@ -53,8 +53,9 @@ public class LazySelection extends LazyDataReduction {
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		int[] imageSize = Arrays.copyOfRange(frames, frames.length - dim, frames.length);
 		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
-		for (int i = 0; i < datDimMake.length; i++)
+		for (int i = 0; i < datDimMake.length; i++) {
 			datDimMake[i] = list.get(i).length;
+		}
 		long[] bgFramesTotal = (long[]) ConvertUtils.convert(ArrayUtils.addAll(datDimMake, imageSize), long[].class);
 
 		
@@ -77,24 +78,24 @@ public class LazySelection extends LazyDataReduction {
 			iter.next();
 			long[] bgFrame = (long[]) ConvertUtils.convert(iter.getCounts(), long[].class);
 			long[] gridFrame = new long[datDimMake.length];
-			for (int i = 0; i < datDimMake.length; i++)
+			for (int i = 0; i < datDimMake.length; i++) {
 				gridFrame[i] = list.get(i)[(int) bgFrame[i]];
+			}
 			
-				long[] start = new long[frames.length];
-				start = Arrays.copyOf(gridFrame, frames.length);
-				long[] writePosition = new long[frames.length];
-				writePosition = Arrays.copyOf(bgFrame, frames.length);
-				
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
-				H5.H5Sselect_hyperslab(bgIds.dataspace_id, HDF5Constants.H5S_SELECT_SET,
-						start, block, count, block);
-				H5.H5Dread(bgIds.dataset_id, bgIds.datatype_id, memspace_id, bgIds.dataspace_id,
-						HDF5Constants.H5P_DEFAULT, data.getBuffer());
-				
-				H5.H5Sselect_hyperslab(output_dataspace_id, HDF5Constants.H5S_SELECT_SET,
-						writePosition, block, count, block);
-				H5.H5Dwrite(output_data_id, bgIds.datatype_id, memspace_id, output_dataspace_id,
-						HDF5Constants.H5P_DEFAULT, data.getBuffer());
+			long[] start = new long[frames.length];
+			start = Arrays.copyOf(gridFrame, frames.length);
+			long[] writePosition = new long[frames.length];
+			writePosition = Arrays.copyOf(bgFrame, frames.length);
+
+			int memspace_id = H5.H5Screate_simple(block.length, block, null);
+			H5.H5Sselect_hyperslab(bgIds.dataspace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+			H5.H5Dread(bgIds.dataset_id, bgIds.datatype_id, memspace_id, bgIds.dataspace_id, HDF5Constants.H5P_DEFAULT,
+					data.getBuffer());
+
+			H5.H5Sselect_hyperslab(output_dataspace_id, HDF5Constants.H5S_SELECT_SET, writePosition, block, count,
+					block);
+			H5.H5Dwrite(output_data_id, bgIds.datatype_id, memspace_id, output_dataspace_id, HDF5Constants.H5P_DEFAULT,
+					data.getBuffer());
 		}
 		
 		DataSliceIdentifiers outputIds = new DataSliceIdentifiers();

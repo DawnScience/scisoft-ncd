@@ -39,28 +39,29 @@ public class LazyAverage extends LazyDataReduction {
 	public static String name = "Average";
 	private int[] averageIndices;
 	
-	IProgressMonitor monitor = new NullProgressMonitor();
+	private IProgressMonitor monitor = new NullProgressMonitor();
 	
 	public int[] getAverageIndices() {
 		return averageIndices;
 	}
 
 	public void setAverageIndices(int[] averageIndices) {
-		this.averageIndices = averageIndices;
+		this.averageIndices = Arrays.copyOf(averageIndices, averageIndices.length);
 	}
 
 	public void setMonitor(IProgressMonitor monitor) {
 		this.monitor = monitor;
 	}
 
-	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids) throws NullPointerException, HDF5Exception {
+	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids) throws HDF5Exception {
 		
 		long[] frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		
 		// Calculate shape of the averaged dataset based on the dimensions selected for averaging
 		long[] framesAve = Arrays.copyOf(frames, frames.length);
-		for (int idx : averageIndices)
+		for (int idx : averageIndices) {
 			framesAve[idx - 1] = 1;
+		}
 		
 		int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
@@ -100,19 +101,21 @@ public class LazyAverage extends LazyDataReduction {
 		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
 			
-			if (monitor.isCanceled())
+			if (monitor.isCanceled()) {
 				return;
+			}
 			
 			int[] currentFrame = iter.getPos();
 			int[] data_stop = Arrays.copyOf(currentFrame, currentFrame.length);
 			long[] data_iter_array = Arrays.copyOf(frames, frames.length);
 			Arrays.fill(data_iter_array, 0, frames.length - dim, 1);
-			for (int i = 0; i < currentFrame.length; i++)
-				if (i < currentFrame.length - dim)
+			for (int i = 0; i < currentFrame.length; i++) {
+				if (i < currentFrame.length - dim) {
 					data_stop[i]++;
-				else
+				} else {
 					data_stop[i] = frames_int[i];
-			
+				}
+			}
 			int[] data_start = Arrays.copyOf(currentFrame, currentFrame.length);
 			int[] data_step = Arrays.copyOf(step, currentFrame.length);
 			Arrays.fill(data_step, 0, currentFrame.length - dim, 1);
@@ -121,10 +124,13 @@ public class LazyAverage extends LazyDataReduction {
 				data_start[i] = 0;
 				data_stop[i] = frames_int[i];
 				data_iter_array[i] = frames_int[i];
-				if (i > sliceDim)
+				if (i > sliceDim) {
 					data_step[i] = frames_int[i];
-				else if (i == sliceDim)
-					data_step[i] = sliceSize;
+				} else {
+					if (i == sliceDim) {
+						data_step[i] = sliceSize;
+					}
+				}
 			}
 			
 			newShape = AbstractDataset.checkSlice(data_stop, data_start, data_stop, data_start, data_stop, data_step);
@@ -138,28 +144,32 @@ public class LazyAverage extends LazyDataReduction {
 	    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
 			while (data_iter.hasNext()) {
 				
-				if (monitor.isCanceled())
+				if (monitor.isCanceled()) {
 					return;
+				}
 				
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
 				int data_slice_rank = data_slice.getRank();
 				
-				if (monitor.isCanceled())
+				if (monitor.isCanceled()) {
 					return;
+				}
 				
 				int totalFramesBatch = 1;
-				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--)
+				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--) {
 					if (ArrayUtils.contains(averageIndices, idx + 1)) {
 						totalFramesBatch *= data_slice.getShape()[idx];
 						data_slice = data_slice.sum(idx);
 					}
+				}
 				totalFrames += totalFramesBatch;
 				ave_frame = ave_frame.iadd(data_slice);
 			}
 			
-			if (monitor.isCanceled())
+			if (monitor.isCanceled()) {
 				return;
+			}
 			
 			ave_frame =  ave_frame.idivide(totalFrames);
 			
@@ -170,8 +180,9 @@ public class LazyAverage extends LazyDataReduction {
 			long[] ave_count_data = new long[frames.length];
 			Arrays.fill(ave_count_data, 1);
 			
-			if (monitor.isCanceled())
+			if (monitor.isCanceled()) {
 				return;
+			}
 			
 			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,

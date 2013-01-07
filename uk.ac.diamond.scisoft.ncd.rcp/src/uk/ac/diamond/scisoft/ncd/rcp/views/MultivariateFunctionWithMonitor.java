@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
 import org.apache.commons.math3.optimization.ConvergenceChecker;
@@ -89,16 +90,21 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 	}
 	
 	public void configureOptimizer(Integer cmaesLambda, double[] cmaesInputSigma, Integer cmaesMaxIterations, Integer cmaesCheckFeasableCount, ConvergenceChecker<PointValuePair> cmaesChecker) {
-		if (cmaesLambda != null)
+		if (cmaesLambda != null) {
 			this.cmaesLambda = cmaesLambda;
-		if (cmaesInputSigma != null)
-			this.cmaesInputSigma = cmaesInputSigma;
-		if (cmaesMaxIterations != null)
+		}
+		if (cmaesInputSigma != null) {
+			this.cmaesInputSigma = Arrays.copyOf(cmaesInputSigma, cmaesInputSigma.length);
+		}
+		if (cmaesMaxIterations != null) {
 			this.cmaesMaxIterations = cmaesMaxIterations;
-		if (cmaesCheckFeasableCount != null)
+		}
+		if (cmaesCheckFeasableCount != null) {
 			this.cmaesCheckFeasableCount = cmaesCheckFeasableCount;
-		if (cmaesChecker != null)
+		}
+		if (cmaesChecker != null) {
 			this.cmaesChecker = cmaesChecker;
+		}
 	}
 	
 	private void setMonitor(IProgressMonitor monitor) {

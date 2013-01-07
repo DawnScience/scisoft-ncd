@@ -126,7 +126,7 @@ public class CalibrationMethods {
 			double position = peak.getKey().getPosition();
 			HKL idx = peak.getValue();
 			Amount<Angle> angle = twoTheta.get(idx);
-			indexedPeakList.add(new CalibrationPeak(position, angle, idx.getD(), idx.getIndices()));
+			indexedPeakList.add(new CalibrationPeak(position, angle, idx));
 		}
 		
 		return indexedPeaks;

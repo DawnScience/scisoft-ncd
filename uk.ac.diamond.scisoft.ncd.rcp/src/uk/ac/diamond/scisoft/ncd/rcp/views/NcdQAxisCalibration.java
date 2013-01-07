@@ -318,13 +318,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				IMemento[] peaks = calibrationPeaksMemento.getChildren(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 				calibrationPeakList = new ArrayList<CalibrationPeak>();
 				for (IMemento peak: peaks) {
-					Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
+					float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 					Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
-					Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
-					Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
-					Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
-					Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
+					float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
+					int h = peak.getInteger(CalibrationPreferences.QAXIS_H);
+					int k = peak.getInteger(CalibrationPreferences.QAXIS_K);
+					int l = peak.getInteger(CalibrationPreferences.QAXIS_L);
+					HKL hkl = new HKL(h, k, l, Amount.valueOf(dSpacing, selUnit));
+					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, hkl));
 				}
 			}
 			setCalTable(calibrationPeakList);
@@ -356,13 +357,14 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					if (dataPeaksMemento != null) {
 						IMemento peaks[] = dataPeaksMemento.getChildren(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 						for (IMemento peak: peaks) {
-							Float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
+							float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
 							Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
-							Float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
-							Integer h = peak.getInteger(CalibrationPreferences.QAXIS_H);
-							Integer k = peak.getInteger(CalibrationPreferences.QAXIS_K);
-							Integer l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, Amount.valueOf(dSpacing, selUnit), new int[] {h,k,l}));
+							float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
+							int h = peak.getInteger(CalibrationPreferences.QAXIS_H);
+							int k = peak.getInteger(CalibrationPreferences.QAXIS_K);
+							int l = peak.getInteger(CalibrationPreferences.QAXIS_L);
+							HKL hkl = new HKL(h, k, l, Amount.valueOf(dSpacing, selUnit));
+							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, hkl));
 						}
 					}
 					

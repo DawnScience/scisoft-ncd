@@ -20,10 +20,10 @@ import java.util.Arrays;
 
 public class SliceSettings {
 	
-	long[] frames;
-	int[] start;
-	int sliceDim;
-	int sliceSize;
+	private long[] frames;
+	private int[] start;
+	private int sliceDim;
+	private int sliceSize;
 	
 	public SliceSettings(SliceSettings slice) {
 		if (slice != null) {
@@ -35,25 +35,25 @@ public class SliceSettings {
 	}
 
 	public SliceSettings(long[] frames, int sliceDim, int sliceSize) {
-		this.frames = frames;
+		this.frames = Arrays.copyOf(frames, frames.length);
 		this.sliceDim = sliceDim;
 		this.sliceSize = sliceSize;
 	}
 
 	public long[] getFrames() {
-		return frames;
+		return Arrays.copyOf(frames, frames.length);
 	}
 	
 	public void setFrames(long[] frames) {
-		this.frames = frames;
+		this.frames = Arrays.copyOf(frames, frames.length);
 	}
 
 	public int[] getStart() {
-		return start;
+		return Arrays.copyOf(start, start.length);
 	}
 
 	public void setStart(int[] start) {
-		this.start = start;
+		this.start = Arrays.copyOf(start, start.length);
 	}
 
 	public int getSliceDim() {
