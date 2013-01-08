@@ -13,6 +13,7 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  org.eclipse.ui.forms;bundle-version="3.5.1",
  org.eclipse.ui.navigator.resources;bundle-version="3.4.2",
  com.springsource.org.apache.commons.lang;bundle-version="[2.5.0,3.0.0)",
+ org.uncommons.maths;bundle-version="[1.2.3,2.0.0)",
  org.apache.commons.math3;bundle-version="[3.0.0,4.0.0)",
  org.apache.commons.validator;bundle-version="[1.4.0,2.0.0)",
  uk.ac.diamond.scisoft.analysis;bundle-version="[1.3.0,1.4.0)",
@@ -27,7 +28,6 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.apache.commons.io,
  org.eclipse.draw2d,
  org.slf4j;version="[1.5.0,2.0.0)",
- org.uncommons.maths.combinatorics,
  uk.ac.gda.monitor
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
