@@ -26,8 +26,8 @@ import gda.util.TestUtils;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.math.util.MultidimensionalCounter;
-import org.apache.commons.math.util.MultidimensionalCounter.Iterator;
+import org.apache.commons.math3.util.MultidimensionalCounter;
+import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
