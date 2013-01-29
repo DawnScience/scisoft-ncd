@@ -114,37 +114,8 @@ public class LazyNcdProcessing {
 			super(name);
 			
 			tmp_ids = null;
-			setCurrentSliceParams(null);
+			currentSliceParams = null;
 		}
-		
-		protected void setDim(int dim) {
-			this.dim = dim;
-		}
-
-		protected DataSliceIdentifiers getResultIds() {
-			return tmp_ids;
-		}
-
-		protected void setResultIds(DataSliceIdentifiers tmp_ids) {
-			this.tmp_ids = new DataSliceIdentifiers(tmp_ids);
-		}
-
-		protected void setCalibrationIds(DataSliceIdentifiers calibration_ids) {
-			this.tmp_calibration_ids = new DataSliceIdentifiers(calibration_ids);
-		}
-
-		protected void setBgIds(DataSliceIdentifiers bg_ids) {
-			this.tmp_bgIds = new DataSliceIdentifiers(bg_ids);
-		}
-
-		protected SliceSettings getCurrentSliceParams() {
-			return currentSliceParams;
-		}
-
-		protected void setCurrentSliceParams(SliceSettings currentSliceParams) {
-			this.currentSliceParams = new SliceSettings(currentSliceParams);
-		}
-    	
     }
 	
 	public LazyNcdProcessing() {
@@ -568,9 +539,9 @@ public class LazyNcdProcessing {
 					}
 				};
 				
-				sectorJob.setDim(dim);
-				sectorJob.setResultIds(input_ids);
-				sectorJob.setCurrentSliceParams(sliceParams);
+				sectorJob.dim = dim;
+				sectorJob.tmp_ids = new DataSliceIdentifiers(input_ids);
+				sectorJob.currentSliceParams = new SliceSettings(sliceParams);
 				sectorJobList.add(sectorJob);
 				
 			}
@@ -735,13 +706,15 @@ public class LazyNcdProcessing {
 				}
 			};
 			
-			processingJob.setDim(dim);
-			processingJob.setResultIds(input_ids);
-			if (flags.isEnableNormalisation())
-				processingJob.setCalibrationIds(calibration_ids);
-			if(flags.isEnableBackground())
-				processingJob.setBgIds(bgIds);
-			processingJob.setCurrentSliceParams(sliceParams);
+			processingJob.dim = dim;
+			processingJob.tmp_ids = new DataSliceIdentifiers(input_ids);
+			if (flags.isEnableNormalisation()) {
+				processingJob.tmp_calibration_ids = new DataSliceIdentifiers(calibration_ids);
+			}
+			if(flags.isEnableBackground()) {
+				processingJob.tmp_bgIds = new DataSliceIdentifiers(bgIds);
+			}
+			processingJob.currentSliceParams = new SliceSettings(sliceParams);
 			processingJobList.add(processingJob);
 		}
 
@@ -782,8 +755,8 @@ public class LazyNcdProcessing {
 		
 		if (!processingJobList.isEmpty()) {
 			DataReductionJob tmpJob = processingJobList.get(0);
-			input_ids = new DataSliceIdentifiers(tmpJob.getResultIds());
-			sliceParams = new SliceSettings(tmpJob.getCurrentSliceParams());
+			input_ids = new DataSliceIdentifiers(tmpJob.tmp_ids);
+			sliceParams = new SliceSettings(tmpJob.currentSliceParams);
 		}
 		
 		if(flags.isEnableAverage()) {
