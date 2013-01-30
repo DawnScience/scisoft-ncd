@@ -99,7 +99,7 @@ public class LazyNcdProcessing {
 	private int inv_group_id, inv_data_id;
 	private int result_group_id;
 	
-	private int background_file_handle, background_entry_group_id, background_detector_group_id, background_input_data_id;
+	private int background_file_handle, background_entry_group_id, background_detector_group_id, background_input_data_id, background_data_group_id;
 	
 	private DataSliceIdentifiers input_ids, calibration_ids;
 	private int fapl;
@@ -156,6 +156,7 @@ public class LazyNcdProcessing {
 		background_entry_group_id = -1;
 		background_detector_group_id = -1;
 		background_input_data_id = -1;
+		background_data_group_id = -1;
 				
 		calibration_group_id = -1;
 		input_calibration_id = -1;
@@ -432,7 +433,7 @@ public class LazyNcdProcessing {
 			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
-			background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+			background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDWR, fapl);
 			background_entry_group_id = H5.H5Gopen(background_file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 			background_detector_group_id = H5.H5Gopen(background_entry_group_id, bgDetector, HDF5Constants.H5P_DEFAULT);
 			background_input_data_id = H5.H5Dopen(background_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
@@ -450,6 +451,21 @@ public class LazyNcdProcessing {
 				lazyBackgroundSubtraction.writeQaxisData(bg_group_id);
 			}
 			lazyBackgroundSubtraction.writeNcdMetadata(bg_group_id);
+			
+			// Store background filename used in data reduction
+			int str_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(str_type, bgFile.length());
+			int metadata_id = NcdNexusUtils.makedata(bg_group_id, "filename", str_type, 1, new long[] {1});
+			
+			int filespace_id = H5.H5Dget_space(metadata_id);
+			int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+			H5.H5Sselect_all(filespace_id);
+			H5.H5Dwrite(metadata_id, str_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, bgFile.getBytes());
+			
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(str_type);
+			H5.H5Dclose(metadata_id);
 		} else {
 		    bgFrames = null;
 		    bgFrames_int = null;
@@ -599,7 +615,7 @@ public class LazyNcdProcessing {
 
 		final int[] final_bgFrames_int;
 		if (flags.isEnableBackground() && bgFrames != null && bgFrames_int != null) {
-			if (Arrays.equals(bgFrames_int, frames_int)) {
+			if (!Arrays.equals(bgFrames_int, frames_int)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
 				for (int i = 0; i < (rank - dim); i++)
 					if (bgFrames[i] != frames[i] && bgFrames[i] != 1) {
@@ -607,21 +623,27 @@ public class LazyNcdProcessing {
 						bgFrames[i] = 1;
 					}
 				if (bgAverageIndices.size() > 0) {
-					int bgfile_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-					int bgentry_group_id = H5.H5Gopen(bgfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-					int bgdata_group_id = NcdNexusUtils.makegroup(bgentry_group_id,
-							detector + "_result_" + monitorFile, "NXdata");
+					background_data_group_id = NcdNexusUtils.makegroup(background_entry_group_id,
+							bgDetector + "_" + monitorFile, "NXdata");
 
 					LazyAverage lazyAverage = new LazyAverage();
 					lazyAverage.setAverageIndices(ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})));
-					lazyAverage.execute(dim, bgFrames_int,bgdata_group_id, frameBatch, bgIds);
+					lazyAverage.execute(dim, bgFrames_int, background_data_group_id, frameBatch, bgIds);
 
 					bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 				}
 			}
 			final_bgFrames_int = Arrays.copyOf(bgFrames_int, bgFrames_int.length);
-		} else
+			
+			// Make link to the background dataset and store background filename
+			String nodeName =  bgDetector;
+			if (background_data_group_id != -1) {
+				nodeName =  bgDetector + "_" + monitorFile + "/" + LazyAverage.name;
+			}
+			H5.H5Lcreate_external(bgFile, "/entry1/" + nodeName +  "/data", bg_group_id, "background", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		} else {
 			final_bgFrames_int = null;
+		}
 		
 		ArrayList<DataReductionJob> processingJobList = new ArrayList<DataReductionJob>();
 		ArrayList<DataReductionJob> runningJobList = new ArrayList<DataReductionJob>();
@@ -838,6 +860,8 @@ public class LazyNcdProcessing {
 		if (calibration_group_id != -1)
 			H5.H5Gclose(calibration_group_id);
 		
+		if (background_data_group_id != -1)
+			H5.H5Gclose(background_data_group_id);
 		if (background_input_data_id != -1)
 			H5.H5Dclose(background_input_data_id);
 		if (background_detector_group_id != -1)

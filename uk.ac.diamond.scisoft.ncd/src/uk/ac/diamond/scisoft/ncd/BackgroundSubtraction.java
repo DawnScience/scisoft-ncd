@@ -83,7 +83,7 @@ public class BackgroundSubtraction {
 					mydata[i] = parentdata[i] - mybg[i % bgsize];
 				}
 			} else {
-				logger.error("background and data sizes imcompatible");
+				logger.error("background and data sizes incompatible");
 			}
 		}
 		
