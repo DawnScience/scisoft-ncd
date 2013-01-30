@@ -629,6 +629,13 @@ public class LazyNcdProcessing {
 					LazyAverage lazyAverage = new LazyAverage();
 					lazyAverage.setAverageIndices(ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})));
 					lazyAverage.execute(dim, bgFrames_int, background_data_group_id, frameBatch, bgIds);
+					if (bgIds != null) {
+						lazyAverage.writeNcdMetadata(bgIds.datagroup_id);
+						if (qaxis != null) {
+							lazyAverage.setQaxis(qaxis, qaxisUnit);
+							lazyAverage.writeQaxisData(bgIds.datagroup_id);
+						}
+					}
 
 					bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 				}
