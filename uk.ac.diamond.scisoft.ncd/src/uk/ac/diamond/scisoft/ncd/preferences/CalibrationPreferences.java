@@ -48,4 +48,5 @@ public class CalibrationPreferences {
 	public static final String QAXIS_ROIER = "qaxis.roi.er";
 	public static final String QAXIS_ROISP = "qaxis.roi.sp";
 	public static final String QAXIS_ROIEP = "qaxis.roi.ep";
+	public static final String QAXIS_ROISYM = "qaxis.roi.sym";
 }

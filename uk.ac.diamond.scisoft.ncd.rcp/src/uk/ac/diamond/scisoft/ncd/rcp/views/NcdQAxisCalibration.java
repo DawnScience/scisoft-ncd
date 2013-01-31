@@ -120,8 +120,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 		super.createPartControl(parent);
 		
-		restoreState();
-		
 		try {
 	        this.plottingSystem = PlottingFactory.createPlottingSystem();
 	        plottingSystem.setColorOption(ColorOption.NONE);
@@ -179,6 +177,13 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		peaksSourceProvider = (MultivariateFunctionSourceProvider) service.getSourceProvider(MultivariateFunctionSourceProvider.PEAKREFINEMENT_STATE);
 		beamxySourceProvider.addSourceProviderListener(this);
 		peaksSourceProvider.addSourceProviderListener(this);
+		
+		PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				restoreState();
+			}
+		});
 	}
 
 	@Override
@@ -267,6 +272,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIEP, (float) intSector.getAngle(1));
 					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTX, (float) intSector.getPoint()[0]);
 					roiMemento.putFloat(CalibrationPreferences.QAXIS_ROIPTY, (float) intSector.getPoint()[1]);
+					roiMemento.putInteger(CalibrationPreferences.QAXIS_ROISYM, intSector.getSymmetry());
 				}
 			}
 		}
@@ -385,14 +391,17 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIER));
 				roiData.setPoint(roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTX),
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
+				roiData.setSymmetry(roiMemento.getInteger(CalibrationPreferences.QAXIS_ROISYM));
 				try {
 					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-					plotSystem.setPlotType(PlotType.IMAGE);
-					IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
-					sector.setROI(roiData.copy());
-					sector.setUserRegion(true);
-					sector.setVisible(true);
-					plotSystem.addRegion(sector);
+					if (plotSystem != null) {
+						plotSystem.setPlotType(PlotType.IMAGE);
+						IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
+						sector.setROI(roiData.copy());
+						sector.setUserRegion(true);
+						sector.setVisible(true);
+						plotSystem.addRegion(sector);
+					}
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
 				}
