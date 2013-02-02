@@ -226,8 +226,9 @@ public class DataReductionHandler extends AbstractHandler {
 				dimSaxs = ncdDetectors.getDimSaxs();
 			}
 			
-			if (flags.isEnableNormalisation())
+			if (flags.isEnableNormalisation()) {
 				calibration = ncdScalerSourceProvider.getScaler();
+			}
 			
 			final String bgPath = ncdBgFileSourceProvider.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
@@ -248,10 +249,12 @@ public class DataReductionHandler extends AbstractHandler {
 					try {
 						if (enableBackground) {
 							final String bgFilename = createResultsFile(bgName, bgPath, "background");
-							if (enableWaxs)
+							if (enableWaxs) {
 								bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
-							if (enableSaxs)
+							}
+							if (enableSaxs) {
 								bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
+							}
 							processing.setBgFile(bgFilename);
 						}
 					} catch (Exception e) {
@@ -271,9 +274,9 @@ public class DataReductionHandler extends AbstractHandler {
 							inputfileName = FilenameUtils.getName(inputfilePath);
 						}
 						
-						if (ignoreInputFile(inputfilePath, inputfileExtension))
+						if (ignoreInputFile(inputfilePath, inputfileExtension)) {
 							continue;
-						
+						}
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						try {
 							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
@@ -340,8 +343,9 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 
 				private boolean ignoreInputFile(String inputfilePath, String inputfileExtension) {
-					if (!inputfileExtension.equals("nxs"))
+					if (!inputfileExtension.equals("nxs")) {
 						return true;
+					}
 					HDF5File dataTree;
 					try {
 						dataTree = new HDF5Loader(inputfilePath).loadTree();
@@ -351,14 +355,16 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 					if (enableWaxs) {
 						HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorWaxs	+ "/data");
-						if (node == null)
+						if (node == null) {
 							return true;
+						}
 					}
 					
 					if (enableSaxs) {
 						HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
-						if (node == null)
+						if (node == null) {
 							return true;
+						}
 					}
 					
 					return false;
@@ -388,8 +394,9 @@ public class DataReductionHandler extends AbstractHandler {
 			flags.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());
 			flags.setEnableAzimuthal(ncdAzimuthSourceProvider.isEnableAzimuthal());
 			flags.setEnableFastintegration(ncdFastIntSourceProvider.isEnableFastIntegration());
-			if (!flags.isEnableRadial() && !flags.isEnableAzimuthal())
+			if (!flags.isEnableRadial() && !flags.isEnableAzimuthal()) {
 				throw new IllegalArgumentException(NcdMessages.NO_SEC_INT);
+			}
 		}
 	}
 
@@ -428,21 +435,27 @@ public class DataReductionHandler extends AbstractHandler {
 		}
 		
 		if (flags.isEnableWaxs()) {
-			if (detectorWaxs == null)
+			if (detectorWaxs == null) {
 				throw new ExecutionException("WAXS detector has not been selected");
-			if (pxWaxs == null)
+			}
+			if (pxWaxs == null) {
 				throw new ExecutionException("WAXS detector pixel size has not been specified");
-			if (dimWaxs == null)
+			}
+			if (dimWaxs == null) {
 				throw new ExecutionException("WAXS detector dimensionality has not been specified");
+			}
 		}
 		
 		if (flags.isEnableSaxs()) {
-			if (detectorSaxs == null)
+			if (detectorSaxs == null) {
 				throw new ExecutionException("SAXS detector has not been selected");
-			if (pxSaxs == null)
+			}
+			if (pxSaxs == null) {
 				throw new ExecutionException("SAXS detector pixel size has not been specified");
-			if (dimSaxs == null)
+			}
+			if (dimSaxs == null) {
 				throw new ExecutionException("SAXS detector dimensionality has not been specified");
+			}
 		}
 		
 	}
@@ -450,13 +463,16 @@ public class DataReductionHandler extends AbstractHandler {
 	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws FileNotFoundException, IOException {
 
 		workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
-		if (workingDir == null || workingDir.isEmpty())
+		if (workingDir == null || workingDir.isEmpty()) {
 			throw new IllegalArgumentException(NcdMessages.NO_WORKING_DIR);
+		}
 		File testDir = new File(workingDir);
-		if (!(testDir.isDirectory()))
+		if (!(testDir.isDirectory())) {
 			throw new FileNotFoundException(NLS.bind(NcdMessages.NO_WORKINGDIR_DATA, testDir.getCanonicalPath()));
-		if (!(testDir.canWrite()))
+		}
+		if (!(testDir.canWrite())) {
 			throw new IllegalArgumentException(NcdMessages.NO_WORKINGDIR_WRITE);
+		}
 		
 		SliceInput dataSliceInput = ncdDataSliceSourceProvider.getDataSlice();
 		Integer firstFrame = null;
@@ -470,8 +486,9 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		SliceInput gridAverageSlice = ncdGridAverageSourceProvider.getGridAverage();
 		String gridAverage = null;
-		if (gridAverageSlice != null)
+		if (gridAverageSlice != null) {
 			gridAverage = gridAverageSlice.getAdvancedSlice();
+		}
 		
 		String bgFile = null;
 		Double bgScaling = null;
@@ -479,26 +496,32 @@ public class DataReductionHandler extends AbstractHandler {
 			bgFile = ncdBgFileSourceProvider.getBgFile();
 			bgScaling = ncdBgScaleSourceProvider.getBgScaling();
 			
-			if (bgFile == null)
+			if (bgFile == null) {
 				throw new IllegalArgumentException(NcdMessages.NO_BG_FILE);
+			}
 			File testFile = new File(bgFile);
-			if (!(testFile.isFile()))
+			if (!(testFile.isFile())) {
 				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_BG_DATA, testFile.getCanonicalPath()));
-			if (!(testFile.canRead()))
+			}
+			if (!(testFile.canRead())) {
 				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_BG_READ, testFile.getCanonicalPath()));
+			}
 		}
 
 		String drFile = null;
 		if (flags.isEnableDetectorResponse()) {
 			drFile = ncdDrFileSourceProvider.getDrFile();
 			
-			if (drFile == null)
+			if (drFile == null) {
 				throw new IllegalArgumentException(NcdMessages.NO_DR_FILE);
+			}
 			File testFile = new File(drFile);
-			if (!(testFile.isFile()))
+			if (!(testFile.isFile())) {
 				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_DR_DATA, testFile.getCanonicalPath()));
-			if (!(testFile.canRead()))
+			}
+			if (!(testFile.canRead())) {
 				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_DR_READ, testFile.getCanonicalPath()));
+			}
 		}
 		
 		int normChannel = -1;
@@ -516,40 +539,44 @@ public class DataReductionHandler extends AbstractHandler {
 		IViewPart activePlot = page.findView(PlotView.ID + "DP");
 		if (activePlot instanceof PlotView) {
 			BooleanDataset mask = null;
-			if (enableMask) {
-				IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
-				Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
-				if (imageTraces == null || imageTraces.isEmpty())
-					throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
-				ITrace imageTrace = imageTraces.iterator().next();
-				if (imageTrace != null && imageTrace instanceof IImageTrace)
-					mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
-				if (mask != null) {
-					processing.setMask(new BooleanDataset(mask));
-					processing.setEnableMask(true);
-				} else {
-					throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
-				}
-			}
 			SectorROI intSector = null;
 			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 			if (flags.isEnableSector()) {
 				Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-				if (sectorRegions == null || sectorRegions.isEmpty())
+				if (sectorRegions == null || sectorRegions.isEmpty()) {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
-				if (sectorRegions.size() > 1)
+				}
+				if (sectorRegions.size() > 1) {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
+				}
 				ROIBase intBase = sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
 					int sym = intSector.getSymmetry(); 
-					if ((sym == SectorROI.NONE) || (sym == SectorROI.FULL))
+					if ((sym == SectorROI.NONE) || (sym == SectorROI.FULL)) {
 						processing.setIntSector(intSector.copy());
-					else
+					} else {
 						throw new IllegalArgumentException(NcdMessages.NO_SEC_SYM);
+					}
 				}
-				else
+				else {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
+				}
+				if (enableMask) {
+					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
+					if (imageTraces == null || imageTraces.isEmpty())
+						throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
+					ITrace imageTrace = imageTraces.iterator().next();
+					if (imageTrace != null && imageTrace instanceof IImageTrace)
+						mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
+					if (mask != null) {
+						processing.setMask(new BooleanDataset(mask));
+						processing.setEnableMask(true);
+					} else {
+						throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
+					}
+				}
 			}
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
@@ -616,11 +643,13 @@ public class DataReductionHandler extends AbstractHandler {
 		    H5.H5Gclose(calib_id);
 		}
 		
-		if (enableWaxs)
+		if (enableWaxs) {
 			createDetectorNode(detectorWaxs, entry_id, inputfilePath);
+		}
 		
-		if (enableSaxs)
+		if (enableSaxs)  {
 			createDetectorNode(detectorSaxs, entry_id, inputfilePath);
+		}
 		
 		H5.H5Gclose(entry_id);
 		H5.H5Fclose(fid);
@@ -667,9 +696,9 @@ public class DataReductionHandler extends AbstractHandler {
 			}
 			H5.H5Tclose(type_id);
 			H5.H5Aclose(attr_id);
-			
-		} else
+		} else {
 		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detector + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		}
 		
 		H5.H5Gclose(detector_id);
 		
