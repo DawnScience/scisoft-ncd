@@ -43,8 +43,8 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -251,14 +251,30 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		energy = new Text(group, SWT.BORDER);
 		energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3 ,1));
 		energy.setToolTipText("Set the energy used in data collection");
-		energy.addModifyListener(new ModifyListener() {
+		energy.addFocusListener(new FocusListener() {
 			
 			@Override
-			public void modifyText(ModifyEvent e) {
-				if (getEnergy().equals(ncdEnergySourceProvider.getEnergy())) {
-					return;
+			public void focusLost(FocusEvent e) {
+				Amount<Energy> tmpEnergy = getEnergy();
+				Amount<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
+				if (tmpEnergy != null) {
+					if (savedEnergy != null && tmpEnergy.equals(savedEnergy)) {
+						return;
+					}
+					ncdEnergySourceProvider.setEnergy(tmpEnergy);
+				} else {
+					if (savedEnergy != null) {
+						ncdEnergySourceProvider.setEnergy(savedEnergy);
+					}
 				}
-				ncdEnergySourceProvider.setEnergy(getEnergy());
+			}
+			
+			@Override
+			public void focusGained(FocusEvent e) {
+				Amount<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
+				if (savedEnergy != null) {
+					ncdEnergySourceProvider.setEnergy(savedEnergy);
+				}
 			}
 		});
 		
