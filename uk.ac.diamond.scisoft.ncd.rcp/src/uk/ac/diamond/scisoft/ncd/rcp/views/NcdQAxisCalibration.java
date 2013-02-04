@@ -23,6 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Angle;
+import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -208,9 +209,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					break;
 				}
 			
-			Double energy = getEnergy();
-			if (energy != null)
-				memento.putFloat(CalibrationPreferences.QAXIS_ENERGY, energy.floatValue());
+			Amount<Energy> energy = getEnergy();
+			if (energy != null) {
+				memento.putFloat(CalibrationPreferences.QAXIS_ENERGY, new Float(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))));
+			}
 			
 			if (!(calibrationPeakList.isEmpty())) {
 				IMemento calibrationPeaksMemento = memento.createChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -315,8 +317,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			
 			flt = memento.getFloat(CalibrationPreferences.QAXIS_ENERGY);
 			if (flt != null) {
-				energy.setText(String.format("%.3f", flt));
-				ncdEnergySourceProvider.setEnergy(new Double(flt));
+				energy.setText(flt.toString());
+				ncdEnergySourceProvider.setEnergy(Amount.valueOf(flt, SI.KILO(NonSI.ELECTRON_VOLT)));
 			}
 			
 			IMemento calibrationPeaksMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -412,7 +414,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 	protected Amount<Length> getLambda() {
 		Amount<Length> lambdaDim = Constants.ℎ.times(Constants.c).divide(
-				Amount.valueOf(ncdEnergySourceProvider.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT);
+				ncdEnergySourceProvider.getEnergy().to(SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT);
 		return lambdaDim;
 	}
 	

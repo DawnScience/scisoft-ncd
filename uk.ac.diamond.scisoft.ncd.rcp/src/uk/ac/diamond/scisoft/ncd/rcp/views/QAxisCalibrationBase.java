@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -120,9 +121,13 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	}
 
-	protected Double getEnergy() {
+	protected Amount<Energy> getEnergy() {
 		String input = energy.getText();
-		return doubleValidator.validate(input);
+		Double val = doubleValidator.validate(input);
+		if (val != null) {
+			return Amount.valueOf(val, SI.KILO(NonSI.ELECTRON_VOLT));
+		}
+		return null;
 	}
 
 	protected Double getGradient() {
@@ -250,6 +255,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
+				if (getEnergy().equals(ncdEnergySourceProvider.getEnergy())) {
+					return;
+				}
 				ncdEnergySourceProvider.setEnergy(getEnergy());
 			}
 		});
@@ -262,7 +270,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		unitSel = new HashMap<Unit<Length>, Button>(2);
 		Button unitButton = new Button(unitGrp, SWT.RADIO);
 		unitButton.setText(NonSI.ANGSTROM.toString());
-		unitButton.setToolTipText("calibrate q-axis in Ångstroms");
+		unitButton.setToolTipText("calibrate q-axis in \u212bngstroms");
 		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 		unitSel.put(NonSI.ANGSTROM, unitButton);
 		
@@ -420,13 +428,22 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
 		if (sourceName.equals(NcdCalibrationSourceProvider.CALIBRATION_STATE)) {
-			if (sourceValue instanceof CalibrationResultsBean)
+			if (sourceValue instanceof CalibrationResultsBean) {
 				updateCalibrationResults();
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.ENERGY_STATE)) {
+			if (sourceValue instanceof Amount<?>) {
+				Double val = ((Amount<Energy>)sourceValue).doubleValue(SI.KILO(NonSI.ELECTRON_VOLT));
+				energy.setText(val.toString());
+			}
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
-			if (sourceValue instanceof String)
+			if (sourceValue instanceof String) {
 				updateCalibrationResults();
+			}
 		}
 	}
 }

@@ -18,8 +18,11 @@ package uk.ac.diamond.scisoft.ncd.rcp;
 
 import java.util.HashMap;
 
+import javax.measure.quantity.Energy;
+
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 
@@ -75,7 +78,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
 	private Integer normChannel;
 	private Double bgScaling, absScaling;
-	private Double energy;
+	private Amount<Energy> energy;
 
 	public NcdProcessingSourceProvider() {
 	}
@@ -221,8 +224,8 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, WAXSDETECTOR_STATE, this.waxsDetector);
 	}
 	
-	public void setEnergy(Double energy) {
-		this.energy = (energy != null) ? new Double(energy) : null;
+	public void setEnergy(Amount<Energy> energy) {
+		this.energy = (energy != null) ? energy.copy() : null;
 		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
 	}
 
@@ -367,7 +370,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return absScaling;
 	}
 
-	public Double getEnergy() {
+	public Amount<Energy> getEnergy() {
 		return energy;
 	}
 }
