@@ -32,13 +32,16 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import org.apache.commons.validator.routines.DoubleValidator;
+import org.dawb.common.services.ILoaderService;
 import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
 import org.dawb.common.ui.plot.tool.IToolPage;
 import org.dawb.common.ui.plot.tool.IToolPageSystem;
+import org.dawb.common.ui.plot.trace.IImageTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
+import org.dawb.workbench.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.swt.SWT;
@@ -67,7 +70,11 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
+import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
@@ -81,6 +88,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
 	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
+	private ILoaderService loaderService;
 	
 	private static CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
@@ -105,7 +113,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected String currentDetector;
 	
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-	
+
 	private static class Compare implements Comparator<IPeak> {
 
 		@Override
@@ -160,6 +168,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
+		loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+		
 		
 		ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		scrolledComposite.setExpandHorizontal(true);
@@ -397,9 +407,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		cameralength.setText("--");
 		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentDetector)) {
 			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentDetector);
-			if (peakList != null)
+			if (peakList != null) {
 				calibrationPeakList.addAll(peakList);
-			
+			}
 			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
 			if (ncdCalibrationSourceProvider.getFunction(currentDetector) != null) {
 
@@ -410,16 +420,45 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(0)));
 						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(1)));
 						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
-						if (mcl != null)
+						if (mcl != null) {
 							cameralength.setText(mcl.to(SI.METER).toString());
-						for (Button unitBtn : unitSel.values())
+						}
+						for (Button unitBtn : unitSel.values()) {
 							unitBtn.setSelection(false);
-						if (units == null) 
+						}
+						if (units == null) { 
 							unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
-						else
+						} else {
 							unitSel.get(units).setSelection(true);
+						}
 						calTable.setInput(calibrationPeakList);
 						calTable.refresh();
+						
+						// update locked diffraction metadata in Diffraction tool
+						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
+						if (lockedMeta == null) {
+							IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
+							int[] datashape = trace.getData().getShape();
+							loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+						}
+						DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
+						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
+						
+						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+						if (sectorRegions != null && !sectorRegions.isEmpty() && sectorRegions.size() == 1) {
+							final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
+							detectorProperties.setBeamCentreCoords(sroi.getPoint());
+						}
+						if (mcl != null) {
+							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETER));
+						}
+						
+						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector).getPxSize();
+						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETER));
+						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETER));
+						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
+						crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 					}
 				});
 			}
