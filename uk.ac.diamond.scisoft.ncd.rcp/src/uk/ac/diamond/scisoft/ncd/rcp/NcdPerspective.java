@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp;
 
+import org.dawb.common.ui.views.ValuePageView;
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
@@ -36,7 +37,8 @@ public class NcdPerspective implements IPerspectiveFactory {
 	 * String used elsewhere, do not change
 	 */
 	static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdperspective";
-	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
+	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectFolder";
+	static final String ToolsFolder_ID = "org.dawb.workbench.plotting.views.toolFoleder";
 	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
 	
 	// Currently defined in uk.ac.diamond.sda.navigator.views class 
@@ -52,8 +54,11 @@ public class NcdPerspective implements IPerspectiveFactory {
 			layout.getViewLayout(explorer).setCloseable(false);
 		projectFolderLayout.addView(FileView_ID);
 
-		layout.addView(ToolPageView2D_ID, IPageLayout.RIGHT, 0.65f, IPageLayout.ID_EDITOR_AREA);
-		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
+		IFolderLayout toolsFolderLayout = layout.createFolder(ToolsFolder_ID, IPageLayout.RIGHT, 0.65f, IPageLayout.ID_EDITOR_AREA);
+		toolsFolderLayout.addView(ToolPageView2D_ID);
+		if (layout.getViewLayout(ToolPageView2D_ID) != null)
+			layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
+		toolsFolderLayout.addView(ValuePageView.ID);
 		layout.addView(NcdDataReductionParameters.ID, IPageLayout.BOTTOM, 0.65f, ToolPageView2D_ID);
 		
 		
