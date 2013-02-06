@@ -438,15 +438,20 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 						if (lockedMeta == null) {
-							IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-							int[] datashape = trace.getData().getShape();
-							loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+							Collection<ITrace> traces = plotSystem.getTraces();
+							if (traces != null && !traces.isEmpty()) {
+								int[] datashape = traces.iterator().next().getData().getShape();
+								loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+							} else {
+								logger.info("SCISOFT NCD: Couldn't find calibration image for configuring diffraction metadata");
+								return;
+							}
 						}
 						DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
 						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
 						
 						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-						if (sectorRegions != null && !sectorRegions.isEmpty() && sectorRegions.size() == 1) {
+						if (sectorRegions != null && sectorRegions.size() == 1) {
 							final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
 							detectorProperties.setBeamCentreCoords(sroi.getPoint());
 						}
