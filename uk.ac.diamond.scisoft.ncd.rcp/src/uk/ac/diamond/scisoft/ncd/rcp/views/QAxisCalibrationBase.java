@@ -450,20 +450,23 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
 						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
 						
-						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-						if (sectorRegions != null && sectorRegions.size() == 1) {
-							final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
-							detectorProperties.setBeamCentreCoords(sroi.getPoint());
-						}
+						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector).getPxSize();
+						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETER));
+						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETER));
+						
+						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
+						crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+						
 						if (mcl != null) {
 							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETER));
 						}
 						
-						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector).getPxSize();
-						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETER));
-						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETER));
-						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
-						crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+						if (sectorRegions != null && sectorRegions.size() == 1) {
+							final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
+							double[] cp = sroi.getPoint();
+							detectorProperties.setBeamCentreCoords(cp);
+						}
 					}
 				});
 			}
