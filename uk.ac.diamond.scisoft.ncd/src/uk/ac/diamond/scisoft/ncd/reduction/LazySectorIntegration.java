@@ -16,7 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.UnitFormat;
 
@@ -43,6 +45,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private AbstractDataset mask;
 	private Double gradient, intercept;
 	Amount<Length> cameraLength;
+	Amount<Energy> energy;
 	
 	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
@@ -77,29 +80,40 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 	
 	public double[] getCalibrationData() {
-		if (gradient != null && intercept != null)
+		if (gradient != null && intercept != null) {
 			return new double[] {gradient.doubleValue(), intercept.doubleValue()};
+		}
 		return null;
 	}
 
 	public void setCalibrationData(Double gradient, Double intercept) {
-		if (gradient != null)
+		if (gradient != null) {
 			this.gradient = new Double(gradient);
-		if (intercept != null)
+		}
+		if (intercept != null) {
 			this.intercept =  new Double(intercept);
+		}
 	}
 
 	public void setCameraLength(Amount<Length> cameraLength) {
-		if (cameraLength != null)
-			this.cameraLength = cameraLength;
+		if (cameraLength != null) {
+			this.cameraLength = cameraLength.copy();
+		}
+	}
+
+	public void setEnergy(Amount<Energy> energy) {
+		if (energy != null) {
+			this.energy = energy.copy();
+		}
 	}
 
 	public AbstractDataset[] execute(int dim, AbstractDataset data, DataSliceIdentifiers sector_id, DataSliceIdentifiers azimuth_id, ILock lock) {
 		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
 		reductionStep.parentdata = data;
 		reductionStep.setROI(intSector);
-		if (mask != null) 
+		if (mask != null) {
 			reductionStep.setMask(mask);
+		}
 		reductionStep.setIDs(sector_id);
 		reductionStep.setAzimuthalIDs(azimuth_id);
 		reductionStep.setAreaData(areaData);
@@ -120,12 +134,18 @@ public class LazySectorIntegration extends LazyDataReduction {
 			writeIntegrationRadiiMetadata(datagroup_id);
 			writeIntegrationSymmetryMetadata(datagroup_id);
 		}
-		if (cameraLength != null)
+		if (cameraLength != null) {
 			writeCameraLengthMetadata(datagroup_id);
-		if (mask != null)
+		}
+		if (energy != null) {
+			writeEnergyMetadata(datagroup_id);
+		}
+		if (mask != null) {
 			writeMaskMetadata(datagroup_id);
-		if (gradient != null && intercept != null)
+		}
+		if (gradient != null && intercept != null) {
 			writeQcalibrationMetadata(datagroup_id);
+		}
 	}
 
 	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
@@ -154,6 +174,20 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);
 		H5.H5Dclose(cameralength_id);
+	}
+	
+	private void writeEnergyMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, 1, new long[] {1}, false, "keV");
+		int filespace_id = H5.H5Dget_space(energy_id);
+		int type = H5.H5Dget_type(energy_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))});
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(energy_id);
 	}
 	
 	private void writeIntegrationAnglesMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
@@ -234,13 +268,13 @@ public class LazySectorIntegration extends LazyDataReduction {
 			
 			int attr_id = H5.H5Acreate(qcalibration_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
-			
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, unitString .getBytes());
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);

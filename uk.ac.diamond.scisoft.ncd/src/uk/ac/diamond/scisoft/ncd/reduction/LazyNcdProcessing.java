@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
 
@@ -69,6 +70,7 @@ public class LazyNcdProcessing {
 	private Double slope;
 	private Double intercept;
 	private Amount<Length> cameraLength;
+	private Amount<Energy> energy;
 	private Unit<ScatteringVector> qaxisUnit;
 	private BooleanDataset mask;
 
@@ -130,6 +132,7 @@ public class LazyNcdProcessing {
 		slope = null;
 		intercept = null;
 		cameraLength = null;
+		energy = null;
 		qaxisUnit = null;
 		mask = null;
 		crb = null;
@@ -266,6 +269,10 @@ public class LazyNcdProcessing {
 		this.cameraLength = cameraLength;
 	}
 
+	public void setEnergy(Amount<Energy> energy) {
+		this.energy = energy;
+	}
+
 	public void setUnit(Unit<Length> unit) {
 		if (unit == null) {
 			this.qaxisUnit = null;
@@ -373,6 +380,7 @@ public class LazyNcdProcessing {
 				lazySectorIntegration.setQaxis(qaxis, qaxisUnit);
 				lazySectorIntegration.setCalibrationData(slope, intercept);
 				lazySectorIntegration.setCameraLength(cameraLength);
+				lazySectorIntegration.setEnergy(energy);
 				lazySectorIntegration.writeQaxisData(sec_group_id);
 			}
 			

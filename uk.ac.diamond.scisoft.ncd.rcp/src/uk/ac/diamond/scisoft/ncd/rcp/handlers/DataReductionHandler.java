@@ -25,6 +25,7 @@ import java.text.SimpleDateFormat;
 import java.util.Collection;
 import java.util.Date;
 
+import javax.measure.quantity.Energy;
 import javax.measure.unit.SI;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -62,6 +63,7 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -581,7 +583,9 @@ public class DataReductionHandler extends AbstractHandler {
 			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) sourceProviderService.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 			CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+			Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
 			//CalibrationResultsBean crb = null;
 			//if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
 			//	Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
@@ -590,6 +594,7 @@ public class DataReductionHandler extends AbstractHandler {
 			//		crb = (CalibrationResultsBean) bd;
 			//}
 			processing.setCrb(crb);
+			processing.setEnergy(energy);
 		}
 		
 		processing.setBgFile(bgFile);
