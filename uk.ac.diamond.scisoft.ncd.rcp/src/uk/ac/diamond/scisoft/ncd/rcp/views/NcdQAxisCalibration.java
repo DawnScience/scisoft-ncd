@@ -102,6 +102,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	protected String GUI_PLOT_NAME = "Dataset Plot";
 	protected String ACTIVE_PLOT = "Dataset Plot";
 	private AbstractPlottingSystem plottingSystem;
+	public static final  String SECTOR_NAME = "Calibration";
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
 	
@@ -398,7 +399,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					if (plotSystem != null) {
 						plotSystem.setPlotType(PlotType.IMAGE);
-						IRegion sector = plotSystem.createRegion("Stored Sector", RegionType.SECTOR);
+						IRegion sector = plotSystem.createRegion(SECTOR_NAME, RegionType.SECTOR);
 						sector.setROI(roiData.copy());
 						sector.setUserRegion(true);
 						sector.setVisible(true);

@@ -20,16 +20,20 @@ import java.io.File;
 import java.text.ParsePosition;
 import java.util.ArrayList;
 
+import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
+import org.dawb.common.services.ILoaderService;
 import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlotType;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawb.common.ui.plot.region.IRegion;
 import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -51,6 +55,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
@@ -59,6 +65,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -67,6 +74,7 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.views.NcdQAxisCalibration;
 
 public class QAxisFileHandler extends AbstractHandler {
 
@@ -79,6 +87,7 @@ public class QAxisFileHandler extends AbstractHandler {
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
@@ -108,6 +117,8 @@ public class QAxisFileHandler extends AbstractHandler {
 					if (nodeLink == null)
 						return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 
+					Amount<Length> cameraLength = null;
+					Amount<Energy> energy = null;
 					HDF5Node node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
 						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
@@ -124,7 +135,6 @@ public class QAxisFileHandler extends AbstractHandler {
 							inv_units = unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse()
 									.asType(Length.class);
 						}
-						Amount<Length> cameraLength = null;
 						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 								+ "_processing/SectorIntegration/camera length");
 						if (nodeLink != null) {
@@ -136,6 +146,17 @@ public class QAxisFileHandler extends AbstractHandler {
 						crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[] { gradient,
 								intercept }), new ArrayList<CalibrationPeak>(), cameraLength, inv_units);
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
+						
+						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+								+ "_processing/SectorIntegration/energy");
+						if (nodeLink != null) {
+							node = nodeLink.getDestination();
+							if (node instanceof HDF5Dataset) {
+								energy = Amount.valueOf(
+										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
+							}
+						}
+						ncdEnergySourceProvider.setEnergy(energy);
 					}
 
 					SectorROI roiData = new SectorROI();
@@ -185,7 +206,7 @@ public class QAxisFileHandler extends AbstractHandler {
 					if (activePlot instanceof PlotView) {
 						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						plotSystem.setPlotType(PlotType.IMAGE);
-						IRegion sector = plotSystem.getRegion("Calibration");
+						IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
 						if (sector == null) {
 							sector = plotSystem.createRegion("Calibration", RegionType.SECTOR);
 						}
@@ -194,7 +215,32 @@ public class QAxisFileHandler extends AbstractHandler {
 						sector.setVisible(true);
 						plotSystem.addRegion(sector);
 					}
-
+					
+					// update locked diffraction metadata in Diffraction tool
+					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
+					if (lockedMeta == null) {
+						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
+						if (nodeLink != null) {
+							int[] datashape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getShape();
+							loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+						} else {
+							logger.info("SCISOFT NCD: Couldn't read calibration image shape for configuring diffraction metadata");
+							return null;
+						}
+					}
+					DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
+					DiffractionCrystalEnvironment crystalEnvironment = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
+					if (energy != null) {
+						crystalEnvironment.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+					}
+					if (cameraLength != null) {
+						detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETER));
+					}
+					double[] cp = roiData.getPoint();
+					if (cp != null) {
+						detectorProperties.setBeamCentreCoords(cp);
+					}
 				} catch (Exception e) {
 					return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 				}

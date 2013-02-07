@@ -18,12 +18,17 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.Collection;
 
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
+import org.dawb.common.services.ILoaderService;
 import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.region.IRegion;
+import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -35,6 +40,7 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
@@ -43,10 +49,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
+import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
@@ -82,8 +92,9 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 				try {
 					HDF5File dataTree = new HDF5Loader(dataFileName).loadTree();
 					HDF5NodeLink nodeLink = dataTree.findNodeLink("/entry1/instrument/monochromator/energy");
+					Double energy = null;   // energy value in keV
 					if (nodeLink != null) {
-	    				double energy = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
+	    				energy = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
 	    				ncdEnergySourceProvider.setEnergy(Amount.valueOf(energy, SI.KILO(NonSI.ELECTRON_VOLT)));
 	    				logger.info("Energy value : {}", energy);
 					} else {
@@ -111,6 +122,23 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 					}
 
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
+					if (lockedMeta == null) {
+						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(data.getShape()));
+					}
+					DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
+					DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
+					
+					Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+					if (sectorRegions != null && !sectorRegions.isEmpty() && sectorRegions.size() == 1) {
+						final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
+						detectorProperties.setBeamCentreCoords(sroi.getPoint());
+					}
+					if (energy != null) {
+						crystalProperties.setWavelengthFromEnergykeV(energy);
+					}
 				} catch (Exception e) {
 					return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), e);
 				}

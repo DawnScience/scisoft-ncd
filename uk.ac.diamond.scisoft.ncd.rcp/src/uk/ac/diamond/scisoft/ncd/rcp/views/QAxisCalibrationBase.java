@@ -454,8 +454,9 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETER));
 						
 						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
-						crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
-						
+						if (energy != null) {
+							crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+						}
 						if (mcl != null) {
 							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETER));
 						}
