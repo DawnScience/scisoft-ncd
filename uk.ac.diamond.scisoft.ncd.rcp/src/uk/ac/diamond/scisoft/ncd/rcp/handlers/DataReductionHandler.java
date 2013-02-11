@@ -416,7 +416,7 @@ public class DataReductionHandler extends AbstractHandler {
 			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
 			NcdDetectorSettings detWaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorWaxs);
 			pxWaxs = detWaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
-			dimWaxs = detWaxsInfo.getDimmension();
+			dimWaxs = detWaxsInfo.getDimension();
 			if ((detectorWaxs!=null) && (pxWaxs != null)) {
 				ncdDetectors.setDetectorWaxs(detectorWaxs);
 				ncdDetectors.setPxWaxs(pxWaxs);
@@ -428,7 +428,7 @@ public class DataReductionHandler extends AbstractHandler {
 			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 			NcdDetectorSettings detSaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorSaxs);
 			pxSaxs = detSaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
-			dimSaxs = detSaxsInfo.getDimmension();
+			dimSaxs = detSaxsInfo.getDimension();
 			if ((detectorSaxs != null) && (pxSaxs != null)) {
 				ncdDetectors.setDetectorSaxs(detectorSaxs);
 				ncdDetectors.setPxSaxs(pxSaxs);

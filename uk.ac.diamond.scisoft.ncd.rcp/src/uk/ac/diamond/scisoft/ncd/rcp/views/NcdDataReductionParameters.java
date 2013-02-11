@@ -220,7 +220,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
-					int detDim = tmpDet.getValue().getDimmension();
+					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
@@ -228,7 +228,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
-					int detDim = tmpDet.getValue().getDimmension();
+					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {

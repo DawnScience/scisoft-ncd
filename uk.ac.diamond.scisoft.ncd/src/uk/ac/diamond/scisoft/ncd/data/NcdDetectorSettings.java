@@ -31,7 +31,7 @@ public class NcdDetectorSettings {
 	public NcdDetectorSettings(NcdDetectorSettings ncdDetector) {
 		super();
 		this.type = ncdDetector.getType();
-		this.dim = ncdDetector.getDimmension();
+		this.dim = ncdDetector.getDimension();
 		this.name = ncdDetector.getName();
 		Amount<Length> tmpPxSize = ncdDetector.getPxSize();
 		if (tmpPxSize != null)
@@ -56,11 +56,11 @@ public class NcdDetectorSettings {
 		this.type = type;
 	}
 	
-	public int getDimmension() {
+	public int getDimension() {
 		return dim;
 	}
 	
-	public void setDimmension(int dim) {
+	public void setDimension(int dim) {
 		this.dim = dim;
 	}
 	

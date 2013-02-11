@@ -38,6 +38,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
@@ -51,6 +52,13 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 public class DetectorInformationHandler extends AbstractHandler {
 	
 	private static final Logger logger = LoggerFactory.getLogger(DetectorInformationHandler.class);
+	
+	// Attribute value indicating detector data type 
+	private static final HashMap<String, Integer> INTERPRETATION = new HashMap<String, Integer>();
+	static {
+		INTERPRETATION.put("spectrum", 1);
+		INTERPRETATION.put("image", 2);
+	}
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -64,18 +72,17 @@ public class DetectorInformationHandler extends AbstractHandler {
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		
 		if (sel != null) {
-			
 			Object[] selObjects = sel.toArray();
 			HashMap<String, Integer> detNames = new HashMap<String, Integer>();
 			HashMap<String, HDF5Group> detInfo = new HashMap<String, HDF5Group>();
+			HashMap<String, String> detDim = new HashMap<String, String>();
 			for (int i = 0; i < selObjects.length; i++) {
-				
 				String tmpfilePath;
-				if (selObjects[i] instanceof IFile)
+				if (selObjects[i] instanceof IFile) {
 					tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
-				else
+				} else {
 					tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
-				
+				}
 				try {
 					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
 					HDF5NodeLink nodeLink = tmpfile.findNodeLink("/entry1/instrument");
@@ -87,12 +94,19 @@ public class DetectorInformationHandler extends AbstractHandler {
 							String tmpName = iterator.next();
 							HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
 							if (tmpTree instanceof HDF5Group) {
-								if (detNames.containsKey(tmpName))
+								if (detNames.containsKey(tmpName)) {
 									detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
-								else {
+								} else {
 									detNames.put(tmpName, new Integer(1));
 									detInfo.put(tmpName, (HDF5Group) tmpTree);
 								}
+							}
+							
+							// This code assumes that detector interpretation attribute doesn't change across data files
+							HDF5NodeLink dimLink = tmpfile.findNodeLink("/entry1/" + tmpName + "/data");
+							if (dimLink != null && dimLink.getDestination().containsAttribute("interpretation")) {
+								HDF5Attribute interpretation = dimLink.getDestination().getAttribute("interpretation");
+								detDim.put(tmpName, interpretation.getFirstElement());
 							}
 						}
 					}
@@ -110,14 +124,14 @@ public class DetectorInformationHandler extends AbstractHandler {
 		        	detInfo.remove(detName.getKey());
 		        }
 		    }
-    		updateDetectorInformation(detInfo, ncdDetectorSourceProvider);
+    		updateDetectorInformation(detInfo, detDim, ncdDetectorSourceProvider);
 		}
 		
 		page.activate(part);
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, NcdCalibrationSourceProvider ncdDetectorSourceProvider) {
+	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, HashMap<String, String> detDim, NcdCalibrationSourceProvider ncdDetectorSourceProvider) {
 	    ncdDetectorSourceProvider.getNcdDetectors().clear();
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
@@ -140,8 +154,12 @@ public class DetectorInformationHandler extends AbstractHandler {
 		        	
 				    if (type.equals(DetectorTypes.WAXS_DETECTOR) || type.equals(DetectorTypes.SAXS_DETECTOR)) {
 		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);
-		        		if (type.equals(DetectorTypes.SAXS_DETECTOR))
-		        			tmpDet.setDimmension(2);
+		        		if (type.equals(DetectorTypes.SAXS_DETECTOR)) {
+		        			tmpDet.setDimension(2);
+		        		}
+		        		if (detDim.containsKey(detName)) {
+		        			tmpDet.setDimension(INTERPRETATION.get(detDim.get(detName)));
+		        		}
 		    	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
 		    	        if (pixelData != null) {
 		    				double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
