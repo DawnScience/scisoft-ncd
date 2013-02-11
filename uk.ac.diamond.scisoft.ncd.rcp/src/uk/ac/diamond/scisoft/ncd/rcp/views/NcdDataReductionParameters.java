@@ -640,6 +640,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						normChan.setMaximum(calDet.getMaxChannel());
 						Display dsp = normChan.getDisplay();
 						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
+						// Update normalisation channel setting in case it was reset by new limits
+						ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
 					}
 				}
 			});
@@ -1252,8 +1254,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						normChan.setMaximum(max);
 					}
 					Integer normChannel = ncdNormChannelSourceProvider.getNormChannel();
-					if (normChannel != null)
+					if (normChannel != null) {
 						normChan.setSelection(normChannel);
+					}
+					
+					// Update source provider in case the stored value
+					// is not applicable to the current detector
+					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
 				}
 			}
 		}

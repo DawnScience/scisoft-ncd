@@ -23,6 +23,8 @@ import java.util.Map.Entry;
 
 import javax.measure.unit.SI;
 
+import org.dawb.hdf5.Nexus;
+import org.dawb.hdf5.nexus.NexusUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -83,20 +85,26 @@ public class DetectorInformationHandler extends AbstractHandler {
 				}
 				try {
 					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
-					HDF5NodeLink nodeLink = tmpfile.findNodeLink("/entry1/instrument");
-					if (nodeLink != null) {
-						HDF5Group node = (HDF5Group) nodeLink.getDestination();
-						Iterator<String> iterator = node.getNodeNameIterator();
+					String[] locations = new String[] {"/entry1", "/entry1/instrument"};
+					for (String loc : locations) {
+						HDF5NodeLink nodeLink = tmpfile.findNodeLink(loc);
+						if (nodeLink != null) {
+							HDF5Group node = (HDF5Group) nodeLink.getDestination();
+							Iterator<String> iterator = node.getNodeNameIterator();
 
-						while (iterator.hasNext()) {
-							String tmpName = iterator.next();
-							HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
-							if (tmpTree instanceof HDF5Group) {
-								if (detNames.containsKey(tmpName)) {
-									detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
-								} else {
-									detNames.put(tmpName, new Integer(1));
-									detInfo.put(tmpName, (HDF5Group) tmpTree);
+							while (iterator.hasNext()) {
+								String tmpName = iterator.next();
+								HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
+								if (tmpTree instanceof HDF5Group) {
+									String nxClass = tmpTree.getAttribute(NexusUtils.NXCLASS).getFirstElement();
+									if (nxClass.equals(Nexus.DETECT) || nxClass.equals(Nexus.MONITOR)) {
+										if (detNames.containsKey(tmpName)) {
+											detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
+										} else {
+											detNames.put(tmpName, new Integer(1));
+											detInfo.put(tmpName, (HDF5Group) tmpTree);
+										}
+									}
 								}
 							}
 						}
@@ -128,6 +136,14 @@ public class DetectorInformationHandler extends AbstractHandler {
 	    while (it.hasNext()) {
 	        Entry<String, HDF5Group> detector = it.next();
 	        String detName = detector.getKey();
+	        HDF5Group detNode = detector.getValue();
+			String nxClass = detNode.getAttribute(NexusUtils.NXCLASS).getFirstElement();
+	        if (nxClass.equals(Nexus.MONITOR)) {
+        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, DetectorTypes.CALIBRATION_DETECTOR, 1);
+				tmpDet.setMaxChannel(0);
+    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
+    	        continue;
+	        }
 	        HDF5NodeLink sasNode = detector.getValue().getNodeLink("sas_type");
 	        HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
 	        if (sasNode != null && dataNode != null) {
