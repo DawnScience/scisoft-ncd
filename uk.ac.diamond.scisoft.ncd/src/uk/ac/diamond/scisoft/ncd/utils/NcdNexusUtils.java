@@ -38,9 +38,9 @@ public class NcdNexusUtils {
 
 	public static int makegroup(int parent_id, String name, String nxclass) throws HDF5Exception {
 		
-		if (parent_id < 0)
+		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
-		
+		}
 		int open_group_id = -1;
 		int dataspace_id = -1;
 		int datatype_id = -1;
@@ -48,9 +48,9 @@ public class NcdNexusUtils {
 		
 		open_group_id = H5.H5Gcreate(parent_id, name, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
 				HDF5Constants.H5P_DEFAULT);
-		if (open_group_id < 0)
+		if (open_group_id < 0) {
 			throw new HDF5Exception("H5 makegroup error: can't create a group");
-
+		}
 		byte[] nxdata = nxclass.getBytes();
 		dataspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 		datatype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
@@ -58,13 +58,13 @@ public class NcdNexusUtils {
 		
 		attribute_id = H5.H5Acreate(open_group_id, "NX_class", datatype_id, dataspace_id, HDF5Constants.H5P_DEFAULT,
 				HDF5Constants.H5P_DEFAULT);
-		if (attribute_id < 0)
+		if (attribute_id < 0) {
 			throw new HDF5Exception("H5 putattr write error: can't create attribute");
-		
+		}
 		int write_id = H5.H5Awrite(attribute_id, datatype_id, nxdata);
-		if (write_id < 0)
+		if (write_id < 0) {
 			throw new HDF5Exception("H5 makegroup attribute write error: can't create NXclass attribute");
-		
+		}
 		H5.H5Aclose(attribute_id);
 		H5.H5Sclose(dataspace_id);
 		H5.H5Tclose(datatype_id);
@@ -73,22 +73,22 @@ public class NcdNexusUtils {
 	}
 	
 	public static int makedata(int parent_id, String name, int type, int rank, long[] dim) throws HDF5Exception {
-		if (parent_id < 0)
+		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
-
+		}
 		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
-		if (dataspace_id < 0)
+		if (dataspace_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
-
+		}
 		int dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
 		//if (dcpl_id >= 0)
 		//	H5.H5Pset_chunk(dcpl_id, rank, dim);
 
 		int dataset_id = H5.H5Dcreate(parent_id, name, type, dataspace_id, HDF5Constants.H5P_DEFAULT, dcpl_id,
 				HDF5Constants.H5P_DEFAULT);
-		if (dataset_id < 0)
+		if (dataset_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to create dataset");
-
+		}
 		H5.H5Sclose(dataspace_id);
 		H5.H5Pclose(dcpl_id);
 		
@@ -96,13 +96,13 @@ public class NcdNexusUtils {
 	}
 		
 	public static int makedata(int parent_id, String name, int type, int rank, long[] dim, boolean signal, String units) throws HDF5Exception {
-		if (parent_id < 0)
+		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
-
+		}
 		int dataset_id = makedata(parent_id, name, type, rank, dim);
-		if (dataset_id < 0)
+		if (dataset_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to create dataset");
-
+		}
 		// add signal attribute
 		{
 			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
@@ -110,13 +110,13 @@ public class NcdNexusUtils {
 			
 			int attr_id = H5.H5Acreate(dataset_id, "signal", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
-			
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, signal ? new int[] {1} : new int[] {0});
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);
@@ -130,12 +130,13 @@ public class NcdNexusUtils {
 			
 			int attr_id = H5.H5Acreate(dataset_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, units.getBytes());
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);
@@ -144,22 +145,22 @@ public class NcdNexusUtils {
 	}
 	
 	public static int makeaxis(int parent_id, String name, int type, int rank, long[] dim, int[] axis, int primary, String units) throws HDF5Exception {
-		if (parent_id < 0)
+		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
-
+		}
 		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
-		if (dataspace_id < 0)
+		if (dataspace_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
-
+		}
 		int dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
 		//if (dcpl_id >= 0)
 		//	H5.H5Pset_chunk(dcpl_id, rank, dim);
 
 		int dataset_id = H5.H5Dcreate(parent_id, name, type, dataspace_id, HDF5Constants.H5P_DEFAULT, dcpl_id,
 				HDF5Constants.H5P_DEFAULT);
-		if (dataset_id < 0)
+		if (dataset_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to create dataset");
-
+		}
 		H5.H5Sclose(dataspace_id);
 		H5.H5Pclose(dcpl_id);
 		
@@ -170,13 +171,13 @@ public class NcdNexusUtils {
 			
 			int attr_id = H5.H5Acreate(dataset_id, "axis", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
-			
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, axis);
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);
@@ -189,13 +190,13 @@ public class NcdNexusUtils {
 			
 			int attr_id = H5.H5Acreate(dataset_id, "primary", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
-			
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, new int[] {primary});
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);
@@ -209,12 +210,13 @@ public class NcdNexusUtils {
 			
 			int attr_id = H5.H5Acreate(dataset_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			if (attr_id < 0)
+			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			}
 			int write_id = H5.H5Awrite(attr_id, attrtype_id, units.getBytes());
-			if (write_id < 0)
+			if (write_id < 0) {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
-			
+			}
 			H5.H5Aclose(attr_id);
 			H5.H5Sclose(attrspace_id);
 			H5.H5Tclose(attrtype_id);
@@ -254,16 +256,16 @@ public class NcdNexusUtils {
 
 		H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 				ids.block);
-		int rank = H5.H5Sget_simple_extent_ndims(ids.dataspace_id);
+		int rank = block_data.length;
 		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
 		int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
 		AbstractDataset data = AbstractDataset.zeros(block_data_int, dtype);
 		int memspace_id = H5.H5Screate_simple(rank, ids.block, null);
 		// Read the data using the previously defined hyperslab.
-		if ((ids.dataset_id >= 0) && (ids.dataspace_id >= 0) && (memspace_id >= 0))
+		if ((ids.dataset_id >= 0) && (ids.dataspace_id >= 0) && (memspace_id >= 0)) {
 			H5.H5Dread(ids.dataset_id, ids.datatype_id, memspace_id, ids.dataspace_id, HDF5Constants.H5P_DEFAULT,
 					data.getBuffer());
-
+		}
 		return data;
 	}
 	
@@ -305,14 +307,16 @@ public class NcdNexusUtils {
 						start, block, count, block);
 				H5.H5Dread(ids.dataset_id, ids.datatype_id, memspace_id, ids.dataspace_id,
 						HDF5Constants.H5P_DEFAULT, data.getBuffer());
-				if (result == null)
+				if (result == null) {
 					result = data.clone();
-				else
+				} else {
 					result = DatasetUtils.append(result, data, block.length - dim - 1);
+				}
 		}
 		
-		if (result != null)
+		if (result != null) {
 			result.setShape(framesTotal);
+		}
 		return result;
 	}
 	
