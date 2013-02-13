@@ -85,8 +85,9 @@ public class SectorIntegration {
 			}
 			if (calculateRadial) {
 				AbstractDataset radset = intresult[0];
-				if (areaData !=null && areaData[0] != null)
+				if (areaData !=null && areaData[0] != null) {
 					radset = Maths.dividez(radset, areaData[0]);
+				}
 				int radrange = radset.getShape()[0];
 				radset.resize(new int[] { 1, radrange });
 				if (myraddata  == null) {
@@ -96,8 +97,9 @@ public class SectorIntegration {
 			}
 			if (calculateAzimuthal) {
 				AbstractDataset azset = intresult[1];
-				if (areaData !=null && areaData[1] != null)
+				if (areaData !=null && areaData[1] != null) {
 					azset = Maths.dividez(azset, areaData[1]);
+				}
 				int azrange = azset.getShape()[0];
 				azset.resize(new int[] { 1, azrange });
 				if (myazdata == null) {

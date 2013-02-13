@@ -555,11 +555,11 @@ public class DataReductionHandler extends AbstractHandler {
 				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
 					int sym = intSector.getSymmetry(); 
-					if ((sym == SectorROI.NONE) || (sym == SectorROI.FULL)) {
-						processing.setIntSector(intSector.copy());
-					} else {
-						throw new IllegalArgumentException(NcdMessages.NO_SEC_SYM);
+					SectorROI tmpSector = intSector.copy();
+					if ((sym != SectorROI.NONE) && (sym != SectorROI.FULL)) {
+						tmpSector.setCombineSymmetry(true);
 					}
+					processing.setIntSector(tmpSector);
 				}
 				else {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);

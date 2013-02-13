@@ -137,16 +137,20 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			parentdata = flattenGridData(parentdata, dim);
 			roi.setAverageArea(false);
 			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed);
-			if (calculateAzimuthal)
+			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
-			if (calculateRadial)
+			}
+			if (calculateRadial) {
 				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+			}
 			try {
 				lock.acquire();
-				if (calculateAzimuthal)
+				if (calculateAzimuthal) {
 					writeResults(azimuthalIds, myazdata, dataShape, dim);
-				if(calculateRadial)
+				}
+				if(calculateRadial) {
 					writeResults(ids, myraddata, dataShape, dim);
+				}
 			} catch (Exception e) {
 				throw e;
 			} finally {

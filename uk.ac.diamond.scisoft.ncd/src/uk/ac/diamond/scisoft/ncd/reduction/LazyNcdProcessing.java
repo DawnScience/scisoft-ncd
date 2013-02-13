@@ -378,10 +378,8 @@ public class LazyNcdProcessing {
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
-			if (intSector.getSymmetry() == SectorROI.FULL)
+			if (intSector.getSymmetry() == SectorROI.FULL) {
 				angles[1] = angles[0] + 2 * Math.PI;
-			if (intSector.getSymmetry() != SectorROI.NONE && intSector.getSymmetry() != SectorROI.FULL) {
-				 throw new IllegalArgumentException(NcdMessages.NO_SEC_SYM);
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
@@ -590,8 +588,9 @@ public class LazyNcdProcessing {
 			for (Job job : sectorJobList) {
 				if (monitor.isCanceled()) {
 					sectorJobList.clear();
-					for (Job runningJob : runningJobList)
+					for (Job runningJob : runningJobList) {
 						runningJob.cancel();
+					}
 					break;
 				}
 				while (runningJobList.size() >= cores) {
@@ -724,8 +723,9 @@ public class LazyNcdProcessing {
 
 							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
 							int[] bgStart = new int[finalSliceDim + 1];
-							for (int i = 0; i <= finalSliceDim; i++)
+							for (int i = 0; i <= finalSliceDim; i++) {
 								bgStart[i] = Math.min(currentSliceParams.getStart()[i], final_bgFrames_int[i] - 1);
+							}
 							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
 							bgSliceParams.setStart(bgStart);
 							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
@@ -839,9 +839,9 @@ public class LazyNcdProcessing {
 		
 	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
 	    H5.H5Lcreate_hard(input_ids.datagroup_id, "./data", result_group_id, "./data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-	    if (qaxis != null)
+	    if (qaxis != null) {
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-	    
+	    }
 	    closeHDF5Identifiers();
 	}
 	
