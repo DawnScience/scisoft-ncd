@@ -3,7 +3,7 @@
       title="Using Detector Mask">
    <intro>
       <description>
-         Some detectors have inactive areas or damaged pixels. Masking tool allows us to mark these regions to ignore them in sector integration calculations.
+         Some detectors have inactive areas or damaged pixels. Masking tool allows us to mark these regions to ignore them in sector integration calculations. This section provides brief description of the Masking tool. For more extensive guide, please refer to the &quot;Masking&quot; cheat sheet in the &quot;Plotting tools&quot; section.
       </description>
    </intro>
    <item
