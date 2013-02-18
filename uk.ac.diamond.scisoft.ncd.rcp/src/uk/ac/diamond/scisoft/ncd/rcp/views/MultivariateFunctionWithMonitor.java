@@ -130,8 +130,8 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 			// logger.info("idx {} peak start position {}", idx, peak.getParameterValues());
 			double pos = peak.getPosition();
 			double fwhm = peak.getFWHM();
-			int startIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos - fwhm);
-			int stopIdx = DatasetUtils.findIndexGreaterThanorEqualTo(axis, pos + fwhm) + 1;
+			int startIdx = DatasetUtils.findIndexGreaterThanOrEqualTo(axis, pos - fwhm);
+			int stopIdx = DatasetUtils.findIndexGreaterThanOrEqualTo(axis, pos + fwhm) + 1;
 
 			AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
 			AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
