@@ -26,6 +26,7 @@ import java.util.Collection;
 import java.util.Date;
 
 import javax.measure.quantity.Energy;
+import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -405,39 +406,45 @@ public class DataReductionHandler extends AbstractHandler {
 	private void readDetectorInformation(final NcdReductionFlags flags, NcdDetectors ncdDetectors) throws ExecutionException {
 		
 		String detectorWaxs = null;
+		NcdDetectorSettings detWaxsInfo = null;
+		NcdDetectorSettings detSaxsInfo = null;
 		String detectorSaxs = null;
-		Double pxWaxs = null;
-		Double pxSaxs = null;
+		Amount<Length> pxWaxs = null;
+		Amount<Length> pxSaxs = null;
 		Integer dimWaxs = null ;
 		Integer dimSaxs = null ;
 		
 		
 		if (flags.isEnableWaxs()) {
 			detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-			NcdDetectorSettings detWaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorWaxs);
-			pxWaxs = detWaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
-			dimWaxs = detWaxsInfo.getDimension();
-			if ((detectorWaxs!=null) && (pxWaxs != null)) {
-				ncdDetectors.setDetectorWaxs(detectorWaxs);
-				ncdDetectors.setPxWaxs(pxWaxs);
-				ncdDetectors.setDimWaxs(dimWaxs);
+			detWaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorWaxs);
+			if (detWaxsInfo != null) {
+				pxWaxs = detWaxsInfo.getPxSize();
+				dimWaxs = detWaxsInfo.getDimension();
+				if ((detectorWaxs != null) && (pxWaxs != null)) {
+					ncdDetectors.setDetectorWaxs(detectorWaxs);
+					ncdDetectors.setPxWaxs(pxWaxs.doubleValue(SI.MILLIMETER));
+					ncdDetectors.setDimWaxs(dimWaxs);
+				}
 			}
 		} 
 		
 		if (flags.isEnableSaxs()) {
 			detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-			NcdDetectorSettings detSaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorSaxs);
-			pxSaxs = detSaxsInfo.getPxSize().doubleValue(SI.MILLIMETER);
-			dimSaxs = detSaxsInfo.getDimension();
-			if ((detectorSaxs != null) && (pxSaxs != null)) {
-				ncdDetectors.setDetectorSaxs(detectorSaxs);
-				ncdDetectors.setPxSaxs(pxSaxs);
-				ncdDetectors.setDimSaxs(dimSaxs);
+			detSaxsInfo = ncdDetectorSourceProvider.getNcdDetectors().get(detectorSaxs);
+			if (detSaxsInfo != null) {
+				pxSaxs = detSaxsInfo.getPxSize();
+				dimSaxs = detSaxsInfo.getDimension();
+				if ((detectorSaxs != null) && (pxSaxs != null)) {
+					ncdDetectors.setDetectorSaxs(detectorSaxs);
+					ncdDetectors.setPxSaxs(pxSaxs.doubleValue(SI.MILLIMETER));
+					ncdDetectors.setDimSaxs(dimSaxs);
+				}
 			}
 		}
 		
 		if (flags.isEnableWaxs()) {
-			if (detectorWaxs == null) {
+			if (detectorWaxs == null || detWaxsInfo == null) {
 				throw new ExecutionException("WAXS detector has not been selected");
 			}
 			if (pxWaxs == null) {
@@ -449,7 +456,7 @@ public class DataReductionHandler extends AbstractHandler {
 		}
 		
 		if (flags.isEnableSaxs()) {
-			if (detectorSaxs == null) {
+			if (detectorSaxs == null || detSaxsInfo == null) {
 				throw new ExecutionException("SAXS detector has not been selected");
 			}
 			if (pxSaxs == null) {
