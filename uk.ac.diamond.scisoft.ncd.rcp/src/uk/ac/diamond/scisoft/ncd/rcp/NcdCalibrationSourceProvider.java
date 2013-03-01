@@ -103,6 +103,11 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, NCDDETECTORS_STATE, ncdDetectors);
 	}
 
+	public void clearNcdDetectors() {
+		ncdDetectors.clear();
+		fireSourceChanged(ISources.WORKBENCH, NCDDETECTORS_STATE, ncdDetectors);
+	}
+
 	public HashMap<String, NcdDetectorSettings> getNcdDetectors() {
 		return ncdDetectors;
 	}

@@ -142,7 +142,9 @@ public class DetectorInformationHandler extends AbstractHandler {
 	}
 
 	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, NcdCalibrationSourceProvider ncdDetectorSourceProvider) {
-	    ncdDetectorSourceProvider.getNcdDetectors().clear();
+		
+	    ncdDetectorSourceProvider.clearNcdDetectors();
+	    
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Entry<String, HDF5Group> detector = it.next();
