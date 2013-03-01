@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 
 import javax.measure.unit.SI;
 
+import org.apache.commons.io.FilenameUtils;
 import org.dawb.hdf5.Nexus;
 import org.dawb.hdf5.nexus.NexusUtils;
 import org.eclipse.core.commands.AbstractHandler;
@@ -72,17 +73,26 @@ public class DetectorInformationHandler extends AbstractHandler {
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		
+		int idxFiles = 0;	// Counter for a number of NeXus files in the selection
+		
 		if (sel != null) {
 			Object[] selObjects = sel.toArray();
 			HashMap<String, Integer> detNames = new HashMap<String, Integer>();
 			HashMap<String, HDF5Group> detInfo = new HashMap<String, HDF5Group>();
 			for (int i = 0; i < selObjects.length; i++) {
-				String tmpfilePath;
+				String tmpfilePath, tmpfileExtension;
 				if (selObjects[i] instanceof IFile) {
 					tmpfilePath = ((IFile)selObjects[i]).getLocation().toString();
+					tmpfileExtension = ((IFile)selObjects[i]).getFileExtension();
 				} else {
 					tmpfilePath = ((File)selObjects[i]).getAbsolutePath();
+					tmpfileExtension = FilenameUtils.getExtension(tmpfilePath);
 				}
+				
+				if (!tmpfileExtension.equals("nxs")) {
+					continue;
+				}
+				
 				try {
 					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
 					String[] locations = new String[] {"/entry1", "/entry1/instrument"};
@@ -109,6 +119,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 							}
 						}
 					}
+					idxFiles++;
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
 					return null;
@@ -119,7 +130,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 			Iterator<Entry<String, Integer>> it = detNames.entrySet().iterator();
 		    while (it.hasNext()) {
 		        Entry<String, Integer> detName = it.next();
-		        if (detName.getValue() != selObjects.length) {
+		        if (detName.getValue() != idxFiles) {
 		        	detInfo.remove(detName.getKey());
 		        }
 		    }
