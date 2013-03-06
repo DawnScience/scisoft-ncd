@@ -208,7 +208,7 @@ public class QAxisFileHandler extends AbstractHandler {
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
 						if (sector == null) {
-							sector = plotSystem.createRegion("Calibration", RegionType.SECTOR);
+							sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
 						}
 						sector.setROI(roiData.copy());
 						sector.setUserRegion(true);
