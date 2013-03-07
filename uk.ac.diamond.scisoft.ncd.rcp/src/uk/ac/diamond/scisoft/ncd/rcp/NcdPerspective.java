@@ -17,10 +17,12 @@
 package uk.ac.diamond.scisoft.ncd.rcp;
 
 import org.dawb.common.ui.views.ValuePageView;
+import org.eclipse.core.runtime.preferences.InstanceScope;
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 import org.eclipse.ui.navigator.resources.ProjectExplorer;
+import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.FrameworkUtil;
 
 import uk.ac.diamond.scisoft.analysis.rcp.views.DatasetInspectorView;
@@ -74,7 +76,9 @@ public class NcdPerspective implements IPerspectiveFactory {
 		
 		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.8f, IPageLayout.ID_EDITOR_AREA);
 		
-		
+		final ScopedPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.plotting");
+	    store.setValue("org.dawb.plotting.system.colourSchemeName", "NCD");
+
 	}
 
 }
