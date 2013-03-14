@@ -160,7 +160,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
@@ -168,7 +168,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
@@ -188,7 +188,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.WAXS_DETECTOR, 1);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETER));
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETRE));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
 						ncdDetector.setDimension(dim.intValue());
@@ -209,7 +209,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.SAXS_DETECTOR, 2);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETER));
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETRE));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
 						ncdDetector.setDimension(dim.intValue());
@@ -317,7 +317,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					if (detSettings != null) {
 						Double waxsPixel = getWaxsPixel();
 						if (waxsPixel != null)
-							detSettings.setPxSize(Amount.valueOf(waxsPixel, SI.MILLIMETER));
+							detSettings.setPxSize(Amount.valueOf(waxsPixel, SI.MILLIMETRE));
 					}
 				}
 			}
@@ -399,7 +399,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					if (detSettings != null) {
 						Double saxsPixel = getSaxsPixel();
 						if (saxsPixel != null)
-							detSettings.setPxSize(Amount.valueOf(saxsPixel, SI.MILLIMETER));
+							detSettings.setPxSize(Amount.valueOf(saxsPixel, SI.MILLIMETRE));
 					}
 				}
 			}
@@ -510,7 +510,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					}
 					Amount<Length> pxSize = detSettings.getPxSize();
 					if (pxSize != null && pxSaxs != null && !(pxSaxs.isDisposed())) {
-						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
+						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 						if (!(pxText.equals(pxSaxs.getText())))
 							pxSaxs.setText(pxText);
 					}
@@ -529,7 +529,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					}
 					Amount<Length> pxSize = detSettings.getPxSize();
 					if (pxSize != null && pxWaxs != null && !(pxWaxs.isDisposed())) {
-						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETER));
+						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 						if (!(pxText.equals(pxWaxs.getText())))
 							pxWaxs.setText(pxText);
 					}

@@ -300,10 +300,10 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		unitSel.put(NonSI.ANGSTROM, unitButton);
 		
 		unitButton = new Button(unitGrp, SWT.RADIO);
-		unitButton.setText(SI.NANO(SI.METER).toString());
+		unitButton.setText(SI.NANO(SI.METRE).toString());
 		unitButton.setToolTipText("calibrate q-axis in nanometers");
 		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-		unitSel.put(SI.NANO(SI.METER), unitButton);
+		unitSel.put(SI.NANO(SI.METRE), unitButton);
 		
 		inputQAxis = new Button(group, SWT.NONE);
 		inputQAxis.setText("Override");
@@ -420,7 +420,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(1)));
 						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
 						if (mcl != null) {
-							cameralength.setText(mcl.to(SI.METER).toString());
+							cameralength.setText(mcl.to(SI.METRE).toString());
 						}
 						for (Button unitBtn : unitSel.values()) {
 							unitBtn.setSelection(false);
@@ -450,15 +450,15 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
 						
 						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector).getPxSize();
-						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETER));
-						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETER));
+						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETRE));
+						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETRE));
 						
 						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
 						if (energy != null) {
 							crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 						}
 						if (mcl != null) {
-							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETER));
+							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETRE));
 						}
 						
 						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);

@@ -184,7 +184,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		    	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
 		    	        if (pixelData != null) {
 		    				double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
-		    				tmpDet.setPxSize(Amount.valueOf(pxSize * 1000, SI.MILLIMETER));
+		    				tmpDet.setPxSize(Amount.valueOf(pxSize * 1000, SI.MILLIMETRE));
 		    	        }
 		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
 				    }

@@ -142,7 +142,7 @@ public class CalibrationMethods {
    			regression.addData(position, qVal);
 		}
    		regression.regress();
-   		fitResult = new double [] {regression.getIntercept(), regression.getSlope()/pixelSize.doubleValue(SI.MILLIMETER)};
+   		fitResult = new double [] {regression.getIntercept(), regression.getSlope()/pixelSize.doubleValue(SI.MILLIMETRE)};
    		return regression.getSumSquaredErrors();
 	}
 	
@@ -159,15 +159,15 @@ public class CalibrationMethods {
 			Amount<ScatteringVector> q2 = Constants.two_π.divide(peak2.getValue().getD()).to(ScatteringVector.UNIT);
 			Amount<Length> dist = pixelSize.times(peak2.getKey().getPosition() - peak1.getKey().getPosition())
 					.times(Constants.two_π).divide(wavelength.times(q2.minus(q1))).to(Length.UNIT);
-			cameraLen.add(dist.doubleValue(SI.MILLIMETER));
+			cameraLen.add(dist.doubleValue(SI.MILLIMETRE));
 		    //logger.info("Camera length from " + indexedPeaks.get(peak2).toString() + " and " + indexedPeaks.get(peak1).toString() + "is {} mm", dist);
 		}
 		double[] cameraLenArray = ArrayUtils.toPrimitive(cameraLen.toArray(new Double[] {}));
 	    double mcl = StatUtils.mean(cameraLenArray);
 	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
-	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
+	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETRE);
 	    
-	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METRE));
    	    return meanCameraLength;
 	}
 	
@@ -179,14 +179,14 @@ public class CalibrationMethods {
 					.to(ScatteringVector.UNIT);
 			Amount<Length> dist = pixelSize.times(peakPos).times(Constants.two_π).divide(wavelength.times(q))
 					.to(Length.UNIT);
-			cameraLen.add(dist.doubleValue(SI.MILLIMETER));
+			cameraLen.add(dist.doubleValue(SI.MILLIMETRE));
 		}
 		double[] cameraLenArray = ArrayUtils.toPrimitive(cameraLen.toArray(new Double[] {}));
 	    double mcl = StatUtils.mean(cameraLenArray);
 	    double std = Math.sqrt(StatUtils.variance(cameraLenArray));
-	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETER);
+	    meanCameraLength = Amount.valueOf(mcl, std, SI.MILLIMETRE);
 	    
-	    logger.info("Camera length: {}", meanCameraLength.to(SI.METER));
+	    logger.info("Camera length: {}", meanCameraLength.to(SI.METRE));
    	    return meanCameraLength;
 	}
 	

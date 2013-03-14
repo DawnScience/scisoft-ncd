@@ -202,7 +202,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
-			Unit<Length> selUnit = SI.NANO(SI.METER);
+			Unit<Length> selUnit = SI.NANO(SI.METRE);
 			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
 					selUnit = unitBtn.getKey();
@@ -240,7 +240,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 					Amount<Length> mcl = crb.getMeanCameraLength(key);
 					if (mcl != null)
-						crbDataMemento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.to(SI.METER).toString());
+						crbDataMemento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.to(SI.METRE).toString());
 					
 					ArrayList<CalibrationPeak> calPeaks = crb.getPeakList(key);
 					if (calPeaks != null) {
@@ -305,7 +305,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			val = this.memento.getInteger(CalibrationPreferences.QAXIS_STANDARD);
 			if (val != null) standard.select(val);
 			
-			Unit<Length> selUnit = SI.NANO(SI.METER);
+			Unit<Length> selUnit = SI.NANO(SI.METRE);
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units != null) 
 				selUnit = Unit.valueOf(units).asType(Length.class);
@@ -358,7 +358,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					if (tmp != null) {
 						// JScience can't parse brackets
 						tmp = tmp.replace("(", "").replace(")", "");
-						meanCameraLength = Amount.valueOf(tmp).to(SI.METER);
+						meanCameraLength = Amount.valueOf(tmp).to(SI.METRE);
 					}
 					
 					IMemento dataPeaksMemento = data.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -462,7 +462,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		
 		plottingSystem.clear();
 		
-		double px = getPixel(false).doubleValue(SI.MILLIMETER);
+		double px = getPixel(false).doubleValue(SI.MILLIMETRE);
 		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
@@ -592,7 +592,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						Parameter gradient = new Parameter(calibrationMethod.getFitResult()[1]);
 						Parameter intercept = new Parameter(calibrationMethod.getFitResult()[0]);
 						StraightLine calibrationFunction = new StraightLine(new Parameter[] { gradient, intercept });
-						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METER);
+						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METRE);
 						cameralength.setText(meanCameraLength.toString());
 
 						crb.putCalibrationResult(getDetectorName(), calibrationFunction, calibrationMethod.getIndexedPeakList(),

@@ -219,7 +219,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
@@ -227,7 +227,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null)
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETER));
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}

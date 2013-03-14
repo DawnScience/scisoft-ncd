@@ -127,7 +127,7 @@ public class QAxisFileHandler extends AbstractHandler {
 
 						// The default value that was used when unit setting was fixed.
 						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-						String units = unitFormat.format(SI.NANO(SI.METER));
+						String units = unitFormat.format(SI.NANO(SI.METRE));
 						HDF5Attribute unitsAttr = node.getAttribute("unit");
 						Unit<Length> inv_units = null;
 						if (unitsAttr != null) {
@@ -141,7 +141,7 @@ public class QAxisFileHandler extends AbstractHandler {
 							node = nodeLink.getDestination();
 							if (node instanceof HDF5Dataset)
 								cameraLength = Amount.valueOf(
-										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.MILLIMETER);
+										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.MILLIMETRE);
 						}
 						crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[] { gradient,
 								intercept }), new ArrayList<CalibrationPeak>(), cameraLength, inv_units);
@@ -235,7 +235,7 @@ public class QAxisFileHandler extends AbstractHandler {
 						crystalEnvironment.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 					}
 					if (cameraLength != null) {
-						detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETER));
+						detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETRE));
 					}
 					double[] cp = roiData.getPoint();
 					if (cp != null) {

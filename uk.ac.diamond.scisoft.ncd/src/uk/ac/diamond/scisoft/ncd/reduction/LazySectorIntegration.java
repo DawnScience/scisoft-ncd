@@ -168,7 +168,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		int type = H5.H5Dget_type(cameralength_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(cameralength_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.doubleValue(SI.MILLIMETER)});
+		H5.H5Dwrite(cameralength_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.doubleValue(SI.MILLIMETRE)});
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
