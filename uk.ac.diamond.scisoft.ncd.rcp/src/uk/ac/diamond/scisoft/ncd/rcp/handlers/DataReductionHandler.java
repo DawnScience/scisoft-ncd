@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import gda.analysis.io.ScanFileHolderException;
+
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -68,8 +70,11 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
@@ -655,6 +660,12 @@ public class DataReductionHandler extends AbstractHandler {
 		    H5.H5Gclose(calib_id);
 		}
 		
+		try {
+			writeNCDMetadata(entry_id, inputfilePath);
+		} catch (ScanFileHolderException e) {
+			logger.warn("Couldn't open scan data file. Scan metadata won't be written into NCD processing results file", e);
+		}
+		
 		if (enableWaxs) {
 			createDetectorNode(detectorWaxs, entry_id, inputfilePath);
 		}
@@ -667,6 +678,42 @@ public class DataReductionHandler extends AbstractHandler {
 		H5.H5Fclose(fid);
 		
 		return filename;
+	}
+
+	private void writeNCDMetadata(int entry_id, String inputfilePath) throws ScanFileHolderException, HDF5Exception {
+		HDF5File inputFileTree = new HDF5Loader(inputfilePath).loadTree();
+		
+		writeStringMetadata("/entry1/entry_identifier", "entry_identifier", entry_id, inputFileTree);
+		writeStringMetadata("/entry1/scan_command", "scan_command", entry_id, inputFileTree);
+		writeStringMetadata("/entry1/scan_identifier", "scan_identifier", entry_id, inputFileTree);
+		writeStringMetadata("/entry1/title", "title", entry_id, inputFileTree);
+			
+	}
+	
+	private void writeStringMetadata(String nodeName, String textName, int entry_id, HDF5File inputFileTree) throws HDF5Exception {
+		
+		HDF5Node node;
+		HDF5NodeLink nodeLink;
+		nodeLink = inputFileTree.findNodeLink(nodeName);
+		if (nodeLink != null) {
+			node = nodeLink.getDestination();
+			if (node instanceof HDF5Dataset) {
+				String text = ((AbstractDataset) ((HDF5Dataset) node).getDataset()).getString(0);
+				
+				int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				H5.H5Tset_size(text_type, text.length());
+				int text_id = NcdNexusUtils.makedata(entry_id, textName, text_type, 1, new long[] {1});
+				int filespace_id = H5.H5Dget_space(text_id);
+				int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+				H5.H5Sselect_all(filespace_id);
+				H5.H5Dwrite(text_id, text_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, text.getBytes());
+					
+				H5.H5Sclose(filespace_id);
+				H5.H5Sclose(memspace_id);
+				H5.H5Tclose(text_type);
+				H5.H5Dclose(text_id);
+			}
+		}
 	}
 
 	private void createDetectorNode(String detector, int entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
