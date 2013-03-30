@@ -36,6 +36,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
@@ -107,15 +108,22 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 
 					// Open first frame if dataset has miltiple images
 					HDF5Dataset node = (HDF5Dataset) nodeLink.getDestination();
-					int[] shape = node.getDataset().squeeze().getShape();
-					int[] start = new int[shape.length];
-					int[] stop = Arrays.copyOf(shape, shape.length);
+					final int[] shape = node.getDataset().getShape();
+					
+					final int[] sqShape = AbstractDataset.squeezeShape(shape, true);
+					if (sqShape.length > 2) {
+						MessageDialog.openWarning(window.getShell(),"Multiple data frames detected","WARNING: This dataset contains several frames. By default, the first frame will be loaded for NCD calibration." +
+								" If you require different frame, please switch to NCD Data Reduction or DExplore perspectives, plot the required frame in Dataset Plot and return to continue NCD calibration process.");
+					}
+					
+					final int[] start = new int[shape.length];
+					final int[] stop = Arrays.copyOf(shape, shape.length);
 					Arrays.fill(start, 0, shape.length, 0);
 					if (shape.length > 2) {
 						Arrays.fill(stop, 0, shape.length - 2, 1);
 					}
-					AbstractDataset data = (AbstractDataset) node.getDataset().squeeze()
-							.getSlice(start, stop, null).clone();
+					AbstractDataset data = (AbstractDataset) node.getDataset()
+							.getSlice(start, stop, null).clone().squeeze();
 
 					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					if (activePlotSystem != null) {
