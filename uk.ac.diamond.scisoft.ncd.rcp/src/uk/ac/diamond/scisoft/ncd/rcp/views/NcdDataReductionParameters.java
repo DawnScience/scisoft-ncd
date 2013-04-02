@@ -66,10 +66,13 @@ import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"; //$NON-NLS-1$
+
+	protected static final String PLOT_NAME = "Dataset Plot";
 
 	private IMemento memento;
 
@@ -81,7 +84,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Button browse;
 	private String inputDirectory = "Please specify results directory";
-	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
+	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr, runCalibratioin;
 	
 	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
 	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
@@ -98,18 +101,20 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
+	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
+	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
 	private static Combo calList;
-	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, drLabel;
+	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
-	private ExpandableComposite ecomp, secEcomp, refEcomp, bgEcomp, aveEcomp;
+	private ExpandableComposite ecomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
 	private ExpansionAdapter expansionAdapter;
 	
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-	
+
 	private Double getAbsScale() {
 		String input = absScale.getText();
 		return doubleValidator.validate(input);
@@ -604,29 +609,30 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		secEcomp.setExpanded(false);
 		
-		refEcomp = new ExpandableComposite(c, SWT.NONE);
-		refEcomp.setText("Reference data");
-		refEcomp.setToolTipText("Set options for NCD data reduction");
-		gl = new GridLayout(2, false);
+		normEcomp = new ExpandableComposite(c, SWT.NONE);
+		normEcomp.setText("Normlaisation");
+		normEcomp.setToolTipText("Set options for Normalisation stage");
+		gl = new GridLayout(4, false);
 		gl.horizontalSpacing = 15;
-		refEcomp.setLayout(gl);
-		refEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		refEcomp.addExpansionListener(expansionAdapter);
+		normEcomp.setLayout(gl);
+		normEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		normEcomp.addExpansionListener(expansionAdapter);
 
 		{
-			Composite g = new Composite(refEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(7, false));
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			Composite g = new Composite(normEcomp, SWT.NONE);
+			g.setLayout(new GridLayout(6, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 			
 			calListLabel = new Label(g, SWT.NONE);
 			calListLabel.setText("Normalisation Data");
 			calList = new Combo(g, SWT.NONE);
-			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false);
+			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 3, 1);
 			calList.setLayoutData(gridData);
 			calList.setToolTipText("Select the detector with calibration data");
 			String tmpScaler = ncdScalerSourceProvider.getScaler();
-			if (tmpScaler != null)
+			if (tmpScaler != null) {
 				calList.add(tmpScaler);
+			}
 			calList.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -654,8 +660,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			normChan.setToolTipText("Select the channel number with calibration data");
 			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
 			Integer tmpNormChannel = ncdNormChannelSourceProvider.getNormChannel();
-			if (tmpNormChannel != null)
+			if (tmpNormChannel != null) {
 				normChan.setSelection(tmpNormChannel);
+			}
 			normChan.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -665,13 +672,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			
 			absScaleLabel = new Label(g, SWT.NONE);
 			absScaleLabel.setText("Abs. Scale");
-			absScaleLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+			absScaleLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
 			absScale = new Text(g, SWT.BORDER);
-			absScale.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
+			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
 			Double tmpAbsScaling = ncdAbsScaleSourceProvider.getAbsScaling();
-			if (tmpAbsScaling != null)
+			if (tmpAbsScaling != null) {
 				absScale.setText(tmpAbsScaling.toString());
+			}
 			absScale.addModifyListener(new ModifyListener() {
 				
 				@Override
@@ -679,7 +687,42 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale());
 				}
 			});
+			
+			absOffsetLabel = new Label(g, SWT.NONE);
+			absOffsetLabel.setText("Offset");
+			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			absOffset = new Label(g, SWT.NONE);
+			absOffset.setText("--");
+			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			
+			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
+			absoluteCalibrationListener.setAbsScaleWidgets(absScale, absOffset);
+			
+			runCalibratioin = new Button(g, SWT.PUSH);
+			runCalibratioin.setText("Run Absolute Intensity Calibration");
+			runCalibratioin.setToolTipText("Run absolute intensity calibration procedure." +
+							" Please plot reduced I(q) profile for glassy carbon sample before starting calibration.");
+			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+			runCalibratioin.addSelectionListener(absoluteCalibrationListener);
+			
+			normEcomp.setClient(g);
+		}
+		normEcomp.setExpanded(false);
+		
+		refEcomp = new ExpandableComposite(c, SWT.NONE);
+		refEcomp.setText("Reference data");
+		refEcomp.setToolTipText("Set options for NCD data reduction");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		refEcomp.setLayout(gl);
+		refEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		refEcomp.addExpansionListener(expansionAdapter);
 
+		{
+			Composite g = new Composite(refEcomp, SWT.NONE);
+			g.setLayout(new GridLayout(7, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
 			bgLabel = new Label(g, SWT.NONE);
 			bgLabel.setText("Background Subtraction File");
 			bgFile = new Text(g, SWT.BORDER);
@@ -1087,15 +1130,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 
 	private void updateNormalisationWidgets(boolean selection) {
-		if (refEcomp != null && !(refEcomp.isDisposed())) {
-			if (!selection && !(drButton.getSelection()) && !(bgButton.getSelection())) {
-				refEcomp.setExpanded(selection);
-				refEcomp.setEnabled(selection);
-			} else {
-				refEcomp.setExpanded(true);
-				refEcomp.setEnabled(true);
-			}
-			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+		if (normEcomp != null && !(normEcomp.isDisposed())) {
+			normEcomp.setExpanded(selection);
+			normEcomp.setEnabled(selection);
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(normEcomp, selection));
 		}
 		if (normButton != null && !(normButton.isDisposed()))
 			normButton.setSelection(selection);
@@ -1111,6 +1149,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absScale.setEnabled(selection);
 		if (absScaleLabel != null && !(absScaleLabel.isDisposed()))
 			absScaleLabel.setEnabled(selection);
+		if (absOffsetLabel != null && !(absOffsetLabel.isDisposed()))
+			absOffsetLabel.setEnabled(selection);
+		if (absOffset != null && !(absOffset.isDisposed()))
+			absOffset.setEnabled(selection);
+		if (runCalibratioin != null && !(runCalibratioin.isDisposed()))
+			runCalibratioin.setEnabled(selection);
 	}
 
 	private void updateSectorIntegrationWidgets(boolean selection) {
@@ -1133,14 +1177,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	private void updateBackgroundSubtractionWidgets(boolean selection) {
 		if (refEcomp != null && !(refEcomp.isDisposed())) {
-			if (!selection && !(drButton.getSelection()) && !(normButton.getSelection())) {
+			if (!selection && !(drButton.getSelection())) {
 				refEcomp.setExpanded(selection);
 				refEcomp.setEnabled(selection);
 			} else {
 				refEcomp.setExpanded(true);
 				refEcomp.setEnabled(true);
 			}
-			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(refEcomp, selection));
 		}
 		if (bgEcomp != null && !(bgEcomp.isDisposed())) {
 			bgEcomp.setEnabled(selection);
@@ -1179,14 +1223,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private void updateDetectorResponseWidgets(boolean selection) {
 		if (refEcomp != null && !(refEcomp.isDisposed())) {
-			if (!selection && !(bgButton.getSelection()) && !(normButton.getSelection())) {
+			if (!selection && !(bgButton.getSelection())) {
 				refEcomp.setExpanded(selection);
 				refEcomp.setEnabled(selection);
 			} else {
 				refEcomp.setExpanded(true);
 				refEcomp.setEnabled(true);
 			}
-			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(refEcomp, selection));
 		}
 		if (drButton != null && !(drButton.isDisposed()))
 			drButton.setSelection(selection);
@@ -1201,8 +1245,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private void updateAverageWidgets(boolean selection) {
 		if (aveEcomp != null && !(aveEcomp.isDisposed())) {
 			aveEcomp.setEnabled(selection);
-			if (!selection)
+			if (!selection) {
 				aveEcomp.setExpanded(selection);
+			}
 			expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, selection));
 		}
 		if (aveButton != null && !(aveButton.isDisposed()))
