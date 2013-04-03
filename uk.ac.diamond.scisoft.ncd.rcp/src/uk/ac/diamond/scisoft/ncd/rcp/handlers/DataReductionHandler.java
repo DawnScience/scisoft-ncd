@@ -121,6 +121,7 @@ public class DataReductionHandler extends AbstractHandler {
 
 	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
@@ -156,6 +157,7 @@ public class DataReductionHandler extends AbstractHandler {
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
@@ -541,10 +543,12 @@ public class DataReductionHandler extends AbstractHandler {
 		int normChannel = -1;
 		String calibration = null;
 		Double absScaling = null;
+		Double thickness = null;
 		if (flags.isEnableNormalisation()) {
 			normChannel = ncdNormChannelSourceProvider.getNormChannel();
 			calibration = ncdScalerSourceProvider.getScaler();
 			absScaling = ncdAbsScaleSourceProvider.getAbsScaling();
+			thickness = ncdSampleThicknessSourceProvider.getSampleThickness();
 		}
 		
 		boolean enableMask = ncdMaskSourceProvider.isEnableMask();
@@ -610,7 +614,9 @@ public class DataReductionHandler extends AbstractHandler {
 		}
 		
 		processing.setBgFile(bgFile);
-		processing.setAbsScaling(absScaling);
+		if (absScaling != null && thickness != null) {
+			processing.setAbsScaling(absScaling / thickness);
+		}
 		processing.setBgScaling(bgScaling);
 		processing.setDrFile(drFile);
 		processing.setFirstFrame(firstFrame);

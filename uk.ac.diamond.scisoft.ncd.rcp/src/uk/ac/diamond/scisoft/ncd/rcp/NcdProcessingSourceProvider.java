@@ -54,6 +54,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
 	public final static String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
 	public final static String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
+	public final static String ABSOFFSET_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absOffset";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
 	
 	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
@@ -78,7 +79,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
 	private Integer normChannel;
-	private Double bgScaling, absScaling, sampleThickness;
+	private Double bgScaling, absScaling, absOffset, sampleThickness;
 	private Amount<Energy> energy;
 
 	public NcdProcessingSourceProvider() {
@@ -115,6 +116,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(GRIDAVERAGE_STATE, gridAverage);
 		currentState.put(BKGSCALING_STATE, bgScaling);
 		currentState.put(ABSSCALING_STATE, absScaling);
+		currentState.put(ABSOFFSET_STATE, absOffset);
 		currentState.put(SAMPLETHICKNESS_STATE, sampleThickness);
 		currentState.put(WORKINGDIR_STATE, workingDir);
 		
@@ -148,6 +150,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     GRIDAVERAGE_STATE,
 		                     BKGSCALING_STATE,
 		                     ABSSCALING_STATE,
+		                     ABSOFFSET_STATE,
 		                     SAMPLETHICKNESS_STATE,
 		                     WORKINGDIR_STATE};
 	}
@@ -277,6 +280,11 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
 	}
 
+	public void setAbsOffset(Double absOffset) {
+		this.absOffset = (absOffset != null) ? new Double(absOffset) : null;
+		fireSourceChanged(ISources.WORKBENCH, ABSOFFSET_STATE, this.absOffset);
+	}
+
 	public void setWorkingDir(String workingDir) {
 		this.workingDir = (workingDir != null) ? new String(workingDir): null;
 		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
@@ -376,6 +384,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 
 	public Double getAbsScaling() {
 		return absScaling;
+	}
+
+	public Double getAbsOffset() {
+		return absOffset;
 	}
 
 	public Double getSampleThickness() {

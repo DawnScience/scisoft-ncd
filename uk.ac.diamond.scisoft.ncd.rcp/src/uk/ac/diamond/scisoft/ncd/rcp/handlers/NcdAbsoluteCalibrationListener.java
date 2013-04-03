@@ -18,7 +18,6 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.IOException;
 import java.net.URL;
-import java.text.DecimalFormat;
 import java.util.Collection;
 
 import gda.analysis.io.ScanFileHolderException;
@@ -36,14 +35,16 @@ import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IWorkbenchWindow;
+import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.io.DatLoader;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
@@ -51,19 +52,18 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
 	protected static final String PLOT_NAME = "Dataset Plot";
 	
-	private Text absScale;
-	private Label absOffset;
-
-	public void setAbsScaleWidgets(Text absScale, Label absOffset) {
-		this.absScale = absScale;
-		this.absOffset = absOffset;
-	}
-
 	@Override
 	public void widgetSelected(SelectionEvent e) {
 		
 		final AbstractDataset absQ, absI;
 		final AbstractDataset dataQ, dataI;
+		
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		final NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
+		final NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		final NcdProcessingSourceProvider ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
+		
 		try {
 			URL fileURL = new URL("platform:/plugin/uk.ac.diamond.scisoft.ncd.rcp/data/Glassy Carbon L average.dat");
 			
@@ -132,24 +132,14 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						plottingSystemRef.repaint();
 						
 						double[] polynom = ncdAbsoluteCalibration.getCalibrationPolynomial().getCoefficients();
-						
-					    DecimalFormat nForm = new DecimalFormat("0.#####");
-					    DecimalFormat sForm = new DecimalFormat("0.#####E0");
-						if (absScale != null && !(absScale.isDisposed())) {
-							if (Math.abs(polynom[1]) > 1e5) {
-								absScale.setText(sForm.format(polynom[1]));
-							} else {
-								absScale.setText(nForm.format(polynom[1]));
-							}
+						Double thickness = ncdSampleThicknessSourceProvider.getSampleThickness();
+						if (thickness == null || thickness.isInfinite() || thickness.isNaN() || !(thickness > 0.0)) {
+							Status status = new Status(IStatus.ERROR, ID, "Invalid sample thickness. Please specify sample thickness in millimeters.");
+							StatusManager.getManager().handle(status, StatusManager.SHOW);
+							return;
 						}
-						
-						if (absOffset != null && !(absOffset.isDisposed())) {
-							if (Math.abs(polynom[0]) > 1e5) {
-								absOffset.setText(sForm.format(polynom[0]));
-							} else {
-								absOffset.setText(nForm.format(polynom[0]));
-							}
-						}
+						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness);
+						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0]);
 					}
 				});
 					

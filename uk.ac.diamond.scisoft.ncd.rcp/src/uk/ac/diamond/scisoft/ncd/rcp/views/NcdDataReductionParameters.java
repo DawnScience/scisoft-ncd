@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.io.File;
+import java.text.DecimalFormat;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
@@ -97,7 +98,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
-	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdAbsOffsetSourceProvider, ncdBgScaleSourceProvider;
 	
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
@@ -354,6 +355,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTEOFFSET);
 			if (flt != null) {
 				absOffset.setText(flt.toString());
+				ncdAbsOffsetSourceProvider.setAbsOffset(new Double(flt));
 			}
 			
 			flt = memento.getFloat(NcdPreferences.NCD_SAMPLETHICKNESS);
@@ -740,11 +742,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absOffsetLabel.setText("Offset");
 			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absOffset = new Label(g, SWT.NONE);
-			absOffset.setText("--");
 			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			
 			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
-			absoluteCalibrationListener.setAbsScaleWidgets(absScale, absOffset);
 			
 			runCalibratioin = new Button(g, SWT.PUSH);
 			runCalibratioin.setText("Run Absolute Intensity Calibration");
@@ -1158,6 +1158,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		
 		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
@@ -1171,6 +1172,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdAverageSourceProvider.addSourceProviderListener(this);
 		ncdBgFileSourceProvider.addSourceProviderListener(this);
 		ncdDrFileSourceProvider.addSourceProviderListener(this);
+		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
+		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
 	}
 
 	@Override
@@ -1357,6 +1360,28 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					// Update source provider in case the stored value
 					// is not applicable to the current detector
 					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
+				}
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.ABSSCALING_STATE)) {
+			if (absScale != null && !(absScale.isDisposed())) {
+				String tmpText = absScale.getText();
+			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
+				String sourceText = sForm.format(sourceValue);
+				if (!(tmpText.equals(sourceText)) && (sourceText != null)) {
+					absScale.setText(sourceText);
+				}
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.ABSOFFSET_STATE)) {
+			if (absOffset != null && !(absOffset.isDisposed())) {
+				String tmpText = absOffset.getText();
+			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
+				String sourceText = sForm.format(sourceValue);
+				if (!(tmpText.equals(sourceText)) && (sourceText != null)) {
+					absOffset.setText(sourceText);
 				}
 			}
 		}
