@@ -743,6 +743,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absOffset = new Label(g, SWT.NONE);
 			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			absOffset.setToolTipText("Offset value between reference and calibrated profiles. Should be close to zero.");
 			
 			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
 			
