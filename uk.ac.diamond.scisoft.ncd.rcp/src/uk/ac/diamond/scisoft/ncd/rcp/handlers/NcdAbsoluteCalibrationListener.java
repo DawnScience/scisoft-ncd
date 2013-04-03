@@ -43,7 +43,7 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.io.DatLoader;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NCDAbsoluteCalibration;
+import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
 
 public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
