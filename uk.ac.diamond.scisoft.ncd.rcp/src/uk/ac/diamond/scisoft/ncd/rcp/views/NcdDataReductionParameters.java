@@ -206,20 +206,20 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
-			Double sampleThickness = getSampleThickness();
-			if (sampleThickness != null)
-				memento.putFloat(NcdPreferences.NCD_SAMPLETHICKNESS, sampleThickness.floatValue());
+			Double sampleThicknessVal = getSampleThickness();
+			if (sampleThicknessVal != null)
+				memento.putFloat(NcdPreferences.NCD_SAMPLETHICKNESS, sampleThicknessVal.floatValue());
 			
-			Double absScale = getAbsScale();
-			if (absScale != null)
-				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScale.floatValue());
-			Double absOffset = getAbsOffset();
-			if (absOffset != null)
-				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffset.floatValue());
+			Double absScaleVal = getAbsScale();
+			if (absScaleVal != null)
+				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScaleVal.floatValue());
+			Double absOffsetVal = getAbsOffset();
+			if (absOffsetVal != null)
+				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffsetVal.floatValue());
 			
-			Double bgScale = getBgScale();
-			if (bgScale != null)
-				memento.putFloat(NcdPreferences.NCD_BACKGROUNDSCALE, bgScale.floatValue());
+			Double bgScaleVal = getBgScale();
+			if (bgScaleVal != null)
+				memento.putFloat(NcdPreferences.NCD_BACKGROUNDSCALE, bgScaleVal.floatValue());
 			
 			memento.putString(NcdPreferences.NCD_BGFIRSTFRAME, bgFramesStart.getText());
 			memento.putString(NcdPreferences.NCD_BGLASTFRAME, bgFramesStop.getText());
@@ -240,16 +240,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				if (tmpDet.getValue().getType().equals(DetectorTypes.WAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null)
+					if (pixels != null) {
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
+					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null)
+					if (pixels != null) {
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
+					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
