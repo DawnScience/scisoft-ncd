@@ -54,6 +54,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
 	public final static String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
 	public final static String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
+	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
 	
 	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
 	public final static String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
@@ -77,7 +78,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
 	private Integer normChannel;
-	private Double bgScaling, absScaling;
+	private Double bgScaling, absScaling, sampleThickness;
 	private Amount<Energy> energy;
 
 	public NcdProcessingSourceProvider() {
@@ -114,6 +115,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(GRIDAVERAGE_STATE, gridAverage);
 		currentState.put(BKGSCALING_STATE, bgScaling);
 		currentState.put(ABSSCALING_STATE, absScaling);
+		currentState.put(SAMPLETHICKNESS_STATE, sampleThickness);
 		currentState.put(WORKINGDIR_STATE, workingDir);
 		
 		return currentState;
@@ -146,6 +148,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     GRIDAVERAGE_STATE,
 		                     BKGSCALING_STATE,
 		                     ABSSCALING_STATE,
+		                     SAMPLETHICKNESS_STATE,
 		                     WORKINGDIR_STATE};
 	}
 
@@ -264,6 +267,11 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, BKGSCALING_STATE, this.bgScaling);
 	}
 
+	public void setSampleThickness(Double sampleThickness) {
+		this.sampleThickness = (sampleThickness != null) ? new Double(sampleThickness) : null;
+		fireSourceChanged(ISources.WORKBENCH, SAMPLETHICKNESS_STATE, this.sampleThickness);
+	}
+
 	public void setAbsScaling(Double absScaling) {
 		this.absScaling = (absScaling != null) ? new Double(absScaling) : null;
 		fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
@@ -368,6 +376,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 
 	public Double getAbsScaling() {
 		return absScaling;
+	}
+
+	public Double getSampleThickness() {
+		return sampleThickness;
 	}
 
 	public Amount<Energy> getEnergy() {

@@ -78,7 +78,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	private static Spinner normChan;
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
-	private Text bgFile, drFile, bgScale, absScale;
+	private Text bgFile, drFile, bgScale, sampleThickness, absScale;
 
 	private Text location;
 	
@@ -97,7 +97,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
-	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
 	
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
@@ -106,7 +106,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
 	private static Combo calList;
-	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
+	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
 	private ExpandableComposite ecomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
@@ -115,8 +115,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 
+	private Double getSampleThickness() {
+		String input = sampleThickness.getText();
+		return doubleValidator.validate(input);
+	}
+	
 	private Double getAbsScale() {
 		String input = absScale.getText();
+		return doubleValidator.validate(input);
+	}
+	
+	private Double getAbsOffset() {
+		String input = absOffset.getText();
 		return doubleValidator.validate(input);
 	}
 	
@@ -196,9 +206,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
+			Double sampleThickness = getSampleThickness();
+			if (sampleThickness != null)
+				memento.putFloat(NcdPreferences.NCD_SAMPLETHICKNESS, sampleThickness.floatValue());
+			
 			Double absScale = getAbsScale();
 			if (absScale != null)
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScale.floatValue());
+			Double absOffset = getAbsOffset();
+			if (absOffset != null)
+				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffset.floatValue());
 			
 			Double bgScale = getBgScale();
 			if (bgScale != null)
@@ -330,6 +347,17 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			if (flt != null) {
 				absScale.setText(flt.toString());
 				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt));
+			}
+			
+			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTEOFFSET);
+			if (flt != null) {
+				absOffset.setText(flt.toString());
+			}
+			
+			flt = memento.getFloat(NcdPreferences.NCD_SAMPLETHICKNESS);
+			if (flt != null) {
+				sampleThickness.setText(flt.toString());
+				ncdSampleThicknessSourceProvider.setSampleThickness(new Double(flt));
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_BGFIRSTFRAME);
@@ -620,13 +648,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		{
 			Composite g = new Composite(normEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(6, false));
+			g.setLayout(new GridLayout(7, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 			
 			calListLabel = new Label(g, SWT.NONE);
 			calListLabel.setText("Normalisation Data");
 			calList = new Combo(g, SWT.NONE);
-			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 3, 1);
+			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
 			calList.setLayoutData(gridData);
 			calList.setToolTipText("Select the detector with calibration data");
 			String tmpScaler = ncdScalerSourceProvider.getScaler();
@@ -670,11 +698,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			
+			sampleThicknessLabel = new Label(g, SWT.NONE);
+			sampleThicknessLabel.setText("Sample Thickness (mm)");
+			sampleThicknessLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
+			sampleThickness = new Text(g, SWT.BORDER);
+			sampleThickness.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			sampleThickness.setToolTipText("Set sample thickness in millimeters");
+			Double tmpSampleThickness = ncdSampleThicknessSourceProvider.getSampleThickness();
+			if (tmpSampleThickness != null) {
+				sampleThickness.setText(tmpSampleThickness.toString());
+			}
+			sampleThickness.addModifyListener(new ModifyListener() {
+				
+				@Override
+				public void modifyText(ModifyEvent e) {
+					ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness());
+				}
+			});
+			
 			absScaleLabel = new Label(g, SWT.NONE);
 			absScaleLabel.setText("Abs. Scale");
 			absScaleLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
 			absScale = new Text(g, SWT.BORDER);
-			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 1, 1));
+			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
 			Double tmpAbsScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 			if (tmpAbsScaling != null) {
@@ -702,7 +748,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			runCalibratioin.setText("Run Absolute Intensity Calibration");
 			runCalibratioin.setToolTipText("Run absolute intensity calibration procedure." +
 							" Please plot reduced I(q) profile for glassy carbon sample before starting calibration.");
-			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
 			runCalibratioin.addSelectionListener(absoluteCalibrationListener);
 			
 			normEcomp.setClient(g);
@@ -1108,6 +1154,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
 		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
 		
+		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		
@@ -1145,6 +1192,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			calListLabel.setEnabled(selection);
 		if (normChanLabel != null && !(normChanLabel.isDisposed()))
 			normChanLabel.setEnabled(selection);
+		if (sampleThickness != null && !(sampleThickness.isDisposed()))
+			sampleThickness.setEnabled(selection);
 		if (absScale != null && !(absScale.isDisposed()))
 			absScale.setEnabled(selection);
 		if (absScaleLabel != null && !(absScaleLabel.isDisposed()))
