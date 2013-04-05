@@ -296,7 +296,7 @@ public class LazyNcdProcessing {
 		detector_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + detector, HDF5Constants.H5P_DEFAULT);
 		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		
-		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+		input_ids = new DataSliceIdentifiers();
 		input_ids.setIDs(detector_group_id, input_data_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_ids.dataspace_id);
