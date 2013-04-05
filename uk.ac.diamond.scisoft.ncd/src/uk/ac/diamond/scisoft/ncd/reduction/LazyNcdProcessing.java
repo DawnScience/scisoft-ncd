@@ -104,7 +104,6 @@ public class LazyNcdProcessing {
 	private int background_file_handle, background_entry_group_id, background_detector_group_id, background_input_data_id;
 	
 	private DataSliceIdentifiers input_ids, calibration_ids;
-	private int fapl;
 	
     private abstract class DataReductionJob extends Job {
 
@@ -184,7 +183,6 @@ public class LazyNcdProcessing {
 		
 		result_group_id =  -1;
 		
-		fapl = -1;
 		lock = Job.getJobManager().newLock();
 	}
 
@@ -287,12 +285,16 @@ public class LazyNcdProcessing {
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
 		final String monitorFile = tmpName[1];
 		
-		fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
-		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
+		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
+		H5.H5Pclose(fapl);
 		entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		
+		fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		inputfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		H5.H5Pclose(fapl);
 		detector_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + detector, HDF5Constants.H5P_DEFAULT);
 		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		
@@ -453,7 +455,10 @@ public class LazyNcdProcessing {
 			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
+			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 			background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+			H5.H5Pclose(fapl);
 			background_entry_group_id = H5.H5Gopen(background_file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 			background_detector_group_id = H5.H5Gopen(background_entry_group_id, bgDetector, HDF5Constants.H5P_DEFAULT);
 			background_input_data_id = H5.H5Dopen(background_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
@@ -837,9 +842,6 @@ public class LazyNcdProcessing {
 	}
 	
 	private void closeHDF5Identifiers() throws HDF5LibraryException {
-		if (fapl != -1) {
-			H5.H5Pclose(fapl);
-		}
 		if (result_group_id != -1) {
 			H5.H5Gclose(result_group_id);
 		}
