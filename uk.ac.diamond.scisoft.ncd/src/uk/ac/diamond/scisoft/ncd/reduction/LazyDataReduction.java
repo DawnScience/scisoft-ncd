@@ -74,6 +74,11 @@ public abstract class LazyDataReduction {
 		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type_id);
+		H5.H5Dclose(qaxis_id);
 	}
 	
 	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
