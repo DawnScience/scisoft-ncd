@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import gda.analysis.io.ScanFileHolderException;
+
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -25,13 +27,11 @@ import java.util.List;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.Unit;
 
-import gda.analysis.io.ScanFileHolderException;
-
-import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
-import org.dawb.common.ui.plot.axis.IAxis;
-import org.dawb.common.ui.plot.trace.ILineTrace;
-import org.dawb.common.ui.plot.trace.ITrace;
+import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.axis.IAxis;
+import org.dawnsci.plotting.api.trace.ILineTrace;
+import org.dawnsci.plotting.api.trace.ITrace;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -58,6 +58,7 @@ import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+//dascgitolite@dasc-git.diamond.ac.uk/scisoft/scisoft-ncd.git
 
 public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
