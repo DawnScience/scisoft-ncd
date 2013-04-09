@@ -147,9 +147,6 @@ public class DetectorInformationHandler extends AbstractHandler {
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 	    ncdDetectorSourceProvider.clearNcdDetectors();
 	    
-		String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-		String detectorWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-		
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Entry<String, HDF5Group> detector = it.next();
@@ -198,10 +195,10 @@ public class DetectorInformationHandler extends AbstractHandler {
 				}
 	        }
 	    }
-	    if (detectorWaxs != null && !ncdDetectorSourceProvider.getNcdDetectors().containsKey(detectorWaxs)) {
+	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
 	    	ncdWaxsDetectorSourceProvider.setWaxsDetector(null);
 	    }
-	    if (detectorSaxs != null && !ncdDetectorSourceProvider.getNcdDetectors().containsKey(detectorSaxs)) {
+	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
 	    	ncdSaxsDetectorSourceProvider.setSaxsDetector(null);
 	    }
 	}
