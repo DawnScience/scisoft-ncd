@@ -349,7 +349,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTESCALE);
 			if (flt != null) {
 				absScale.setText(flt.toString());
-				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt));
+				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt), true);
 			}
 			
 			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTEOFFSET);
@@ -734,7 +734,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				
 				@Override
 				public void modifyText(ModifyEvent e) {
-					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale());
+					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale(), false);
 				}
 			});
 			
@@ -1366,24 +1366,26 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.ABSSCALING_STATE)) {
-			if (absScale != null && !(absScale.isDisposed())) {
-				String tmpText = absScale.getText();
+			if (sourceValue != null) {
 			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
 				String sourceText = sForm.format(sourceValue);
-				if (!(tmpText.equals(sourceText)) && (sourceText != null)) {
+				if (sourceText != null) {
 					absScale.setText(sourceText);
 				}
+			} else {
+				absScale.setText("");
 			}
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.ABSOFFSET_STATE)) {
-			if (absOffset != null && !(absOffset.isDisposed())) {
-				String tmpText = absOffset.getText();
+			if (sourceValue != null) {
 			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
 				String sourceText = sForm.format(sourceValue);
-				if (!(tmpText.equals(sourceText)) && (sourceText != null)) {
+				if (sourceText != null) {
 					absOffset.setText(sourceText);
 				}
+			} else {
+				absOffset.setText("");
 			}
 		}
 		

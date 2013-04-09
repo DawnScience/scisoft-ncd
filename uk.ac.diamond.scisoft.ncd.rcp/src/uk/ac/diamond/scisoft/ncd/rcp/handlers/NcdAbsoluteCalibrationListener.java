@@ -190,7 +190,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 							StatusManager.getManager().handle(status, StatusManager.SHOW);
 							return;
 						}
-						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness);
+						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness, true);
 						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0]);
 					}
 				});
