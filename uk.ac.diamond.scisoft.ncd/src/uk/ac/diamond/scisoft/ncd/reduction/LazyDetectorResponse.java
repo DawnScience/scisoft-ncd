@@ -59,7 +59,10 @@ public class LazyDetectorResponse extends LazyDataReduction {
 	
 	public AbstractDataset createDetectorResponseInput() throws HDF5Exception {
 		
-		int nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
+		int nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		H5.H5Pclose(fapl);
 		
 		int entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
@@ -84,6 +87,15 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		if ((input_data_id >= 0) && (input_dataspace_id >= 0) && (memspace_id >= 0))
 			H5.H5Dread(input_data_id, input_datatype_id, memspace_id, input_dataspace_id, HDF5Constants.H5P_DEFAULT,
 					drData.getBuffer());
+		
+		H5.H5Sclose(memspace_id);
+		H5.H5Sclose(input_dataspace_id);
+		H5.H5Tclose(input_datatype_id);
+		H5.H5Dclose(input_data_id);
+		H5.H5Gclose(detector_group_id);
+		H5.H5Gclose(instrument_group_id);
+		H5.H5Gclose(entry_group_id);
+		H5.H5Fclose(nxsfile_handle);
 		
 		return drData;
 	}
