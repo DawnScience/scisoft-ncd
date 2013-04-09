@@ -24,10 +24,10 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
 import org.dawb.common.services.ILoaderService;
-import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
-import org.dawb.common.ui.plot.region.IRegion;
-import org.dawb.common.ui.plot.region.IRegion.RegionType;
+import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.region.IRegion;
+import org.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;

@@ -22,10 +22,10 @@ import java.util.Collection;
 
 import gda.analysis.io.ScanFileHolderException;
 
-import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
-import org.dawb.common.ui.plot.trace.ILineTrace;
-import org.dawb.common.ui.plot.trace.ITrace;
+import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.trace.ILineTrace;
+import org.dawnsci.plotting.api.trace.ITrace;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;

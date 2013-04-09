@@ -19,10 +19,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.Collection;
 
-import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
-import org.dawb.common.ui.plot.trace.IImageTrace;
-import org.dawb.common.ui.plot.trace.ITrace;
+import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.trace.IImageTrace;
+import org.dawnsci.plotting.api.trace.ITrace;
 import org.dawnsci.plotting.tools.masking.MaskingTool;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
