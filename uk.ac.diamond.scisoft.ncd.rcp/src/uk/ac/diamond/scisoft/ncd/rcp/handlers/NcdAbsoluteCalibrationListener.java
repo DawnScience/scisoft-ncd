@@ -29,6 +29,7 @@ import gda.analysis.io.ScanFileHolderException;
 
 import org.dawb.common.ui.plot.IPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.common.ui.plot.axis.IAxis;
 import org.dawb.common.ui.plot.trace.ILineTrace;
 import org.dawb.common.ui.plot.trace.ITrace;
 import org.eclipse.core.runtime.FileLocator;
@@ -48,7 +49,9 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
+import uk.ac.diamond.scisoft.analysis.dataset.Slice;
 import uk.ac.diamond.scisoft.analysis.io.DatLoader;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
@@ -101,6 +104,9 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		}
 
 		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(PLOT_NAME);
+		IAxis selAxis = plottingSystemRef.getSelectedXAxis();
+		double lowerAxis = selAxis.getLower();
+		double upperAxis = selAxis.getUpper();
 		
 		Collection<ITrace> traces = plottingSystemRef.getTraces();
 		ITrace tmpTrace = null;
@@ -131,12 +137,18 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		ILineTrace dataTrace = (ILineTrace) tmpTrace;
 		dataQ = new ArrayList<Amount<ScatteringVector>>();
 		AbstractDataset dataQDataset = dataTrace.getXData();
-		final IndexIterator it = dataQDataset.getIterator();
-		while (it.hasNext()) {
-			double val = dataQDataset.getDouble(it.index);
+		int idxLower = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, lowerAxis));
+		int idxUpper = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, upperAxis));
+		if (idxLower == idxUpper) {
+			Status status = new Status(IStatus.ERROR, ID, "Invalid data range. Please check plot settings");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
+		for (int idx = idxLower; idx < idxUpper; idx++) {
+			double val = dataQDataset.getDouble(idx);
 			dataQ.add(Amount.valueOf(val, unit));
 		}
-		dataI = dataTrace.getYData();
+		dataI = dataTrace.getYData().getSlice(new Slice(idxLower, idxUpper));
 		
 		final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 		try {
@@ -145,6 +157,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		} catch (Exception ex) {
 			Status status = new Status(IStatus.ERROR, ID, "Error setting calibration procedure", ex);
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
 		}
 		Job job = new Job("Absolute Intensity Calibration") {
 			

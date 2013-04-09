@@ -154,11 +154,14 @@ public class NCDAbsoluteCalibration {
 	public void calibrate() {
 		qMin = Math.max(absQ.min().doubleValue(), dataQ.min().doubleValue());
 		qMax = Math.min(absQ.max().doubleValue(), dataQ.max().doubleValue());
+		if (!(qMin < qMax)) {
+			throw new IllegalArgumentException("No calibration data found for the selected scattering vector range");
+		}
 		
-		int dataQStart = DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMin);
-		int dataQStop = DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMax);
-		int absQStart = DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMin);
-		int absQStop = DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMax);
+		int dataQStart = Math.min(dataQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMin));
+		int dataQStop = Math.min(dataQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMax));
+		int absQStart = Math.min(absQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMin));
+		int absQStop = Math.min(absQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMax));
 		
 		double abs1 = absI.getDouble(absQStart); 
 		double abs2 = absI.getDouble(absQStop); 
