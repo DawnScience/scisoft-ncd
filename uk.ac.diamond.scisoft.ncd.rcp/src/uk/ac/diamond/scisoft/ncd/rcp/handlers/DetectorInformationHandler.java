@@ -50,6 +50,7 @@ import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class DetectorInformationHandler extends AbstractHandler {
 	
@@ -69,9 +70,6 @@ public class DetectorInformationHandler extends AbstractHandler {
 		IWorkbenchPage page = window.getActivePage();
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection();
 		IWorkbenchPart part = page.getActivePart();
-		
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		
 		int idxFiles = 0;	// Counter for a number of NeXus files in the selection
 		
@@ -134,15 +132,19 @@ public class DetectorInformationHandler extends AbstractHandler {
 		        	detInfo.remove(detName.getKey());
 		        }
 		    }
-    		updateDetectorInformation(detInfo, ncdDetectorSourceProvider);
+    		updateDetectorInformation(detInfo, window);
 		}
 		
 		page.activate(part);
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, NcdCalibrationSourceProvider ncdDetectorSourceProvider) {
+	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, IWorkbenchWindow window) {
 		
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 	    ncdDetectorSourceProvider.clearNcdDetectors();
 	    
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
@@ -192,6 +194,12 @@ public class DetectorInformationHandler extends AbstractHandler {
 					logger.error("SCISOFT NCD: Error reading sas_type information in " + detName + " detector", e);
 				}
 	        }
+	    }
+	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
+	    	ncdWaxsDetectorSourceProvider.setWaxsDetector(null);
+	    }
+	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
+	    	ncdSaxsDetectorSourceProvider.setSaxsDetector(null);
 	    }
 	}
 }

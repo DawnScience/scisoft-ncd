@@ -275,9 +275,11 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, SAMPLETHICKNESS_STATE, this.sampleThickness);
 	}
 
-	public void setAbsScaling(Double absScaling) {
+	public void setAbsScaling(Double absScaling, boolean notify) {
 		this.absScaling = (absScaling != null) ? new Double(absScaling) : null;
-		fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
+		if (notify) {
+			fireSourceChanged(ISources.WORKBENCH, ABSSCALING_STATE, this.absScaling);
+		}
 	}
 
 	public void setAbsOffset(Double absOffset) {

@@ -16,14 +16,20 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import gda.analysis.io.ScanFileHolderException;
+
 import java.io.IOException;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.List;
 
-import gda.analysis.io.ScanFileHolderException;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.Unit;
 
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.axis.IAxis;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
 import org.eclipse.core.runtime.FileLocator;
@@ -39,12 +45,20 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
+import uk.ac.diamond.scisoft.analysis.dataset.Slice;
 import uk.ac.diamond.scisoft.analysis.io.DatLoader;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
+import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+//dascgitolite@dasc-git.diamond.ac.uk/scisoft/scisoft-ncd.git
 
 public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
@@ -55,21 +69,30 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 	@Override
 	public void widgetSelected(SelectionEvent e) {
 		
-		final AbstractDataset absQ, absI;
-		final AbstractDataset dataQ, dataI;
+		final AbstractDataset dataI, absI;
+		final List<Amount<ScatteringVector>> dataQ, absQ;
 		
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		final NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		final NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		final NcdProcessingSourceProvider ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
+		final NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		final NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		
 		try {
 			URL fileURL = new URL("platform:/plugin/uk.ac.diamond.scisoft.ncd.rcp/data/Glassy Carbon L average.dat");
 			
 			DatLoader dataLoader = new DatLoader(FileLocator.resolve(fileURL).getPath());
 			DataHolder data = dataLoader.loadFile();
-			absQ = data.getDataset(0);
+			
+			AbstractDataset absQDataset = data.getDataset(0);
+			absQ = new ArrayList<Amount<ScatteringVector>>();
+			final IndexIterator it = absQDataset.getIterator();
+			while (it.hasNext()) {
+				double val = absQDataset.getDouble(it.index);
+				absQ.add(Amount.valueOf(val, NonSI.ANGSTROM.inverse().asType(ScatteringVector.class)));
+			}
 			absI = data.getDataset(1);
 		} catch (IOException er) {
 			Status status = new Status(IStatus.ERROR, ID, "Could not find reference glassy carbon data", er);
@@ -82,6 +105,9 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		}
 
 		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(PLOT_NAME);
+		IAxis selAxis = plottingSystemRef.getSelectedXAxis();
+		double lowerAxis = selAxis.getLower();
+		double upperAxis = selAxis.getUpper();
 		
 		Collection<ITrace> traces = plottingSystemRef.getTraces();
 		ITrace tmpTrace = null;
@@ -95,23 +121,50 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			return;
 		}
 		
+		String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+		if (detectorSaxs == null) {
+			Status status = new Status(IStatus.ERROR, ID, "SAXS detector not selected. Please load SAXS detector information.");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
+		CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		if (crb == null || !crb.containsKey(detectorSaxs)) {
+			Status status = new Status(IStatus.ERROR, ID, "Couldn't find SAXS detector calibration data.");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
+		Unit<ScatteringVector> unit = crb.getUnit(detectorSaxs).inverse().asType(ScatteringVector.class);
+		
 		ILineTrace dataTrace = (ILineTrace) tmpTrace;
-		dataQ = dataTrace.getXData();
-		dataI = dataTrace.getYData();
+		dataQ = new ArrayList<Amount<ScatteringVector>>();
+		AbstractDataset dataQDataset = dataTrace.getXData();
+		int idxLower = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, lowerAxis));
+		int idxUpper = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, upperAxis));
+		if (idxLower == idxUpper) {
+			Status status = new Status(IStatus.ERROR, ID, "Invalid data range. Please check plot settings");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
+		for (int idx = idxLower; idx < idxUpper; idx++) {
+			double val = dataQDataset.getDouble(idx);
+			dataQ.add(Amount.valueOf(val, unit));
+		}
+		dataI = dataTrace.getYData().getSlice(new Slice(idxLower, idxUpper));
 		
 		final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 		try {
-			ncdAbsoluteCalibration.setAbsoluteData(absQ, absI);
-			ncdAbsoluteCalibration.setData(dataQ, dataI);
+			ncdAbsoluteCalibration.setAbsoluteData(absQ, absI, unit);
+			ncdAbsoluteCalibration.setData(dataQ, dataI, unit);
 		} catch (Exception ex) {
 			Status status = new Status(IStatus.ERROR, ID, "Error setting calibration procedure", ex);
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
 		}
 		Job job = new Job("Absolute Intensity Calibration") {
 			
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				final AbstractDataset resDataset = ncdAbsoluteCalibration.calibrate();
+				ncdAbsoluteCalibration.calibrate();
 				Display.getDefault().syncExec(new Runnable() {
 					
 					@Override
@@ -120,12 +173,12 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						plottingSystemRef.clear();
 						
 						ILineTrace refTrace = plottingSystemRef.createLineTrace("Reference Glassy Carbon Profile");
-						refTrace.setData(absQ, absI);
+						refTrace.setData(ncdAbsoluteCalibration.getAbsQ(), absI);
 						refTrace.setTraceColor(ColorConstants.red);
 						plottingSystemRef.addTrace(refTrace);
 						
 						ILineTrace edeTrace = plottingSystemRef.createLineTrace("Calibrated Input Data");
-						edeTrace.setData(dataQ, resDataset);
+						edeTrace.setData(ncdAbsoluteCalibration.getDataQ(), ncdAbsoluteCalibration.getCalibratedI());
 						edeTrace.setTraceColor(ColorConstants.blue);
 						plottingSystemRef.addTrace(edeTrace);
 						
@@ -138,7 +191,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 							StatusManager.getManager().handle(status, StatusManager.SHOW);
 							return;
 						}
-						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness);
+						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness, true);
 						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0]);
 					}
 				});

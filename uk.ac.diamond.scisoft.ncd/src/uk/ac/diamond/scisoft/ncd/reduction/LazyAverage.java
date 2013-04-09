@@ -66,8 +66,9 @@ public class LazyAverage extends LazyDataReduction {
 		int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
 	    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
-	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
 		int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
+		H5.H5Tclose(type);
 		
 		// Loop over dimensions that aren't averaged
 		int[] iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
@@ -189,6 +190,10 @@ public class LazyAverage extends LazyDataReduction {
 					ave_start, ave_step, ave_count_data, ave_step);
 			H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id,
 					HDF5Constants.H5P_DEFAULT, ave_frame.getBuffer());
+			
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(type_id);
 		}
 		
 		input_ids.setIDs(ave_group_id, ave_data_id);
