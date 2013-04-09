@@ -18,6 +18,9 @@ package uk.ac.diamond.scisoft.ncd.calibration;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
+
+import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.analysis.MultivariateFunction;
@@ -35,7 +38,9 @@ import org.apache.commons.math3.optim.SimpleBounds;
 import org.apache.commons.math3.optim.SimplePointChecker;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.Well19937a;
+import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
@@ -44,8 +49,8 @@ public class NCDAbsoluteCalibration {
 	
 	private PolynomialFunction calibrationPolynomial;
 	
-	private AbstractDataset absQ, absI;
-	private AbstractDataset dataQ, dataI;
+	private AbstractDataset dataI, absI, calibratedI;
+	private AbstractDataset dataQ, absQ;
 	private UnivariateFunction absInterpolate;
 	
 	private int cmaesLambda = 5;
@@ -101,16 +106,26 @@ public class NCDAbsoluteCalibration {
 		}
 	}
 	
-	public void setAbsoluteData(AbstractDataset absQ, AbstractDataset absI) {
-		this.absQ = absQ;
+	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, AbstractDataset absI, Unit<ScatteringVector> unit) {
+		absQ = new DoubleDataset(lstAbsQ.size());
+		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
+			Amount<ScatteringVector> vec = lstAbsQ.get(idx);
+			absQ.set(vec.doubleValue(unit), idx);
+			
+		}
 		this.absI = absI;
 		
 		UnivariateInterpolator interpolator = new SplineInterpolator();
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
 	}
 	
-	public void setData(AbstractDataset dataQ, AbstractDataset dataI) {
-		this.dataQ = dataQ;
+	public void setData(List<Amount<ScatteringVector>> lstDataQ, AbstractDataset dataI, Unit<ScatteringVector> unit) {
+		dataQ = new DoubleDataset(lstDataQ.size());
+		for (int idx = 0; idx < lstDataQ.size(); idx++) {
+			Amount<ScatteringVector> vec = lstDataQ.get(idx);
+			dataQ.set(vec.doubleValue(unit), idx);
+			
+		}
 		this.dataI = dataI;
 	}
 
@@ -136,7 +151,7 @@ public class NCDAbsoluteCalibration {
 		return fit.getPoint();
 	}
 	
-	public AbstractDataset calibrate() {
+	public void calibrate() {
 		qMin = Math.max(absQ.min().doubleValue(), dataQ.min().doubleValue());
 		qMax = Math.min(absQ.max().doubleValue(), dataQ.max().doubleValue());
 		
@@ -162,14 +177,27 @@ public class NCDAbsoluteCalibration {
 		System.out.println(calibrationPolynomial.toString());
 		residual.value(calibrationPolynomial.getCoefficients());
 		
-		return calibratedData(dataI);
+		calibratedData(dataI);
 	}
 	
-	public AbstractDataset calibratedData(AbstractDataset data) {
+	public void calibratedData(AbstractDataset data) {
 		final int size = data.getSize();
 		double[] tmpData = new double[size];
-		for (int i = 0; i < size; i++)
+		for (int i = 0; i < size; i++) {
 			tmpData[i] = calibrationPolynomial.value(data.getDouble(i));
-		return new DoubleDataset(tmpData, new int[] {size});
+		}
+		calibratedI = new DoubleDataset(tmpData, new int[] {size});
+	}
+	
+	public AbstractDataset getCalibratedI() {
+		return calibratedI;
+	}
+	
+	public AbstractDataset getAbsQ() {
+		return absQ;
+	}
+	
+	public AbstractDataset getDataQ() {
+		return dataQ;
 	}
 }
