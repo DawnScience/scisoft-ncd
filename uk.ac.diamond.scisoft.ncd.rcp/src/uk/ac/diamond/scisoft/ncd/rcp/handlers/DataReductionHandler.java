@@ -643,7 +643,7 @@ public class DataReductionHandler extends AbstractHandler {
 		final String filename = workingDir + File.separator + prefix + "_" + FilenameUtils.getBaseName(inputfileName) + detNames + datetime + ".nxs";
 		
 		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
-		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
+		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);  
 		H5.H5Pclose(fapl);
 		
