@@ -567,7 +567,7 @@ public class DataReductionHandler extends AbstractHandler {
 				if (sectorRegions.size() > 1) {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
 				}
-				ROIBase intBase = sectorRegions.iterator().next().getROI();
+				ROIBase intBase = (ROIBase)sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
 					int sym = intSector.getSymmetry(); 

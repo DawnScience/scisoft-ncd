@@ -265,7 +265,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
-				ROIBase intBase = sectorRegions.iterator().next().getROI();
+				ROIBase intBase = (ROIBase)sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					SectorROI intSector = (SectorROI) intBase;
 					IMemento roiMemento = memento.createChild(CalibrationPreferences.QAXIS_ROI);
@@ -536,7 +536,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						 
 						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();
 						
-						ROIBase roi = sector.getROI();
+						ROIBase roi = (ROIBase)sector.getROI();
 						roi.setPoint((double[]) sourceValue);
 						sector.setROI(roi);
 
