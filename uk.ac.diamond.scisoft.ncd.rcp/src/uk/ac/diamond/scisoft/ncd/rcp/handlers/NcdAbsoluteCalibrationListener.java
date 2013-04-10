@@ -137,7 +137,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		
 		ILineTrace dataTrace = (ILineTrace) tmpTrace;
 		dataQ = new ArrayList<Amount<ScatteringVector>>();
-		AbstractDataset dataQDataset = dataTrace.getXData();
+		AbstractDataset dataQDataset = (AbstractDataset)dataTrace.getXData();
 		int idxLower = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, lowerAxis));
 		int idxUpper = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, upperAxis));
 		if (idxLower == idxUpper) {
@@ -149,7 +149,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			double val = dataQDataset.getDouble(idx);
 			dataQ.add(Amount.valueOf(val, unit));
 		}
-		dataI = dataTrace.getYData().getSlice(new Slice(idxLower, idxUpper));
+		dataI = ((AbstractDataset)dataTrace.getYData()).getSlice(new Slice(idxLower, idxUpper));
 		
 		final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 		try {

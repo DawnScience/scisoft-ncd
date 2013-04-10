@@ -432,8 +432,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
 		if (runRefinement) {
 			IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-			final AbstractDataset dataset = trace.getData();
-			final AbstractDataset mask = trace.getMask();
+			final AbstractDataset dataset = (AbstractDataset)trace.getData();
+			final AbstractDataset mask    = (AbstractDataset)trace.getMask();
 			
 			final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi);
 			beamOffset.addSourceProviders(service);
