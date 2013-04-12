@@ -28,7 +28,9 @@ Require-Bundle: org.eclipse.core.filesystem;bundle-version="1.3.1",
  ncsa.hdf;bundle-version="2.8.0",
  org.dawnsci.plotting.api;bundle-version="1.0.0"
 Bundle-ClassPath: .
-Import-Package: org.apache.commons.io,
+Import-Package:  ncsa.hdf.hdf5lib,
+ ncsa.hdf.hdf5lib.exceptions,
+ org.apache.commons.io,
  org.eclipse.draw2d,
  org.slf4j;version="[1.5.0,2.0.0)"
 Bundle-ActivationPolicy: lazy

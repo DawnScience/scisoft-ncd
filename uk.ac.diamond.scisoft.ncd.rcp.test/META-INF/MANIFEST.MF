@@ -8,6 +8,7 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.junit4;bundle-version="4.8.1"
 Import-Package: gda.util,
  ncsa.hdf.hdf5lib,
+ ncsa.hdf.hdf5lib.exceptions,
  org.apache.commons.beanutils;version="[1.8.0,2.0.0)",
  org.apache.commons.io
 Bundle-Vendor: Diamond Light Source
