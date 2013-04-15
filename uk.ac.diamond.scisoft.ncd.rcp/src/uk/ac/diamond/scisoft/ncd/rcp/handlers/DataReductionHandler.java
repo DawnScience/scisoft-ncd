@@ -78,7 +78,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
+import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
@@ -567,7 +567,7 @@ public class DataReductionHandler extends AbstractHandler {
 				if (sectorRegions.size() > 1) {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
 				}
-				ROIBase intBase = (ROIBase)sectorRegions.iterator().next().getROI();
+				IROI intBase = sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					intSector = (SectorROI) intBase;
 					int sym = intSector.getSymmetry(); 

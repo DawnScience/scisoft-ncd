@@ -81,7 +81,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
-import uk.ac.diamond.scisoft.analysis.roi.ROIBase;
+import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
@@ -265,7 +265,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
-				ROIBase intBase = (ROIBase)sectorRegions.iterator().next().getROI();
+				IROI intBase = sectorRegions.iterator().next().getROI();
 				if (intBase instanceof SectorROI) {
 					SectorROI intSector = (SectorROI) intBase;
 					IMemento roiMemento = memento.createChild(CalibrationPreferences.QAXIS_ROI);
@@ -536,7 +536,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						 
 						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();
 						
-						ROIBase roi = (ROIBase)sector.getROI();
+						IROI roi = sector.getROI();
 						roi.setPoint((double[]) sourceValue);
 						sector.setROI(roi);
 
