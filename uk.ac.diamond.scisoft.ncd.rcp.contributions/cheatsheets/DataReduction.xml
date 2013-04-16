@@ -61,7 +61,7 @@
          If &quot;3. Normalisation&quot; stage is enabled we need to specify normalisation parameters under &quot;Reference Data&quot; group. 
       </description>
       <subitem
-         label="Select detector name holding normalisation values from &quot;Normalisation Data&quot; drop-down list. If the list is empty, repeat &quot;Loading Detector Information&quot; step from &quot;Setup for NCD Data Reduction&quot; section.">
+         label="Select detector name holding normalisation values from &quot;Normalisation Data&quot; drop-down list. IMPORTANT! If the list is empty, repeat &quot;Loading Detector Information&quot; step from &quot;Setup for NCD Data Reduction&quot; section.">
       </subitem>   
       <subitem
          label="Specify channel number that holds normalisation values in &quot;Channel&quot; spinner.">
