@@ -35,11 +35,14 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.HDFArray;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.common.ui.plot.PlottingFactory;
+import org.dawb.hdf5.HierarchicalDataFactory;
+import org.dawb.hdf5.IHierarchicalDataFile;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
@@ -256,9 +259,13 @@ public class DataReductionHandler extends AbstractHandler {
 					monitor.beginTask("Running NCD data reduction",idxMonitor*selObjects.length);
 					
 					IFileSystem fileSystem = EFS.getLocalFileSystem();
-					try {
-						if (enableBackground) {
+					IHierarchicalDataFile dawbReader = null;
+					IHierarchicalDataFile dawbWriter = null;
+					if (enableBackground) {
+						try {
+							dawbReader = HierarchicalDataFactory.getReader(bgPath);
 							final String bgFilename = createResultsFile(bgName, bgPath, "background");
+							dawbWriter = HierarchicalDataFactory.getWriter(bgFilename);
 							if (enableWaxs) {
 								bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
 							}
@@ -266,10 +273,26 @@ public class DataReductionHandler extends AbstractHandler {
 								bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
 							}
 							processing.setBgFile(bgFilename);
+							dawbReader.close();
+							dawbWriter.close();
+						} catch (Exception e) {
+							logger.error("SCISOFT NCD: Error processing background file", e);
+							if (dawbReader != null) {
+								try {
+									dawbReader.close();
+								} catch (Exception ex) {
+									logger.error("SCISOFT NCD: Failed to close input background file", ex);
+								}
+							}
+							if (dawbWriter != null) {
+								try {
+									dawbWriter.close();
+								} catch (Exception ex) {
+									logger.error("SCISOFT NCD: Failed to close processing background file", ex);
+								}
+							}
+							return Status.CANCEL_STATUS;
 						}
-					} catch (Exception e) {
-						logger.error("SCISOFT NCD: Error processing background file", e);
-						return Status.CANCEL_STATUS;
 					}
 					
 					for (int i = 0; i < selObjects.length; i++) {
@@ -288,11 +311,17 @@ public class DataReductionHandler extends AbstractHandler {
 							continue;
 						}
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
+						IHierarchicalDataFile dawbOutputReader = null;
+						IHierarchicalDataFile dawbOutputWriter = null;
 						try {
+							dawbOutputReader = HierarchicalDataFactory.getReader(inputfilePath);
 							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
 							IFileStore outputFile = fileSystem.getStore(URIUtil.toURI(filename));
+							dawbOutputWriter = HierarchicalDataFactory.getWriter(filename);
 							
 							if (monitor.isCanceled()) {
+								dawbOutputReader.close();
+								dawbOutputWriter.close();
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
@@ -303,6 +332,8 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (monitor.isCanceled()) {
+								dawbOutputReader.close();
+								dawbOutputWriter.close();
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
@@ -313,10 +344,14 @@ public class DataReductionHandler extends AbstractHandler {
 							}
 							
 							if (monitor.isCanceled()) {
+								dawbOutputReader.close();
+								dawbOutputWriter.close();
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
 							
+							dawbOutputReader.close();
+							dawbOutputWriter.close();
 /*							Display.getDefault().syncExec(new Runnable() {
 
 								@Override
@@ -335,6 +370,20 @@ public class DataReductionHandler extends AbstractHandler {
 
 
 						} catch (final Exception e) {
+							try {
+								if (dawbOutputReader != null) {
+									dawbOutputReader.close();
+								}
+							} catch (Exception ex) {
+								logger.error("SCISOFT NCD: Error closing input data file", ex);
+							}
+							try {
+								if (dawbOutputWriter != null) {
+									dawbOutputWriter.close();
+								}
+							} catch (Exception ex) {
+								logger.error("SCISOFT NCD: Error closing NCD data reduction result file", ex);
+							}
 							logger.error("SCISOFT NCD: Error running NCD data reduction", e);
 /*							Display.getDefault().syncExec(new Runnable() {
                             
@@ -745,19 +794,29 @@ public class DataReductionHandler extends AbstractHandler {
 				String ltarget = ulink.getFragment();
 				File f = new File(lpath);
 				if (!f.exists()) {
-					logger.debug("File, {}, does not exist!", lpath);
+					logger.debug("SCISOFT NCD: Linked file, {}, does not exist!", lpath);
 
 					// see if linked file in same directory
 					File file = new File(inputfilePath);
 					f = new File(file.getParent(), f.getName());
 					if (!f.exists()) {
+						H5.H5Tclose(type_id);
+						H5.H5Aclose(attr_id);
+						
+						H5.H5Gclose(detector_id);
+						
+						H5.H5Dclose(input_data_id);
+						H5.H5Gclose(detector_group_id);
+						H5.H5Gclose(entry_group_id);
+						H5.H5Fclose(file_handle);
+						
 						throw new HDF5Exception("File, " + lpath + ", does not exist");
 					}
 				}
 				lpath = f.getAbsolutePath();
 				H5.H5Lcreate_external(lpath, ltarget, detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			} else {
-				System.err.println("Wrong scheme: " + ulink.getScheme());
+				logger.error("SCISOFT NCD: Linked file has incompatible type: " + ulink.getScheme());
 			}
 			H5.H5Tclose(type_id);
 			H5.H5Aclose(attr_id);
