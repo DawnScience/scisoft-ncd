@@ -143,10 +143,12 @@ public class DetectorInformationHandler extends AbstractHandler {
 		
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 		NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-	    ncdDetectorSourceProvider.clearNcdDetectors();
 	    
+	    ncdDetectorSourceProvider.clearNcdDetectors();
+	
 		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
 	        Entry<String, HDF5Group> detector = it.next();
@@ -195,11 +197,13 @@ public class DetectorInformationHandler extends AbstractHandler {
 				}
 	        }
 	    }
-	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
-	    	ncdWaxsDetectorSourceProvider.setWaxsDetector(null);
-	    }
-	    if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
-	    	ncdSaxsDetectorSourceProvider.setSaxsDetector(null);
-	    }
+	    
+		ncdDetectorSourceProvider.updateNcdDetectors();
+		
+		if (ncdDetectorSourceProvider.getNcdDetectors().isEmpty()) {
+			ncdScalerSourceProvider.setScaler(null);
+		    ncdWaxsDetectorSourceProvider.setWaxsDetector(null);
+		    ncdSaxsDetectorSourceProvider.setSaxsDetector(null);
+		}
 	}
 }

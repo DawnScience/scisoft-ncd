@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
@@ -334,6 +335,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
 				}
 			}
+			ncdDetectorSourceProvider.updateNcdDetectors();
 			idx = memento.getInteger(NcdPreferences.NCD_NORM_INDEX);
 			if (idx != null) {
 				calList.select(idx);
@@ -1323,6 +1325,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
 		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
 			if (calList != null && !(calList.isDisposed())) {
+				int idxSel = calList.getSelectionIndex();
+				String saveSelection = null;
+				if (idxSel != -1) {
+					saveSelection = calList.getItem(idxSel);
+				}
 				calList.removeAll();
 				if (sourceValue instanceof HashMap<?, ?>) {
 					for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
@@ -1337,10 +1344,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						}
 					}
 				}
-
 				if (calList.getItemCount() > 0) {
-					calList.select(0);
-					ncdScalerSourceProvider.setScaler(calList.getItem(0));
+					idxSel = (idxSel != -1) ? ArrayUtils.indexOf(calList.getItems(), saveSelection) : 0;
+					idxSel = (idxSel == -1) ? 0 : idxSel;
+					calList.select(idxSel);
+					ncdScalerSourceProvider.setScaler(calList.getItem(idxSel));
 				}
 			}
 		}

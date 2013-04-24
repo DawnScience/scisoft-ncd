@@ -195,6 +195,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
 				}
 			}
+			ncdDetectorSourceProvider.updateNcdDetectors();
 			
 			idx = memento.getInteger(NcdPreferences.NCD_WAXS_INDEX);
 			if (idx != null) {
@@ -216,6 +217,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
 				}
 			}
+			ncdDetectorSourceProvider.updateNcdDetectors();
 			idx = memento.getInteger(NcdPreferences.NCD_SAXS_INDEX);
 			if (idx != null) {
 				detListSaxs.select(idx);
