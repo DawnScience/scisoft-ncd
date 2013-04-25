@@ -261,10 +261,11 @@ public class DataReductionHandler extends AbstractHandler {
 					IFileSystem fileSystem = EFS.getLocalFileSystem();
 					IHierarchicalDataFile dawbReader = null;
 					IHierarchicalDataFile dawbWriter = null;
+					String bgFilename = null;
 					if (enableBackground) {
 						try {
 							dawbReader = HierarchicalDataFactory.getReader(bgPath);
-							final String bgFilename = createResultsFile(bgName, bgPath, "background");
+							bgFilename = createResultsFile(bgName, bgPath, "background");
 							dawbWriter = HierarchicalDataFactory.getWriter(bgFilename);
 							if (enableWaxs) {
 								bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
@@ -313,15 +314,22 @@ public class DataReductionHandler extends AbstractHandler {
 						logger.info("Processing: " + inputfileName + " " + selObjects[i].getClass().toString());
 						IHierarchicalDataFile dawbOutputReader = null;
 						IHierarchicalDataFile dawbOutputWriter = null;
+						IHierarchicalDataFile dawbBgReader = null;
 						try {
 							dawbOutputReader = HierarchicalDataFactory.getReader(inputfilePath);
 							final String filename = createResultsFile(inputfileName, inputfilePath, "results");
 							IFileStore outputFile = fileSystem.getStore(URIUtil.toURI(filename));
 							dawbOutputWriter = HierarchicalDataFactory.getWriter(filename);
+							if (bgFilename != null) {
+								dawbBgReader = HierarchicalDataFactory.getReader(bgFilename);
+							}
 							
 							if (monitor.isCanceled()) {
 								dawbOutputReader.close();
 								dawbOutputWriter.close();
+								if (dawbBgReader != null) {
+									dawbBgReader.close();
+								}
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
@@ -334,6 +342,9 @@ public class DataReductionHandler extends AbstractHandler {
 							if (monitor.isCanceled()) {
 								dawbOutputReader.close();
 								dawbOutputWriter.close();
+								if (dawbBgReader != null) {
+									dawbBgReader.close();
+								}
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
@@ -346,12 +357,18 @@ public class DataReductionHandler extends AbstractHandler {
 							if (monitor.isCanceled()) {
 								dawbOutputReader.close();
 								dawbOutputWriter.close();
+								if (dawbBgReader != null) {
+									dawbBgReader.close();
+								}
 								outputFile.delete(EFS.NONE, new NullProgressMonitor());
 								return Status.CANCEL_STATUS;
 							}
 							
 							dawbOutputReader.close();
 							dawbOutputWriter.close();
+							if (dawbBgReader != null) {
+								dawbBgReader.close();
+							}
 /*							Display.getDefault().syncExec(new Runnable() {
 
 								@Override
@@ -383,6 +400,13 @@ public class DataReductionHandler extends AbstractHandler {
 								}
 							} catch (Exception ex) {
 								logger.error("SCISOFT NCD: Error closing NCD data reduction result file", ex);
+							}
+							try {
+								if (dawbBgReader != null) {
+									dawbBgReader.close();
+								}
+							} catch (Exception ex) {
+								logger.error("SCISOFT NCD: Error closing background processing results file", ex);
 							}
 							logger.error("SCISOFT NCD: Error running NCD data reduction", e);
 /*							Display.getDefault().syncExec(new Runnable() {
