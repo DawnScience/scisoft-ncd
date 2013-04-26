@@ -101,7 +101,26 @@
          label="To remove misfitted peaks select corresponding entry in the list of peaks and press &quot;Delete&quot; button on the &quot;Peak Fitting&quot; toolbar.">
       </subitem>   
       <subitem
-         label="Repeat peak fitting procedure until all required calibration peaks are appropriatelly fitted.">
+         label="Repeat peak fitting procedure until all required calibration peaks are appropriately fitted.">
+      </subitem>   
+   </item>
+  <item
+         title="Selecting calibrant peaks for indexing (optional)">
+      <description>
+         Calibration procedure tries to index selected peaks automatically. In some cases when indexing procedure fails to assign correct indexes to the fitted peaks,
+         it is possible to use only subset of calibrant peaks to steer fitting procedure towards correct index values.
+      </description>
+      <subitem
+         label="Open DAWN preference page using Window &gt; Preferences menu option and locate reference calibrant peak table in Data Analysis &gt; Diffraction &gt; Calibrants node.">
+      </subitem>   
+      <subitem
+         label="Select appropriate calibrant from &quot;Calibrant&quot; drop-down list.">
+      </subitem>   
+      <subitem
+         label="Using &quot;Add/Remove Position&quot; buttons modify the default list or calibrant peaks positions and close the dialog.">
+      </subitem>   
+      <subitem
+         label="The default list of calibrant peaks can be restored pressing &quot;Restore Defaults&quot; button.">
       </subitem>   
    </item>
    <item
