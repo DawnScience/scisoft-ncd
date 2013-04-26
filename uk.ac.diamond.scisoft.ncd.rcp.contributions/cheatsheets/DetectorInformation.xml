@@ -9,7 +9,8 @@
    <item
       title="Selecting data files">
       <description>
-         Select single file or multiple files by holding SHIFT or CTRL keys in the project explorer view. Detectors present only in all the selected files will be loaded into the relevant fields in NCD Detector Parameters and NCD Data Reduction Parameters views.<br/>         
+         Select single file or multiple NeXus files with your experimental data by holding SHIFT or CTRL keys in the project explorer view. Detectors present only in all the selected files will be loaded into the relevant fields in NCD Detector Parameters and NCD Data Reduction Parameters views.<br/>
+         IMPORTANT! For most cases selecting single experimental data file should be enough for setting up detector information. Including files that don't have appropriate structure (e.g. .h5 or processing results files) could prevent correct setting of detector information.<br/>         
          WARNING! Calibration detector is only relevant for Normalisation stage in NCD data reduction. Hence, it can be set only in NCD Data Reduction perspective. If you read detector information in NCD Calibration perspective, Calibration detector will not be set.
          You would need to reload Detector Information in NCD Data Reduction if you want to use Normalisation stage. 
       </description>
