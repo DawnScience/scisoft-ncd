@@ -10,6 +10,18 @@
       </description>
    </intro>
    <item
+         title="Selecting sector region">
+      <description>
+         If data reduction process includes sector integration stage, please open one of the images and select &quot;Radial Profile&quot; and/or &quot;Azimuthal Profile&quot;tool
+         to check corresponding integrated profiles. Adjust sector dimensions, if needed. <br/>
+         IMPORTANT! Please take care not to move the sector region while trying to adjust dimensions. If sector region is accidentally moved, it can be returned back to the currently set
+         beam center position pressing &quot;Center sector&quot; button on the integrated profile plot toolbar. When appropriate sector region size is selected,
+         it is recommended to select &quot;Lock to Metadata&quot; button that positions sector origin at currently set beam stop position and fixes region so that it can't be accidentally moved. <br/>
+         Current beam center position can be checked in the table view in &quot;Diffraction&quot; tool. It gets updated when NCD calibration procedure is completed or q-axis calibration data is loaded from NCD processing results file.
+         Pressing lock button on the &quot;Diffraction&quot; tool view toolbar ensures that the currently set metadata will not be accidentally overwritten by opening a file with a header containing different metadata.               
+      </description>
+   </item>
+   <item
          title="Specify experiment type">
       <description>
          Select SAXS and/or WAXS checkboxes in &quot;NCD Detector parameters&quot; view to process SAXS and/or WAXS data, respectively.

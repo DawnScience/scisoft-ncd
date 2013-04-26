@@ -67,7 +67,7 @@
    <item
          title="Inspect sector integration result">
       <description>
-         Data reduction results are stored in output directory in results_detectorname_DDMMYY_HHMMSS_inputfilename.nxs file under &quot;/entry1/detectorname_result/data&quot; node.
+         Data reduction results are stored in output directory in results_inputfilename_detectorname_DDMMYY_HHMMSS.nxs file under &quot;/entry1/detectorname_result/data&quot; node.
          Double-click on this node to plot it in the &quot;Dataset Plot&quot; view. Using &quot;Peak Fitting&quot; tool from &quot;Plotting Tools&quot; button on the toolbar fit calibration peak position and compare with reference values. 
       </description>
    </item>
