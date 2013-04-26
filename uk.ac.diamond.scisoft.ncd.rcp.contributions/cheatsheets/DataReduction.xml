@@ -3,7 +3,7 @@
       title="Basic NCD Data Reduction">
    <intro>
       <description>
-         Prerequsites: <br/>
+         Prerequisites: <br/>
 		 <br/>
          Create project with data<br/>
          Load detector information
@@ -58,16 +58,16 @@
    <item
          title="Specifying Normalisation parameters">
       <description>
-         If &quot;3. Normalisation&quot; stage is enabled we need to specify normalisation parameters under &quot;Reference Data&quot; group. 
+         If &quot;3. Normalisation&quot; stage is enabled we need to specify normalisation parameters under &quot;Normalisation&quot; group. 
       </description>
       <subitem
          label="Select detector name holding normalisation values from &quot;Normalisation Data&quot; drop-down list. IMPORTANT! If the list is empty, repeat &quot;Loading Detector Information&quot; step from &quot;Setup for NCD Data Reduction&quot; section.">
       </subitem>   
       <subitem
-         label="Specify channel number that holds normalisation values in &quot;Channel&quot; spinner.">
+         label="If normalisation dataset contains values from several channels, specify channel number that should be used for data reduction with &quot;Channel&quot; spinner.">
       </subitem>   
       <subitem
-         label="Specify scaling value for normalisation data in &quot;Abs. Scale&quot; field (optional).">
+         label="Specify scaling value for normalisation data in &quot;Abs. Scale&quot; field (optional). This value can be set to calibrate scattering intensity on an absolute scale (see &quot;Absolute Intensity Calibration&quot; for details).">
       </subitem>   
    </item>
    <item
@@ -100,5 +100,37 @@
          Data reduction results are stored in output directory in results_detectorname_DDMMYY_HHMMSS_inputfilename.nxs file under &quot;/entry1/detectorname_processing/&quot; node. Every data reduction stage has separate subnode with output result stored under data subnode.
          Output dataset of NCD data reduction is stored in &quot;/entry1/dtectorname_result/data&quot; node.
       </description>
+   </item>
+   <item
+         title="Absolute intensity calibration (optional)">
+      <description>
+         Absolute intensity calibration procedure calculates scaling value that needs to be applied to normalised data to obtain integrated intensities on an absolute scale.
+         This calculation requires reduced data from a glassy carbon sample and sample thickness. Reference dataset with glassy carbon scattering data will be fitted to the input profile to identify correct scaling value.   
+      </description>
+      <subitem
+         label="Plot the results of data reduction (normalised and background subtracted) for a glassy carbon sample.">
+      </subitem>   
+      <subitem
+         label="Check that NCD calibration settings are correct. Scattering vector units specified by NCD calibration setting should be the same as units of the plotted glassy carbon data. You can update current NCD calibration data in &quot;NCD Calibration&quot; perspective by loading q-axis information from the glassy carbon processing results file.">
+      </subitem>   
+      <subitem
+         label="If only part of input data should be used in fitting (e.g. to exclude masked areas near beamstop or detector edge), zoom into the requred range of the input data. Only values that are visible on the plot would be used for calculation of the scaling factor.">
+      </subitem>   
+      <subitem
+         label="Specify sample thickness (in mm) in the &quot;Sample Thickness&quot; input box in the &quot;Normalisation&quot; section of the &quot;NCD Data Reduction Parameters&quot; view.">
+      </subitem>   
+      <subitem
+         label="Press &quot;Run Absolute Intensity Calibration&quot; button to estimate required scaling factor.">
+      </subitem>   
+      <subitem
+         label="After calibration completes, result of the fit of the reference data to the input glassy carbon profile will be plotted in the &quot;Dataset Plot&quot; view. Calculated scaling factor value is set in &quot;Abs.Scale&quot; input field.">
+      </subitem>   
+      <subitem
+         label="Value in the &quot;Offset&quot; field can be viewed as a measure of accuracy of the scaling factor estimation. This value is a shift along the intensity axis that was applied by the fitting process to get best match for reference and input data. In ideal case this value should be zero.
+Large offset value could be indicative of poor background subtraction in the input glassy carbon data.">
+      </subitem>   
+      <subitem
+         label="Make sure that sample thickness parameter is set correctly in &quot;NCD Data Reduction Parameters&quot; view before running NCD data reduction process. Sample thickness data is currently not recorded in experimental files and needs to be updated manually for correct absolute intensity calculation.">
+      </subitem>   
    </item>
 </cheatsheet>
