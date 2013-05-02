@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Loading Calibration Image">
+   <intro>
+      <description>
+         This tutorial describes procedure for loading calibration image in the &quot;NCD Calibration&quot; perspective.
+      </description>
+   </intro>
+   <item
+         title="Open NCD Calibration perspective">
+      <description>
+         Tools for calibration of SAXS detector are available in the &quot;NCD Calibration&quot; perspective. 
+      </description>
+      <subitem
+         label="Open &quot;Window &gt; Open Perspective &gt; Other...&quot; menu option.">
+      </subitem>   
+      <subitem
+         label="Select &quot;NCD Calibration&quot; from the list of the available perspectives.">
+      </subitem>   
+   </item>
+   <item
+         title="Loading calibration image">
+      <description>
+         We need to open image with scattering data from a calibration sample. Make sure that SAXS checkbox is selected in NCD Detector parameters view, appropriate detector is selected in the adjacent combo,
+         2D option is selected and pixel size specified. 
+      </description>
+      <subitem
+         label="Select file with calibration image in the &quot;Project explorer&quot; view.">
+      </subitem>   
+      <subitem
+         label="Right-click on the file and select &quot;NCD &gt; Load Calibration Image&quot; menu option. Calibration image should appear in the &quot;Dataset Plot&quot; view.">
+      </subitem>   
+      <subitem
+         label="If calibration file contains multiple images, first image will be loaded using &quot;Load Calibration Image&quot; menu. If different image needs to be used, it can be plotted in &quot;Dataset Plot&quot; using generic DAWN plotting tools in DExplore perspective.">
+      </subitem>   
+      <subitem
+         label="IMPORTANT! Do not use &quot;NCD Calibration&quot; perspective for browsing data as it is designed specifically for running calibration process and does not include essential components for data browsing (i.e. &quot;Dataset Inspector&quot; view). For data browsing, please use &quot;NCD Data Reduction&quot; or &quot;DExplore&quot; perspectives instead.">
+      </subitem>   
+   </item>
+</cheatsheet>

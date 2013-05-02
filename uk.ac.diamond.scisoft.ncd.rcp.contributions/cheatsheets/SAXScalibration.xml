@@ -7,49 +7,6 @@
       </description>
    </intro>
    <item
-         title="Open NCD Calibration perspective">
-      <description>
-         Tools for calibration of SAXS detector are available in NCD Calibration perspective. Once calibration procedure is completed cailbration parameters will be applied to calculate scattering vector values in subsequent data reduction runs. 
-      </description>
-      <subitem
-         label="Open &quot;Window &gt; Open Perspective &gt; Other...&quot; menu option.">
-      </subitem>   
-      <subitem
-         label="Select &quot;NCD Calibration&quot; from the list of the available perspectives.">
-      </subitem>   
-   </item>
-   <item
-         title="Loading calibration image">
-      <description>
-         We need to open image with scattering data from a calibration sample. Make sure that SAXS checkbox is selected in NCD Detector parameters view, appropriate detector is selected in the adjacent combo,
-         2D option is selected and pixel size specified. 
-      </description>
-      <subitem
-         label="Select file with calibration image in the &quot;Project explorer&quot; view.">
-      </subitem>   
-      <subitem
-         label="Right-click on the file and select &quot;NCD &gt; Load Calibration Image&quot; menu option. Calibration image should appear in the &quot;Dataset Plot&quot; view.">
-      </subitem>   
-   </item>
-   <item
-         title="Setting detector mask">
-      <description>
-		Some detectors have inactive areas or damaged pixels. Masking tool allows us to mark these regions to ignore them in sector integration calculations.
-      </description>
-      <subitem
-         label="Select &quot;Masking Tool&quot; option from &quot;Image Tools&quot; button from the toolbar in &quot;Dataset plot&quot; view.">
-      </subitem>   
-      <subitem
-         label="&quot;Enable lower mask&quot; and &quot;Enable upper mask&quot; checkboxes activate thresholds for masking pixels with the intensities above or below the levels set in the adjacent spinner controls, respectively.">
-      </subitem>   
-      <subitem
-         label="&quot;Enable masking using regions&quot; checkbox adding masked regions using free hand drawing tool and other regions accessible from the toolbar underneath.">
-      </subitem>   
-      <subitem
-         label="Masking thresholds and regions can be applied clicking &quot;Apply&quot; button or removed with &quot;Reset&quot; button.">
-      </subitem>   
-   </item>
-   <item
          title="Specifying integration region">
       <description>
          We need to open image with scattering data from a calibration sample. Make sure that SAXS checkbox is selected in NCD Detector parameters view, appropriate detector is selected in the adjacent combo,
@@ -141,13 +98,16 @@
          label="Select appropriate calibration standard in the &quot;Standard&quot; drop-down list in &quot;SAXS Q-axis Calibration&quot; view.">
       </subitem>   
       <subitem
-         label="(Experimental) If &quot;Refine beam position&quot; checkbox is selected calibration procedure will try to adjust sctor origing to get more accurate calibration results.">
+         label="(Experimental) If &quot;Refine beam position&quot; checkbox is selected, calibration procedure will try to adjust sector origin to get more accurate calibration results.">
       </subitem>   
       <subitem
-         label="Press &quot;Calibrate&quot; button. (Experimental) If &quot;Refine beam position&quot; checkbox is selected calibration procedure will try to adjust sctor origing to get more accurate calibration results">
+         label="Press &quot;Calibrate&quot; button. Once calibration procedure is completed cailbration parameters will be applied to calculate scattering vector values in subsequent data reduction runs.">
       </subitem>   
       <subitem
-         label="Results of calibration are output in &quot;SAXS Q-axis Calibration&quot; view in the table. Linear calibration fuction is plotted in the adjucent area with points indication positions of the fitted peaks.">
+         label="Results of calibration are output in &quot;SAXS Q-axis Calibration&quot; view in the table. Linear calibration function is plotted in the adjacent area with points indication positions of the fitted peaks.">
+      </subitem>   
+      <subitem
+         label="After completing calibration process, it is recommended to run NCD data reduction process with sector integration stage on the calibrant dataset to insure that the calibration data is configured correctly. The results file output by the data reduction process can be used to restore calibration information when needed. Please check &quot;Inspect Calibration Results&quot; page in the &quot;Running NCD Data Reduction&quot; section for further information.">
       </subitem>   
    </item>
 </cheatsheet>

@@ -39,9 +39,22 @@
 		<taskGroup kind="set" name="Configuring NCD Data Reduction"
 			skip="true">
 			<intro>
-				This group of tasks describes procedures for calibrating SAXS
-				detector and creating detector mask
+				This group of tasks describes tasks that are relevant for calibrating SAXS
+				detector.
 			</intro>
+			<task kind="cheatsheet" name="Loading Calibrant Image" skip="true">
+				<intro>
+					These tutorials describes how to access NCD Calibration perspective and load calibration image.
+					Following files will be needed to complete these task:
+					<br />
+					<b>i22-34820.nxs</b>
+					- Ag Behenate calibration file. It has four circles that correspond
+					to first four calibration peaks.
+					<br />
+				</intro>
+				<param name="path"
+					value="CalibrationImage.xml" />
+			</task>
 			<task kind="cheatsheet" name="Setting Detector Mask" skip="true">
 				<intro>
 					Pilatus2M has an inactive grid area where pixels are assigned
@@ -60,13 +73,7 @@
 			</task>
 			<task kind="cheatsheet" name="Calibrating SAXS detector" skip="true">
 				<intro>
-					These tutorials present SAXS detector calibration procedure.
-					Following files will be needed to complete these task:
-					<br />
-					<b>i22-34820.nxs</b>
-					- Ag Behenate calibration file. It has four circles that correspond
-					to first four calibration peaks.
-					<br />
+					These tutorials describes SAXS detector calibration procedure.
 				</intro>
 				<param name="path"
 					value="SAXScalibration.xml" />
