@@ -51,6 +51,13 @@
 				<param name="path"
 					value="Masking.xml" />
 			</task>
+			<task kind="cheatsheet" name="Setting Beam Centre" skip="true">
+				<intro>
+					Diffraction tool provide several options for setting beam centre location.
+				</intro>
+				<param name="path"
+					value="BeamCentre.xml" />
+			</task>
 			<task kind="cheatsheet" name="Calibrating SAXS detector" skip="true">
 				<intro>
 					These tutorials present SAXS detector calibration procedure.

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Setting Beam Centre Position">
+   <intro>
+      <description>
+         Diffraction tool provides a fitting routine that can be used to accurately identify beam centre location from circular scattering profiles.
+      </description>
+   </intro>
+   <item
+         title="Open Diffraction tool page">
+      <description>
+         Select &quot;Diffraction&quot; tool from image tools button from the toolbar in &quot;Dataset plot&quot; view.
+      </description>
+   </item>
+   <item
+         title="Beam centre setting option">
+      <description>
+         There are two options for setting beam centre location in &quot;Diffraction&quot; tool: single-click centring or circle fitting routine. They are accessible from toolbar buttons with tooltips &quot;One-click bean centre&quot; and  &quot;Select 3 or 4 points on ring...&quot;.
+      </description>
+   </item>
+   <item
+         title="Identifying beam centre (one-click)">
+      <description>
+         For the case of one-click beam centring, select one-click beam centre button in the toolbar of the &quot;Diffraction&quot; tool view and click on the beam centre position on the image. 
+      </description>
+   </item>
+   <item
+         title="Identifying beam centre (circle fitting)">
+      <description>
+         Circle fitting routine can find beam centre by fitting diffraction rings of the calibrant sample (e.g. AgBe). Select fitting action on the toolbar in the &quot;Diffraction&quot; tool view. Select 3 or 4 points on the diffraction ring, double-clicking on the last point to finish selection process. When point selection if finished, centre of the fitted circle will be marked as a beam centre position.<br/>
+         Clicking on &quot;Refine beam centre&quot; button on the toolbar will try to improve the initial fit by searching for more points on the selected ring and rerunning fitting routine.   
+      </description>
+   </item>
+   <item
+         title="Editing beam centre values">
+      <description>
+         If beam centre position is known, corresponding values can be entered into &quot;Beam Centre&quot; section of the table in the &quot;Diffraction&quot; tool view.
+      </description>
+   </item>
+   <item
+         title="Plotting calibration rings (optional)">
+      <description>
+         If beam centre, energy and detector distance (it is determined at the end of the calibration process) are set correctly, calibration rings can be visualised by selecting &quot;Calibrant&quot; option in &quot;Resolution rings&quot; button on the toolbar and selecting the appropriate calibrant under &quot;Calibrants&quot; button.
+      </description>
+   </item>
+   <item
+         title="Locking and saving metadata">
+      <description>
+         Beam centre position, together with the rest of the settings in the &quot;Diffraction&quot; tool (including energy and detector distance) can be locked using the lock button on the toolbar. This will apply currently locked settings to all subsequently open images.<br/>
+         Metadata can be also saved into a file and then imported back from this file using &quot;Export metadata to file&quot; and &quot;Import metadata from file&quot;, respectively.   
+      </description>
+   </item>
+</cheatsheet>
