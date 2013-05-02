@@ -78,6 +78,13 @@
 				<param name="path"
 					value="SAXScalibration.xml" />
 			</task>
+			<task kind="cheatsheet" name="Inspect Calibration Results (Recommended)" skip="true">
+				<intro>
+					After completing calibration procedure it is strongly recommended to run sector integration stage on the calibration image and fit resulting peak positions on the q-axis. 
+				</intro>
+				<param name="path"
+					value="InspectCalibration.xml" />
+			</task>
 			<task kind="cheatsheet" name="Restoring Data from Processing Results"
 				skip="true">
 				<intro>
@@ -96,22 +103,8 @@
 		<taskGroup kind="set" name="Running NCD Data Reduction"
 			skip="true">
 			<intro>
-				This group of tasks describes procedures for calibrating SAXS
-				detector, creating detector mask and running data reduction process
+				This group of tasks describes procedures for running NCD data reduction process.
 			</intro>
-			<task kind="cheatsheet" name="Inspect Calibration Results (Recommended)" skip="true">
-				<intro>
-					After completing calibration procedure it is strongly recommended to run sector integration stage on the calibration image and fit resulting peak positions on the q-axis. 
-					Following files will be needed to complete these task:
-					<br />
-					<b>i22-34820.nxs</b>
-					- Ag Behenate calibration file. It has four circles that correspond
-					to first four calibration peaks.
-					<br />
-				</intro>
-				<param name="path"
-					value="InspectCalibration.xml" />
-			</task>
 			<task kind="cheatsheet" name="Basic NCD Data Reduction" skip="true">
 				<intro>
 					These tutorials present basic NCD data reduction workflow.

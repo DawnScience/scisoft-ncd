@@ -3,29 +3,14 @@
       title="Inspect Calibration Results (Recommended)">
    <intro>
       <description>
-         Prerequsites: <br/>
-		 <br/>
-         Create project with data<br/>
-         Load detector information
+         Running data reduction on the calibration dataset is useful to check consistency of SAXS calibration and create a results file that can be used to restore calibration information.
       </description>
    </intro>
    <item
-         title="Inspect calibration results (recommended)">
+         title="Open NCD Data Reduction perspective">
       <description>
-         Running data reduction on the calibration dataset is a good reference of success of calibration procedures.
+         Open &quot;Window &gt; Open Perspective &gt; Other...&quot; menu option. Select &quot;NCD Data Reduction&quot; from the list of the available perspectives. 
       </description>
-      <subitem
-         label="Check that &quot;2. Sector Integration&quot; stage is selected in &quot;NCD Data Reduction Parameters&quot; view. If detector mask was used select &quot;Apply detector mask&quot; option is &quot;Detectors&quot; panel.">
-      </subitem>   
-      <subitem
-         label="Select file with the calibration image in the &quot;Project Explorer&quot; and right-click on it. Select &quot;NCD &gt; Run Data Reduction&quot; from the popup menu.">
-      </subitem>   
-      <subitem
-         label="Plot and inspect data from the results file opened in the editor area after data reduction completes.">
-      </subitem>   
-      <subitem
-         label="If detector mask was enabled it will be stored in &quot;entry1/detectorName_processing/SectorIntegration/mask&quot; field. The results file can be used to load this information back into DAWN workbench by selecting results file in &quot;Project Explorer&quot; and selecting &quot;NCD &gt; Load detector mask&quot; option from the popup menu.">
-      </subitem>   
    </item>
    <item
          title="Specify experiment type">
@@ -55,7 +40,7 @@
          label="Enable calculation of radial profile select corresponding checkbox.">
       </subitem>   
       <subitem
-         label="If detector mask is avaliable, select &quot;Apply Detector Mask&quot; checkbox.">
+         label="If detector mask is available, select &quot;Apply Detector Mask&quot; checkbox.">
       </subitem>   
    </item>
    <item
