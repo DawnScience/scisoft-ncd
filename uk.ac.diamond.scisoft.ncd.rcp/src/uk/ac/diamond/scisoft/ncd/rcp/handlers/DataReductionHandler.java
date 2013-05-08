@@ -30,12 +30,12 @@ import java.util.Date;
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.HDFArray;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -62,6 +62,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.ErrorDialog;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IViewPart;
@@ -117,11 +118,12 @@ public class DataReductionHandler extends AbstractHandler {
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider;
-	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider, ncdCalibrationSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider;
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
-
+	private NcdProcessingSourceProvider ncdEnergySourceProvider;
+	
 	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
@@ -164,6 +166,8 @@ public class DataReductionHandler extends AbstractHandler {
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 	}
 	
 	@Override
@@ -245,6 +249,18 @@ public class DataReductionHandler extends AbstractHandler {
 			
 			final String bgPath = ncdBgFileSourceProvider.getBgFile();
 			final String bgName = FilenameUtils.getName(bgPath);
+			
+			if (flags.isEnableSector() && !isCalibrationResultsBean()) {
+				boolean proceed = MessageDialog
+						.openConfirm(
+								window.getShell(),
+								"Missing NCD calibration data",
+								"IMPORTANT! NCD calibration data was not found for currently selected SAXS detector. " +
+								"Please open NCD Calibration perspective to configure calibration data.\nProceed with data reduction anyway?");
+				if (!proceed) {
+					return Boolean.FALSE;
+				}
+			}
 			
 			Job ncdJob = new Job("Running NCD data reduction") {
 
@@ -462,6 +478,22 @@ public class DataReductionHandler extends AbstractHandler {
 		return null;
 	}
 	
+	private boolean isCalibrationResultsBean() {
+		CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		if (crb != null) {
+			if (crb.containsKey(detectorSaxs)) {
+				Double slope = crb.getFunction(detectorSaxs).getParameterValue(0);
+				Double intercept = crb.getFunction(detectorSaxs).getParameterValue(1);
+				Unit<Length> qaxisUnit = crb.getUnit(detectorSaxs);
+				Amount<Length> cameraLength = crb.getMeanCameraLength(detectorSaxs);
+				if (slope != null && intercept != null && qaxisUnit != null && cameraLength != null) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
 	public void readDataReductionStages(NcdReductionFlags flags) {
 		flags.setEnableWaxs(ncdWaxsDetectorSourceProvider.isEnableWaxs());
 		flags.setEnableSaxs(ncdSaxsDetectorSourceProvider.isEnableSaxs());
@@ -669,19 +701,8 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 				}
 			}
-			IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-			ISourceProviderService sourceProviderService = (ISourceProviderService) window.getService(ISourceProviderService.class);
-			NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) sourceProviderService.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-			NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) sourceProviderService.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 			CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 			Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
-			//CalibrationResultsBean crb = null;
-			//if (guiinfo.containsKey(GuiParameters.CALIBRATIONFUNCTIONNCD)) {
-			//	Serializable bd = guiinfo.get(GuiParameters.CALIBRATIONFUNCTIONNCD);
-            //
-			//	if (bd != null && bd instanceof CalibrationResultsBean)
-			//		crb = (CalibrationResultsBean) bd;
-			//}
 			processing.setCrb(crb);
 			processing.setEnergy(energy);
 		}
