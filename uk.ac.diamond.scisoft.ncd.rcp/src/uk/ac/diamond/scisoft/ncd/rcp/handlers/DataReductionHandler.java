@@ -485,8 +485,7 @@ public class DataReductionHandler extends AbstractHandler {
 				Double slope = crb.getFunction(detectorSaxs).getParameterValue(0);
 				Double intercept = crb.getFunction(detectorSaxs).getParameterValue(1);
 				Unit<Length> qaxisUnit = crb.getUnit(detectorSaxs);
-				Amount<Length> cameraLength = crb.getMeanCameraLength(detectorSaxs);
-				if (slope != null && intercept != null && qaxisUnit != null && cameraLength != null) {
+				if (slope != null && intercept != null && qaxisUnit != null) {
 					return true;
 				}
 			}
