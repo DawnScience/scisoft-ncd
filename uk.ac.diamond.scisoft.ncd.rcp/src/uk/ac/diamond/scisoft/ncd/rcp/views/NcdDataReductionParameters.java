@@ -1417,6 +1417,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			updateSectorIntegrationWidgets(isEnableSector);
 		}
 		
+		if (sourceName.equals(NcdProcessingSourceProvider.INVARIANT_STATE)) {
+			boolean isEnableInvariant = ncdInvariantSourceProvider.isEnableInvariant();
+			invButton.setSelection(isEnableInvariant);
+		}
+		
 		if (sourceName.equals(NcdProcessingSourceProvider.AVERAGE_STATE)) {
 			boolean isEnableAverage = ncdAverageSourceProvider.isEnableAverage();
 			updateAverageWidgets(isEnableAverage);
@@ -1436,6 +1441,74 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				if (!(tmpText.equals(sourceValue)) && (sourceValue != null))
 					drFile.setText((String) sourceValue);
 			}
+		}
+
+		if(sourceName.equals(NcdProcessingSourceProvider.WORKINGDIR_STATE)){
+			if(location !=null && !location.isDisposed()){
+				String tmpText = location.getText();
+				if(!tmpText.equals(sourceValue) && sourceValue != null){
+					location.setText((String) sourceValue);
+				}
+			}
+		}
+		
+		if(sourceName.equals(NcdProcessingSourceProvider.DATASLICE_STATE)){
+			SliceInput slice = (SliceInput)sourceValue;
+			if(detFramesStart != null && !detFramesStart.isDisposed()){
+				String tmpText = detFramesStart.getText();
+				
+				// TODO shield the text field so that only integers can be input
+				if(slice != null && slice.getStartFrame() != null 
+						&& !tmpText.equals(slice.getStartFrame().toString())){
+					detFramesStart.setText(slice.getStartFrame().toString());
+				}
+			}
+			if(detFramesStop != null && !detFramesStop.isDisposed()){
+				String tmpText = detFramesStop.getText();
+				if(slice != null && slice.getStopFrame() != null 
+						&& !tmpText.equals(slice.getStopFrame().toString())){
+					detFramesStop.setText(slice.getStopFrame().toString());
+				}
+			}
+			//advanceslice
+			
+			//
+		}
+		if(sourceName.equals(NcdProcessingSourceProvider.RADIAL_STATE)){
+			if(radialButton != null && !radialButton.isDisposed()){
+				boolean tmpBool = radialButton.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					radialButton.setSelection((Boolean) sourceValue);
+				}
+			}
+		}
+		if(sourceName.equals(NcdProcessingSourceProvider.AZIMUTH_STATE)){
+			if(azimuthalButton != null && !azimuthalButton.isDisposed()){
+				boolean tmpBool = azimuthalButton.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					azimuthalButton.setSelection((Boolean) sourceValue);
+				}
+			}
+		}
+		if(sourceName.equals(NcdProcessingSourceProvider.FASTINT_STATE)){
+			if(fastIntButton != null && !fastIntButton.isDisposed()){
+				boolean tmpBool = fastIntButton.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					fastIntButton.setSelection((Boolean) sourceValue);
+				}
+			}
+		}
+		if(sourceName.equals(NcdProcessingSourceProvider.MASK_STATE)){
+			if(useMask != null && !useMask.isDisposed()){
+				boolean tmpBool = useMask.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					useMask.setSelection((Boolean) sourceValue);
+				}
+			}
+		}
+		//normalisation
+		if(sourceName.equals(NcdProcessingSourceProvider.MASK_STATE)){
+			//TODO
 		}
 	}
 }

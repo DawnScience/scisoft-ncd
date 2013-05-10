@@ -538,6 +538,36 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				}
 			}
 		}
+		
+		if(sourceName.equals(NcdProcessingSourceProvider.WAXS_STATE)){
+			if(detTypeWaxs != null && !detTypeWaxs.isDisposed()){
+				boolean tmpBool = detTypeWaxs.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					detTypeWaxs.setSelection((Boolean) sourceValue);
+					
+					detListWaxs.setEnabled((Boolean) sourceValue);
+					pxWaxs.setEnabled((Boolean) sourceValue);
+					pxWaxsLabel.setEnabled((Boolean) sourceValue);
+					for (Button dim : dimWaxs)
+						dim.setEnabled((Boolean) sourceValue);
+				}
+			}
+		}
+		if(sourceName.equals(NcdProcessingSourceProvider.SAXS_STATE)){
+			if(detTypeSaxs != null && !detTypeSaxs.isDisposed()){
+				boolean tmpBool = detTypeSaxs.getSelection();
+				if(sourceValue != null && (Boolean) sourceValue != tmpBool){
+					detTypeSaxs.setSelection((Boolean) sourceValue);
+					
+					detListSaxs.setEnabled((Boolean) sourceValue);
+					pxSaxs.setEnabled((Boolean) sourceValue);
+					pxSaxsLabel.setEnabled((Boolean) sourceValue);
+					for (Button dim : dimSaxs)
+						dim.setEnabled((Boolean) sourceValue);
+				}
+			}
+		}
+		//TODO bind rest of the widgets
 	}
 
 	@Override

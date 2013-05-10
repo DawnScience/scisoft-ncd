@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <?eclipse version="3.4"?>
 <plugin>
+   <extension-point id="ncdDataReductionPage" name="NCD Data Reduction Wizard Page" schema="schema/ncdDataReductionPage.exsd"/>
    <extension
          point="org.eclipse.ui.commands">
       <command
@@ -126,6 +127,10 @@
       <command
             id="uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo"
             name="Read Detector Information">
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+            name="NCD Data Reduction Wizard">
       </command>
    </extension>
    <extension
@@ -565,6 +570,10 @@
                </or>
             </and>
          </enabledWhen>
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdDataReductionWizardHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard">
       </handler>
    </extension>
 	<extension

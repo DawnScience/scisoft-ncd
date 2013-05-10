@@ -124,6 +124,20 @@
                </with>
                </visibleWhen>
             </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+                  label="Run Data Reduction Wizard"
+                  style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
+            </command>
          </menu>
       </menuContribution>
       <menuContribution
@@ -179,7 +193,23 @@
                   label="Run Data Reduction"
                   style="push">
             </command>
+            <command
+                  commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+                  label="Run Data Reduction Wizard"
+                  style="push">
+            </command>
          </menu>
+      </menuContribution>
+      <menuContribution
+            allPopups="false"
+            locationURI="toolbar:uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters">
+         <command
+               commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+               icon="icons/new_wiz.gif"
+               id="RunWizard"
+               label="Run Wizard"
+               style="push">
+         </command>
       </menuContribution>
    </extension>
    <extension
@@ -334,5 +364,38 @@
           </includes>
     </viewerContentBinding>
 	</extension>
+ <extension
+       point="uk.ac.diamond.scisoft.ncd.rcp.ncdDataReductionPage">
+    <datareduction_page
+          datareduction_page="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionResponsePage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.datareduction_page1">
+    </datareduction_page>
+    <datareduction_page
+          datareduction_page="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionSectorIntegrationPage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.datareduction_page2">
+    </datareduction_page>
+    <datareduction_page
+          datareduction_page="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionNormalisationPage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.datareduction_page3">
+    </datareduction_page>
+    <datareduction_page
+          datareduction_page="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionBackgroundPage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.datareduction_page4">
+    </datareduction_page>
+    <datareduction_page
+          datareduction_page="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionAveragePage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.datareduction_page6">
+    </datareduction_page>
+ </extension>
+ <extension
+       point="org.eclipse.ui.newWizards">
+    <wizard
+          class="uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionWizard"
+          finalPerspective="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective"
+          icon="icons/ncd_icon.png"
+          id="uk.ac.diamond.scisoft.ncd.rcp.ncdDataReductionWizard"
+          name="NCD Data Reduction Wizard">
+    </wizard>
+ </extension>
 
 </fragment>

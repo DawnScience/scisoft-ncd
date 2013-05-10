@@ -60,6 +60,8 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
 	public final static String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
 	public final static String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
+
+	public final static String OPEN_NCD_WIZARD = "uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard";
 	
 	private boolean enableAverage = false;
 	private boolean enableBackground = false;
