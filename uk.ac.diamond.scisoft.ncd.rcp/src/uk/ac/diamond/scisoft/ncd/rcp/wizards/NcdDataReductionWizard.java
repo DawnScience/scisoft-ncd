@@ -110,13 +110,7 @@ public class NcdDataReductionWizard extends Wizard {
 		//run the data reduction command
 		IHandlerService handlerService = (IHandlerService) window.getService(IHandlerService.class);
 		try {
-			//
-//			String value = System.getProperty("called.in.code");
-
-//			System.setProperty("called.in.code", "yes");
-//			value = System.getProperty("called.in.code");
-			handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.process", null);
-//			System.setProperty("called.in.code", "no");
+			handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.process.wizard", null);
 		} catch (Exception ex) {
 			MessageDialog dialog = new MessageDialog(window.getShell(), "Error", null, 
 					"Error:"+ex.toString(), MessageDialog.ERROR,

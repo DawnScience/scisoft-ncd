@@ -132,6 +132,11 @@
             id="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
             name="NCD Data Reduction Wizard">
       </command>
+      <command
+            defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.DataReductionHandler"
+            id="uk.ac.diamond.scisoft.ncd.rcp.process.wizard"
+            name="Run Data Reduction Wizard">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.services">
@@ -574,6 +579,30 @@
       <handler
             class="uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdDataReductionWizardHandler"
             commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard">
+         <enabledWhen>
+            <or>
+               <with
+                     variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="org.eclipse.core.resources.IFile">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+               <with
+                     variable="activeMenuSelection">
+                  <iterate>
+                     <and>
+                        <instanceof
+                              value="java.io.File">
+                        </instanceof>
+                     </and>
+                  </iterate>
+               </with>
+            </or>
+         </enabledWhen>
       </handler>
    </extension>
 	<extension

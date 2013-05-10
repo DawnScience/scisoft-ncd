@@ -126,6 +126,7 @@
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+                  icon="icons/new_wiz.gif"
                   label="Run Data Reduction Wizard"
                   style="push">
                <visibleWhen
@@ -195,21 +196,11 @@
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
+                  icon="icons/new_wiz.gif"
                   label="Run Data Reduction Wizard"
                   style="push">
             </command>
          </menu>
-      </menuContribution>
-      <menuContribution
-            allPopups="false"
-            locationURI="toolbar:uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters">
-         <command
-               commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
-               icon="icons/new_wiz.gif"
-               id="RunWizard"
-               label="Run Wizard"
-               style="push">
-         </command>
       </menuContribution>
    </extension>
    <extension
