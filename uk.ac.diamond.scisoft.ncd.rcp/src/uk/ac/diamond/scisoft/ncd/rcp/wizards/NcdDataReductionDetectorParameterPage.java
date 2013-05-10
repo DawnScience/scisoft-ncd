@@ -20,6 +20,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.util.Map;
 
+import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
 import org.apache.commons.validator.routines.DoubleValidator;
@@ -110,6 +111,10 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 
 		detListWaxs = new Combo(container, SWT.NONE);
 		detListWaxs.setToolTipText("Select the WAXS detector used in data collection");
+		String detWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
+		if(detWaxs != null){
+			detListWaxs.add(detWaxs);
+		}
 		detListWaxs.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -150,9 +155,24 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		}
 		
 		pxWaxsLabel = new Label(container, SWT.NONE);
-		pxWaxsLabel.setText("pixel (mm)");
+		pxWaxsLabel.setText("pixel (mm):");
 		pxWaxs = new Text(container, SWT.BORDER);
+		pxWaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		pxWaxs.setToolTipText("Set detector pixel size");
+		NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(detWaxs);
+		if (detSettings != null) {
+			int idxDim = detSettings.getDimension() - 1;
+			if (dimWaxs != null && !(dimWaxs[idxDim].isDisposed())) {
+				for (Button btn : dimWaxs) btn.setSelection(false);
+				dimWaxs[idxDim].setSelection(true);
+			}
+			Amount<Length> pxSize = detSettings.getPxSize();
+			if (pxSize != null && pxWaxs != null && !(pxWaxs.isDisposed())) {
+				String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
+				if (!(pxText.equals(pxWaxs.getText())))
+					pxWaxs.setText(pxText);
+			}
+		}
 		pxWaxs.addModifyListener(new ModifyListener() {
 			@Override
 			public void modifyText(ModifyEvent e) {
@@ -184,6 +204,10 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		
 		detListSaxs = new Combo(container, SWT.NONE);
 		detListSaxs.setToolTipText("Select the SAXS detector used in data collection");
+		String detSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+		if(detSaxs != null){
+			detListSaxs.add(detSaxs);
+		}
 		detListSaxs.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -225,9 +249,24 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		}
 		
 		pxSaxsLabel = new Label(container, SWT.NONE);
-		pxSaxsLabel.setText("pixel (mm)");
+		pxSaxsLabel.setText("pixel (mm):");
 		pxSaxs = new Text(container, SWT.BORDER);
+		pxSaxs.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		pxSaxs.setToolTipText("Set detector pixel size");
+		detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(detSaxs);
+		if (detSettings != null) {
+			int idxDim = detSettings.getDimension() - 1;
+			if (dimSaxs != null && !(dimSaxs[idxDim].isDisposed())) {
+				for (Button btn : dimSaxs) btn.setSelection(false);
+				dimSaxs[idxDim].setSelection(true);
+			}
+			Amount<Length> pxSize = detSettings.getPxSize();
+			if (pxSize != null && pxSaxs != null && !(pxSaxs.isDisposed())) {
+				String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
+				if (!(pxText.equals(pxSaxs.getText())))
+					pxSaxs.setText(pxText);
+			}
+		}
 		pxSaxs.addModifyListener(new ModifyListener() {
 			
 			@Override
@@ -328,8 +367,6 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override
