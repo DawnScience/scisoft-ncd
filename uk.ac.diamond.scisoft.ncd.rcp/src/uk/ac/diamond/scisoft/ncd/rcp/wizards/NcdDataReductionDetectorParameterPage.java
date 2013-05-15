@@ -228,9 +228,9 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 			}
 		}
 
-		String detSaxs = ncdSaxsDetectorSourceProvider.getWaxsDetector();
+		String detSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 		if (detSaxs != null) {
-			int idxSaxs = detListSaxs.indexOf(detWaxs);
+			int idxSaxs = detListSaxs.indexOf(detSaxs);
 			detListSaxs.select(idxSaxs);
 		} else {
 			detListSaxs.select(Math.min(0, detListSaxs.getItemCount() - 1));
