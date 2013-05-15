@@ -18,6 +18,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.validator.routines.DoubleValidator;
@@ -39,6 +40,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
@@ -100,9 +102,21 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 		GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
 		calList.setLayoutData(gridData);
 		calList.setToolTipText("Select the detector with calibration data");
+		HashMap<String, NcdDetectorSettings> ncdDetectorSettings = ncdDetectorSourceProvider.getNcdDetectors();
+		if (ncdDetectorSettings != null) {
+			for (NcdDetectorSettings ncdSettings : ncdDetectorSettings.values()) {
+				if (ncdSettings.getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+					calList.add(ncdSettings.getName());
+				}
+			}
+		}
+
 		String tmpScaler = ncdScalerSourceProvider.getScaler();
 		if (tmpScaler != null) {
-			calList.add(tmpScaler);
+			int idxScaler = calList.indexOf(tmpScaler);
+			calList.select(idxScaler);
+		} else {
+			calList.select(Math.min(0, calList.getItemCount() - 1));
 		}
 		calList.addSelectionListener(new SelectionAdapter() {
 			@Override

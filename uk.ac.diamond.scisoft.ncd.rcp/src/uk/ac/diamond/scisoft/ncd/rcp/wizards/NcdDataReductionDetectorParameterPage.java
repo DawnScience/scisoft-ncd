@@ -18,6 +18,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import javax.measure.quantity.Length;
@@ -44,6 +45,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
@@ -111,9 +113,22 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 
 		detListWaxs = new Combo(container, SWT.NONE);
 		detListWaxs.setToolTipText("Select the WAXS detector used in data collection");
+
+		HashMap<String, NcdDetectorSettings> ncdDetectorSettings = ncdDetectorSourceProvider.getNcdDetectors();
+		if (ncdDetectorSettings != null) {
+			for (NcdDetectorSettings ncdSettings : ncdDetectorSettings.values()) {
+				if (ncdSettings.getType().equals(DetectorTypes.WAXS_DETECTOR)) {
+					detListWaxs.add(ncdSettings.getName());
+				}
+			}
+		}
+
 		String detWaxs = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-		if(detWaxs != null){
-			detListWaxs.add(detWaxs);
+		if (detWaxs != null) {
+			int idxWaxs = detListWaxs.indexOf(detWaxs);
+			detListWaxs.select(idxWaxs);
+		} else {
+			detListWaxs.select(Math.min(0, detListWaxs.getItemCount() - 1));
 		}
 		detListWaxs.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -204,9 +219,21 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		
 		detListSaxs = new Combo(container, SWT.NONE);
 		detListSaxs.setToolTipText("Select the SAXS detector used in data collection");
-		String detSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-		if(detSaxs != null){
-			detListSaxs.add(detSaxs);
+		
+		if (ncdDetectorSettings != null) {
+			for (NcdDetectorSettings ncdSettings : ncdDetectorSettings.values()) {
+				if (ncdSettings.getType().equals(DetectorTypes.SAXS_DETECTOR)) {
+					detListSaxs.add(ncdSettings.getName());
+				}
+			}
+		}
+
+		String detSaxs = ncdSaxsDetectorSourceProvider.getWaxsDetector();
+		if (detSaxs != null) {
+			int idxSaxs = detListSaxs.indexOf(detWaxs);
+			detListSaxs.select(idxSaxs);
+		} else {
+			detListSaxs.select(Math.min(0, detListSaxs.getItemCount() - 1));
 		}
 		detListSaxs.addSelectionListener(new SelectionAdapter() {
 			@Override
