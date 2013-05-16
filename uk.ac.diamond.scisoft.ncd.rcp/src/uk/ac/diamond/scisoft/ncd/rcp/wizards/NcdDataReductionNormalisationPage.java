@@ -29,7 +29,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
@@ -44,7 +43,6 @@ import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
 
 public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionPage {
 
@@ -53,13 +51,11 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 	private Text sampleThickness;
 	private Text absScale;
 	private Label absOffset;
-	private Button runCalibration;
 	private NcdProcessingSourceProvider ncdScalerSourceProvider;
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
-	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 
 	public static int PAGENUMBER = 4;
 
@@ -198,15 +194,6 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 		absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		absOffset.setToolTipText("Offset value between reference and calibrated profiles. Should be close to zero.");
 		
-		absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
-		
-		runCalibration = new Button(subContainer, SWT.PUSH);
-		runCalibration.setText("Run Absolute Intensity Calibration");
-		runCalibration.setToolTipText("Run absolute intensity calibration procedure." +
-						" Please plot reduced I(q) profile for glassy carbon sample before starting calibration.");
-		runCalibration.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		runCalibration.addSelectionListener(absoluteCalibrationListener);
-
 		setControl(container);
 	}
 
