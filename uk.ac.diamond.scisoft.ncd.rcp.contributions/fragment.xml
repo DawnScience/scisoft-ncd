@@ -207,7 +207,7 @@
          point="org.eclipse.ui.views">
       <category
             id="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
-            name="NCD Data Reduction">
+            name="Data Analysis - NCD Data Reduction">
       </category>
       <view
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
