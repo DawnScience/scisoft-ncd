@@ -22,7 +22,9 @@ public class NcdMessages extends NLS {
 	
 	private static final String BUNDLE_NAME = "uk.ac.diamond.scisoft.ncd.preferences.NcdMessages"; //$NON-NLS-1$
 	
-	public static String NO_SAXS_DETECTOR;
+	public static String NO_SAXS_DETECTOR, NO_WAXS_DETECTOR;
+	public static String NO_SAXS_PIXEL, NO_WAXS_PIXEL;
+	public static String NO_SAXS_DIM, NO_WAXS_DIM;
 	public static String NO_BG_FILE, NO_BG_READ, NO_BG_DATA;
 	public static String NO_DR_FILE, NO_DR_READ, NO_DR_DATA;
 	public static String NO_WORKING_DIR, NO_WORKINGDIR_WRITE, NO_WORKINGDIR_DATA;

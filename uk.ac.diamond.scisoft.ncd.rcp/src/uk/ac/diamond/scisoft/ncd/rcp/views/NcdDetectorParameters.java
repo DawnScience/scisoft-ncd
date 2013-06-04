@@ -511,10 +511,15 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 						dimSaxs[idxDim].setSelection(true);
 					}
 					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null && pxSaxs != null && !(pxSaxs.isDisposed())) {
-						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
-						if (!(pxText.equals(pxSaxs.getText())))
-							pxSaxs.setText(pxText);
+					if (pxSaxs != null && !(pxSaxs.isDisposed())) {
+						if (pxSize != null) {
+							String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
+							if (!(pxText.equals(pxSaxs.getText()))) {
+								pxSaxs.setText(pxText);
+							}
+						} else {
+							pxSaxs.setText("");
+						}
 					}
 				}
 			}
@@ -530,10 +535,15 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 						dimWaxs[idxDim].setSelection(true);
 					}
 					Amount<Length> pxSize = detSettings.getPxSize();
-					if (pxSize != null && pxWaxs != null && !(pxWaxs.isDisposed())) {
-						String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
-						if (!(pxText.equals(pxWaxs.getText())))
-							pxWaxs.setText(pxText);
+					if (pxWaxs != null && !(pxWaxs.isDisposed())) {
+						if (pxSize != null) {
+							String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
+							if (!(pxText.equals(pxWaxs.getText()))) {
+								pxWaxs.setText(pxText);
+							}
+						} else {
+							pxWaxs.setText("");
+						}
 					}
 				}
 			}

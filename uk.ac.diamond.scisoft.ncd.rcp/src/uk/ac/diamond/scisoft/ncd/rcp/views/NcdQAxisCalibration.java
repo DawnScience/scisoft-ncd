@@ -53,6 +53,7 @@ import org.eclipse.draw2d.ColorConstants;
 import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.IDialogConstants;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.osgi.util.NLS;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -69,6 +70,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
@@ -86,6 +88,7 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
@@ -421,40 +424,68 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	@Override
 	protected void runJavaCommand() {
-		final boolean runRefinement = beamRefineButton.getSelection();
+		
+		try {
+			String saxsDet = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			if (saxsDet == null) {
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
+			}
+			Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
+			if (energy == null) {
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_ENERGY_DATA, "calibration settings"));
+			}
+			NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDet);
+			if (detSettings == null) {
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
+			}
+			if (detSettings.getPxSize() == null) {
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
+			}
 
-		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-		Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
-		if (sectorRegions == null || sectorRegions.isEmpty())
-			throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
-		if (sectorRegions.size() > 1)
-			throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
-		final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
-		if (runRefinement) {
-			IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-			final AbstractDataset dataset = (AbstractDataset)trace.getData();
-			final AbstractDataset mask    = (AbstractDataset)trace.getMask();
-			
-			final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask, sroi);
-			beamOffset.addSourceProviders(service);
+			final boolean runRefinement = beamRefineButton.getSelection();
 
-			int cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
-			double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
-			double[] cmaesInputSigma = new double[] { cmaesInputSigmaPref, cmaesInputSigmaPref };
-			int cmaesMaxIterations = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESmaxiteration);
-			int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
-			SimplePointChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1.0 / cmaesCheckerPref);
-			beamOffset.configureOptimizer(cmaesLambda == 0 ? null : cmaesLambda,
-					cmaesInputSigmaPref == 0 ? null	: cmaesInputSigma,
-					cmaesMaxIterations == 0 ? null : cmaesMaxIterations,
-					null,
-					cmaesCheckerPref == 0 ? null : cmaesChecker);
-			
-			beamOffset.setInitPeaks(peaks);
-			
-			beamOffset.optimize(sroi.getPoint());
-		} else 
-			peaksSourceProvider.putPeaks(peaks);
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
+			if (sectorRegions == null || sectorRegions.isEmpty()) {
+				throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
+			}
+			if (sectorRegions.size() > 1) {
+				throw new IllegalArgumentException(NcdMessages.NO_SEC_SUPPORT);
+			}
+			final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
+			if (runRefinement) {
+				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
+				final AbstractDataset dataset = (AbstractDataset) trace.getData();
+				final AbstractDataset mask = (AbstractDataset) trace.getMask();
+
+				final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask,
+						sroi);
+				beamOffset.addSourceProviders(service);
+
+				int cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
+				double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore()
+						.getInt(NcdPreferences.CMAESsigma);
+				double[] cmaesInputSigma = new double[] { cmaesInputSigmaPref, cmaesInputSigmaPref };
+				int cmaesMaxIterations = Activator.getDefault().getPreferenceStore()
+						.getInt(NcdPreferences.CMAESmaxiteration);
+				int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
+				SimplePointChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4,
+						1.0 / cmaesCheckerPref);
+				beamOffset.configureOptimizer(cmaesLambda == 0 ? null : cmaesLambda, cmaesInputSigmaPref == 0 ? null
+						: cmaesInputSigma, cmaesMaxIterations == 0 ? null : cmaesMaxIterations, null,
+						cmaesCheckerPref == 0 ? null : cmaesChecker);
+
+				beamOffset.setInitPeaks(peaks);
+
+				beamOffset.optimize(sroi.getPoint());
+			} else {
+				peaksSourceProvider.putPeaks(peaks);
+			}
+		} catch (Exception e) {
+			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
 
 	}
 

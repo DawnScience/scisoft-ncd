@@ -556,25 +556,25 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		if (flags.isEnableWaxs()) {
 			if (detectorWaxs == null || detWaxsInfo == null) {
-				throw new ExecutionException("WAXS detector has not been selected");
+				throw new ExecutionException(NcdMessages.NO_WAXS_DETECTOR);
 			}
 			if (pxWaxs == null) {
-				throw new ExecutionException("WAXS detector pixel size has not been specified");
+				throw new ExecutionException(NcdMessages.NO_WAXS_PIXEL);
 			}
 			if (dimWaxs == null) {
-				throw new ExecutionException("WAXS detector dimensionality has not been specified");
+				throw new ExecutionException(NcdMessages.NO_WAXS_DIM);
 			}
 		}
 		
 		if (flags.isEnableSaxs()) {
 			if (detectorSaxs == null || detSaxsInfo == null) {
-				throw new ExecutionException("SAXS detector has not been selected");
+				throw new ExecutionException(NcdMessages.NO_SAXS_DETECTOR);
 			}
 			if (pxSaxs == null) {
-				throw new ExecutionException("SAXS detector pixel size has not been specified");
+				throw new ExecutionException(NcdMessages.NO_SAXS_PIXEL);
 			}
 			if (dimSaxs == null) {
-				throw new ExecutionException("SAXS detector dimensionality has not been specified");
+				throw new ExecutionException(NcdMessages.NO_SAXS_DIM);
 			}
 		}
 		
