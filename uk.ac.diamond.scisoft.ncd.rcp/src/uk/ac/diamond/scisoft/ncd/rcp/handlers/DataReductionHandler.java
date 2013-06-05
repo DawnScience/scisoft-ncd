@@ -48,6 +48,7 @@ import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
+import org.dawnsci.plotting.tools.masking.MaskingTool;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -687,11 +688,14 @@ public class DataReductionHandler extends AbstractHandler {
 				if (enableMask) {
 					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
-					if (imageTraces == null || imageTraces.isEmpty())
-						throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
-					ITrace imageTrace = imageTraces.iterator().next();
-					if (imageTrace != null && imageTrace instanceof IImageTrace)
-						mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
+					if (imageTraces == null || imageTraces.isEmpty()) {
+						mask = MaskingTool.getSavedMask();
+					} else {
+						ITrace imageTrace = imageTraces.iterator().next();
+						if (imageTrace != null && imageTrace instanceof IImageTrace) {
+							mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
+						}
+					}
 					if (mask != null) {
 						processing.setMask(new BooleanDataset(mask));
 						processing.setEnableMask(true);

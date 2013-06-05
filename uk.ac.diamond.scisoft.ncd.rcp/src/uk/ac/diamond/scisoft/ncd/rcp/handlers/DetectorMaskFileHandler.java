@@ -28,12 +28,15 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
@@ -73,59 +76,90 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 			ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 			NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 			String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-			if (detectorSaxs == null) {
-				return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
-			}
-			String maskFileName;
-			if (sel instanceof IFile) {
-				maskFileName = ((IFile) sel).getLocation().toString();
-			} else {
-				maskFileName = ((File) sel).getAbsolutePath();
-			}
 			try {
+				if (detectorSaxs == null) {
+					throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
+				}
+				String maskFileName;
+				if (sel instanceof IFile) {
+					maskFileName = ((IFile) sel).getLocation().toString();
+				} else {
+					maskFileName = ((File) sel).getAbsolutePath();
+				}
 				HDF5File dataTree = new HDF5Loader(maskFileName).loadTree();
 				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs
 						+ "_processing/SectorIntegration/mask");
 				if (node == null) {
-					return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), null);
+					throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName));
 				}
+				
 				mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
+				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
+				final BooleanDataset savedMask = MaskingTool.getSavedMask();
 
-				IWorkbenchPage page = window.getActivePage();
-				IViewPart activePlot = page.findView(PlotView.ID + "DP");
-				if (activePlot instanceof PlotView) {
-					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
-					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
-					if (imageTraces == null || imageTraces.isEmpty()) {
-						throw new IllegalArgumentException(NcdMessages.NO_IMAGE_PLOT);
-					}
-					ITrace imageTrace = imageTraces.iterator().next();
-					if (imageTrace != null && imageTrace instanceof IImageTrace) {
-						BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
-						BooleanDataset savedMask = MaskingTool.getSavedMask();
-						if (savedMask != null) {
-							MessageDialog dialog = new MessageDialog(window.getShell(), "Loading Detector Mask", null,
-									"Should the mask loaded from the file be superimposed on the existing mask or overwrite it?", MessageDialog.QUESTION, new String[] {"Superimpose",  "Overwrite"}, 0);
-							int overwrite = dialog.open();
-							if (overwrite == 0) {
-								boolMask = boolMask.imultiply(savedMask);
+				Job maskingJob = new Job("Loading Detector Mask") {
+					@Override
+					public IStatus run(IProgressMonitor monitor) {
+						monitor.beginTask("Reading Mask Dataset...", 1);
+						Display.getDefault().syncExec(new Runnable() {
+							@Override
+							public void run() {
+								BooleanDataset newMask = boolMask;
+								int overwrite = 1;
+								if (savedMask != null) {
+									MessageDialog dialog = new MessageDialog(
+											Display.getCurrent().getActiveShell(),
+											"Loading Detector Mask",
+											null,
+											"Should the mask loaded from the file be superimposed on the existing mask or overwrite it?",
+											MessageDialog.QUESTION, new String[] { "Superimpose", "Overwrite" }, 0);
+									overwrite = dialog.open();
+									if (overwrite == 0) {
+										newMask = boolMask.imultiply(savedMask);
+									}
+								}
+								MaskingTool.setSavedMask(newMask, true);
+
+								IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+										.getActivePage();
+								IViewPart activePlot = page.findView(PlotView.ID + "DP");
+								if (activePlot instanceof PlotView) {
+									IPlottingSystem activePlotSystem = PlottingFactory
+											.getPlottingSystem(((PlotView) activePlot).getPartName());
+									Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
+									if (imageTraces == null || imageTraces.isEmpty()) {
+										IImageTrace maskTrace = activePlotSystem.createImageTrace("Mask");
+										maskTrace.setData(newMask, null, true);
+										maskTrace.setMask(newMask);
+										activePlotSystem.addTrace(maskTrace);
+									} else {
+										ITrace imageTrace = imageTraces.iterator().next();
+										((IImageTrace) imageTrace).setMask(boolMask);
+									}
+								}
 							}
-						}
-						((IImageTrace) imageTrace).setMask(boolMask);
-						MaskingTool.setSavedMask(boolMask, true);
-					}
-				}
+						});
 
+						monitor.worked(1);
+						monitor.done();
+						return Status.OK_STATUS;
+					}
+				};
+				maskingJob.setUser(true);
+				maskingJob.schedule();
 			} catch (Exception e) {
-				return ErrorDialog(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName), e);
+				return ErrorDialog(e);
 			}
+			
+			
 
 		}
 
 		return null;
 	}
 
-	private IStatus ErrorDialog(String msg, Exception e) {
+	private IStatus ErrorDialog(Exception e) {
+		String msg = "Error loading detector mask!";
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);

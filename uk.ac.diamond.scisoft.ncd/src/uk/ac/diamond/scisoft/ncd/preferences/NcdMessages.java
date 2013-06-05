@@ -28,7 +28,7 @@ public class NcdMessages extends NLS {
 	public static String NO_BG_FILE, NO_BG_READ, NO_BG_DATA;
 	public static String NO_DR_FILE, NO_DR_READ, NO_DR_DATA;
 	public static String NO_WORKING_DIR, NO_WORKINGDIR_WRITE, NO_WORKINGDIR_DATA;
-	public static String NO_IMAGE_DATA, NO_IMAGE_PLOT, NO_MASK_IMAGE, NO_MASK_DATA, NO_QAXIS_DATA;
+	public static String NO_IMAGE_DATA, NO_MASK_IMAGE, NO_MASK_DATA, NO_QAXIS_DATA;
 	public static String NO_SEC_DATA, NO_SEC_INT, NO_SEC_SYM, NO_SEC_SUPPORT;
 	public static String NO_ENERGY_DATA;
 
