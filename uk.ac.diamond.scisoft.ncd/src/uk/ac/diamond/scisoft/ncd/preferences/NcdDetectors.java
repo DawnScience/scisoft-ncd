@@ -16,18 +16,22 @@
 
 package uk.ac.diamond.scisoft.ncd.preferences;
 
+import javax.measure.quantity.Length;
+
+import org.jscience.physics.amount.Amount;
+
 public class NcdDetectors {
 
 	private String detectorWaxs, detectorSaxs;
-	private Double pxWaxs, pxSaxs;
+	private Amount<Length> pxWaxs, pxSaxs;
 	private Integer dimWaxs, dimSaxs;
 	
 	public NcdDetectors() {
 		detectorWaxs = null;
 		detectorSaxs = null;
 		
-		pxWaxs = 0.0;
-		pxSaxs = 0.0;
+		pxWaxs = null;
+		pxSaxs = null;
 		
 		dimWaxs = 1;
 		dimSaxs = 2;
@@ -60,24 +64,20 @@ public class NcdDetectors {
 		this.detectorSaxs = detectorSaxs;
 	}
 
-	// TODO: Change to use Amount<Lenght> instead of Double
-	public Double getPxWaxs() {
-		return pxWaxs;
+	public Amount<Length> getPxWaxs() {
+		return pxWaxs.copy();
 	}
 
-	// TODO: Change to use Amount<Lenght> instead of Double
-	public void setPxWaxs(Double pxWaxs) {
-		this.pxWaxs = pxWaxs;
+	public void setPxWaxs(Amount<Length> pxWaxs) {
+		this.pxWaxs = pxWaxs.copy();
 	}
 
-	// TODO: Change to use Amount<Lenght> instead of Double
-	public Double getPxSaxs() {
-		return pxSaxs;
+	public Amount<Length> getPxSaxs() {
+		return pxSaxs.copy();
 	}
 
-	// TODO: Change to use Amount<Lenght> instead of Double
-	public void setPxSaxs(Double pxSaxs) {
-		this.pxSaxs = pxSaxs;
+	public void setPxSaxs(Amount<Length> pxSaxs) {
+		this.pxSaxs = pxSaxs.copy();
 	}
 	
 	public Integer getDimWaxs() {

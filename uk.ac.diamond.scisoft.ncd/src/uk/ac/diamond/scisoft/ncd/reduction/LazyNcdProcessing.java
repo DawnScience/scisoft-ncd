@@ -963,7 +963,7 @@ public class LazyNcdProcessing {
 			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
 			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
 			if (dim == 1) {
-				Amount<Length> pxWaxs = Amount.valueOf(ncdDetectors.getPxWaxs(), SI.MILLIMETER);
+				Amount<Length> pxWaxs = ncdDetectors.getPxWaxs();
 				for (int i = 0; i < numPoints; i++) {
 					Amount<ScatteringVector> amountQaxis = slope.times(i).times(pxWaxs).plus(intercept).to(qaxisUnit); 
 					qaxis.set(amountQaxis.getEstimatedValue(), i);
@@ -972,7 +972,7 @@ public class LazyNcdProcessing {
 			} else {
 				if (dim > 1 && flags.isEnableSector()) {
 					double d2bs = intSector.getRadii()[0];
-					Amount<Length> pxSaxs = Amount.valueOf(ncdDetectors.getPxSaxs(), SI.MILLIMETER);
+					Amount<Length> pxSaxs = ncdDetectors.getPxSaxs();
 					for (int i = 0; i < numPoints; i++) {
 						Amount<ScatteringVector> amountQaxis = slope.times(i + d2bs).times(pxSaxs).plus(intercept).to(qaxisUnit); 
 						qaxis.set(amountQaxis.getEstimatedValue(), i);
