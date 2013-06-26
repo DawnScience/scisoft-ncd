@@ -33,7 +33,7 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 
-	protected AbstractDataset qaxis;
+	protected AbstractDataset[] qaxis;
 	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
 	protected String calibration;
@@ -54,15 +54,13 @@ public abstract class LazyDataReduction {
 		this.normChannel = normChannel;
 	}
 
-	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
+	public void setQaxis(AbstractDataset[] qaxis, Unit<ScatteringVector> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}
 
-	//public abstract AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset dataCal, DataSliceIdentifiers norm_id);
-	
 	public void writeQaxisData(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
+		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis[0].getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
@@ -71,9 +69,9 @@ public abstract class LazyDataReduction {
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
 		int type_id = H5.H5Dget_type(qaxis_id);
-		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
+		int memspace_id = H5.H5Screate_simple(qaxis[0].getRank(), qaxisShape, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
+		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis[0].getBuffer());
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);

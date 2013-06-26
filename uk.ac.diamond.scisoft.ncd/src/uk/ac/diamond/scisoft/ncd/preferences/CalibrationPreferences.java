@@ -31,7 +31,11 @@ public class CalibrationPreferences {
 	public static final String QAXIS_L = "qaxis.l";
 	
 	public static final String QAXIS_GRADIENT = "qaxis.gradient";
+	public static final String QAXIS_GRADIENT_ERROR = "qaxis.gradient.error";
+	public static final String QAXIS_GRADIENT_UNIT = "qaxis.gradient.unit";
 	public static final String QAXIS_INTERCEPT = "qaxis.intercept";
+	public static final String QAXIS_INTERCEPT_ERROR = "qaxis.intercept.error";
+	public static final String QAXIS_INTERCEPT_UNIT = "qaxis.intercept.unit";
 	public static final String QAXIS_CAMERALENGTH = "qaxis.cameraLength";
 	
 	public static final String QAXIS_STANDARD = "qaxis.standard";

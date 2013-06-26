@@ -27,7 +27,8 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
 public class CalibrationResultsBean implements Serializable {
 	
@@ -37,28 +38,34 @@ public class CalibrationResultsBean implements Serializable {
 		results = new HashMap<String, CalibrationResultsData>();
 	}
 	
-	public CalibrationResultsBean(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+	public CalibrationResultsBean(String experiment, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		results = new HashMap<String, CalibrationResultsData>();
-		putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit); 
+		putCalibrationResult(experiment, gradient, intercept, peaks, meanCameraLength, unit); 
 	}
 	
-	public void putCalibrationResult(String experiment, AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
-		CalibrationResultsData newData = new CalibrationResultsData(calibrationFunction, peaks, meanCameraLength, unit);	
+	public void putCalibrationResult(String experiment, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+		CalibrationResultsData newData = new CalibrationResultsData(gradient, intercept, peaks, meanCameraLength, unit);	
 		results.put(experiment, newData);
 	}
 	
-	public AFunction getFunction(String experiment) {
-		if (results.containsKey(experiment))
-			return results.get(experiment).getFuction();
-		return null;
-	}
-
 	public ArrayList<CalibrationPeak> getPeakList(String experiment) {
 		if (results.containsKey(experiment))
 			return results.get(experiment).getPeakList();
 		return null;
 	}
 
+	public Amount<ScatteringVectorOverDistance> getGradient(String experiment) {
+		if (results.containsKey(experiment))
+			return results.get(experiment).getGradient();
+		return null;
+	}
+	
+	public Amount<ScatteringVector> getIntercept(String experiment) {
+		if (results.containsKey(experiment))
+			return results.get(experiment).getIntercept();
+		return null;
+	}
+	
 	public Amount<Length> getMeanCameraLength(String experiment) {
 		if (results.containsKey(experiment))
 			return results.get(experiment).getMeanCameraLength();

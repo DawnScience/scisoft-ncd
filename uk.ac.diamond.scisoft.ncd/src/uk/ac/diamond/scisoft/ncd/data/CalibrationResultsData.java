@@ -25,23 +25,27 @@ import javax.measure.unit.Unit;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
 class CalibrationResultsData implements Serializable {
-	private AFunction fuction;
 	private ArrayList<CalibrationPeak> peakList;
+	private Amount<ScatteringVector> intercept;
+	private Amount<ScatteringVectorOverDistance> gradient;
 	private Amount<Length> meanCameraLength;
 	private Unit<Length> unit;
 	
-	public CalibrationResultsData(AFunction calibrationFunction, Unit<Length> unit) {
+	public CalibrationResultsData(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, Unit<Length> unit) {
 		super();
-		this.fuction= calibrationFunction;
+		this.gradient= gradient.copy();
+		this.intercept= intercept.copy();
 		this.unit = unit;
 	}
 
-	CalibrationResultsData(AFunction calibrationFunction, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+	CalibrationResultsData(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		super();
-		this.fuction= calibrationFunction;
+		this.gradient= gradient.copy();
+		this.intercept= intercept.copy();
 		
 		if (peaks != null) {
 			this.peakList = new ArrayList<CalibrationPeak>();
@@ -58,8 +62,12 @@ class CalibrationResultsData implements Serializable {
 		this.unit = unit;
 	}
 	
-	public AFunction getFuction() {
-		return fuction;
+	public Amount<ScatteringVector> getIntercept() {
+		return intercept;
+	}
+
+	public Amount<ScatteringVectorOverDistance> getGradient() {
+		return gradient;
 	}
 
 	public ArrayList<CalibrationPeak> getPeakList() {

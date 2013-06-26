@@ -28,7 +28,8 @@ import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.fitting.functions.AFunction;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
@@ -72,20 +73,25 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 
 	public void putCalibrationResult(CalibrationResultsBean crb) {
 		for (String experiment : crb.keySet()) {
-			AFunction calibrationFunction = crb.getFunction(experiment);
+			Amount<ScatteringVectorOverDistance> gradient = crb.getGradient(experiment);
+			Amount<ScatteringVector> intercept = crb.getIntercept(experiment);
 			List<CalibrationPeak> peaks = crb.getPeakList(experiment);
 			Amount<Length> meanCameraLength = crb.getMeanCameraLength(experiment);
 			Unit<Length> unit = crb.getUnit(experiment);
-			calibrationResults.putCalibrationResult(experiment, calibrationFunction, peaks, meanCameraLength, unit);
+			calibrationResults.putCalibrationResult(experiment, gradient, intercept, peaks, meanCameraLength, unit);
 		}
 		
 		fireSourceChanged(ISources.WORKBENCH, CALIBRATION_STATE, crb);
 	}
 	
-	public AFunction getFunction(String experiment) {
-		return calibrationResults.getFunction(experiment);
+	public Amount<ScatteringVectorOverDistance> getGradient(String experiment) {
+		return calibrationResults.getGradient(experiment);
 	}
-	
+
+	public Amount<ScatteringVector> getIntercept(String experiment) {
+		return calibrationResults.getIntercept(experiment);
+	}
+
 	public Amount<Length> getMeanCameraLength(String experiment) {
 		return calibrationResults.getMeanCameraLength(experiment);
 	}

@@ -21,6 +21,7 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -43,6 +44,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -67,8 +69,8 @@ public class LazyNcdProcessing {
 	private Double bgScaling;
 	private String bgFile, drFile, calibration;
 	private SectorROI intSector;
-	private Double slope;
-	private Double intercept;
+	private Amount<ScatteringVectorOverDistance> slope;
+	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
 	private Amount<Energy> energy;
 	private Unit<ScatteringVector> qaxisUnit;
@@ -254,11 +256,11 @@ public class LazyNcdProcessing {
 		this.gridAverage = gridAverage;
 	}
 
-	public void setSlope(Double slope) {
+	public void setSlope(Amount<ScatteringVectorOverDistance> slope) {
 		this.slope = slope;
 	}
 
-	public void setIntercept(Double intercept) {
+	public void setIntercept(Amount<ScatteringVector> intercept) {
 		this.intercept = intercept;
 	}
 
@@ -367,7 +369,7 @@ public class LazyNcdProcessing {
 	    final AbstractDataset[] areaData;
 		int secRank = rank - dim + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
-		AbstractDataset qaxis = null;
+		AbstractDataset[] qaxis = null;
 		final LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
@@ -942,14 +944,15 @@ public class LazyNcdProcessing {
 		frameBatch = Math.max(1, (int) (maxMemory / (10 * batchSize * cores)));
 	}
 
-	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
+	private AbstractDataset[] calculateQaxisDataset(String detector, int dim, long[] frames) {
 		
 		AbstractDataset qaxis = null;
+		AbstractDataset qaxisErr = null;
 		
 		if (crb != null) {
 			if (crb.containsKey(detector)) {
-				if (slope == null) slope = crb.getFunction(detector).getParameterValue(0);
-				if (intercept == null) intercept = crb.getFunction(detector).getParameterValue(1);
+				if (slope == null) slope = crb.getGradient(detector);
+				if (intercept == null) intercept = crb.getIntercept(detector);
 				if (qaxisUnit == null) setUnit(crb.getUnit(detector));
 				cameraLength = crb.getMeanCameraLength(detector);
 			}
@@ -957,23 +960,27 @@ public class LazyNcdProcessing {
 		
 		if (slope != null && intercept != null) {
 			int numPoints = (int) frames[frames.length - 1];
+			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
+			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
 			if (dim == 1) {
-				qaxis = AbstractDataset.zeros(new int[]{numPoints}, AbstractDataset.FLOAT32);
-				double pxWaxs = ncdDetectors.getPxWaxs();
+				Amount<Length> pxWaxs = Amount.valueOf(ncdDetectors.getPxWaxs(), SI.MILLIMETER);
 				for (int i = 0; i < numPoints; i++) {
-					qaxis.set(i*pxWaxs *slope + intercept, i);
+					Amount<ScatteringVector> amountQaxis = slope.times(i).times(pxWaxs).plus(intercept).to(qaxisUnit); 
+					qaxis.set(amountQaxis.getEstimatedValue(), i);
+					qaxisErr.set(amountQaxis.getAbsoluteError(), i);
 				}
 			} else {
 				if (dim > 1 && flags.isEnableSector()) {
 					double d2bs = intSector.getRadii()[0];
-					qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
-					double pxSaxs = ncdDetectors.getPxSaxs();
+					Amount<Length> pxSaxs = Amount.valueOf(ncdDetectors.getPxSaxs(), SI.MILLIMETER);
 					for (int i = 0; i < numPoints; i++) {
-						qaxis.set((i + d2bs) * pxSaxs * slope + intercept, i);
+						Amount<ScatteringVector> amountQaxis = slope.times(i + d2bs).times(pxSaxs).plus(intercept).to(qaxisUnit); 
+						qaxis.set(amountQaxis.getEstimatedValue(), i);
+						qaxisErr.set(amountQaxis.getAbsoluteError(), i);
 					}
 				}
 			}
 		}
-		return qaxis;
+		return new AbstractDataset[] {qaxis, qaxisErr};
 	}
 }

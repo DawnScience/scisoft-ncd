@@ -69,6 +69,8 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
@@ -137,14 +139,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		return null;
 	}
 
-	protected Double getGradient() {
+	protected Amount<ScatteringVectorOverDistance> getGradient() {
 		String input = gradient.getText();
-		return doubleValidator.validate(input);
+		return Amount.valueOf(input).to(ScatteringVectorOverDistance.UNIT);
 	}
 	
-	protected Double getIntercept() {
+	protected Amount<ScatteringVector> getIntercept() {
 		String input = intercept.getText();
-		return doubleValidator.validate(input);
+		return Amount.valueOf(input).to(ScatteringVector.UNIT);
 	}
 	
 	protected Unit<Length> getUnit() {
@@ -410,14 +412,16 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 				calibrationPeakList.addAll(peakList);
 			}
 			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
-			if (ncdCalibrationSourceProvider.getFunction(currentDetector) != null) {
+			final Amount<ScatteringVectorOverDistance> amountGrad = ncdCalibrationSourceProvider.getGradient(currentDetector);
+			final Amount<ScatteringVector> amountIntercept = ncdCalibrationSourceProvider.getIntercept(currentDetector);
+			if (amountGrad != null && amountIntercept != null) {
 
 				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 
 					@Override
 					public void run() {
-						gradient.setText(String.format("%5.5g",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(0)));
-						intercept.setText(String.format("%3.5f",ncdCalibrationSourceProvider.getFunction(currentDetector).getParameterValue(1)));
+						gradient.setText(amountGrad.toString());
+						intercept.setText(amountIntercept.toString());
 						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
 						if (mcl != null) {
 							cameralength.setText(mcl.to(SI.METRE).toString());

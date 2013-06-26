@@ -75,6 +75,8 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
@@ -483,9 +485,9 @@ public class DataReductionHandler extends AbstractHandler {
 		CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		if (crb != null) {
 			if (crb.containsKey(detectorSaxs)) {
-				Double slope = crb.getFunction(detectorSaxs).getParameterValue(0);
-				Double intercept = crb.getFunction(detectorSaxs).getParameterValue(1);
 				Unit<Length> qaxisUnit = crb.getUnit(detectorSaxs);
+				Amount<ScatteringVectorOverDistance> slope = crb.getGradient(detectorSaxs);
+				Amount<ScatteringVector> intercept = crb.getIntercept(detectorSaxs);
 				if (slope != null && intercept != null && qaxisUnit != null) {
 					return true;
 				}

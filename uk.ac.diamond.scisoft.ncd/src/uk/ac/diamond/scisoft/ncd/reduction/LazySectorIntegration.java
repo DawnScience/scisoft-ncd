@@ -31,6 +31,8 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -43,9 +45,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private SectorROI intSector;
 	private AbstractDataset[] areaData;
 	private AbstractDataset mask;
-	private Double gradient, intercept;
-	Amount<Length> cameraLength;
-	Amount<Energy> energy;
+	private Amount<ScatteringVectorOverDistance> gradient;
+	private Amount<ScatteringVector> intercept;
+	private Amount<Length> cameraLength;
+	private Amount<Energy> energy;
 	
 	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
@@ -79,19 +82,19 @@ public class LazySectorIntegration extends LazyDataReduction {
 		this.fast = fast;
 	}
 	
-	public double[] getCalibrationData() {
+	public Object[] getCalibrationData() {
 		if (gradient != null && intercept != null) {
-			return new double[] {gradient.doubleValue(), intercept.doubleValue()};
+			return new Object[] {gradient.copy(), intercept.copy()};
 		}
 		return null;
 	}
 
-	public void setCalibrationData(Double gradient, Double intercept) {
-		if (gradient != null) {
-			this.gradient = new Double(gradient);
+	public void setCalibrationData(Amount<ScatteringVectorOverDistance> slope, Amount<ScatteringVector> intercept) {
+		if (slope != null) {
+			this.gradient = slope.copy();
 		}
 		if (intercept != null) {
-			this.intercept =  new Double(intercept);
+			this.intercept =  intercept.copy();
 		}
 	}
 
@@ -255,7 +258,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		int type = H5.H5Dget_type(qcalibration_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
-		double[] qCalibration = new double[] {gradient.doubleValue(), intercept.doubleValue()};
+		double[] qCalibration = new double[] {gradient.getEstimatedValue(), intercept.getEstimatedValue()};
 		H5.H5Dwrite(qcalibration_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qCalibration);
 		
 		// add unit attribute

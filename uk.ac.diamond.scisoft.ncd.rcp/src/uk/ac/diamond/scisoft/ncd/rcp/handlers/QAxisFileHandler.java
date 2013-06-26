@@ -54,11 +54,11 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
@@ -97,43 +97,41 @@ public class QAxisFileHandler extends AbstractHandler {
 				final Object sel = ((IStructuredSelection)selection).getFirstElement();
 				
 				String qaxisFilename;
-				if (sel instanceof IFile)
+				if (sel instanceof IFile) {
 					qaxisFilename = ((IFile)sel).getLocation().toString();
-				else
+				} else {
 					qaxisFilename = ((File)sel).getAbsolutePath();
-				
+				}
 				try {
 					
 					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					if (detectorSaxs == null)
+					if (detectorSaxs == null) {
 						return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
-
+					}
 					CalibrationResultsBean crb = null;
 					
 					HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
 					HDF5NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration");
 					
-					if (nodeLink == null)
+					if (nodeLink == null) {
 						return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
-
+					}
 					Amount<Length> cameraLength = null;
 					Amount<Energy> energy = null;
 					HDF5Node node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
 						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-						Parameter gradient = new Parameter(qaxis.getDouble(0));
-						Parameter intercept = new Parameter(qaxis.getDouble(1));
+						double gradient = qaxis.getDouble(0);
+						double intercept = qaxis.getDouble(1);
 
 						// The default value that was used when unit setting was fixed.
 						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-						String units = unitFormat.format(SI.NANO(SI.METRE));
+						Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
 						HDF5Attribute unitsAttr = node.getAttribute("unit");
-						Unit<Length> inv_units = null;
 						if (unitsAttr != null) {
-							units = unitsAttr.getFirstElement();
-							inv_units = unitFormat.parseProductUnit(units, new ParsePosition(0)).inverse()
-									.asType(Length.class);
+							String unitString = unitsAttr.getFirstElement();
+							unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
 						}
 						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 								+ "_processing/SectorIntegration/camera length");
@@ -143,8 +141,9 @@ public class QAxisFileHandler extends AbstractHandler {
 								cameraLength = Amount.valueOf(
 										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.MILLIMETRE);
 						}
-						crb = new CalibrationResultsBean(detectorSaxs, new StraightLine(new Parameter[] { gradient,
-								intercept }), new ArrayList<CalibrationPeak>(), cameraLength, inv_units);
+						Amount<ScatteringVectorOverDistance> amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+						Amount<ScatteringVector> amountIntercept = Amount.valueOf(intercept,  unit);
+						crb = new CalibrationResultsBean(detectorSaxs, amountGradient, amountIntercept, new ArrayList<CalibrationPeak>(), cameraLength, unit.inverse().asType(Length.class));
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 						
 						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs

@@ -38,6 +38,7 @@ import org.uncommons.maths.combinatorics.CombinationGenerator;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 
@@ -50,13 +51,17 @@ public class CalibrationMethods {
 	private Amount<Length> wavelength;
 	private Amount<Length> pixelSize;
 	private Unit<Length> unit;
+    private Unit<ScatteringVectorOverDistance> unitGradient; 
+    private Unit<ScatteringVector> unitIntercept; 
 	
-    Amount<Length> meanCameraLength;
+    private Amount<Length> meanCameraLength;
 
-    private double[] fitResult;
+    public Amount<ScatteringVectorOverDistance> gradient; 
+    public Amount<ScatteringVector> intercept;
+    
     private List<CalibrationPeak> indexedPeakList;
     
-	SimpleRegression regression;
+	private SimpleRegression regression;
 
 	public CalibrationMethods(ArrayList<IPeak> peaks, CalibrantSpacing calibrantSpacing, Amount<Length> wavelength,
 			Amount<Length> pixelSize, Unit<Length> unit) {
@@ -66,8 +71,8 @@ public class CalibrationMethods {
 		this.wavelength = wavelength;
 		this.pixelSize = pixelSize;
 		this.unit = unit;
-		
-		this.fitResult = new double[2];
+		this.unitGradient = unit.inverse().divide(SI.MILLIMETRE).asType(ScatteringVectorOverDistance.class);
+		this.unitIntercept = unit.inverse().asType(ScatteringVector.class);
 	}
 	
 
@@ -76,8 +81,13 @@ public class CalibrationMethods {
 	}
 
 
-	public double[] getFitResult() {
-		return fitResult;
+	public Amount<ScatteringVectorOverDistance> getGradient() {
+		return gradient;
+	}
+
+
+	public Amount<ScatteringVector> getIntercept() {
+		return intercept;
 	}
 
 
@@ -132,17 +142,24 @@ public class CalibrationMethods {
 		return indexedPeaks;
 	}
 	
-	private double fitFunctionToData(LinkedHashMap<IPeak, HKL> peaks, boolean intercept) {
-		regression = new SimpleRegression(intercept);
-		if (intercept)
+	private double fitFunctionToData(LinkedHashMap<IPeak, HKL> peaks, boolean hasIntercept) {
+		regression = new SimpleRegression(hasIntercept);
+		if (hasIntercept) {
 			regression.addData(0.0, 0.0);
+		}
 		for (Entry<IPeak, HKL> peak : peaks.entrySet()) {
 			double position = peak.getKey().getPosition();
 	        double qVal = 2.0 * Math.PI / peak.getValue().getD().doubleValue(unit);
    			regression.addData(position, qVal);
 		}
    		regression.regress();
-   		fitResult = new double [] {regression.getIntercept(), regression.getSlope()/pixelSize.doubleValue(SI.MILLIMETRE)};
+   		
+		gradient = Amount.valueOf(regression.getSlope(), regression.getSlopeStdErr(), unit.inverse()).divide(pixelSize)
+				.to(unit.inverse().divide(pixelSize.getUnit()).asType(ScatteringVectorOverDistance.class));
+		intercept = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), unit.inverse()).to(
+				unit.inverse().asType(ScatteringVector.class));
+   		//fitResult = new double [] {regression.getIntercept(), regression.getSlope()/pixelSize.doubleValue(SI.MILLIMETRE)};
+	    logger.info("Gradient: {},  Intercept: {}", gradient.doubleValue(unitGradient), intercept.doubleValue(unitIntercept));
    		return regression.getSumSquaredErrors();
 	}
 	

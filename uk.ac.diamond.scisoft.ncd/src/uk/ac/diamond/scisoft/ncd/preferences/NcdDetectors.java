@@ -60,18 +60,22 @@ public class NcdDetectors {
 		this.detectorSaxs = detectorSaxs;
 	}
 
+	// TODO: Change to use Amount<Lenght> instead of Double
 	public Double getPxWaxs() {
 		return pxWaxs;
 	}
 
+	// TODO: Change to use Amount<Lenght> instead of Double
 	public void setPxWaxs(Double pxWaxs) {
 		this.pxWaxs = pxWaxs;
 	}
 
+	// TODO: Change to use Amount<Lenght> instead of Double
 	public Double getPxSaxs() {
 		return pxSaxs;
 	}
 
+	// TODO: Change to use Amount<Lenght> instead of Double
 	public void setPxSaxs(Double pxSaxs) {
 		this.pxSaxs = pxSaxs;
 	}
