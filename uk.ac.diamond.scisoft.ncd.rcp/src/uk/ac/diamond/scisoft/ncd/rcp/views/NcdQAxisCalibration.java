@@ -520,11 +520,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		
 		plottingSystem.clear();
 		
-		double px = getPixel(false).doubleValue(SI.MILLIMETRE);
+		Amount<Length> px = getPixel(false);
 		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
-		xAxis.imultiply(px);
+		xAxis.imultiply(px.getEstimatedValue());
 		AbstractDataset qvalues = calibrationFunction.makeDataset(xAxis);
 		
         ILineTrace calibrationLine = plottingSystem.createLineTrace("Fitting line");
@@ -538,7 +538,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		ArrayList<Double> qData = new ArrayList<Double>();
 		
 		for (CalibrationPeak peak : list) {
-			peakPos.add(peak.getPeakPos() * px);
+			peakPos.add(px.times(peak.getPeakPos()).getEstimatedValue());
 			qData.add(2.0 * Math.PI / peak.getDSpacing().doubleValue(getUnitScale()));
 		}
 		
@@ -551,7 +551,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
         referencePoints.setData(AbstractDataset.createFromList(peakPos), AbstractDataset.createFromList(qData));
         plottingSystem.addTrace(referencePoints);
         
-        plottingSystem.getSelectedXAxis().setTitle("Pixel position / mm");
+        plottingSystem.getSelectedXAxis().setTitle("Pixel position / " + px.getUnit().toString());
         plottingSystem.getSelectedYAxis().setTitle("q / " + getUnitScale().inverse().toString());
         plottingSystem.autoscaleAxes();
 

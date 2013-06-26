@@ -118,6 +118,7 @@ public class QAxisFileHandler extends AbstractHandler {
 						return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 					}
 					Amount<Length> cameraLength = null;
+					Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
 					Amount<Energy> energy = null;
 					HDF5Node node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
@@ -137,9 +138,14 @@ public class QAxisFileHandler extends AbstractHandler {
 								+ "_processing/SectorIntegration/camera length");
 						if (nodeLink != null) {
 							node = nodeLink.getDestination();
-							if (node instanceof HDF5Dataset)
+							if (node instanceof HDF5Dataset) {
+								if (node.containsAttribute("units")) {
+									cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
+											.asType(Length.class);
+								}
 								cameraLength = Amount.valueOf(
-										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.MILLIMETRE);
+										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), cameraLengthUnit);
+							}
 						}
 						Amount<ScatteringVectorOverDistance> amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
 						Amount<ScatteringVector> amountIntercept = Amount.valueOf(intercept,  unit);

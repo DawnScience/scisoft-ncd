@@ -21,7 +21,8 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map.Entry;
 
-import javax.measure.unit.SI;
+import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.dawb.hdf5.Nexus;
@@ -187,8 +188,12 @@ public class DetectorInformationHandler extends AbstractHandler {
 						}
 		    	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
 		    	        if (pixelData != null) {
-		    				double pxSize = ((HDF5Dataset) pixelData.getDestination()).getDataset().getSlice().getDouble(0);
-		    				tmpDet.setPxSize(Amount.valueOf(pxSize * 1000, SI.MILLIMETRE));
+		    	        	HDF5Dataset pxSizeDataset = (HDF5Dataset) pixelData.getDestination();
+		    				double pxSize = pxSizeDataset.getDataset().getSlice().getDouble(0);
+		    				if (pxSizeDataset.containsAttribute("units")) {
+								Unit<Length> pxSizeUnit = Unit.valueOf(pxSizeDataset.getAttribute("units").getFirstElement()).asType(Length.class);
+			    				tmpDet.setPxSize(Amount.valueOf(pxSize, pxSizeUnit));
+		    				}
 		    	        }
 		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
 				    }

@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 
 import org.eclipse.swt.widgets.Composite;
 import org.jscience.physics.amount.Amount;
@@ -43,7 +44,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 	@Override
 	protected Amount<Length> getPixel(boolean scale) {
 		NcdDetectorSettings detector = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
-		return detector.getPxSize();
+		return detector.getPxSize().copy().to(SI.MILLIMETRE);
 	}
 	
 }

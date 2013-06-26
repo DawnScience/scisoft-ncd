@@ -23,6 +23,9 @@ import gda.util.TestUtils;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+
 import junit.framework.Assert;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -32,6 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
+import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -73,7 +77,7 @@ public class LazyNcdProcessingTest {
 	private static String detectorOut = "Rapid2D_processing";
 	private static String detectorBg = "Rapid2D_result";
 	private static String calibration = "Scalers";
-	private static Double pxSaxs = 0.1;
+	private static Amount<Length> pxSaxs = Amount.valueOf(0.1, SI.MILLIMETER);
 	private static int dim = 2;
 	private static String filename, bgFilename;
 	private static String testScratchDirectoryName;
