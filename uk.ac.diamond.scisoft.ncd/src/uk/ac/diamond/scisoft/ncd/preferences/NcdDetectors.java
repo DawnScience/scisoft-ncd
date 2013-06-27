@@ -65,19 +65,19 @@ public class NcdDetectors {
 	}
 
 	public Amount<Length> getPxWaxs() {
-		return pxWaxs.copy();
+		return (pxWaxs == null) ? null : pxWaxs.copy();
 	}
 
 	public void setPxWaxs(Amount<Length> pxWaxs) {
-		this.pxWaxs = pxWaxs.copy();
+		this.pxWaxs = (pxWaxs == null) ? null : pxWaxs.copy();
 	}
 
 	public Amount<Length> getPxSaxs() {
-		return pxSaxs.copy();
+		return (pxSaxs == null) ? null : pxSaxs.copy();
 	}
 
 	public void setPxSaxs(Amount<Length> pxSaxs) {
-		this.pxSaxs = pxSaxs.copy();
+		this.pxSaxs = (pxSaxs == null) ? null : pxSaxs.copy();
 	}
 	
 	public Integer getDimWaxs() {

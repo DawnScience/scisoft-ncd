@@ -21,7 +21,6 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -982,6 +981,11 @@ public class LazyNcdProcessing {
 				}
 			}
 		}
+		
+		if (qaxis == null) {
+			return null;
+		}
+		
 		return new AbstractDataset[] {qaxis, qaxisErr};
 	}
 }
