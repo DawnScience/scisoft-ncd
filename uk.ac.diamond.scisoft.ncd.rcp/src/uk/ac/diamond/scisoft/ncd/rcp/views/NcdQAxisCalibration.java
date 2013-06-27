@@ -516,7 +516,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 	}
 
-	private void plotCalibrationResults(StraightLine calibrationFunction, List<CalibrationPeak> list) {
+	private void plotCalibrationResults(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> list) {
+		
+		StraightLine calibrationFunction = new StraightLine(new Parameter[] {
+				new Parameter(gradient.getEstimatedValue()),
+				new Parameter(intercept.getEstimatedValue()) });
 		
 		plottingSystem.clear();
 		
@@ -536,12 +540,29 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 
 		ArrayList<Double> peakPos = new ArrayList<Double>();
 		ArrayList<Double> qData = new ArrayList<Double>();
+		ArrayList<Double> qEst = new ArrayList<Double>();
+		ArrayList<Double> qEstError = new ArrayList<Double>();
 		
 		for (CalibrationPeak peak : list) {
-			peakPos.add(px.times(peak.getPeakPos()).getEstimatedValue());
+			Amount<Length> pxPos = px.times(peak.getPeakPos()); 
+			peakPos.add(pxPos.getEstimatedValue());
 			qData.add(2.0 * Math.PI / peak.getDSpacing().doubleValue(getUnitScale()));
+			Amount<ScatteringVector> q = gradient.times(pxPos).plus(intercept).to(intercept.getUnit());
+			qEst.add(q.getEstimatedValue());
+			qEstError.add(q.getAbsoluteError());
 		}
 		
+		AbstractDataset.createFromList(peakPos);
+        ILineTrace estPoints = plottingSystem.createLineTrace("Peak Positions");
+        estPoints.setTraceType(TraceType.POINT);
+        estPoints.setTraceColor(ColorConstants.red);
+        estPoints.setPointStyle(PointStyle.CIRCLE);
+        estPoints.setPointSize(5);
+        AbstractDataset qDataset = AbstractDataset.createFromList(qEst);
+        qDataset.setError(AbstractDataset.createFromList(qEstError));
+        estPoints.setData(AbstractDataset.createFromList(peakPos), qDataset);
+        plottingSystem.addTrace(estPoints);
+        
 		AbstractDataset.createFromList(peakPos);
         ILineTrace referencePoints = plottingSystem.createLineTrace("Calibration Points");
         referencePoints.setTraceType(TraceType.POINT);
@@ -657,10 +678,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 								meanCameraLength, getUnitScale());
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 
-						StraightLine calibrationFunction = new StraightLine(new Parameter[] {
-								new Parameter(gradient.getEstimatedValue()),
-								new Parameter(intercept.getEstimatedValue()) });
-						plotCalibrationResults(calibrationFunction, calibrationMethod.getIndexedPeakList());
+						plotCalibrationResults(gradient, intercept, calibrationMethod.getIndexedPeakList());
 						return Status.OK_STATUS;
 					} catch (Exception e) {
 						logger.error("Error updating plot view", e);
