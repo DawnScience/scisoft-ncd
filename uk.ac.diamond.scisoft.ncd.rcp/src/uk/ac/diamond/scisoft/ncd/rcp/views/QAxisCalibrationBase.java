@@ -63,6 +63,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.jscience.mathematics.number.Real;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -140,13 +141,19 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 
 	protected Amount<ScatteringVectorOverDistance> getGradient() {
+		// Ignoring units for now because of bugs in JScience unit parser
 		String input = gradient.getText();
-		return Amount.valueOf(input).to(ScatteringVectorOverDistance.UNIT);
+		Real realVal = Real.valueOf(input);
+		Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE).asType(ScatteringVectorOverDistance.class);
+		return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
 	}
 	
 	protected Amount<ScatteringVector> getIntercept() {
+		// Ignoring units for now because of bugs in JScience unit parser
 		String input = intercept.getText();
-		return Amount.valueOf(input).to(ScatteringVector.UNIT);
+		Real realVal = Real.valueOf(input);
+		Unit<ScatteringVector> unit = getUnit().inverse().asType(ScatteringVector.class);
+		return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
 	}
 	
 	protected Unit<Length> getUnit() {
