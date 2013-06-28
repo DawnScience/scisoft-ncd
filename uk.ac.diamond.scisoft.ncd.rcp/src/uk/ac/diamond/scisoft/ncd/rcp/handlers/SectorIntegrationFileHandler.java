@@ -24,8 +24,8 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 
 import org.dawb.common.services.ILoaderService;
-import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;

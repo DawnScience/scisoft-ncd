@@ -19,8 +19,8 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.Collection;
 
-import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
 import org.dawnsci.plotting.tools.masking.MaskingTool;
