@@ -33,7 +33,6 @@ import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.math3.optimization.PointValuePair;
 import org.apache.commons.math3.optimization.SimplePointChecker;
-import org.dawb.common.ui.plot.AbstractPlottingSystem;
 import org.dawb.common.ui.plot.PlottingFactory;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
@@ -108,7 +107,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	protected String GUI_PLOT_NAME = "Dataset Plot";
 	protected String ACTIVE_PLOT = "Dataset Plot";
-	private AbstractPlottingSystem plottingSystem;
+	private IPlottingSystem plottingSystem;
 	public static final  String SECTOR_NAME = "Calibration";
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
