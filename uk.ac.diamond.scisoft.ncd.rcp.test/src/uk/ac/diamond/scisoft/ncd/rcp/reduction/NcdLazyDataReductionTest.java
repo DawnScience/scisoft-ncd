@@ -60,16 +60,16 @@ public class NcdLazyDataReductionTest {
 	private ILock lock = Job.getJobManager().newLock();
 	
 	private static AbstractDataset data, error;
-	static long [] shape = new long[] {5, 3, 91, 32, 64};
-	static long [] normShape = new long[] {shape[0], shape[1], shape[2], 1};
-	static long [] invShape = new long[] {shape[0], shape[1], shape[2]};
-	static long [] imageShape = new long[] {shape[3], shape[4]};
-	static long [] bgShape = new long[] {4, 13, imageShape[0], imageShape[1]};
+	private static long [] shape = new long[] {5, 3, 91, 32, 64};
+	private static long [] normShape = new long[] {shape[0], shape[1], shape[2], 1};
+	private static long [] invShape = new long[] {shape[0], shape[1], shape[2]};
+	private static long [] imageShape = new long[] {shape[3], shape[4]};
+	private static long [] bgShape = new long[] {4, 13, imageShape[0], imageShape[1]};
 	private static float scale = 1.0f; 
 	private static float scaleBg = 0.46246f;
 	private static float absScale = 100.0f;
-	static int dim = 2;
-	static int points = 1;
+	private static int dim = 2;
+	private static int points = 1;
 	
 	@BeforeClass
 	public static void writeTestNexusFile() throws Exception {
@@ -545,7 +545,6 @@ public class NcdLazyDataReductionTest {
 	@Test
 	public void testLazyAverage() throws Exception {
 		
-		LazyAverage lazyAverage = new LazyAverage();
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
@@ -555,14 +554,19 @@ public class NcdLazyDataReductionTest {
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		
+	    DataSliceIdentifiers input_errors_ids = NcdNexusUtils.readDataId(filename, testDatasetName, "errors");
+		input_errors_ids.setSlice(lstart, shape, count, shape);
+		
+		LazyAverage lazyAverage = new LazyAverage();
 		lazyAverage.setAverageIndices(new int[] {1,3});
-		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 100, input_ids);
+		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 100, input_ids, input_errors_ids);
 		
 	    long[] shapeRes = new long[] {1, shape[1], 1, imageShape[0], imageShape[1]}; 
 		SliceSettings resultsSlice = new SliceSettings(shapeRes, 0, (int) shapeRes[0]);
 	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    resultsSlice.setStart(start);
 		AbstractDataset outDataset = NcdNexusUtils.sliceInputData(resultsSlice, input_ids);
+		AbstractDataset outErrors = NcdNexusUtils.sliceInputData(resultsSlice, input_errors_ids);
 		
 		for (int k = 0; k < shape[1]; k++) {
 		  for (int i = 0; i < imageShape[0]; i++) {
@@ -570,11 +574,15 @@ public class NcdLazyDataReductionTest {
 				start = new int[] {0, k, 0, i, j};
 				int[] stop = new int[] {(int) shape[0], k + 1, (int) shape[2], i + 1 , j + 1};
 				AbstractDataset dataSlice = data.getSlice(start, stop, null);
+				AbstractDataset errorsSlice = error.getSlice(start, stop, null);
 				double value = outDataset.getDouble(new int[] {0, k, 0, i, j});
+				double errors = outErrors.getDouble(new int[] {0, k, 0, i, j});
 				double expected = (Double) dataSlice.sum() / (shape[0] * shape[2]);
+				double expectederrors = (Double) errorsSlice.sum() / (shape[0] * shape[2]);
 
 				// This check fails for higher accuracy settings
 				assertEquals(String.format("Test average frame for (%d, %d, %d)", k, i, j), expected, value, 1e-6*expected);
+				assertEquals(String.format("Test average frame errors for (%d, %d, %d)", k, i, j), expectederrors, errors, 1e-6*expected);
 			}
 		  }
 		}

@@ -53,7 +53,7 @@ public class LazyAverage extends LazyDataReduction {
 		this.monitor = monitor;
 	}
 
-	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids) throws HDF5Exception {
+	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
 		
 		long[] frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		
@@ -68,6 +68,7 @@ public class LazyAverage extends LazyDataReduction {
 	    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
 		int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
+		int ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
 		H5.H5Tclose(type);
 		
 		// Loop over dimensions that aren't averaged
@@ -139,6 +140,7 @@ public class LazyAverage extends LazyDataReduction {
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
+			AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
 			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;
@@ -151,6 +153,7 @@ public class LazyAverage extends LazyDataReduction {
 				
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
+				AbstractDataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
 				int data_slice_rank = data_slice.getRank();
 				
 				if (monitor.isCanceled()) {
@@ -162,10 +165,12 @@ public class LazyAverage extends LazyDataReduction {
 					if (ArrayUtils.contains(averageIndices, idx + 1)) {
 						totalFramesBatch *= data_slice.getShape()[idx];
 						data_slice = data_slice.sum(idx);
+						errors_slice = errors_slice.sum(idx);
 					}
 				}
 				totalFrames += totalFramesBatch;
 				ave_frame = ave_frame.iadd(data_slice);
+				ave_errors_frame = ave_errors_frame.iadd(errors_slice);
 			}
 			
 			if (monitor.isCanceled()) {
@@ -173,6 +178,11 @@ public class LazyAverage extends LazyDataReduction {
 			}
 			
 			ave_frame =  ave_frame.idivide(totalFrames);
+			ave_errors_frame =  ave_errors_frame.idivide(totalFrames);
+			
+			if (monitor.isCanceled()) {
+				return;
+			}
 			
 			int filespace_id = H5.H5Dget_space(ave_data_id);
 			int type_id = H5.H5Dget_type(ave_data_id);
@@ -180,23 +190,30 @@ public class LazyAverage extends LazyDataReduction {
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 			long[] ave_count_data = new long[frames.length];
 			Arrays.fill(ave_count_data, 1);
-			
-			if (monitor.isCanceled()) {
-				return;
-			}
-			
 			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
-			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
-					ave_start, ave_step, ave_count_data, ave_step);
-			H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id,
-					HDF5Constants.H5P_DEFAULT, ave_frame.getBuffer());
+			
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
+					ave_step);
+			H5.H5Dwrite(ave_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
+					ave_frame.getBuffer());
 			
 			H5.H5Sclose(filespace_id);
 			H5.H5Sclose(memspace_id);
 			H5.H5Tclose(type_id);
+			
+			filespace_id = H5.H5Dget_space(ave_errors_id);
+			type_id = H5.H5Dget_type(ave_errors_id);
+			memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+			
+			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
+					ave_step);
+			H5.H5Dwrite(ave_errors_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
+					ave_errors_frame.getBuffer());
+			
 		}
 		
 		input_ids.setIDs(ave_group_id, ave_data_id);
+		input_errors_ids.setIDs(ave_group_id, ave_errors_id);
 	}
 
 }
