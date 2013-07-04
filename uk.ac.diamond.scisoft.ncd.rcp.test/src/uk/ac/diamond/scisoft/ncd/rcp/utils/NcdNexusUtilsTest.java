@@ -96,7 +96,7 @@ public class NcdNexusUtilsTest {
 		int[] step = new int[] {1, 1, 1, 1};
 		IDataset data = lazyDataset.getSlice(start, stop, step);
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector);
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector, "data");
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
 	    SliceSettings drSlice = new SliceSettings(frames_long, sliceDim, sliceBatch);
 	    drSlice.setStart(start);
@@ -125,7 +125,7 @@ public class NcdNexusUtilsTest {
 		for (int i = 0; i < datDimMake.length; i++)
 			datDimMake[i] = list.get(i).length;
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector);
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector, "data");
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
 	    
 	    SliceSettings drSlice = new SliceSettings(frames_long, 0, 1);

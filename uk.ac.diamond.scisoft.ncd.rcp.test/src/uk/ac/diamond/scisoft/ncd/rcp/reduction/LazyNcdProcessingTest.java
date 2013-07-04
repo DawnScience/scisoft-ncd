@@ -188,7 +188,7 @@ public class LazyNcdProcessingTest {
 		
 		testbgClass.setNcdDetectors(ncdDetectors);
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector);
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector, "data");
 	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);
 	    int[] start = new int[] {0, 0, 0, 0};
 	    drSlice.setStart(start);
@@ -201,7 +201,7 @@ public class LazyNcdProcessingTest {
 	@Test
 	public void checkDetectorResponse() throws HDF5Exception {
 
-	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector);
+	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector, "data");
 	    SliceSettings dataSlice = new SliceSettings(frames, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, firstFrame, 0, 0};
 	    dataSlice.setStart(start);
@@ -264,7 +264,7 @@ public class LazyNcdProcessingTest {
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 	    
-	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration);
+	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration, "data");
 	    SliceSettings normSlice = new SliceSettings(framesCal, 1, lastFrame - firstFrame + 1);
 	    normSlice.setStart(start);
 		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
@@ -300,7 +300,7 @@ public class LazyNcdProcessingTest {
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 
-	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFilename, detectorBg);
+	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFilename, detectorBg, "data");
 	    SliceSettings bgSlice = new SliceSettings(framesBg, 1, 1);
 	    start = new int[] {0, 0, 0};
 	    bgSlice.setStart(start);
@@ -314,7 +314,7 @@ public class LazyNcdProcessingTest {
 				float testResult = (float) (valData - bgScaling*valBg);
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(testResult*testResult + valResult*valResult)), 1e-10);
 
-				assertEquals(String.format("Test normalisation for pixel (%d, %d)", frame, i), testResult, valResult, acc);
+				assertEquals(String.format("Test background subtraction for pixel (%d, %d)", frame, i), testResult, valResult, acc);
 			}
 		}
 	}
