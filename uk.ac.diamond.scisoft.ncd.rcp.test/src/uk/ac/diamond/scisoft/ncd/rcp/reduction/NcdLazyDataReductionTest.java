@@ -453,25 +453,36 @@ public class NcdLazyDataReductionTest {
 	    int inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
 		int inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invShape.length, invShape, true, "counts");
+		int inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invShape.length, invShape, true, "counts");
 		
-		DataSliceIdentifiers inv_id = new DataSliceIdentifiers();
-		inv_id.setIDs(inv_group_id, inv_data_id);
+		DataSliceIdentifiers invId = new DataSliceIdentifiers();
+		invId.setIDs(inv_group_id, inv_data_id);
 		long[] lstart = new long[] { 0, 0, 0 };
 		long[] count = new long[] { 1, 1, 1 };
-		inv_id.setSlice(lstart, invShape, count, invShape);
+		invId.setSlice(lstart, invShape, count, invShape);
+		
+		DataSliceIdentifiers invErrorsId = new DataSliceIdentifiers();
+		invErrorsId.setIDs(inv_group_id, inv_errors_id);
+		invErrorsId.setSlice(lstart, invShape, count, invShape);
     
-		AbstractDataset outDataset = lazyInvariant.execute(dim, data, inv_id, lock);
+		AbstractDataset[] outDatasets = lazyInvariant.execute(dim, data, error, invId, invErrorsId, lock);
+		AbstractDataset outData = outDatasets[0];
+		AbstractDataset outErrors = outDatasets[1];
 		for (int h = 0; h < invShape[0]; h++) {
 		  for (int g = 0; g < invShape[1]; g++) {
 			for (int k = 0; k < invShape[2]; k++) {
-				float value = outDataset.getFloat(new int[] {h, g, k});
+				float value = outData.getFloat(new int[] {h, g, k});
+				float error = outErrors.getFloat(new int[] {h, g, k});
 				float expected = 0.0f;
+				float expectederror = 0.0f;
 				for (int i = 0; i < imageShape[0]; i++) {
 					for (int j = 0; j < imageShape[1]; j++) { 
 						expected += g*shape[2] + k + i*imageShape[1] + j;
+						expectederror += Math.sqrt(g*shape[2] + k) + Math.sqrt(i*imageShape[1] + j);
 					}
 				}
 				assertEquals(String.format("Test invariant result for (%d, %d, %d)", h, g, k), expected, value, 1e-6*expected);
+				assertEquals(String.format("Test invariant error result for (%d, %d, %d)", h, g, k), expectederror, error, 1e-6*expected);
 			}
 		  }
 		}

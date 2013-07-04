@@ -37,8 +37,6 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5Invariant.class);
 
-	public AbstractDataset parentngd;
-	
 	public HDF5Invariant(String name, String key) {
 		super(name, key);
 	}
@@ -55,15 +53,17 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 		return null;
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public AbstractDataset[] writeout(int dim, ILock lock) {
 		try {
-			if (parentngd == null) return null;
+			if (data == null) return null;
 			Invariant inv = new Invariant();
 			
-			int[] dataShape = Arrays.copyOf(parentngd.getShape(), parentngd.getRank() - dim);
-			parentngd = flattenGridData(parentngd, dim);
+			int[] dataShape = Arrays.copyOf(data.getShape(), data.getRank() - dim);
+			data = flattenGridData(data, dim);
 			
-			float[] mydata = inv.process(parentngd.getBuffer(), parentngd.getShape());
+			Object[] myobj = inv.process(data.getBuffer(), error.getBuffer(), data.getShape());
+			float[] mydata = (float[]) myobj[0];
+			float[] myerrors = (float[]) myobj[1];
 			try {
 				lock.acquire();
 				
@@ -73,13 +73,20 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
+				
+				filespace_id = H5.H5Dget_space(errIds.dataset_id);
+				type_id = H5.H5Dget_type(errIds.dataset_id);
+				memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
+				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
+						errIds.block);
+				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myerrors);
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				lock.release();
 			}
 			
-			return new FloatDataset(mydata, dataShape);
+			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerrors, dataShape)};
 			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);
