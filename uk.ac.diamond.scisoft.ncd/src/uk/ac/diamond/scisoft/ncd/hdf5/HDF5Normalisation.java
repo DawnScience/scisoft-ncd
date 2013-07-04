@@ -36,8 +36,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 	private String calibName;
 	private int calibChannel = 1;
 
-	public AbstractDataset parentngd;
-	public AbstractDataset calibngd;
+	private AbstractDataset calibngd;
 	
 	public HDF5Normalisation(String name, String key) {
 		super(name, key);
@@ -47,6 +46,11 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		return normvalue;
 	}
 
+	public void setCalibrationData(AbstractDataset dataCal) {
+		this.calibngd = dataCal;
+		
+	}
+	
 	public void setNormvalue(double normvalue) {
 		this.normvalue = normvalue;
 	}
@@ -67,18 +71,20 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		this.calibChannel = calibChannel;
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public AbstractDataset[] writeout(int dim, ILock lock) {
 
 		try {
 			Normalisation nm = new Normalisation();
 			nm.setCalibChannel(calibChannel);
 			nm.setNormvalue(normvalue);
-			int[] dataShape = parentngd.getShape();
+			int[] dataShape = data.getShape();
 			
-			parentngd = flattenGridData(parentngd, dim);
+			data = flattenGridData(data, dim);
 			calibngd = flattenGridData(calibngd, 1);
 			
-			float[] mydata = nm.process(parentngd.getBuffer(), calibngd.getBuffer(), parentngd.getShape()[0], parentngd.getShape(), calibngd.getShape());
+			Object[] myobj = nm.process(data.getBuffer(), error.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
+			float[] mydata = (float[]) myobj[0];
+			float[] myerrors = (float[]) myobj[1];
 			
 			try {
 				lock.acquire();
@@ -90,13 +96,22 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 						ids.start, ids.stride, ids.count, ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id,
 						HDF5Constants.H5P_DEFAULT, mydata);
+				
+				filespace_id = H5.H5Dget_space(errIds.dataset_id);
+				type_id = H5.H5Dget_type(errIds.dataset_id);
+				memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
+				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+						errIds.start, errIds.stride, errIds.count, errIds.block);
+				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id,
+						HDF5Constants.H5P_DEFAULT, myerrors);
+				
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				lock.release();
 			}
 			
-			return new FloatDataset(mydata, dataShape);
+			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerrors, dataShape)};
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);
@@ -105,4 +120,5 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		return null;
 		
 	}
+
 }

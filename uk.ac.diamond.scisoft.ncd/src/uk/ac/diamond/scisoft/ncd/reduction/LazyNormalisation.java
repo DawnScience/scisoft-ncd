@@ -31,14 +31,15 @@ public class LazyNormalisation extends LazyDataReduction {
 		this.absScaling = absScaling;
 	}
 
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset dataCal, DataSliceIdentifiers norm_id, ILock lock) {
+	public AbstractDataset[] execute(int dim, AbstractDataset data, AbstractDataset errors, AbstractDataset dataCal, DataSliceIdentifiers norm_id, DataSliceIdentifiers norm_errors_id, ILock lock) {
 		HDF5Normalisation reductionStep = new HDF5Normalisation("norm", "data");
 		reductionStep.setCalibChannel(normChannel);
-		if(absScaling != null)
+		if(absScaling != null) {
 			reductionStep.setNormvalue(absScaling);
-		reductionStep.parentngd = data;
-		reductionStep.calibngd = dataCal;
-		reductionStep.setIDs(norm_id);
+		}
+		reductionStep.setData(data, errors);
+		reductionStep.setCalibrationData(dataCal);
+		reductionStep.setIDs(norm_id, norm_errors_id);
 		
 		return reductionStep.writeout(dim, lock);
 	}

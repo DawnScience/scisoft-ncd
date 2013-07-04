@@ -43,12 +43,14 @@ public class Normalisation {
 	}
 
 	
-	public float[] process(Serializable buffer, Serializable cbuffer, int frames, final int[] dimensions, final int[] cdimensions) {
+	public Object[] process(Serializable buffer, Serializable errors, Serializable cbuffer, int frames, final int[] dimensions, final int[] cdimensions) {
 
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		float[] parenterrors = (float[]) ConvertUtils.convert(errors, float[].class);
 		
 		float[] calibdata = (float[]) cbuffer;
 		float[] mydata = new float[parentdata.length];
+		float[] myerrors = new float[parenterrors.length];
 
 		int calibTotalChannels = cdimensions[1];
 		int parentDataLength = 1;
@@ -58,12 +60,15 @@ public class Normalisation {
 		
 		for (int i = 0; i < frames; i++) {
 			float calReading = calibdata[i * calibTotalChannels + calibChannel];
-			if (calReading == 0) calReading = 1; //TODO better idea?
+			if (calReading == 0) {
+				calReading = 1; //TODO better idea?
+			}
 			for (int j = i * parentDataLength; j < (i + 1) * parentDataLength; j++) {
 				mydata[j] = (float) ((normvalue / calReading) * parentdata[j]);
+				myerrors[j] = (float) ((normvalue / calReading) * parenterrors[j]);
 			}
 		}
 
-		return mydata;
+		return new Object[] {mydata, myerrors};
 	}
 }
