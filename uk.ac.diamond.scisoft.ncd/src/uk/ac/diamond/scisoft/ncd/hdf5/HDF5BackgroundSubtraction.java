@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.BackgroundSubtraction;
 
@@ -31,42 +32,49 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5BackgroundSubtraction.class);
 
-	public AbstractDataset parentngd;
-	private AbstractDataset background;
+	private AbstractDataset background, bgError;
 
 	public HDF5BackgroundSubtraction(String name, String key) {
 		super(name, key);
 	}
 
-	public void setBackground(AbstractDataset ds) {
+	public void setBackground(AbstractDataset ds, AbstractDataset err) {
 		background = ds;
+		if (err != null) {
+			bgError = err;
+		} else {
+			Object obj = DatasetUtils.createJavaArray(ds);
+			bgError = AbstractDataset.array(obj);
+			bgError.ipower(0.5);
+		}
 	}
 
-	public AbstractDataset getBackground() {
-		return background;
-	}
-
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public AbstractDataset[] writeout(int dim, ILock lock) {
 		if (background == null) {
 			return null;
 		}
 
-		if (parentngd == null) {
+		if (data == null) {
 			logger.error(getName() + ": no detector " + key + " found");
 			return null;
 		}
 
 		try {
-			int[] dataShape = parentngd.getShape();
+			int[] dataShape = data.getShape();
 
-			parentngd = flattenGridData(parentngd, dim);
+			data = flattenGridData(data, dim);
+			error = flattenGridData(error, dim);
+			
 			background = background.squeeze();
+			bgError = bgError.squeeze();
 
 			BackgroundSubtraction bs = new BackgroundSubtraction();
-			bs.setBackground(background);
+			bs.setBackground(background, bgError);
 
-			int[] flatShape = parentngd.getShape();
-			float[] mydata = bs.process(parentngd.getBuffer(), flatShape);
+			int[] flatShape = data.getShape();
+			Object[] myobj = bs.process(data.getBuffer(), error.getBuffer(), flatShape);
+			float[] mydata = (float[]) myobj[0];
+			float[] myerror = (float[]) myobj[1];
 			try {
 				lock.acquire();
 				
@@ -76,13 +84,22 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
+				
+				
+				int err_filespace_id = H5.H5Dget_space(errIds.dataset_id);
+				int err_type_id = H5.H5Dget_type(errIds.dataset_id);
+				int err_memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
+				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
+						errIds.block);
+				H5.H5Dwrite(errIds.dataset_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myerror);
+				
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				lock.release();
 			}
 
-			return new FloatDataset(mydata, dataShape);
+			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerror, dataShape)};
 			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);

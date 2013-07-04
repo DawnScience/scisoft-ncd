@@ -30,21 +30,24 @@ public class BackgroundSubtraction {
 
 	private static final Logger logger = LoggerFactory.getLogger(BackgroundSubtraction.class);
 	
-	private FloatDataset background;
+	private FloatDataset background, errBackground;
 
-	public void setBackground(AbstractDataset ds) {
+	public void setBackground(AbstractDataset ds, AbstractDataset eds) {
 		background = (FloatDataset) ds.cast(AbstractDataset.FLOAT32);
+		errBackground = (FloatDataset) eds.cast(AbstractDataset.FLOAT32);
 	}
 
 	public FloatDataset getBackground() {
 		return background;
 	}
 
-	public float[] process(Serializable buffer, final int[] dimensions) {
+	public Object[] process(Serializable buffer, Serializable error, final int[] dimensions) {
 		
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		float[] parenterror = (float[]) ConvertUtils.convert(error, float[].class);
 		
 		float[] mydata = new float[parentdata.length];
+		float[] myerror = new float[parenterror.length];
 		
 		// first dim is timeframe
 		int[] imagedim = Arrays.copyOfRange(dimensions, 1, dimensions.length);
@@ -62,9 +65,11 @@ public class BackgroundSubtraction {
 		if (bgsize == parentsize) {
 			for (int i = 0; i < parentdata.length; i++) {
 				mydata[i] = parentdata[i] - background.getData()[i];
+				myerror[i] = parenterror[i] + errBackground.getData()[i];
 			}
 		} else {
 			float[] mybg = background.getData().clone();
+			float[] myerr = errBackground.getData().clone();
 			if (background.getShape().length >= dimensions.length) {
 				// averaging
 				logger.warn("averaging background to fit data");
@@ -73,20 +78,23 @@ public class BackgroundSubtraction {
 					bgsize *= n;
 				}
 				mybg = new float[bgsize];
+				myerr = new float[bgsize];
 				double multiplicity = parentdata.length / bgsize;
 				for (int i = 0; i < background.getData().length; i++) {
 					mybg[i % bgsize] += background.getData()[i] / multiplicity;
+					myerr[i % bgsize] += errBackground.getData()[i] / multiplicity;
 				}
 			}
 			if (parentsize % bgsize == 0) {
 				for (int i = 0; i < parentdata.length; i++) {
 					mydata[i] = parentdata[i] - mybg[i % bgsize];
+					myerror[i] = parenterror[i] + myerr[i % bgsize];
 				}
 			} else {
 				logger.error("background and data sizes incompatible");
 			}
 		}
 		
-		return mydata;
+		return new Object[] {mydata, myerror};
 	}
 }

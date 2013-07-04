@@ -20,9 +20,6 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
@@ -32,13 +29,13 @@ import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 
 public class HDF5ReductionDetector {
 
-	private static final Logger logger = LoggerFactory.getLogger(HDF5ReductionDetector.class);
+	protected AbstractDataset data, error;
 	
 	private String name;
 	protected String key;
 	protected AbstractDataset qAxis;
 	protected String qAxisUnit;
-	protected DataSliceIdentifiers ids;
+	protected DataSliceIdentifiers ids, errIds;
 	
 	protected String detectorType = DetectorTypes.REDUCTION_DETECTOR;
 	protected double pixelSize = 0.0;
@@ -51,14 +48,27 @@ public class HDF5ReductionDetector {
 		this.key = key;
 		this.name = name;
 		ids = new DataSliceIdentifiers();
+		errIds = new DataSliceIdentifiers();
 	}
 	
 	public void setName(String name) {
 		this.name = name;
 	}
 	
-	public void setIDs(DataSliceIdentifiers input_id) {
+	public void setData(AbstractDataset ds, AbstractDataset err) {
+		data = ds;
+		if (err != null) {
+			error = err;
+		} else {
+			Object obj = DatasetUtils.createJavaArray(ds);
+			error = AbstractDataset.array(obj);
+			error.ipower(0.5);
+		}
+	}
+
+	public void setIDs(DataSliceIdentifiers input_id, DataSliceIdentifiers error_id) {
 		ids = new DataSliceIdentifiers(input_id);
+		errIds = new DataSliceIdentifiers(error_id);
 	}
 	
 	public String getName() {
@@ -106,15 +116,9 @@ public class HDF5ReductionDetector {
 	}
 
 	public void setMask(DoubleDataset mask) {
-		try {
-			if (mask == null || mask.getShape() == getDataDimensions()) {
-				this.mask = mask;
-				return;
-			}
-		} catch (Exception e) {
-			//
+		if (mask == null || mask.getShape() == getDataDimensions()) {
+			this.mask = mask;
 		}
-		logger.error("cannot set mask due to dimensions problem");
 	}
 	
 	@Override
@@ -138,8 +142,9 @@ public class HDF5ReductionDetector {
 		if (dataRank > (dimension + 1)) {
 			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
 			int totalFrames = 1;
-			for (int val : frameArray)
+			for (int val : frameArray) {
 				totalFrames *= val;
+			}
 			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
 			newShape[0] = totalFrames;
 			return data.reshape(newShape);
