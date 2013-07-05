@@ -100,11 +100,11 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		return drData;
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id, ILock lock) {
+	public AbstractDataset[] execute(int dim, AbstractDataset data, AbstractDataset errors, DataSliceIdentifiers det_id, DataSliceIdentifiers det_errors_id, ILock lock) {
 		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse("det", "data");
+		reductionStep.setData(data, errors);
 		reductionStep.setResponse(drData);
-		reductionStep.parentngd = data;
-		reductionStep.setIDs(det_id);
+		reductionStep.setIDs(det_id, det_errors_id);
 		
 		return reductionStep.writeout(dim, lock);
 	}

@@ -217,7 +217,7 @@ public class NcdLazyDataReductionTest {
 			for (int i = 0; i < imageShape[0]; i++) {
 				for (int j = 0; j < imageShape[1]; j++) {
 					int idx = (int) (i*imageShape[1] + j); 
-					float val = scaleBg;
+					float val = (float) Math.log(1.0 + idx);
 					data[idx] = val;
 				}
 			}
@@ -343,7 +343,7 @@ public class NcdLazyDataReductionTest {
 						float expectederror = (float) (absScale*(Math.sqrt(g*shape[2] + k) + Math.sqrt(i*imageShape[1] + j)) / (scale*(g+1)));
 
 						assertEquals(String.format("Test normalisation frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-6*expected);
-						assertEquals(String.format("Test normalisation frame error for (%d, %d, %d, %d, %d)", h, g, k, i, j), expectederror, error, 1e-6*expected);
+						assertEquals(String.format("Test normalisation frame error for (%d, %d, %d, %d, %d)", h, g, k, i, j), expectederror, error, 1e-6*expectederror);
 					}
 				}
 			}
@@ -405,7 +405,7 @@ public class NcdLazyDataReductionTest {
 						float expectederr = (float) (Math.sqrt(g*shape[2] + k) + (1.0f + scaleBg)*Math.sqrt(i*imageShape[1] + j)) + scaleBg*(bgShape_int[1] - 1)/2.0f;
 
 						assertEquals(String.format("Test background subtraction frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-4*Math.abs(expected));
-						assertEquals(String.format("Test background subtraction frame error for (%d, %d, %d, %d, %d)", h, g, k, i, j), expectederr, error, 1e-4*Math.abs(expected));
+						assertEquals(String.format("Test background subtraction frame error for (%d, %d, %d, %d, %d)", h, g, k, i, j), expectederr, error, 1e-4*Math.abs(expectederr));
 					}
 			}
 	}
@@ -420,6 +420,7 @@ public class NcdLazyDataReductionTest {
 	    int dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
 		int dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, shape.length, shape, true, "counts");
+		int dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, shape.length, shape, true, "counts");
 			
 		lazyDetectorResponse.createDetectorResponseInput();
 		
@@ -428,17 +429,27 @@ public class NcdLazyDataReductionTest {
 		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
-		AbstractDataset outDataset = lazyDetectorResponse.execute(dim, data, input_ids, lock);
+		
+		DataSliceIdentifiers errors_ids = new DataSliceIdentifiers();
+		errors_ids.setIDs(dr_group_id, dr_errors_id);
+		errors_ids.setSlice(lstart, shape, count, shape);
+		
+		AbstractDataset[] outDatasets = lazyDetectorResponse.execute(dim, data, error, input_ids, errors_ids, lock);
+		AbstractDataset outData = outDatasets[0];
+		AbstractDataset outErrors = outDatasets[1]; 
 		
 		for (int h = 0; h < shape[0]; h++)
  		  for (int g = 0; g < shape[1]; g++)
 			for (int k = 0; k < shape[2]; k++) {
 				for (int i = 0; i < imageShape[0]; i++)
 					for (int j = 0; j < imageShape[1]; j++) {
-						float value = outDataset.getFloat(new int[] {h, g, k, i, j});
-						float expected = (g*shape[2] + k + i*imageShape[1] + j)*scaleBg;
+						float value = outData.getFloat(new int[] {h, g, k, i, j});
+						float error = outErrors.getFloat(new int[] {h, g, k, i, j});
+						float expected = (float) ((g*shape[2] + k + i*imageShape[1] + j)*Math.log(1.0 + i*imageShape[1] + j));
+						float expectederror =  (float) ((Math.sqrt(g*shape[2] + k) + Math.sqrt(i*imageShape[1] + j))*Math.log(1.0 + i*imageShape[1] + j));
 
-						assertEquals(String.format("Test detector response frame for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test detector response for (%d, %d, %d, %d, %d)", h, g, k, i, j), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test detector response error for (%d, %d, %d, %d, %d)", h, g, k, i, j), expectederror, error, 1e-6*expectederror);
 					}
 			}
 	}
@@ -482,7 +493,7 @@ public class NcdLazyDataReductionTest {
 					}
 				}
 				assertEquals(String.format("Test invariant result for (%d, %d, %d)", h, g, k), expected, value, 1e-6*expected);
-				assertEquals(String.format("Test invariant error result for (%d, %d, %d)", h, g, k), expectederror, error, 1e-6*expected);
+				assertEquals(String.format("Test invariant error result for (%d, %d, %d)", h, g, k), expectederror, error, 1e-6*expectederror);
 			}
 		  }
 		}
@@ -593,7 +604,7 @@ public class NcdLazyDataReductionTest {
 
 				// This check fails for higher accuracy settings
 				assertEquals(String.format("Test average frame for (%d, %d, %d)", k, i, j), expected, value, 1e-6*expected);
-				assertEquals(String.format("Test average frame errors for (%d, %d, %d)", k, i, j), expectederrors, errors, 1e-6*expected);
+				assertEquals(String.format("Test average frame errors for (%d, %d, %d)", k, i, j), expectederrors, errors, 1e-6*expectederrors);
 			}
 		  }
 		}

@@ -31,7 +31,6 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5DetectorResponse.class);
 
-	public AbstractDataset parentngd;
 	private AbstractDataset response;
 
 	public AbstractDataset getResponse() {
@@ -46,7 +45,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 		super(name, key);
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public AbstractDataset[] writeout(int dim, ILock lock) {
 		if (response == null) {
 			return null;
 		}
@@ -54,17 +53,20 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 		try {
 			DetectorResponse dr = new DetectorResponse();
 			dr.setResponse(response);
-			int[] dataShape = parentngd.getShape();
+			int[] dataShape = data.getShape();
 			
-			parentngd = flattenGridData(parentngd, dim);
+			data = flattenGridData(data, dim);
+			error = flattenGridData(error, dim);
 			response = response.squeeze();
 			
-			if (parentngd.getRank() != response.getRank() + 1) {
+			if (data.getRank() != response.getRank() + 1) {
 				throw new IllegalArgumentException("response of wrong dimensionality");
 			}
 
-			int[] flatShape = parentngd.getShape();
-			float[] mydata = dr.process(parentngd.getBuffer(), flatShape[0], flatShape);
+			int[] flatShape = data.getShape();
+			Object[] myobj = dr.process(data.getBuffer(), error.getBuffer(), flatShape[0], flatShape);
+			float[] mydata = (float[]) myobj[0];
+			float[] myerrors = (float[]) myobj[1];
 
 			try {
 				lock.acquire();
@@ -75,13 +77,20 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
+				
+				filespace_id = H5.H5Dget_space(errIds.dataset_id);
+				type_id = H5.H5Dget_type(errIds.dataset_id);
+				memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
+				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
+						errIds.block);
+				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myerrors);
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				lock.release();
 			}
 
-			return new FloatDataset(mydata, dataShape);
+			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerrors, dataShape)};
 			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);
