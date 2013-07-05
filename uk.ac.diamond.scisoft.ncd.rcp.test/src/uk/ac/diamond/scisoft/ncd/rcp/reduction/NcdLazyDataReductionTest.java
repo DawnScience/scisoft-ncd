@@ -516,11 +516,15 @@ public class NcdLazyDataReductionTest {
 		secFrames[secFrames.length - 1] = intRadii[1] - intRadii[0] + 1;
 		int sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secFrames.length, secFrames, true,
 				"counts");
+		int sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secFrames.length, secFrames, true,
+				"counts");
 
 		double[] angles = intSector.getAngles();
 		long[] azFrames = Arrays.copyOf(secFrames, secFrames.length);
 		azFrames[azFrames.length - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames.length, azFrames, false,
+				"counts");
+		int az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, azFrames.length, azFrames, false,
 				"counts");
 
 		intSector.setClippingCompensation(true);
@@ -533,15 +537,19 @@ public class NcdLazyDataReductionTest {
 
 		DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
 		sector_id.setIDs(sec_group_id, sec_data_id);
+		DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers(input_ids);
+		err_sector_id.setIDs(sec_group_id, sec_errors_id);
 		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
 		azimuth_id.setIDs(sec_group_id, az_data_id);
+		DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers(input_ids);
+		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
 		
 		AbstractDataset[] areaData = ROIProfile.area((int[])ConvertUtils.convert(imageShape, int[].class), null, intSector);
 		lazySectorIntegration.setAreaData(areaData);
 		lazySectorIntegration.setCalculateRadial(true);
 		lazySectorIntegration.setCalculateAzimuthal(true);
 		lazySectorIntegration.setFast(false);
-		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
+		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, error, sector_id, err_sector_id, azimuth_id, err_azimuth_id, lock);
 			
 		intSector.setAverageArea(true);
 		for (int h = 0; h < shape[0]; h++)
@@ -550,16 +558,24 @@ public class NcdLazyDataReductionTest {
 				int[] startImage = new int[] {h, g, k, 0, 0};
 				int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
 				AbstractDataset image = data.getSlice(startImage, stopImage, null);
+				AbstractDataset errimage = error.getSlice(startImage, stopImage, null);
 				AbstractDataset[] intResult = ROIProfile.sector(image.squeeze(), null, intSector);
+				AbstractDataset[] errResult = ROIProfile.sector(errimage.squeeze(), null, intSector);
 				for (int i = 0; i < outDataset[1].getShape()[3]; i++) {
 						float value = outDataset[1].getFloat(new int[] {h, g, k, i});
+						float error = outDataset[3].getFloat(new int[] {h, g, k, i});
 						float expected = intResult[0].getFloat(new int[] {i});
+						float expectederror = errResult[0].getFloat(new int[] {i});
 						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
+						assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
 				for (int i = 0; i < outDataset[0].getShape()[3]; i++) {
 					float value = outDataset[0].getFloat(new int[] {h, g, k, i});
+					float error = outDataset[2].getFloat(new int[] {h, g, k, i});
 					float expected = intResult[1].getFloat(new int[] {i});
+					float expectederror = errResult[1].getFloat(new int[] {i});
 					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
+					assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
 			}
 	}
