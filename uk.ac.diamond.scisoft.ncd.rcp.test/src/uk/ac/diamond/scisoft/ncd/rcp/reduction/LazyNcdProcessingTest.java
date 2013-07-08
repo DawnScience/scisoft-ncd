@@ -188,7 +188,7 @@ public class LazyNcdProcessingTest {
 		
 		testbgClass.setNcdDetectors(ncdDetectors);
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector, "data");
+	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector, "data", null)[0];
 	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);
 	    int[] start = new int[] {0, 0, 0, 0};
 	    drSlice.setStart(start);
@@ -201,27 +201,34 @@ public class LazyNcdProcessingTest {
 	@Test
 	public void checkDetectorResponse() throws HDF5Exception {
 
-	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector, "data");
+	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector, "data", null)[0];
 	    SliceSettings dataSlice = new SliceSettings(frames, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, firstFrame, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyDetectorResponse.name);
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesResult, 1, lastFrame - firstFrame + 1);
 	    start = new int[] {0, 0, 0, 0};
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < 512; i++)
 				for (int j = 0; j < 512; j++) {
 					float valResult = result.getFloat(new int[] {0, frame, i, j});
+					float valResultErrors = resultErrors.getFloat(new int[] {0, frame, i, j});
 					float valData = data.getFloat(new int[] {0, frame, i, j});
+					float valInputErrors = (float) Math.sqrt(valData);
 					float valDr = dr.getFloat(new int[] {0, 0, i, j}); 
 					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+					double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultErrors*valResultErrors + valInputErrors*valInputErrors)), 1e-10);
 					
 					assertEquals(String.format("Test detector response for pixel (%d, %d, %d)", frame, i, j), valData*valDr, valResult, acc);
+					assertEquals(String.format("Test detector response errors for pixel (%d, %d, %d)", frame, i, j), valInputErrors*valDr, valResultErrors, accerr);
 				}
 		}
 	}
@@ -230,27 +237,38 @@ public class LazyNcdProcessingTest {
 	public void checkSectorIntegration() throws HDF5Exception {
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-		    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyDetectorResponse.name);
+		    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyDetectorResponse.name);
+		    DataSliceIdentifiers data_id = ids[0];
+		    DataSliceIdentifiers input_errors_id = ids[1];
 		    SliceSettings dataSlice = new SliceSettings(framesResult, 1, 1);
 		    int[] start = new int[] {0, frame, 0, 0};
 		    dataSlice.setStart(start);
 			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+			AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 			
-		    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazySectorIntegration.name);
+		    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazySectorIntegration.name);
+		    DataSliceIdentifiers result_id = array_id[0];
+		    DataSliceIdentifiers result_error_id = array_id[1];
 		    SliceSettings resultSlice = new SliceSettings(framesSec, 1, 1);
 		    start = new int[] {0, frame, 0};
 		    resultSlice.setStart(start);
 			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+			AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 			intSector.setAverageArea(true);
 			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
+			AbstractDataset[] intResultError = ROIProfile.sector(dataErrors.squeeze(), null, intSector);
 
 			for (int j = 0; j < intPoints; j++) {
 				float valResult = result.getFloat(new int[] {0, 0, j});
+				float valResultError = resultError.getFloat(new int[] {0, 0, j});
 				float valData = intResult[0].getFloat(new int[] {j});
+				float valDataError = intResultError[0].getFloat(new int[] {j});
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 
 				assertEquals(String.format("Test sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
+				assertEquals(String.format("Test sector integration error for index (%d, %d)", frame, j), valResultError, valDataError, accerr);
 			}
 		}
 	}
@@ -258,30 +276,40 @@ public class LazyNcdProcessingTest {
 	@Test
 	public void checkNormalisation() throws HDF5Exception {
 
-	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazySectorIntegration.name);
+	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazySectorIntegration.name);
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers input_errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
-	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration, "data");
+	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration, "data", null)[0];
 	    SliceSettings normSlice = new SliceSettings(framesCal, 1, lastFrame - firstFrame + 1);
 	    normSlice.setStart(start);
 		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
 		
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyNormalisation.name);
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyNormalisation.name);
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			float valNorm = norm.getFloat(new int[] {0, frame, normChannel}); 
 			for (int i = 0; i < intPoints; i++) {
 				float valResult = result.getFloat(new int[] {0, frame, i});
+				float valResultError = resultError.getFloat(new int[] {0, frame, i});
 				float valData = data.getFloat(new int[] {0, frame, i});
+				float valDataError = dataErrors.getFloat(new int[] {0, frame, i});
 				float testResult = (float) (valData * absScaling / valNorm);
+				float testError = (float) (valDataError * absScaling / valNorm);
 
 				assertEquals(String.format("Test normalisation for pixel (%d, %d)", frame, i), testResult, valResult, 1e-6*valResult);
+				assertEquals(String.format("Test normalisation erros for pixel (%d, %d)", frame, i), testError, valResultError, 1e-6*valResultError);
 			}
 		}
 	}
@@ -289,83 +317,122 @@ public class LazyNcdProcessingTest {
 	@Test
 	public void checkBackgroundSubtraction() throws HDF5Exception {
 
-	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyNormalisation.name);
+	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyNormalisation.name);
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers input_errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
-	    DataSliceIdentifiers bg_id = NcdNexusUtils.readDataId(bgFilename, detectorBg, "data");
+	    DataSliceIdentifiers[] bg_ids = NcdNexusUtils.readDataId(bgFilename, detectorBg, "data", "errors");
+	    DataSliceIdentifiers bg_data_id = bg_ids[0];
+	    DataSliceIdentifiers bg_error_id = bg_ids[1];
 	    SliceSettings bgSlice = new SliceSettings(framesBg, 1, 1);
 	    start = new int[] {0, 0, 0};
 	    bgSlice.setStart(start);
-		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_id);
+		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_data_id);
+		AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSlice, bg_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < intPoints; i++) {
 				float valResult = result.getFloat(new int[] {0, frame, i});
+				float valResultError = resultError.getFloat(new int[] {0, frame, i});
 				float valData = data.getFloat(new int[] {0, frame, i});
+				float valDataError = dataErrors.getFloat(new int[] {0, frame, i});
 				float valBg = bgData.getFloat(new int[] {0, 0, i});
+				float valBgError = bgErrors.getFloat(new int[] {0, 0, i});
 				float testResult = (float) (valData - bgScaling*valBg);
+				float testResultError = (float) (valDataError + bgScaling*valBgError);
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(testResult*testResult + valResult*valResult)), 1e-10);
+				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(testResultError*testResultError + valResultError*valResultError)), 1e-10);
 
 				assertEquals(String.format("Test background subtraction for pixel (%d, %d)", frame, i), testResult, valResult, acc);
+				assertEquals(String.format("Test background subtraction error for pixel (%d, %d)", frame, i), testResultError, valResultError, accerr);
 			}
 		}
 	}
 	
 	@Test
 	public void checkInvariant() throws HDF5Exception {
-	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers input_errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyInvariant.name);
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyInvariant.name);
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesInv, 1, lastFrame - firstFrame + 1);
 	    start = new int[] {0, 0};
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			float valResult = result.getFloat(new int[] {0, frame});
+			float valResultError = resultErrors.getFloat(new int[] {0, frame});
 			float valData = 0.0f;
-			for (int i = 0; i < intPoints; i++)
+			float valDataError = 0.0f;
+			for (int i = 0; i < intPoints; i++) {
 				valData += data.getFloat(new int[] {0, frame, i});
-			
+				valDataError += dataErrors.getFloat(new int[] {0, frame, i});
+			}
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 			assertEquals(String.format("Test invariant for frame %d", frame), valResult, valData, acc);
+			assertEquals(String.format("Test invariant error for frame %d", frame), valResultError, valDataError, accerr);
 		}
 	}
 	
 	@Test
 	public void checkAverage() throws HDF5Exception {
-	    DataSliceIdentifiers data_id = readResultsId(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyBackgroundSubtraction.name);
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers input_errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, (int) framesSec[1]);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
-	    DataSliceIdentifiers result_id = readResultsId(filename, detectorOut, LazyAverage.name);
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyAverage.name);
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesAve, 1, 1);
 	    start = new int[] {0, 0, 0};
 	    resultSlice.setStart(start);
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int i = 0; i < intPoints; i++) {
 			float valResult = result.getFloat(new int[] {0, 0, i});
+			float valResultError = resultErrors.getFloat(new int[] {0, 0, i});
 			float valData = 0.0f;
-			for (int frame = 0; frame < framesSec[1]; frame++)
+			float valDataError = 0.0f;
+			for (int frame = 0; frame < framesSec[1]; frame++) {
 				valData += data.getFloat(new int[] {0, frame, i});
+				valDataError += dataErrors.getFloat(new int[] {0, frame, i});
+			}
 			valData /= framesSec[1];
+			valDataError /= framesSec[1];
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 			assertEquals(String.format("Test average for index %d", i), valResult, valData, acc);
+			assertEquals(String.format("Test average error for index %d", i), valResultError, valDataError, accerr);
 		}
 	}
 	
@@ -375,16 +442,19 @@ public class LazyNcdProcessingTest {
 		TestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
 	
-	private static DataSliceIdentifiers readResultsId(String dataFile, String detector, String result) throws HDF5Exception {
+	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result) throws HDF5Exception {
 		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		int instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
 		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 		
 		DataSliceIdentifiers ids = new DataSliceIdentifiers();
 		ids.setIDs(detector_group_id, input_data_id);
-		return ids;
+		DataSliceIdentifiers errors_ids = new DataSliceIdentifiers();
+		errors_ids.setIDs(detector_group_id, input_errors_id);
+		return new DataSliceIdentifiers[] {ids, errors_ids};
 	}
 	
 }

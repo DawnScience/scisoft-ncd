@@ -279,16 +279,13 @@ public class NcdLazyDataReductionTest {
 			H5.H5Fclose(nxsFile);
 		}
 		
-	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, testDatasetName, "data");
+	    DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(filename, testDatasetName, "data", "errors");
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
 	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		
-	    DataSliceIdentifiers errors_id = NcdNexusUtils.readDataId(filename, testDatasetName, "errors");
-	    dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
-	    start = new int[] {0, 0, 0, 0, 0};
-	    dataSlice.setStart(start);
 		error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 	}
 	
@@ -304,7 +301,7 @@ public class NcdLazyDataReductionTest {
 		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape.length, shape, true, "counts");
 		int norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, shape.length, shape, true, "counts");
 
-		DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, testNormName, "data");
+		DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, testNormName, "data", null)[0];
 
 		int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
 		long[] framesCal = new long[rankCal];
@@ -363,7 +360,8 @@ public class NcdLazyDataReductionTest {
 		int bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, shape.length, shape, true, "counts");
 		int bg_error_id = NcdNexusUtils.makedata(bg_group_id, "error", type, shape.length, shape, true, "counts");
 			
-		DataSliceIdentifiers bgIds = NcdNexusUtils.readDataId(bgFile, testDatasetName, "data");
+		DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(bgFile, testDatasetName, "data", "errors");
+		DataSliceIdentifiers bgIds = ids[0];
 		H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgShape, null);
 		int[] bgShape_int = (int[]) ConvertUtils.convert(bgShape, int[].class);
 		lazyBackgroundSubtraction.setBgScale((double) scaleBg);
@@ -375,7 +373,7 @@ public class NcdLazyDataReductionTest {
 		int bgFrames = bgShape_int[0] * bgShape_int[1];
 		bgData = bgData.sum(0).sum(0).idivide(bgFrames);
 		
-		DataSliceIdentifiers bgErrorIds = NcdNexusUtils.readDataId(bgFile, testDatasetName, "errors");
+		DataSliceIdentifiers bgErrorIds = ids[1];
 		AbstractDataset bgError = NcdNexusUtils.sliceInputData(bgSliceParams, bgErrorIds);
 		bgError = bgError.sum(0).sum(0).idivide(bgFrames);
 
@@ -587,12 +585,13 @@ public class NcdLazyDataReductionTest {
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
-	    DataSliceIdentifiers input_ids = NcdNexusUtils.readDataId(filename, testDatasetName, "data");
+	    DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(filename, testDatasetName, "data", "errors");
+	    DataSliceIdentifiers input_ids = ids[0];
 		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 		
-	    DataSliceIdentifiers input_errors_ids = NcdNexusUtils.readDataId(filename, testDatasetName, "errors");
+	    DataSliceIdentifiers input_errors_ids = ids[1];
 		input_errors_ids.setSlice(lstart, shape, count, shape);
 		
 		LazyAverage lazyAverage = new LazyAverage();
