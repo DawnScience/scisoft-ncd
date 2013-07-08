@@ -65,10 +65,12 @@ public class DataSliceIdentifiers {
 	public void setIDs(int datagroup_id, int dataset_id) throws HDF5LibraryException {
 		this.datagroup_id = datagroup_id;
 		this.dataset_id = dataset_id;
-		dataspace_id = H5.H5Dget_space(dataset_id);
-		datatype_id = H5.H5Dget_type(dataset_id);
-		dataclass_id = H5.H5Tget_class(datatype_id);
-		datasize_id = H5.H5Tget_size(datatype_id);
+		if (dataset_id != -1) {
+			dataspace_id = H5.H5Dget_space(dataset_id);
+			datatype_id = H5.H5Dget_type(dataset_id);
+			dataclass_id = H5.H5Tget_class(datatype_id);
+			datasize_id = H5.H5Tget_size(datatype_id);
+		}
 	}
 	
 	public void setSlice (long[] start, long[] stride, long[] count, long[] block) {

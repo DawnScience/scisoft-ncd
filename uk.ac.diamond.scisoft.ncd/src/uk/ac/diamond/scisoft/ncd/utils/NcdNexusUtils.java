@@ -224,17 +224,26 @@ public class NcdNexusUtils {
 		return dataset_id;
 	}
 	
-	public static DataSliceIdentifiers readDataId(String dataFile, String detector, String dataset) throws HDF5Exception {
+	public static DataSliceIdentifiers[] readDataId(String dataFile, String detector, String dataset, String errors) throws HDF5Exception {
 		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		//int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
 		//int detector_group_id = H5.H5Gopen(instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		int input_data_id = H5.H5Dopen(detector_group_id, dataset, HDF5Constants.H5P_DEFAULT);
+		int input_errors_id = -1;
+		if (errors != null) {
+			input_errors_id = H5.H5Dopen(detector_group_id, errors, HDF5Constants.H5P_DEFAULT);
+		}
 		
 		DataSliceIdentifiers ids = new DataSliceIdentifiers();
 		ids.setIDs(detector_group_id, input_data_id);
-		return ids;
+		DataSliceIdentifiers errors_ids = null;
+		if (errors != null) {
+			errors_ids = new DataSliceIdentifiers();
+			errors_ids.setIDs(detector_group_id, input_errors_id);
+		}
+		return new DataSliceIdentifiers[] {ids, errors_ids};
 	}
 	
 	public static AbstractDataset sliceInputData(SliceSettings sliceData, DataSliceIdentifiers ids) throws HDF5Exception {
