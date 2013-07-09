@@ -31,17 +31,21 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 	}
 	
-	public AbstractDataset[] execute(int dim, AbstractDataset data, AbstractDataset error, AbstractDataset bgData,
-			AbstractDataset bgError, DataSliceIdentifiers bg_id, DataSliceIdentifiers bg_error_id, ILock lock) {
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData,
+			DataSliceIdentifiers bg_id, DataSliceIdentifiers bg_error_id, ILock lock) {
 		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
 		
-		reductionStep.setData(data, error);
+		reductionStep.setData(data);
 		
 		if (bgScaling != null) {
 			bgData.imultiply(bgScaling);
-			bgError.imultiply(bgScaling);
+			AbstractDataset bgError = bgData.getError();
+			if (bgError != null) {
+				bgError.imultiply(bgScaling);
+				bgData.setError(bgError);
+			}
 		}
-		reductionStep.setBackground(bgData, bgError);
+		reductionStep.setBackground(bgData);
 		reductionStep.setIDs(bg_id, bg_error_id);
 		
 		return reductionStep.writeout(dim, lock);

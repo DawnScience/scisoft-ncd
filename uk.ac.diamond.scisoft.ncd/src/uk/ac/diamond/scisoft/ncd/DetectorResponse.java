@@ -46,7 +46,7 @@ public class DetectorResponse {
 		float[] parenterror = (float[]) ConvertUtils.convert(error, float[].class);
 		
 		float[] mydata = new float[parentdata.length];
-		float[] myerror = new float[parenterror.length];
+		double[] myerror = new double[parenterror.length];
 		
 		float[] responseBuffer = response.getData();
 

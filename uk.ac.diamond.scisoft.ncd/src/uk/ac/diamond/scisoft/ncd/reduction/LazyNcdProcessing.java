@@ -401,6 +401,7 @@ public class LazyNcdProcessing {
 			double dpp = intSector.getDpp();
 			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
 			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secRank, secFrames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secRank, secFrames, false, "counts");
 			
 			double[] angles = intSector.getAngles();
@@ -410,6 +411,7 @@ public class LazyNcdProcessing {
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, secRank, azFrames, false, "counts");
 			
 			intSector.setAverageArea(false);
@@ -439,6 +441,7 @@ public class LazyNcdProcessing {
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			long[] invFrames = Arrays.copyOf(flags.isEnableSector() ? secFrames : frames, invRank);
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invRank, invFrames, true, "counts");
 			
 			lazyInvariant.writeNcdMetadata(inv_group_id);
@@ -450,6 +453,7 @@ public class LazyNcdProcessing {
 		    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, rank, frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, rank, frames, true, "counts");
 			
 			lazyDetectorResponse.createDetectorResponseInput();
@@ -462,6 +466,7 @@ public class LazyNcdProcessing {
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
@@ -487,6 +492,7 @@ public class LazyNcdProcessing {
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			bg_errors_id = NcdNexusUtils.makedata(bg_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
@@ -583,6 +589,7 @@ public class LazyNcdProcessing {
 								lock.acquire();
 								data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 								errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+								data.setError(errors);
 							} catch (Exception e) {
 								throw e;
 							} finally {
@@ -594,9 +601,7 @@ public class LazyNcdProcessing {
 
 								tmp_ids.setIDs(dr_group_id, dr_data_id);
 								tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
-								AbstractDataset[] res = lazyDetectorResponse.execute(dim, data, errors, tmp_ids, tmp_errors_ids, lock);
-								data = res[0];
-								errors = res[1];
+								data = lazyDetectorResponse.execute(dim, data, tmp_ids, tmp_errors_ids, lock);
 							}
 
 							DataSliceIdentifiers sector_id = new DataSliceIdentifiers(tmp_ids);
@@ -616,7 +621,7 @@ public class LazyNcdProcessing {
 							tmpLazySectorIntegration.setFast(flags.isEnableFastintegration());
 							tmpLazySectorIntegration.setMask(mask);
 							tmpLazySectorIntegration.setAreaData(areaData);
-							tmpLazySectorIntegration.execute(dim, data, errors, sector_id, sector_errors_id, azimuth_id, azimuth_errors_id, lock);
+							tmpLazySectorIntegration.execute(dim, data, sector_id, sector_errors_id, azimuth_id, azimuth_errors_id, lock);
 						} catch (Exception e) {
 							e.printStackTrace();
 							return Status.CANCEL_STATUS;
@@ -731,14 +736,15 @@ public class LazyNcdProcessing {
 				@Override
 				protected IStatus run(IProgressMonitor jobmonitor) {
 					try {
-						AbstractDataset data, errors;
+						AbstractDataset data;
 						int finalSliceDim = currentSliceParams.getSliceDim();
 						int finalSliceSize = currentSliceParams.getSliceSize();
 						
 						try {
 							lock.acquire();
 							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
-							errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+							AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+							data.setError(errors);
 						} catch (Exception e) {
 							throw e;
 						} finally {
@@ -750,9 +756,7 @@ public class LazyNcdProcessing {
 
 							tmp_ids.setIDs(dr_group_id, dr_data_id);
 							tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
-							AbstractDataset[] res = lazyDetectorResponse.execute(dim, data, errors, tmp_ids, tmp_errors_ids, lock);
-							data = res[0];
-							errors = res[1];
+							data = lazyDetectorResponse.execute(dim, data, tmp_ids, tmp_errors_ids, lock);
 						}
 
 						if (flags.isEnableNormalisation()) {
@@ -765,9 +769,7 @@ public class LazyNcdProcessing {
 
 							tmp_ids.setIDs(norm_group_id, norm_data_id);
 							tmp_errors_ids.setIDs(norm_group_id, norm_errors_id);
-							AbstractDataset[] res = lazyNormalisation.execute(dim, data, errors, dataCal, tmp_ids, tmp_errors_ids, lock);
-							data = res[0];
-							errors = res[1];
+							data = lazyNormalisation.execute(dim, data, dataCal, tmp_ids, tmp_errors_ids, lock);
 						}
 
 						if (flags.isEnableBackground() && final_bgFrames_int != null) {
@@ -782,18 +784,21 @@ public class LazyNcdProcessing {
 							bgSliceParams.setStart(bgStart);
 							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
 							AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
+							bgData.setError(bgErrors);
 
 							tmp_ids.setIDs(bg_group_id, bg_data_id);
 							tmp_errors_ids.setIDs(bg_group_id, bg_errors_id);
 							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-							AbstractDataset[] remapErrors = NcdDataUtils.matchDataDimensions(errors, bgErrors);
-							AbstractDataset[] res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapErrors[0], remapData[1],  remapErrors[1], tmp_ids, tmp_errors_ids, lock);
-							remapData[0] = res[0];
-							remapErrors[0] = res[1];
+							AbstractDataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getError(), bgData.getError());
+							remapData[0].setError(remapErrors[0]);
+							remapData[1].setError(remapErrors[1]);
+							AbstractDataset res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], tmp_ids, tmp_errors_ids, lock);
+							remapData[0] = res;
+							remapErrors[0] = res.getError();
 
 							// restore original axis order in output dataset
 							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[2].getBuffer());
-							errors = DatasetUtils.transpose(remapErrors[0], (int[]) remapErrors[2].getBuffer());
+							data.setError(DatasetUtils.transpose(remapErrors[0], (int[]) remapErrors[2].getBuffer()));
 						}
 
 						if (flags.isEnableInvariant()) {
@@ -813,7 +818,7 @@ public class LazyNcdProcessing {
 							invErrId.count = Arrays.copyOf(tmp_errors_ids.count, invRank);
 							invErrId.block = Arrays.copyOf(tmp_errors_ids.block, invRank);
 
-							lazyInvariant.execute(dim, data, errors, invId, invErrId, lock);
+							lazyInvariant.execute(dim, data, invId, invErrId, lock);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();

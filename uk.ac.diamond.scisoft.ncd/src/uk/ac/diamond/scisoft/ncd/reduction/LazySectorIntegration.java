@@ -110,12 +110,12 @@ public class LazySectorIntegration extends LazyDataReduction {
 		}
 	}
 
-	public AbstractDataset[] execute(int dim, AbstractDataset data, AbstractDataset errors,
+	public AbstractDataset[] execute(int dim, AbstractDataset data,
 			DataSliceIdentifiers sector_id, DataSliceIdentifiers err_sector_id,
 			DataSliceIdentifiers azimuth_id, DataSliceIdentifiers err_azimuth_id, ILock lock) {
 		
 		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
-		reductionStep.setData(data, errors);
+		reductionStep.setData(data);
 		reductionStep.setROI(intSector);
 		if (mask != null) {
 			reductionStep.setMask(mask);

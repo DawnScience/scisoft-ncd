@@ -26,9 +26,9 @@ public class LazyInvariant extends LazyDataReduction {
 
 	public static String name = "Invariant";
 	
-	public AbstractDataset[] execute(int dim, AbstractDataset data, AbstractDataset errors, DataSliceIdentifiers inv_id, DataSliceIdentifiers inv_errors_id, ILock lock) {
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers inv_id, DataSliceIdentifiers inv_errors_id, ILock lock) {
 		HDF5Invariant reductionStep = new HDF5Invariant("inv", "data");
-		reductionStep.setData(data, errors);
+		reductionStep.setData(data);
 		reductionStep.setIDs(inv_id, inv_errors_id);
 		
 		return reductionStep.writeout(dim, lock);

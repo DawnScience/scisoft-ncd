@@ -29,7 +29,7 @@ import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 
 public class HDF5ReductionDetector {
 
-	protected AbstractDataset data, error;
+	protected AbstractDataset data;
 	
 	private String name;
 	protected String key;
@@ -55,14 +55,14 @@ public class HDF5ReductionDetector {
 		this.name = name;
 	}
 	
-	public void setData(AbstractDataset ds, AbstractDataset err) {
+	public void setData(AbstractDataset ds) {
 		data = ds;
-		if (err != null) {
-			error = err;
-		} else {
+		AbstractDataset err = ds.getError();
+		if (err == null) {
 			Object obj = DatasetUtils.createJavaArray(ds);
-			error = AbstractDataset.array(obj);
+			AbstractDataset error = AbstractDataset.array(obj);
 			error.ipower(0.5);
+			data.setError(error);
 		}
 	}
 

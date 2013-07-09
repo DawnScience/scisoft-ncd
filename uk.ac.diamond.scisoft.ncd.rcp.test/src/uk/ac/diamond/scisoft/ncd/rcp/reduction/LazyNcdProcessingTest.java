@@ -219,11 +219,11 @@ public class LazyNcdProcessingTest {
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < 512; i++)
 				for (int j = 0; j < 512; j++) {
-					float valResult = result.getFloat(new int[] {0, frame, i, j});
-					float valResultErrors = resultErrors.getFloat(new int[] {0, frame, i, j});
-					float valData = data.getFloat(new int[] {0, frame, i, j});
-					float valInputErrors = (float) Math.sqrt(valData);
-					float valDr = dr.getFloat(new int[] {0, 0, i, j}); 
+					float valResult = result.getFloat(0, frame, i, j);
+					double valResultErrors = resultErrors.getDouble(0, frame, i, j);
+					float valData = data.getFloat(0, frame, i, j);
+					double valInputErrors = Math.sqrt(valData);
+					float valDr = dr.getFloat(0, 0, i, j); 
 					double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 					double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultErrors*valResultErrors + valInputErrors*valInputErrors)), 1e-10);
 					
@@ -260,10 +260,10 @@ public class LazyNcdProcessingTest {
 			AbstractDataset[] intResultError = ROIProfile.sector(dataErrors.squeeze(), null, intSector);
 
 			for (int j = 0; j < intPoints; j++) {
-				float valResult = result.getFloat(new int[] {0, 0, j});
-				float valResultError = resultError.getFloat(new int[] {0, 0, j});
-				float valData = intResult[0].getFloat(new int[] {j});
-				float valDataError = intResultError[0].getFloat(new int[] {j});
+				float valResult = result.getFloat(0, 0, j);
+				double valResultError = resultError.getDouble(0, 0, j);
+				float valData = intResult[0].getFloat(j);
+				double valDataError = intResultError[0].getDouble(j);
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 
@@ -299,14 +299,14 @@ public class LazyNcdProcessingTest {
 		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			float valNorm = norm.getFloat(new int[] {0, frame, normChannel}); 
+			float valNorm = norm.getFloat(0, frame, normChannel); 
 			for (int i = 0; i < intPoints; i++) {
-				float valResult = result.getFloat(new int[] {0, frame, i});
-				float valResultError = resultError.getFloat(new int[] {0, frame, i});
-				float valData = data.getFloat(new int[] {0, frame, i});
-				float valDataError = dataErrors.getFloat(new int[] {0, frame, i});
+				float valResult = result.getFloat(0, frame, i);
+				double valResultError = resultError.getDouble(0, frame, i);
+				float valData = data.getFloat(0, frame, i);
+				double valDataError = dataErrors.getDouble(0, frame, i);
 				float testResult = (float) (valData * absScaling / valNorm);
-				float testError = (float) (valDataError * absScaling / valNorm);
+				double testError = valDataError * absScaling / valNorm;
 
 				assertEquals(String.format("Test normalisation for pixel (%d, %d)", frame, i), testResult, valResult, 1e-6*valResult);
 				assertEquals(String.format("Test normalisation erros for pixel (%d, %d)", frame, i), testError, valResultError, 1e-6*valResultError);
@@ -345,14 +345,14 @@ public class LazyNcdProcessingTest {
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < intPoints; i++) {
-				float valResult = result.getFloat(new int[] {0, frame, i});
-				float valResultError = resultError.getFloat(new int[] {0, frame, i});
-				float valData = data.getFloat(new int[] {0, frame, i});
-				float valDataError = dataErrors.getFloat(new int[] {0, frame, i});
-				float valBg = bgData.getFloat(new int[] {0, 0, i});
-				float valBgError = bgErrors.getFloat(new int[] {0, 0, i});
+				float valResult = result.getFloat(0, frame, i);
+				double valResultError = resultError.getDouble(0, frame, i);
+				float valData = data.getFloat(0, frame, i);
+				double valDataError = dataErrors.getDouble(0, frame, i);
+				float valBg = bgData.getFloat(0, 0, i);
+				double valBgError = bgErrors.getDouble(0, 0, i);
 				float testResult = (float) (valData - bgScaling*valBg);
-				float testResultError = (float) (valDataError + bgScaling*valBgError);
+				double testResultError = valDataError + bgScaling*valBgError;
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(testResult*testResult + valResult*valResult)), 1e-10);
 				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(testResultError*testResultError + valResultError*valResultError)), 1e-10);
 
@@ -383,13 +383,13 @@ public class LazyNcdProcessingTest {
 		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			float valResult = result.getFloat(new int[] {0, frame});
-			float valResultError = resultErrors.getFloat(new int[] {0, frame});
+			float valResult = result.getFloat(0, frame);
+			double valResultError = resultErrors.getDouble(0, frame);
 			float valData = 0.0f;
-			float valDataError = 0.0f;
+			double valDataError = 0.0;
 			for (int i = 0; i < intPoints; i++) {
-				valData += data.getFloat(new int[] {0, frame, i});
-				valDataError += dataErrors.getFloat(new int[] {0, frame, i});
+				valData += data.getFloat(0, frame, i);
+				valDataError += dataErrors.getDouble(0, frame, i);
 			}
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
@@ -419,13 +419,13 @@ public class LazyNcdProcessingTest {
 		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int i = 0; i < intPoints; i++) {
-			float valResult = result.getFloat(new int[] {0, 0, i});
-			float valResultError = resultErrors.getFloat(new int[] {0, 0, i});
+			float valResult = result.getFloat(0, 0, i);
+			double valResultError = resultErrors.getDouble(0, 0, i);
 			float valData = 0.0f;
-			float valDataError = 0.0f;
+			double valDataError = 0.0;
 			for (int frame = 0; frame < framesSec[1]; frame++) {
-				valData += data.getFloat(new int[] {0, frame, i});
-				valDataError += dataErrors.getFloat(new int[] {0, frame, i});
+				valData += data.getFloat(0, frame, i);
+				valDataError += dataErrors.getFloat(0, frame, i);
 			}
 			valData /= framesSec[1];
 			valDataError /= framesSec[1];

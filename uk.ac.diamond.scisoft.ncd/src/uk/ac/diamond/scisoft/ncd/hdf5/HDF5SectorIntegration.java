@@ -56,8 +56,9 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	}
 
 	public double[] getCalibrationData() {
-		if (gradient != null && intercept != null)
+		if (gradient != null && intercept != null) {
 			return new double[] {gradient.doubleValue(), intercept.doubleValue()};
+		}
 		return null;
 	}
 
@@ -137,17 +138,18 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			error = flattenGridData(error, dim);
+			data.setError(flattenGridData(data.getError(), dim));
+			
 			roi.setAverageArea(false);
 			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
-			AbstractDataset[] myerrors = sec.process(error, data.getShape()[0], maskUsed);
+			AbstractDataset[] myerrors = sec.process(data.getError(), data.getShape()[0], maskUsed);
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
-				myazerrors = DatasetUtils.cast(myerrors[0], AbstractDataset.FLOAT32);
+				myazerrors = DatasetUtils.cast(myerrors[0], AbstractDataset.FLOAT64);
 			}
 			if (calculateRadial) {
 				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
-				myraderrors =  DatasetUtils.cast(myerrors[1], AbstractDataset.FLOAT32);
+				myraderrors =  DatasetUtils.cast(myerrors[1], AbstractDataset.FLOAT64);
 			}
 			try {
 				lock.acquire();
@@ -173,6 +175,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				if (myazerrors != null) {
 					myazerrors = myazerrors.reshape(resAzShape);
 				}
+				myazdata.setError(myazerrors);
 			}
 			if (calculateRadial && myraddata != null) {
 				int[] resRadShape = Arrays.copyOf(dataShape, resLength);
@@ -181,9 +184,10 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				if (myraderrors != null) {
 					myraderrors = myraderrors.reshape(resRadShape);
 				}
+				myraddata.setError(myraderrors);
 			}
 			
-			return new AbstractDataset[] {myazdata, myraddata, myazerrors, myraderrors};
+			return new AbstractDataset[] {myazdata, myraddata};
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);

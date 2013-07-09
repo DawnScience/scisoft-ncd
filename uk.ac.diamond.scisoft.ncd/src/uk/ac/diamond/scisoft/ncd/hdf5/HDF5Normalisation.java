@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
 
@@ -71,7 +72,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		this.calibChannel = calibChannel;
 	}
 
-	public AbstractDataset[] writeout(int dim, ILock lock) {
+	public AbstractDataset writeout(int dim, ILock lock) {
 
 		try {
 			Normalisation nm = new Normalisation();
@@ -80,11 +81,12 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
+			data.setError(flattenGridData(data.getError(), dim));
 			calibngd = flattenGridData(calibngd, 1);
 			
-			Object[] myobj = nm.process(data.getBuffer(), error.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
+			Object[] myobj = nm.process(data.getBuffer(), data.getError().getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
 			float[] mydata = (float[]) myobj[0];
-			float[] myerrors = (float[]) myobj[1];
+			double[] myerrors = (double[]) myobj[1];
 			
 			try {
 				lock.acquire();
@@ -111,7 +113,9 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 				lock.release();
 			}
 			
-			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerrors, dataShape)};
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setError(new DoubleDataset(myerrors, dataShape));
+			return myres;
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);

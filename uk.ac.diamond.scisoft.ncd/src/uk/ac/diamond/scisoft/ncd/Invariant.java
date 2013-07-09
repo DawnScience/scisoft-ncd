@@ -26,9 +26,9 @@ public class Invariant {
 	public Object[] process(Serializable buffer, Serializable errors, final int[] dimensions) {
 		
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
-		float[] parenterrors = (float[]) ConvertUtils.convert(errors, float[].class);
+		double[] parenterrors = (double[]) ConvertUtils.convert(errors, double[].class);
 		float[] mydata = new float[dimensions[0]];
-		float[] myerrors = new float[dimensions[0]];
+		double[] myerrors = new double[dimensions[0]];
 		
 		// first dim is timeframe
 		int[] imagedim = Arrays.copyOfRange(dimensions, 1, dimensions.length);

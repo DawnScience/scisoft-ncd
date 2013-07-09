@@ -24,6 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.DetectorResponse;
 
@@ -45,7 +46,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 		super(name, key);
 	}
 
-	public AbstractDataset[] writeout(int dim, ILock lock) {
+	public AbstractDataset writeout(int dim, ILock lock) {
 		if (response == null) {
 			return null;
 		}
@@ -56,7 +57,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			error = flattenGridData(error, dim);
+			data.setError(flattenGridData(data.getError(), dim));
 			response = response.squeeze();
 			
 			if (data.getRank() != response.getRank() + 1) {
@@ -64,10 +65,10 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			}
 
 			int[] flatShape = data.getShape();
-			Object[] myobj = dr.process(data.getBuffer(), error.getBuffer(), flatShape[0], flatShape);
+			Object[] myobj = dr.process(data.getBuffer(), data.getError().getBuffer(), flatShape[0], flatShape);
 			float[] mydata = (float[]) myobj[0];
-			float[] myerrors = (float[]) myobj[1];
-
+			double[] myerrors = (double[]) myobj[1];
+			
 			try {
 				lock.acquire();
 				
@@ -90,7 +91,9 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 				lock.release();
 			}
 
-			return new AbstractDataset[] {new FloatDataset(mydata, dataShape), new FloatDataset(myerrors, dataShape)};
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setError(new DoubleDataset(myerrors, dataShape));
+			return myres;
 			
 		} catch (Exception e) {
 			logger.error("exception caugth reducing data", e);
