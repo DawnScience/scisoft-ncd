@@ -36,7 +36,7 @@ public class BackgroundSubtraction {
 
 	public void setBackground(AbstractDataset ds) {
 		background = (FloatDataset) ds.cast(AbstractDataset.FLOAT32);
-		backgroundErrors = (DoubleDataset) ds.getError().cast(AbstractDataset.FLOAT64);
+		backgroundErrors = (DoubleDataset) ds.getErrorBuffer();
 	}
 
 	public FloatDataset getBackground() {

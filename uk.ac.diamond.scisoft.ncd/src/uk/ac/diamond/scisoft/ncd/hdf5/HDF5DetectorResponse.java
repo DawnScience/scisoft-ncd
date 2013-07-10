@@ -57,7 +57,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			data.setError(flattenGridData(data.getError(), dim));
+			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
 			response = response.squeeze();
 			
 			if (data.getRank() != response.getRank() + 1) {
@@ -65,9 +65,12 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			}
 
 			int[] flatShape = data.getShape();
-			Object[] myobj = dr.process(data.getBuffer(), data.getError().getBuffer(), flatShape[0], flatShape);
+			Object[] myobj = dr.process(data.getBuffer(), errors.getBuffer(), flatShape[0], flatShape);
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
+			
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {
 				lock.acquire();
@@ -84,15 +87,13 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 				memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
 						errIds.block);
-				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myerrors);
+				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
 			} catch (Exception e) {
 				throw e;
 			} finally {
 				lock.release();
 			}
 
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
-			myres.setError(new DoubleDataset(myerrors, dataShape));
 			return myres;
 			
 		} catch (Exception e) {

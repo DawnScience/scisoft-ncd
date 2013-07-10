@@ -57,12 +57,8 @@ public class HDF5ReductionDetector {
 	
 	public void setData(AbstractDataset ds) {
 		data = ds;
-		AbstractDataset err = ds.getError();
-		if (err == null) {
-			Object obj = DatasetUtils.createJavaArray(ds);
-			AbstractDataset error = AbstractDataset.array(obj);
-			error.ipower(0.5);
-			data.setError(error);
+		if (!ds.hasErrors()) {
+			data.setErrorBuffer(new DoubleDataset(ds));
 		}
 	}
 

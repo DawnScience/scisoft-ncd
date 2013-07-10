@@ -16,9 +16,12 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.io.Serializable;
+
 import org.eclipse.core.runtime.jobs.ILock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
 
@@ -39,10 +42,17 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		
 		if (bgScaling != null) {
 			bgData.imultiply(bgScaling);
-			AbstractDataset bgError = bgData.getError();
-			if (bgError != null) {
-				bgError.imultiply(bgScaling);
-				bgData.setError(bgError);
+			if (bgData.hasErrors()) {
+				Serializable bgErrorBuffer = bgData.getErrorBuffer();
+				if (bgErrorBuffer instanceof AbstractDataset) {
+					DoubleDataset bgError = new DoubleDataset((AbstractDataset) bgErrorBuffer);
+					bgError.imultiply(bgScaling*bgScaling);
+					bgData.setErrorBuffer(bgError);
+				}
+			} else {
+				DoubleDataset bgErrors = new DoubleDataset((double[]) bgData.getBuffer(), bgData.getShape());
+				bgErrors.imultiply(bgScaling*bgScaling);
+				bgData.setErrorBuffer(bgErrors);
 			}
 		}
 		reductionStep.setBackground(bgData);

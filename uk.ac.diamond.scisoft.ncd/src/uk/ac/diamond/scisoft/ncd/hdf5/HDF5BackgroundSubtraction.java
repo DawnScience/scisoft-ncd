@@ -24,8 +24,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.BackgroundSubtraction;
 
@@ -41,12 +39,8 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 
 	public void setBackground(AbstractDataset ds) {
 		background = ds;
-		AbstractDataset err = ds.getError();
-		if (err == null) {
-			Object obj = DatasetUtils.createJavaArray(ds);
-			AbstractDataset error = AbstractDataset.array(obj);
-			error.ipower(0.5);
-			background.setError(error);
+		if (!ds.hasErrors()) {
+			background.setErrorBuffer(ds);
 		}
 	}
 
@@ -64,6 +58,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 
 			data = flattenGridData(data, dim);
+			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
 			
 			background = background.squeeze();
 
@@ -71,10 +66,13 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			bs.setBackground(background);
 
 			int[] flatShape = data.getShape();
-			Object[] myobj = bs.process(data.getBuffer(), data.getError().getBuffer(), flatShape);
+			Object[] myobj = bs.process(data.getBuffer(), errors.getBuffer(), flatShape);
 			float[] mydata = (float[]) myobj[0];
 			double[] myerror = (double[]) myobj[1];
 					
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setErrorBuffer(myerror);
+			
 			try {
 				lock.acquire();
 				
@@ -83,7 +81,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 				int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
-				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
+				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getBuffer());
 				
 				
 				int err_filespace_id = H5.H5Dget_space(errIds.dataset_id);
@@ -91,7 +89,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 				int err_memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
 				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
 						errIds.block);
-				H5.H5Dwrite(errIds.dataset_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myerror);
+				H5.H5Dwrite(errIds.dataset_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
 				
 			} catch (Exception e) {
 				throw e;
@@ -99,8 +97,6 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 				lock.release();
 			}
 
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
-			myres.setError(new DoubleDataset(myerror, dataShape));
 			return myres;
 			
 		} catch (Exception e) {

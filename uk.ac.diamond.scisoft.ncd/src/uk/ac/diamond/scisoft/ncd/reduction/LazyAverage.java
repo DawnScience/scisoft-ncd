@@ -161,6 +161,7 @@ public class LazyAverage extends LazyDataReduction {
 				}
 				
 				int totalFramesBatch = 1;
+				errors_slice.ipower(2);
 				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--) {
 					if (ArrayUtils.contains(averageIndices, idx + 1)) {
 						totalFramesBatch *= data_slice.getShape()[idx];
@@ -178,7 +179,7 @@ public class LazyAverage extends LazyDataReduction {
 			}
 			
 			ave_frame =  ave_frame.idivide(totalFrames);
-			ave_errors_frame =  ave_errors_frame.idivide(totalFrames);
+			ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
 			
 			if (monitor.isCanceled()) {
 				return;

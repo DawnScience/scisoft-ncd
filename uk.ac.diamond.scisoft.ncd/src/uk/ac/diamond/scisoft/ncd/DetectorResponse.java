@@ -61,7 +61,7 @@ public class DetectorResponse {
 		for (int i = 0; i < frames; i++) {
 			for (int j = 0; j < dataLength; j++) {
 				mydata[i * dataLength + j] = new Float(responseBuffer[j] * parentdata[i * dataLength + j]);
-				myerror[i * dataLength + j] = new Float(responseBuffer[j] * parenterror[i * dataLength + j]);
+				myerror[i * dataLength + j] = new Float(responseBuffer[j] * responseBuffer[j] * parenterror[i * dataLength + j]);
 			}
 		}
 		

@@ -217,7 +217,7 @@ public class LazyNcdProcessingTest {
 		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
-			for (int i = 0; i < 512; i++)
+			for (int i = 0; i < 512; i++) {
 				for (int j = 0; j < 512; j++) {
 					float valResult = result.getFloat(0, frame, i, j);
 					double valResultErrors = resultErrors.getDouble(0, frame, i, j);
@@ -230,6 +230,7 @@ public class LazyNcdProcessingTest {
 					assertEquals(String.format("Test detector response for pixel (%d, %d, %d)", frame, i, j), valData*valDr, valResult, acc);
 					assertEquals(String.format("Test detector response errors for pixel (%d, %d, %d)", frame, i, j), valInputErrors*valDr, valResultErrors, accerr);
 				}
+			}
 		}
 	}
 	
@@ -257,13 +258,13 @@ public class LazyNcdProcessingTest {
 
 			intSector.setAverageArea(true);
 			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
-			AbstractDataset[] intResultError = ROIProfile.sector(dataErrors.squeeze(), null, intSector);
+			AbstractDataset[] intResultError = ROIProfile.sector(dataErrors.ipower(2).squeeze(), null, intSector);
 
 			for (int j = 0; j < intPoints; j++) {
 				float valResult = result.getFloat(0, 0, j);
 				double valResultError = resultError.getDouble(0, 0, j);
 				float valData = intResult[0].getFloat(j);
-				double valDataError = intResultError[0].getDouble(j);
+				double valDataError = Math.sqrt(intResultError[0].getDouble(j));
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 
@@ -352,7 +353,7 @@ public class LazyNcdProcessingTest {
 				float valBg = bgData.getFloat(0, 0, i);
 				double valBgError = bgErrors.getDouble(0, 0, i);
 				float testResult = (float) (valData - bgScaling*valBg);
-				double testResultError = valDataError + bgScaling*valBgError;
+				double testResultError = Math.sqrt(valDataError*valDataError + bgScaling*bgScaling*valBgError*valBgError);
 				double acc = Math.max(1e-6*Math.abs(Math.sqrt(testResult*testResult + valResult*valResult)), 1e-10);
 				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(testResultError*testResultError + valResultError*valResultError)), 1e-10);
 
@@ -372,6 +373,7 @@ public class LazyNcdProcessingTest {
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		dataErrors.ipower(2);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyInvariant.name);
 	    DataSliceIdentifiers result_id = array_id[0];
@@ -391,6 +393,7 @@ public class LazyNcdProcessingTest {
 				valData += data.getFloat(0, frame, i);
 				valDataError += dataErrors.getDouble(0, frame, i);
 			}
+			valDataError = Math.sqrt(valDataError);
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 			assertEquals(String.format("Test invariant for frame %d", frame), valResult, valData, acc);
@@ -408,6 +411,7 @@ public class LazyNcdProcessingTest {
 	    dataSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		dataErrors.ipower(2);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyAverage.name);
 	    DataSliceIdentifiers result_id = array_id[0];
@@ -428,7 +432,7 @@ public class LazyNcdProcessingTest {
 				valDataError += dataErrors.getFloat(0, frame, i);
 			}
 			valData /= framesSec[1];
-			valDataError /= framesSec[1];
+			valDataError = Math.sqrt(valDataError) / framesSec[1];
 			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
 			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 			assertEquals(String.format("Test average for index %d", i), valResult, valData, acc);

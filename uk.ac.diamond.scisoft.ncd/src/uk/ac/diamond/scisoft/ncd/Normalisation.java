@@ -65,7 +65,7 @@ public class Normalisation {
 			}
 			for (int j = i * parentDataLength; j < (i + 1) * parentDataLength; j++) {
 				mydata[j] = (float) ((normvalue / calReading) * parentdata[j]);
-				myerrors[j] = (normvalue / calReading) * parenterrors[j];
+				myerrors[j] = (normvalue / calReading) * (normvalue / calReading) * parenterrors[j];
 			}
 		}
 
