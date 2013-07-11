@@ -137,6 +137,16 @@
             id="uk.ac.diamond.scisoft.ncd.rcp.process.wizard"
             name="Run Data Reduction Wizard">
       </command>
+      <command
+            defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.SaveDataReductionParameters"
+            id="uk.ac.diamond.scisoft.ncd.rcp.saveDataReductionParams"
+            name="Save data reduction">
+      </command>
+      <command
+            defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.LoadDataReductionParameters"
+            id="uk.ac.diamond.scisoft.ncd.rcp.loadDataReductionParams"
+            name="Load data reduction">
+      </command>
    </extension>
    <extension
          point="org.eclipse.ui.services">
@@ -620,5 +630,24 @@
           class="uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdPreferenceInitializer">
     </initializer>
  	</extension>
+  <extension
+        point="org.eclipse.ui.menus">
+     <menuContribution
+           allPopups="false"
+           locationURI="toolbar:uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters">
+        <command
+              commandId="uk.ac.diamond.scisoft.ncd.rcp.saveDataReductionParams"
+              icon="icons/export-data-reduction.png"
+              label="Save data reduction to XML"
+              style="push">
+        </command>
+        <command
+              commandId="uk.ac.diamond.scisoft.ncd.rcp.loadDataReductionParams"
+              icon="icons/import-data-reduction.png"
+              label="Load data reduction to XML"
+              style="push">
+        </command>
+     </menuContribution>
+  </extension>
 
 </plugin>

@@ -269,6 +269,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 	}
 			
+	public void restoreState(IMemento memento) {
+		this.memento = memento;
+		restoreState();
+	}
+	
 	private void restoreState() {
 		if (memento != null) {
 			Boolean val;
@@ -659,7 +664,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			
 			calListLabel = new Label(g, SWT.NONE);
 			calListLabel.setText("Normalisation Data");
-			calList = new Combo(g, SWT.NONE);
+			calList = new Combo(g, SWT.READ_ONLY|SWT.BORDER);
 			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
 			calList.setLayoutData(gridData);
 			calList.setToolTipText("Select the detector with calibration data");
@@ -678,6 +683,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
 						normChan.setMinimum(0);
 						normChan.setMaximum(calDet.getMaxChannel());
+						if (calDet.getMaxChannel()<1) {
+							normChanLabel.setEnabled(false);
+							normChan.setEnabled(false);
+						} else {
+							normChanLabel.setEnabled(true);
+							normChan.setEnabled(true);
+						}
 						Display dsp = normChan.getDisplay();
 						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
 						// Update normalisation channel setting in case it was reset by new limits
@@ -771,13 +783,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		{
 			Composite g = new Composite(refEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(7, false));
+			g.setLayout(new GridLayout(5, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 			
 			bgLabel = new Label(g, SWT.NONE);
 			bgLabel.setText("Background Subtraction File");
+			bgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			bgFile = new Text(g, SWT.BORDER);
-			bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
+			bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			bgFile.setToolTipText("File with the background measurments");
 			String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
 			if (tmpBgFile != null)
@@ -796,7 +809,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 			browseBg = new Button(g, SWT.NONE);
 			browseBg.setText("...");
-			browseBg.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
+			browseBg.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 			browseBg.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
@@ -812,10 +825,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			bgScaleLabel = new Label(g, SWT.NONE);
-			bgScaleLabel.setText("Bg. Scale");
+			bgScaleLabel.setText("      Background Scale");
 			bgScaleLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 			bgScale = new Text(g, SWT.BORDER);
-			bgScale.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
+			bgScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			bgScale.setToolTipText("Scaling values for background data");
 			Double tmpBgScaling = ncdBgScaleSourceProvider.getBgScaling();
 			if (tmpBgScaling != null)
@@ -830,8 +843,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			
 			drLabel = new Label(g, SWT.NONE);
 			drLabel.setText("Detector Response File");
+			drLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			drFile = new Text(g, SWT.BORDER);
-			drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 5, 1));
+			drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
 			drFile.setToolTipText("File with the detector response frame");
 			String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
 			if (tmpDrFile != null)
@@ -850,7 +864,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 			browseDr = new Button(g, SWT.NONE);
 			browseDr.setText("...");
-			browseDr.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false, 1, 1));
+			browseDr.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1));
 			browseDr.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
