@@ -52,9 +52,10 @@ public class LazyDetectorResponse extends LazyDataReduction {
 	}
 	
 	public LazyDetectorResponse(String drFile, String detector) {
-		if(drFile != null)
-			this.drFile = new String(drFile);
-		this.detector = new String(detector);
+		if(drFile != null) {
+			this.drFile = drFile;
+		}
+		this.detector = detector;
 	}
 	
 	public AbstractDataset createDetectorResponseInput() throws HDF5Exception {
@@ -84,9 +85,10 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		drData = AbstractDataset.zeros(frames_int, dtype);
 		
-		if ((input_data_id >= 0) && (input_dataspace_id >= 0) && (memspace_id >= 0))
+		if ((input_data_id >= 0) && (input_dataspace_id >= 0) && (memspace_id >= 0)) {
 			H5.H5Dread(input_data_id, input_datatype_id, memspace_id, input_dataspace_id, HDF5Constants.H5P_DEFAULT,
 					drData.getBuffer());
+		}
 		
 		H5.H5Sclose(memspace_id);
 		H5.H5Sclose(input_dataspace_id);
@@ -100,11 +102,11 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		return drData;
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id, ILock lock) {
+	public AbstractDataset execute(int dim, AbstractDataset data, DataSliceIdentifiers det_id, DataSliceIdentifiers det_errors_id, ILock lock) {
 		HDF5DetectorResponse reductionStep = new HDF5DetectorResponse("det", "data");
+		reductionStep.setData(data);
 		reductionStep.setResponse(drData);
-		reductionStep.parentngd = data;
-		reductionStep.setIDs(det_id);
+		reductionStep.setIDs(det_id, det_errors_id);
 		
 		return reductionStep.writeout(dim, lock);
 	}

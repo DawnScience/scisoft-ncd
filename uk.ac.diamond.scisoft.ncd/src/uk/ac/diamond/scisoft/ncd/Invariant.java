@@ -23,10 +23,12 @@ import org.apache.commons.beanutils.ConvertUtils;
 
 public class Invariant {
 
-	public float[] process(Serializable buffer, final int[] dimensions) {
+	public Object[] process(Serializable buffer, Serializable errors, final int[] dimensions) {
 		
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
+		double[] parenterrors = (double[]) ConvertUtils.convert(errors, double[].class);
 		float[] mydata = new float[dimensions[0]];
+		double[] myerrors = new double[dimensions[0]];
 		
 		// first dim is timeframe
 		int[] imagedim = Arrays.copyOfRange(dimensions, 1, dimensions.length);
@@ -34,8 +36,9 @@ public class Invariant {
 		for(int n: imagedim) imagesize *= n;
 		for (int i = 0; i < parentdata.length; i++) {
 			mydata[i/imagesize] += parentdata[i];
+			myerrors[i/imagesize] += parenterrors[i];
 		}
 		
-		return mydata;
+		return new Object[] {mydata, myerrors};
 	}
 }

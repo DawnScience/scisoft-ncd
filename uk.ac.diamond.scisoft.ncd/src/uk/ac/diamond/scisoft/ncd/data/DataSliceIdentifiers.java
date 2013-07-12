@@ -18,6 +18,8 @@ package uk.ac.diamond.scisoft.ncd.data;
 
 import java.util.Arrays;
 
+import org.apache.commons.beanutils.ConvertUtils;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
@@ -65,10 +67,30 @@ public class DataSliceIdentifiers {
 	public void setIDs(int datagroup_id, int dataset_id) throws HDF5LibraryException {
 		this.datagroup_id = datagroup_id;
 		this.dataset_id = dataset_id;
-		dataspace_id = H5.H5Dget_space(dataset_id);
-		datatype_id = H5.H5Dget_type(dataset_id);
-		dataclass_id = H5.H5Tget_class(datatype_id);
-		datasize_id = H5.H5Tget_size(datatype_id);
+		if (dataset_id != -1) {
+			dataspace_id = H5.H5Dget_space(dataset_id);
+			datatype_id = H5.H5Dget_type(dataset_id);
+			dataclass_id = H5.H5Tget_class(datatype_id);
+			datasize_id = H5.H5Tget_size(datatype_id);
+		}
+	}
+	
+	public void setSlice(SliceSettings slice) {
+		long[] frames = slice.getFrames();
+		long[] start_pos = (long[]) ConvertUtils.convert(slice.getStart(), long[].class);
+		int sliceDim = slice.getSliceDim();
+		int sliceSize = slice.getSliceSize();
+		
+		long[] start_data = Arrays.copyOf(start_pos, frames.length);
+
+		long[] block_data = Arrays.copyOf(frames, frames.length);
+		Arrays.fill(block_data, 0, slice.getSliceDim(), 1);
+		block_data[sliceDim] = Math.min(frames[sliceDim] - start_pos[sliceDim], sliceSize);
+
+		long[] count_data = new long[frames.length];
+		Arrays.fill(count_data, 1);
+
+		setSlice(start_data, block_data, count_data, block_data);
 	}
 	
 	public void setSlice (long[] start, long[] stride, long[] count, long[] block) {

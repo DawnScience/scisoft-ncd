@@ -92,30 +92,36 @@ public class LazyNcdProcessing {
 	private int cores;
     private long maxMemory;
     
-	private int nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id;
+	private int nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id, input_errors_id;
 	private int inputfile_handle;
 	private int calibration_group_id, input_calibration_id;
-	private int dr_group_id, dr_data_id;
-	private int sec_group_id, sec_data_id, az_data_id;
-	private int norm_group_id, norm_data_id;
-	private int bg_group_id, bg_data_id;
-	private int inv_group_id, inv_data_id;
+	private int dr_group_id, dr_data_id, dr_errors_id;
+	private int sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
+	private int norm_group_id, norm_data_id, norm_errors_id;
+	private int bg_group_id, bg_data_id, bg_errors_id;
+	private int inv_group_id, inv_data_id, inv_errors_id;
 	private int result_group_id;
 	
-	private int background_file_handle, background_entry_group_id, background_detector_group_id, background_input_data_id;
+	private int background_file_handle, background_entry_group_id, background_detector_group_id;
+	private int background_input_data_id, background_input_errors_id;
 	
-	private DataSliceIdentifiers input_ids, calibration_ids;
+	private DataSliceIdentifiers input_ids, input_errors_ids, calibration_ids;
 	
     private abstract class DataReductionJob extends Job {
 
 		protected int dim;
-    	protected DataSliceIdentifiers tmp_ids, tmp_calibration_ids, tmp_bgIds;
+    	protected DataSliceIdentifiers tmp_ids, tmp_errors_ids, tmp_calibration_ids;
+    	protected DataSliceIdentifiers tmp_bgIds,  tmp_errors_bgIds;
 		protected SliceSettings currentSliceParams;
 		
 		public DataReductionJob(String name) {
 			super(name);
 			
 			tmp_ids = null;
+			tmp_errors_ids = null;
+			tmp_calibration_ids = null;
+			tmp_bgIds = null;
+			tmp_errors_bgIds = null;
 			currentSliceParams = null;
 		}
     }
@@ -154,33 +160,42 @@ public class LazyNcdProcessing {
 		processing_group_id = -1;
 		detector_group_id = -1;
 		input_data_id = -1;
+		input_errors_id = -1;
 		
 		background_file_handle = -1;
 		background_entry_group_id = -1;
 		background_detector_group_id = -1;
 		background_input_data_id = -1;
+		background_input_errors_id = -1;
 				
 		calibration_group_id = -1;
 		input_calibration_id = -1;
 		
 		input_ids = null;
+		input_errors_ids = null;
 		calibration_ids = null;		
 		
 		dr_group_id = -1;
 		dr_data_id = -1;
+		dr_errors_id = -1;
 		
 		sec_group_id = -1;
 		sec_data_id = -1;
+		sec_errors_id = -1;
 		az_data_id = -1;
+		az_errors_id = -1;
 		
 		norm_group_id = -1;
 		norm_data_id = -1;
+		norm_errors_id = -1;
 		
 		bg_group_id = -1;
 		bg_data_id = -1;
+		bg_errors_id = -1;
 		
 		inv_group_id = -1;
 		inv_data_id = -1;
+		inv_errors_id = -1;
 		
 		result_group_id =  -1;
 		
@@ -308,9 +323,15 @@ public class LazyNcdProcessing {
 		H5.H5Pclose(fapl);
 		detector_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + detector, HDF5Constants.H5P_DEFAULT);
 		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		boolean exists = H5.H5Lexists(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		if (exists) {
+			input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		}
 		
 		input_ids = new DataSliceIdentifiers();
 		input_ids.setIDs(detector_group_id, input_data_id);
+		input_errors_ids = new DataSliceIdentifiers();
+		input_errors_ids.setIDs(detector_group_id, input_errors_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_ids.dataspace_id);
 		long[] frames = new long[rank];
@@ -336,7 +357,9 @@ public class LazyNcdProcessing {
 		    
 		    LazySelection selection = new LazySelection(frames_int);
 		    selection.setFormat(frameSelection);
-		    input_ids = selection.execute(dim, input_ids, sel_group_id);
+		    DataSliceIdentifiers[] obj_ids = selection.execute(dim, input_ids, input_errors_ids, sel_group_id);
+		    input_ids = obj_ids[0];
+		    input_errors_ids = obj_ids[1];
 			H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
 			frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		}
@@ -376,7 +399,7 @@ public class LazyNcdProcessing {
 	    final AbstractDataset[] areaData;
 		int secRank = rank - dim + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
-		AbstractDataset[] qaxis = null;
+		AbstractDataset qaxis = null;
 		final LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
@@ -386,6 +409,8 @@ public class LazyNcdProcessing {
 			double dpp = intSector.getDpp();
 			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
 			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secRank, secFrames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secRank, secFrames, false, "counts");
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
@@ -394,12 +419,14 @@ public class LazyNcdProcessing {
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
 			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, secRank, azFrames, false, "counts");
 			
 			intSector.setAverageArea(false);
 			lazySectorIntegration.setIntSector(intSector);
-			if(enableMask)
+			if(enableMask) {
 				lazySectorIntegration.setMask(mask);
-			
+			}
 			qaxis = calculateQaxisDataset(detector, dim, secFrames);
 			if (qaxis != null) {
 				lazySectorIntegration.setQaxis(qaxis, qaxisUnit);
@@ -422,6 +449,8 @@ public class LazyNcdProcessing {
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			long[] invFrames = Arrays.copyOf(flags.isEnableSector() ? secFrames : frames, invRank);
 			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invRank, invFrames, true, "counts");
 			
 			lazyInvariant.writeNcdMetadata(inv_group_id);
 		}
@@ -432,6 +461,8 @@ public class LazyNcdProcessing {
 		    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, rank, frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, rank, frames, true, "counts");
 			
 			lazyDetectorResponse.createDetectorResponseInput();
 			lazyDetectorResponse.writeNcdMetadata(dr_group_id);
@@ -442,6 +473,9 @@ public class LazyNcdProcessing {
 		    norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
+					flags.isEnableSector() ? secFrames : frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
 			lazyNormalisation.setAbsScaling(absScaling);
@@ -457,6 +491,7 @@ public class LazyNcdProcessing {
 		
 	    int bgRank;
 	    DataSliceIdentifiers bgIds = null;
+	    DataSliceIdentifiers bgErrorsIds = null;
 		final long[] bgFrames;
 		int[] bgFrames_int;
 		final LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
@@ -464,6 +499,9 @@ public class LazyNcdProcessing {
 		    bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
+					flags.isEnableSector() ? secFrames : frames, true, "counts");
+		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			bg_errors_id = NcdNexusUtils.makedata(bg_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
 			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
@@ -473,8 +511,11 @@ public class LazyNcdProcessing {
 			background_entry_group_id = H5.H5Gopen(background_file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 			background_detector_group_id = H5.H5Gopen(background_entry_group_id, bgDetector, HDF5Constants.H5P_DEFAULT);
 			background_input_data_id = H5.H5Dopen(background_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+			background_input_errors_id = H5.H5Dopen(background_detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 			bgIds = new DataSliceIdentifiers();
 			bgIds.setIDs(background_detector_group_id, background_input_data_id);
+			bgErrorsIds = new DataSliceIdentifiers();
+			bgErrorsIds.setIDs(background_detector_group_id, background_input_errors_id);
 		    
 		    bgRank = H5.H5Sget_simple_extent_ndims(bgIds.dataspace_id);
 			bgFrames = new long[bgRank];
@@ -555,6 +596,14 @@ public class LazyNcdProcessing {
 							try {
 								lock.acquire();
 								data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+								if (tmp_errors_ids != null) { 
+									if(tmp_errors_ids.dataset_id >= 0) {
+										AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+										data.setError(errors);
+									} else {
+										tmp_errors_ids.setSlice(currentSliceParams);
+									}
+								}
 							} catch (Exception e) {
 								throw e;
 							} finally {
@@ -565,14 +614,19 @@ public class LazyNcdProcessing {
 								monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 								tmp_ids.setIDs(dr_group_id, dr_data_id);
-								data = lazyDetectorResponse.execute(dim, data, tmp_ids, lock);
+								tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
+								data = lazyDetectorResponse.execute(dim, data, tmp_ids, tmp_errors_ids, lock);
 							}
 
 							DataSliceIdentifiers sector_id = new DataSliceIdentifiers(tmp_ids);
+							DataSliceIdentifiers sector_errors_id = new DataSliceIdentifiers(tmp_errors_ids);
 							DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(tmp_ids);
+							DataSliceIdentifiers azimuth_errors_id = new DataSliceIdentifiers(tmp_errors_ids);
 							monitor.setTaskName(monitorFile + " : Performing sector integration");
 							sector_id.setIDs(sec_group_id, sec_data_id);
+							sector_errors_id.setIDs(sec_group_id, sec_errors_id);
 							azimuth_id.setIDs(sec_group_id, az_data_id);
+							azimuth_errors_id.setIDs(sec_group_id, az_errors_id);
 							
 							LazySectorIntegration tmpLazySectorIntegration = new LazySectorIntegration();
 							tmpLazySectorIntegration.setIntSector(intSector);
@@ -581,7 +635,7 @@ public class LazyNcdProcessing {
 							tmpLazySectorIntegration.setFast(flags.isEnableFastintegration());
 							tmpLazySectorIntegration.setMask(mask);
 							tmpLazySectorIntegration.setAreaData(areaData);
-							tmpLazySectorIntegration.execute(dim, data, sector_id, azimuth_id, lock);
+							tmpLazySectorIntegration.execute(dim, data, sector_id, sector_errors_id, azimuth_id, azimuth_errors_id, lock);
 						} catch (Exception e) {
 							e.printStackTrace();
 							return Status.CANCEL_STATUS;
@@ -593,6 +647,7 @@ public class LazyNcdProcessing {
 				
 				sectorJob.dim = dim;
 				sectorJob.tmp_ids = new DataSliceIdentifiers(input_ids);
+				sectorJob.tmp_errors_ids = new DataSliceIdentifiers(input_errors_ids);
 				sectorJob.currentSliceParams = new SliceSettings(sliceParams);
 				sectorJobList.add(sectorJob);
 				
@@ -645,9 +700,10 @@ public class LazyNcdProcessing {
 
 			sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
 			IntegerDataset idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
-			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {sliceSize}, new int[] {sliceSize});
+			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {1}, new int[] {1});
 			
 			input_ids.setIDs(sec_group_id, sec_data_id);
+			input_errors_ids.setIDs(sec_group_id, sec_errors_id);
 		}
 
 		final int[] final_bgFrames_int;
@@ -662,7 +718,7 @@ public class LazyNcdProcessing {
 				if (bgAverageIndices.size() > 0) {
 					LazyAverage lazyAverage = new LazyAverage();
 					lazyAverage.setAverageIndices(ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})));
-					lazyAverage.execute(dim, bgFrames_int, bg_group_id, frameBatch, bgIds);
+					lazyAverage.execute(dim, bgFrames_int, bg_group_id, frameBatch, bgIds, bgErrorsIds);
 					if (bgIds != null) {
 						lazyAverage.writeNcdMetadata(bgIds.datagroup_id);
 						if (qaxis != null) {
@@ -678,6 +734,7 @@ public class LazyNcdProcessing {
 			
 			// Make link to the background dataset and store background filename
 			H5.H5Lcreate_external(bgFile, "/entry1/" + bgDetector +  "/data", bg_group_id, "background", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			H5.H5Lcreate_external(bgFile, "/entry1/" + bgDetector +  "/errors", bg_group_id, "background_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		} else {
 			final_bgFrames_int = null;
 		}
@@ -700,6 +757,14 @@ public class LazyNcdProcessing {
 						try {
 							lock.acquire();
 							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+							if (tmp_errors_ids != null) { 
+								if(tmp_errors_ids.dataset_id >= 0) {
+									AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+									data.setError(errors);
+								} else {
+									tmp_errors_ids.setSlice(currentSliceParams);
+								}
+							}
 						} catch (Exception e) {
 							throw e;
 						} finally {
@@ -710,7 +775,8 @@ public class LazyNcdProcessing {
 							monitor.setTaskName(monitorFile + " : Correct for detector response");
 
 							tmp_ids.setIDs(dr_group_id, dr_data_id);
-							data = lazyDetectorResponse.execute(dim, data, tmp_ids, lock);
+							tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
+							data = lazyDetectorResponse.execute(dim, data, tmp_ids, tmp_errors_ids, lock);
 						}
 
 						if (flags.isEnableNormalisation()) {
@@ -722,10 +788,11 @@ public class LazyNcdProcessing {
 									tmp_calibration_ids);
 
 							tmp_ids.setIDs(norm_group_id, norm_data_id);
-							data = lazyNormalisation.execute(dim, data, dataCal, tmp_ids, lock);
+							tmp_errors_ids.setIDs(norm_group_id, norm_errors_id);
+							data = lazyNormalisation.execute(dim, data, dataCal, tmp_ids, tmp_errors_ids, lock);
 						}
 
-						if (flags.isEnableBackground()) {
+						if (flags.isEnableBackground() && final_bgFrames_int != null) {
 							monitor.setTaskName(monitorFile + " : Subtracting background");
 
 							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
@@ -736,26 +803,47 @@ public class LazyNcdProcessing {
 							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
 							bgSliceParams.setStart(bgStart);
 							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
-
+							if(tmp_errors_bgIds != null) {
+								if (tmp_errors_bgIds.dataset_id >= 0) {
+									AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
+									bgData.setError(bgErrors);
+								} else {
+									tmp_errors_bgIds.setSlice(bgSliceParams);
+								}
+							}
 							tmp_ids.setIDs(bg_group_id, bg_data_id);
+							tmp_errors_ids.setIDs(bg_group_id, bg_errors_id);
 							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-							remapData[0] = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], tmp_ids, lock);
+							AbstractDataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getError(), bgData.getError());
+							remapData[0].setError(remapErrors[0]);
+							remapData[1].setError(remapErrors[1]);
+							AbstractDataset res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], tmp_ids, tmp_errors_ids, lock);
+							remapData[0] = res;
+							remapErrors[0] = res.getError();
 
 							// restore original axis order in output dataset
 							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[2].getBuffer());
+							data.setError(DatasetUtils.transpose(remapErrors[0], (int[]) remapErrors[2].getBuffer()));
 						}
 
 						if (flags.isEnableInvariant()) {
 							monitor.setTaskName(monitorFile + " : Calculating invariant");
 
-							DataSliceIdentifiers inv_id = new DataSliceIdentifiers(tmp_ids);
-							inv_id.setIDs(inv_group_id, inv_data_id);
-							inv_id.start = Arrays.copyOf(tmp_ids.start, invRank);
-							inv_id.stride = Arrays.copyOf(tmp_ids.stride, invRank);
-							inv_id.count = Arrays.copyOf(tmp_ids.count, invRank);
-							inv_id.block = Arrays.copyOf(tmp_ids.block, invRank);
+							DataSliceIdentifiers invId = new DataSliceIdentifiers(tmp_ids);
+							invId.setIDs(inv_group_id, inv_data_id);
+							invId.start = Arrays.copyOf(tmp_ids.start, invRank);
+							invId.stride = Arrays.copyOf(tmp_ids.stride, invRank);
+							invId.count = Arrays.copyOf(tmp_ids.count, invRank);
+							invId.block = Arrays.copyOf(tmp_ids.block, invRank);
 
-							lazyInvariant.execute(dim, data, inv_id, lock);
+							DataSliceIdentifiers invErrId = new DataSliceIdentifiers(tmp_errors_ids);
+							invErrId.setIDs(inv_group_id, inv_errors_id);
+							invErrId.start = Arrays.copyOf(tmp_errors_ids.start, invRank);
+							invErrId.stride = Arrays.copyOf(tmp_errors_ids.stride, invRank);
+							invErrId.count = Arrays.copyOf(tmp_errors_ids.count, invRank);
+							invErrId.block = Arrays.copyOf(tmp_errors_ids.block, invRank);
+
+							lazyInvariant.execute(dim, data, invId, invErrId, lock);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -768,11 +856,13 @@ public class LazyNcdProcessing {
 			
 			processingJob.dim = dim;
 			processingJob.tmp_ids = new DataSliceIdentifiers(input_ids);
+			processingJob.tmp_errors_ids = new DataSliceIdentifiers(input_errors_ids);
 			if (flags.isEnableNormalisation()) {
 				processingJob.tmp_calibration_ids = new DataSliceIdentifiers(calibration_ids);
 			}
 			if(flags.isEnableBackground()) {
 				processingJob.tmp_bgIds = new DataSliceIdentifiers(bgIds);
+				processingJob.tmp_errors_bgIds = new DataSliceIdentifiers(bgErrorsIds);
 			}
 			processingJob.currentSliceParams = new SliceSettings(sliceParams);
 			processingJobList.add(processingJob);
@@ -817,6 +907,7 @@ public class LazyNcdProcessing {
 		if (!processingJobList.isEmpty()) {
 			DataReductionJob tmpJob = processingJobList.get(0);
 			input_ids = new DataSliceIdentifiers(tmpJob.tmp_ids);
+			input_errors_ids = new DataSliceIdentifiers(tmpJob.tmp_errors_ids);
 			sliceParams = new SliceSettings(tmpJob.currentSliceParams);
 		}
 		
@@ -829,7 +920,7 @@ public class LazyNcdProcessing {
 			LazyAverage lazyAverage = new LazyAverage();
 			lazyAverage.setAverageIndices(averageIndices);
 			lazyAverage.setMonitor(monitor);
-			lazyAverage.execute(dim, frames_int, processing_group_id, frameBatch, input_ids);
+			lazyAverage.execute(dim, frames_int, processing_group_id, frameBatch, input_ids, input_errors_ids);
 			
 			if (monitor.isCanceled()) {
 				closeHDF5Identifiers();
@@ -846,6 +937,7 @@ public class LazyNcdProcessing {
 		
 	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
 	    H5.H5Lcreate_hard(input_ids.datagroup_id, "./data", result_group_id, "./data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+	    H5.H5Lcreate_hard(input_errors_ids.datagroup_id, "./errors", result_group_id, "./errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	    if (qaxis != null) {
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q_errors", result_group_id, "./q_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
@@ -860,6 +952,9 @@ public class LazyNcdProcessing {
 		if (dr_data_id != -1) {
 	    	H5.H5Dclose(dr_data_id);
 		}
+		if (dr_errors_id != -1) {
+	    	H5.H5Dclose(dr_errors_id);
+		}
 		if (dr_group_id != -1) {
 	    	H5.H5Gclose(dr_group_id);
 		}
@@ -867,8 +962,14 @@ public class LazyNcdProcessing {
 		if (sec_data_id != -1) {
 	    	H5.H5Dclose(sec_data_id);
 		}
+		if (sec_errors_id != -1) {
+	    	H5.H5Dclose(sec_errors_id);
+		}
 		if (az_data_id != -1) {
 	    	H5.H5Dclose(az_data_id);
+		}
+		if (az_errors_id != -1) {
+	    	H5.H5Dclose(az_errors_id);
 		}
 		if (sec_group_id != -1) {
 	    	H5.H5Gclose(sec_group_id);
@@ -877,12 +978,18 @@ public class LazyNcdProcessing {
 		if (bg_data_id != -1) {
 	    	H5.H5Dclose(bg_data_id);
 		}
+		if (bg_errors_id != -1) {
+	    	H5.H5Dclose(bg_errors_id);
+		}
 		if (bg_group_id != -1) {
 	    	H5.H5Gclose(bg_group_id);
 		}
 	    
 		if (norm_data_id != -1) {
 	    	H5.H5Dclose(norm_data_id);
+		}
+		if (norm_errors_id != -1) {
+	    	H5.H5Dclose(norm_errors_id);
 		}
 		if (norm_group_id != -1) {
 	    	H5.H5Gclose(norm_group_id);
@@ -891,9 +998,18 @@ public class LazyNcdProcessing {
 		if (inv_data_id != -1) {
 	    	H5.H5Dclose(inv_data_id);
 		}
+		if (inv_errors_id != -1) {
+	    	H5.H5Dclose(inv_errors_id);
+		}
 		if (inv_group_id != -1) {
 	    	H5.H5Gclose(inv_group_id);
 		}
+		
+	    if (input_errors_ids != null && flags.isEnableAverage()) {
+		    if (input_errors_ids.dataset_id != -1) {
+		    	H5.H5Dclose(input_errors_ids.dataset_id);
+		    }
+	    }
 	    if (input_ids != null && flags.isEnableAverage()) {
 		    if (input_ids.dataset_id != -1) {
 		    	H5.H5Dclose(input_ids.dataset_id);
@@ -912,6 +1028,9 @@ public class LazyNcdProcessing {
 		if (background_input_data_id != -1) {
 			H5.H5Dclose(background_input_data_id);
 		}
+		if (background_input_errors_id != -1) {
+			H5.H5Dclose(background_input_errors_id);
+		}
 		if (background_detector_group_id != -1) {
 			H5.H5Gclose(background_detector_group_id);
 		}
@@ -923,6 +1042,9 @@ public class LazyNcdProcessing {
 		}
 		if (input_data_id != -1) {
 			H5.H5Dclose(input_data_id);
+		}
+		if (input_errors_id != -1) {
+			H5.H5Dclose(input_errors_id);
 		}
 		if (detector_group_id != -1) {
 			H5.H5Gclose(detector_group_id);
@@ -952,7 +1074,7 @@ public class LazyNcdProcessing {
 		frameBatch = Math.max(1, (int) (maxMemory / (10 * batchSize * cores)));
 	}
 
-	private AbstractDataset[] calculateQaxisDataset(String detector, int dim, long[] frames) {
+	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
 		
 		AbstractDataset qaxis = null;
 		AbstractDataset qaxisErr = null;
@@ -988,12 +1110,13 @@ public class LazyNcdProcessing {
 					}
 				}
 			}
+			qaxis.setError(qaxisErr);
 		}
 		
 		if (qaxis == null) {
 			return null;
 		}
 		
-		return new AbstractDataset[] {qaxis, qaxisErr};
+		return qaxis;
 	}
 }

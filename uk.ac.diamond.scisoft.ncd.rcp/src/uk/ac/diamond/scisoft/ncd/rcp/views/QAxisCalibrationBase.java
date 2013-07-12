@@ -143,17 +143,25 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected Amount<ScatteringVectorOverDistance> getGradient() {
 		// Ignoring units for now because of bugs in JScience unit parser
 		String input = gradient.getText();
-		Real realVal = Real.valueOf(input);
-		Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE).asType(ScatteringVectorOverDistance.class);
-		return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+		try {
+			Real realVal = Real.valueOf(input);
+			Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE).asType(ScatteringVectorOverDistance.class);
+			return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 	protected Amount<ScatteringVector> getIntercept() {
 		// Ignoring units for now because of bugs in JScience unit parser
 		String input = intercept.getText();
-		Real realVal = Real.valueOf(input);
-		Unit<ScatteringVector> unit = getUnit().inverse().asType(ScatteringVector.class);
-		return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+		try {
+			Real realVal = Real.valueOf(input);
+			Unit<ScatteringVector> unit = getUnit().inverse().asType(ScatteringVector.class);
+			return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+		} catch (Exception e) {
+			return null;
+		}
 	}
 	
 	protected Unit<Length> getUnit() {

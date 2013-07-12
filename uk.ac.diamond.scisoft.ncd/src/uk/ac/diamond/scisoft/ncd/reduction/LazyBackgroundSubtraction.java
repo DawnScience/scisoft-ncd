@@ -16,9 +16,12 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.io.Serializable;
+
 import org.eclipse.core.runtime.jobs.ILock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
 
@@ -31,13 +34,29 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, DataSliceIdentifiers bg_id, ILock lock) {
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData,
+			DataSliceIdentifiers bg_id, DataSliceIdentifiers bg_error_id, ILock lock) {
 		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
-		reductionStep.parentngd = data;
 		
-		if (bgScaling != null) bgData.imultiply(bgScaling);
+		reductionStep.setData(data);
+		
+		if (bgScaling != null) {
+			bgData.imultiply(bgScaling);
+			if (bgData.hasErrors()) {
+				Serializable bgErrorBuffer = bgData.getErrorBuffer();
+				if (bgErrorBuffer instanceof AbstractDataset) {
+					DoubleDataset bgError = new DoubleDataset((AbstractDataset) bgErrorBuffer);
+					bgError.imultiply(bgScaling*bgScaling);
+					bgData.setErrorBuffer(bgError);
+				}
+			} else {
+				DoubleDataset bgErrors = new DoubleDataset((double[]) bgData.getBuffer(), bgData.getShape());
+				bgErrors.imultiply(bgScaling*bgScaling);
+				bgData.setErrorBuffer(bgErrors);
+			}
+		}
 		reductionStep.setBackground(bgData);
-		reductionStep.setIDs(bg_id);
+		reductionStep.setIDs(bg_id, bg_error_id);
 		
 		return reductionStep.writeout(dim, lock);
 	}

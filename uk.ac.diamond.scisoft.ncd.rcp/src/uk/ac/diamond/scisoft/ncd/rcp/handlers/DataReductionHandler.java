@@ -29,7 +29,6 @@ import java.util.Date;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -829,6 +828,7 @@ public class DataReductionHandler extends AbstractHandler {
 		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		
 		boolean isNAPImount = H5.H5Aexists(input_data_id, "napimount");
 		if (isNAPImount) {
 			int attr_id = H5.H5Aopen(input_data_id, "napimount", HDF5Constants.H5P_DEFAULT);
@@ -872,6 +872,11 @@ public class DataReductionHandler extends AbstractHandler {
 			H5.H5Aclose(attr_id);
 		} else {
 		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detector + "/data", detector_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		}
+		
+		boolean exists = H5.H5Lexists(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		if (exists) {
+		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + detector + "/errors", detector_id, "errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		}
 		
 		H5.H5Gclose(detector_id);

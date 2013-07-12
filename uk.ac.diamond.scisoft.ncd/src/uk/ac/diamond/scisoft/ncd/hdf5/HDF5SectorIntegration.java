@@ -37,9 +37,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5SectorIntegration.class);
 
-	public AbstractDataset parentdata;
 	private AbstractDataset[] areaData;
-	private DataSliceIdentifiers azimuthalIds;
+	private DataSliceIdentifiers azimuthalIds, azimuthalErrorsIds;
 	
 	private SectorROI roi;
 	private Double gradient, intercept, cameraLength;
@@ -57,8 +56,9 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	}
 
 	public double[] getCalibrationData() {
-		if (gradient != null && intercept != null)
+		if (gradient != null && intercept != null) {
 			return new double[] {gradient.doubleValue(), intercept.doubleValue()};
+		}
 		return null;
 	}
 
@@ -67,8 +67,9 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		this.intercept =  new Double(intercept);
 	}
 
-	public void setAzimuthalIDs(DataSliceIdentifiers input_id) {
+	public void setAzimuthalIDs(DataSliceIdentifiers input_id, DataSliceIdentifiers input_error_id) {
 		azimuthalIds = new DataSliceIdentifiers(input_id);
+		azimuthalErrorsIds = new DataSliceIdentifiers(input_error_id);
 	}
 	
 	@SuppressWarnings("hiding")
@@ -77,6 +78,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	public HDF5SectorIntegration(String name, String key) {
 		super(name, key);
 		azimuthalIds = new DataSliceIdentifiers();
+		azimuthalErrorsIds = new DataSliceIdentifiers();
 	}
 
 	public void setMask(IDataset mask) {
@@ -124,7 +126,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		roi.setClippingCompensation(true);
 
 		try {
-			AbstractDataset myazdata = null, myraddata = null;
+			AbstractDataset myazdata = null, myazerrors = null;
+			AbstractDataset myraddata = null, myraderrors = null;
 
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(roi);
@@ -132,24 +135,53 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			sec.setCalculateRadial(calculateRadial);
 			sec.setCalculateAzimuthal(calculateAzimuthal);
 			sec.setFast(fast);
-			int[] dataShape = parentdata.getShape();
+			int[] dataShape = data.getShape();
 			
-			parentdata = flattenGridData(parentdata, dim);
+			data = flattenGridData(data, dim);
+			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			
 			roi.setAverageArea(false);
-			AbstractDataset[] mydata = sec.process(parentdata, parentdata.getShape()[0], maskUsed);
+			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
+			AbstractDataset[] myerrors = sec.process(errors, errors.getShape()[0], maskUsed);
+			
+			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+				myazerrors = DatasetUtils.cast(myerrors[0], AbstractDataset.FLOAT64);
+				if (myazdata != null) {
+					myazdata.setErrorBuffer(myazerrors);
+					
+					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
+					resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
+					myazdata = myazdata.reshape(resAzShape);
+					
+					if (myazerrors != null) {
+						myazerrors = myazerrors.reshape(resAzShape);
+					}
+				}
 			}
 			if (calculateRadial) {
 				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+				myraderrors =  DatasetUtils.cast(myerrors[1], AbstractDataset.FLOAT64);
+				if (myraddata != null) {
+					myraddata.setErrorBuffer(myraderrors);
+					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+					myraddata = myraddata.reshape(resRadShape);
+					if (myraderrors != null) {
+						myraderrors = myraderrors.reshape(resRadShape);
+					}
+				}
 			}
 			try {
 				lock.acquire();
-				if (calculateAzimuthal) {
+				if (calculateAzimuthal && myazdata != null) {
 					writeResults(azimuthalIds, myazdata, dataShape, dim);
+					writeResults(azimuthalErrorsIds, myazdata.getError(), dataShape, dim);
 				}
-				if(calculateRadial) {
+				if(calculateRadial && myraddata != null) {
 					writeResults(ids, myraddata, dataShape, dim);
+					writeResults(errIds, myraddata.getError(), dataShape, dim);
 				}
 			} catch (Exception e) {
 				throw e;
@@ -157,17 +189,6 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				lock.release();
 			}
 			
-			int resLength =  dataShape.length - dim + 1;
-			if (calculateAzimuthal && myazdata != null) {
-				int[] resAzShape = Arrays.copyOf(dataShape, resLength);
-				resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
-				myazdata = myazdata.reshape(resAzShape);
-			}
-			if (calculateRadial && myraddata != null) {
-				int[] resRadShape = Arrays.copyOf(dataShape, resLength);
-				resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
-				myraddata = myraddata.reshape(resRadShape);
-			}
 			
 			return new AbstractDataset[] {myazdata, myraddata};
 			

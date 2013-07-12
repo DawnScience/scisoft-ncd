@@ -163,6 +163,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					if (gradient == null || intercept == null) {
 						if (crb.containsKey(det))
 							crb.clearData(det);
+							plottingSystem.clear();
 					} else {
 						crb.putCalibrationResult(det, gradient, intercept, null, null, getUnit());
 					}
@@ -239,11 +240,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
 
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getGradient(key).getEstimatedValue());
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT_ERROR, (float) crb.getGradient(key).getEstimatedValue());
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT_ERROR, (float) crb.getGradient(key).getAbsoluteError());
 					String unitGradient = UnitFormat.getUCUMInstance().format(crb.getGradient(key).getUnit());
 					crbDataMemento.putString(CalibrationPreferences.QAXIS_GRADIENT_UNIT, unitGradient);
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getIntercept(key).getEstimatedValue());
-					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT_ERROR, (float) crb.getIntercept(key).getEstimatedValue());
+					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT_ERROR, (float) crb.getIntercept(key).getAbsoluteError());
 					String unitIntercept = UnitFormat.getUCUMInstance().format(crb.getIntercept(key).getUnit());
 					crbDataMemento.putString(CalibrationPreferences.QAXIS_INTERCEPT_UNIT, unitIntercept);
 

@@ -62,6 +62,7 @@ import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
@@ -117,6 +118,10 @@ public class QAxisFileHandler extends AbstractHandler {
 					if (nodeLink == null) {
 						return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 					}
+					
+					Amount<ScatteringVectorOverDistance> amountGradient = null;
+					Amount<ScatteringVector> amountIntercept = null;
+					Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
 					Amount<Length> cameraLength = null;
 					Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
 					Amount<Energy> energy = null;
@@ -128,27 +133,66 @@ public class QAxisFileHandler extends AbstractHandler {
 
 						// The default value that was used when unit setting was fixed.
 						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-						Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
 						HDF5Attribute unitsAttr = node.getAttribute("unit");
 						if (unitsAttr != null) {
 							String unitString = unitsAttr.getFirstElement();
 							unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
 						}
+						amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+						amountIntercept = Amount.valueOf(intercept,  unit);
+						
+					} else if (node instanceof HDF5Group) {
+						HDF5Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+								+ "_processing/SectorIntegration/qaxis calibration/gradient").getDestination();
+						HDF5Node gradientError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+								+ "_processing/SectorIntegration/qaxis calibration/gradient_errors").getDestination();
+						HDF5Node interceptData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+								+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
+						HDF5Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+								+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
+						
+						double gradient = ((HDF5Dataset) gradientData).getDataset().getSlice().getDouble(0);
+						double errgradient = ((HDF5Dataset) gradientError).getDataset().getSlice().getDouble(0);
+						String strUnit = gradientData.getAttribute("units").getFirstElement();
+						Unit<ScatteringVectorOverDistance> gradientUnit = UnitFormat.getUCUMInstance()
+								.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+						
+						double intercept = ((HDF5Dataset) interceptData).getDataset().getSlice().getDouble(0);
+						double erritercept = ((HDF5Dataset) interceptError).getDataset().getSlice().getDouble(0);
+						strUnit = interceptData.getAttribute("units").getFirstElement();
+						unit = UnitFormat.getUCUMInstance()
+								.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+						
+						amountGradient = Amount.valueOf(gradient, errgradient, gradientUnit);
+						amountIntercept = Amount.valueOf(intercept,  erritercept, unit);
+					}
+					
+					if (amountGradient != null && amountIntercept != null) {
 						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 								+ "_processing/SectorIntegration/camera length");
 						if (nodeLink != null) {
 							node = nodeLink.getDestination();
 							if (node instanceof HDF5Dataset) {
+								double dataVal = ((HDF5Dataset) node).getDataset().getSlice().getDouble(0); 
 								if (node.containsAttribute("units")) {
 									cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
 											.asType(Length.class);
 								}
-								cameraLength = Amount.valueOf(
-										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), cameraLengthUnit);
+								cameraLength = Amount.valueOf(dataVal, cameraLengthUnit);
+							} else if (node instanceof HDF5Group) {
+								HDF5Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+										+ "_processing/SectorIntegration/camera length/data").getDestination();
+								HDF5Node error = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+										+ "_processing/SectorIntegration/camera length/errors").getDestination();
+								
+								double dataVal = ((HDF5Dataset) data).getDataset().getSlice().getDouble(0); 
+								double errorVal = ((HDF5Dataset) error).getDataset().getSlice().getDouble(0); 
+								cameraLengthUnit = Unit.valueOf(data.getAttribute("units").getFirstElement())
+											.asType(Length.class);
+								cameraLength = Amount.valueOf(dataVal, errorVal, cameraLengthUnit);
 							}
 						}
-						Amount<ScatteringVectorOverDistance> amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
-						Amount<ScatteringVector> amountIntercept = Amount.valueOf(intercept,  unit);
+						
 						crb = new CalibrationResultsBean(detectorSaxs, amountGradient, amountIntercept, new ArrayList<CalibrationPeak>(), cameraLength, unit.inverse().asType(Length.class));
 						ncdCalibrationSourceProvider.putCalibrationResult(crb);
 						
