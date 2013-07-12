@@ -391,7 +391,7 @@ public class LazyNcdProcessing {
 	    final AbstractDataset[] areaData;
 		int secRank = rank - dim + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
-		AbstractDataset[] qaxis = null;
+		AbstractDataset qaxis = null;
 		final LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
@@ -584,12 +584,18 @@ public class LazyNcdProcessing {
 					@Override
 					protected IStatus run(IProgressMonitor jobmonitor) {
 						try {
-							AbstractDataset data, errors;
+							AbstractDataset data;
 							try {
 								lock.acquire();
 								data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
-								errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-								data.setError(errors);
+								if (tmp_errors_ids != null) { 
+									if(tmp_errors_ids.dataset_id >= 0) {
+										AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+										data.setError(errors);
+									} else {
+										tmp_errors_ids.setSlice(currentSliceParams);
+									}
+								}
 							} catch (Exception e) {
 								throw e;
 							} finally {
@@ -743,8 +749,14 @@ public class LazyNcdProcessing {
 						try {
 							lock.acquire();
 							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
-							AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-							data.setError(errors);
+							if (tmp_errors_ids != null) { 
+								if(tmp_errors_ids.dataset_id >= 0) {
+									AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+									data.setError(errors);
+								} else {
+									tmp_errors_ids.setSlice(currentSliceParams);
+								}
+							}
 						} catch (Exception e) {
 							throw e;
 						} finally {
@@ -783,9 +795,14 @@ public class LazyNcdProcessing {
 							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
 							bgSliceParams.setStart(bgStart);
 							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
-							AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
-							bgData.setError(bgErrors);
-
+							if(tmp_errors_bgIds != null) {
+								if (tmp_errors_bgIds.dataset_id >= 0) {
+									AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
+									bgData.setError(bgErrors);
+								} else {
+									tmp_errors_bgIds.setSlice(bgSliceParams);
+								}
+							}
 							tmp_ids.setIDs(bg_group_id, bg_data_id);
 							tmp_errors_ids.setIDs(bg_group_id, bg_errors_id);
 							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
@@ -1049,7 +1066,7 @@ public class LazyNcdProcessing {
 		frameBatch = Math.max(1, (int) (maxMemory / (10 * batchSize * cores)));
 	}
 
-	private AbstractDataset[] calculateQaxisDataset(String detector, int dim, long[] frames) {
+	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
 		
 		AbstractDataset qaxis = null;
 		AbstractDataset qaxisErr = null;
@@ -1085,12 +1102,13 @@ public class LazyNcdProcessing {
 					}
 				}
 			}
+			qaxis.setError(qaxisErr);
 		}
 		
 		if (qaxis == null) {
 			return null;
 		}
 		
-		return new AbstractDataset[] {qaxis, qaxisErr};
+		return qaxis;
 	}
 }
