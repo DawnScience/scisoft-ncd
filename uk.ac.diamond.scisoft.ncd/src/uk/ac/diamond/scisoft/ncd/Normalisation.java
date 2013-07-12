@@ -71,4 +71,9 @@ public class Normalisation {
 
 		return new Object[] {mydata, myerrors};
 	}
+	
+	@Deprecated
+	public float[] process(Serializable buffer, Serializable cbuffer, int frames, final int[] dimensions, final int[] cdimensions) {
+		return (float[]) process(buffer, buffer, cbuffer, frames, dimensions, cdimensions)[0];
+	}
 }

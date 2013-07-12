@@ -67,4 +67,9 @@ public class DetectorResponse {
 		
 		return new Object[] {mydata, myerror};
 	}
+	
+	@Deprecated
+	public float[] process(Serializable buffer, int frames, final int[] dimensions) {
+		return (float[]) process(buffer, buffer, frames, dimensions)[0];
+	}
 }

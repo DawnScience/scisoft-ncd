@@ -99,4 +99,9 @@ public class BackgroundSubtraction {
 		
 		return new Object[] {mydata, myerror};
 	}
+	
+	@Deprecated
+	public float[] process(Serializable buffer, final int[] dimensions) {
+		return (float[]) process(buffer, buffer, dimensions)[0];
+	}
 }

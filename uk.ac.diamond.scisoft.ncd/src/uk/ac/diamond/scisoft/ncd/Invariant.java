@@ -41,4 +41,9 @@ public class Invariant {
 		
 		return new Object[] {mydata, myerrors};
 	}
+
+	@Deprecated
+	public float[] process(Serializable buffer, final int[] dimensions) {
+		return (float[]) process(buffer, buffer, dimensions)[0];
+	}
 }
