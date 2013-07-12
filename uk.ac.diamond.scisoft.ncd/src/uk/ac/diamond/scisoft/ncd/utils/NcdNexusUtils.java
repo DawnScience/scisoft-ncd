@@ -208,7 +208,7 @@ public class NcdNexusUtils {
 			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(attrtype_id, units.length());
 			
-			int attr_id = H5.H5Acreate(dataset_id, "unit", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+			int attr_id = H5.H5Acreate(dataset_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");

@@ -163,6 +163,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					if (gradient == null || intercept == null) {
 						if (crb.containsKey(det))
 							crb.clearData(det);
+							plottingSystem.clear();
 					} else {
 						crb.putCalibrationResult(det, gradient, intercept, null, null, getUnit());
 					}
