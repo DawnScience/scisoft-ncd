@@ -280,7 +280,15 @@ public class LazyNcdProcessing {
 		this.qaxisUnit = unit.inverse().asType(ScatteringVector.class);
 	}
 
-	
+	/**
+	 * 
+	 * @param detector - name of detector e.g. Pilatus
+	 * @param dim      - dimension of detector
+	 * @param filename - file path to io file (processing done in this folder) 
+	 * @param monitor
+	 * @throws NullPointerException
+	 * @throws HDF5Exception
+	 */
 	public void execute(String detector, int dim, String filename, final IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
