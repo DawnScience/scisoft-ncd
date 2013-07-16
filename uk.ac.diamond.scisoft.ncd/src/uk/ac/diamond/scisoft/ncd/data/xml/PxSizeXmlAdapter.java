@@ -29,6 +29,8 @@ public class PxSizeXmlAdapter extends XmlAdapter<String, Amount<Length>> {
 	
     @Override
     public Amount<Length> unmarshal( String value ){
+		// JScience can't parse brackets
+		value = value.replace("(", "").replace(")", "");
         return Amount.valueOf(value).to(unit);
     } 
 

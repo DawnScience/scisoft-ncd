@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.data.xml;
 
+import java.text.ParsePosition;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -39,8 +40,12 @@ public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsX
 	
 	public static class CalibrationData {
 		public String detector;
-		public String intercept;
-		public String gradient;
+		public Double intercept;
+		public Double interceptError;
+		public String interceptUnit;
+		public Double gradient;
+		public Double gradientError;
+		public String gradientUnit;
 		public String meanCameraLength;
 		public String unit;
 	}
@@ -50,9 +55,16 @@ public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsX
     	CalibrationResultsBean crb = new CalibrationResultsBean();
     	for (CalibrationData data : value.entry) {
     		String detector = data.detector;
-    		Amount<ScatteringVectorOverDistance> gradient = Amount.valueOf(data.gradient).to(ScatteringVectorOverDistance.UNIT);
-    		Amount<ScatteringVector> intercept = Amount.valueOf(data.intercept).to(ScatteringVector.UNIT);
-    		Amount<Length> meanCameraLength = Amount.valueOf(data.meanCameraLength).to(Length.UNIT);
+			Unit<ScatteringVectorOverDistance> unitGradient = UnitFormat.getUCUMInstance().parseObject(data.gradientUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+    		Amount<ScatteringVectorOverDistance> gradient = Amount.valueOf(data.gradient, data.gradientError, unitGradient);
+			Unit<ScatteringVector> unitIntercept = UnitFormat.getUCUMInstance().parseObject(data.interceptUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+    		Amount<ScatteringVector> intercept = Amount.valueOf(data.intercept, data.interceptError, unitIntercept);
+    		
+    		String tmp = data.meanCameraLength;
+			// JScience can't parse brackets
+			tmp = tmp.replace("(", "").replace(")", "");
+    		Amount<Length> meanCameraLength = Amount.valueOf(tmp).to(Length.UNIT);
+    		
     		Unit<Length> unit = Unit.valueOf(data.unit).asType(Length.class);
     		crb.putCalibrationResult(detector, gradient, intercept, null, meanCameraLength, unit);
     	}
@@ -65,10 +77,17 @@ public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsX
     	for (String key : crb.keySet()) {
     		CalibrationData data = new CalibrationData();
     		data.detector = key;
-    		data.gradient = crb.getGradient(key).toString();
-    		data.intercept = crb.getIntercept(key).toString();
+    		Amount<ScatteringVectorOverDistance> grad = crb.getGradient(key);
+    		data.gradient = grad.getEstimatedValue();
+    		data.gradientError = grad.getAbsoluteError();
+    		data.gradientUnit = UnitFormat.getUCUMInstance().format(grad.getUnit());
+    		Amount<ScatteringVector> inter = crb.getIntercept(key);
+    		data.intercept = inter.getEstimatedValue();
+    		data.interceptError = inter.getAbsoluteError();
+    		data.interceptUnit = UnitFormat.getUCUMInstance().format(inter.getUnit());
     		data.meanCameraLength = crb.getMeanCameraLength(key).toString();
-    		data.unit = UnitFormat.getUCUMInstance().format(crb.getUnit(key));
+    		data.unit = crb.getUnit(key).toString();
+    		
     		list.entry.add(data);
     	}
         return list;
