@@ -217,10 +217,6 @@
                priorityLevel="workbench">
          </variable>
          <variable
-               name="uk.ac.diamond.scisoft.ncd.rcp.normChannel"
-               priorityLevel="workbench">
-         </variable>
-         <variable
                name="uk.ac.diamond.scisoft.ncd.rcp.dataSlice"
                priorityLevel="workbench">
          </variable>

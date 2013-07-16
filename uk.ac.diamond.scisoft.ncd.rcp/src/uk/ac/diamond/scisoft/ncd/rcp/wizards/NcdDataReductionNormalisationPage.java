@@ -50,10 +50,9 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 	private Spinner normChan;
 	private Text sampleThickness;
 	private Text absScale;
-	private Label absOffset;
+	private Label absOffset, normChanLabel;
 	private NcdProcessingSourceProvider ncdScalerSourceProvider;
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
-	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 
@@ -76,8 +75,6 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		ncdDetectorSourceProvider.addSourceProviderListener(this);
-
-		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
 
 		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 
@@ -125,29 +122,41 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 					NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
 					normChan.setMinimum(0);
 					normChan.setMaximum(calDet.getMaxChannel());
+					if (calDet.getMaxChannel() < 1) {
+						normChanLabel.setEnabled(false);
+						normChan.setEnabled(false);
+					} else {
+						normChanLabel.setEnabled(true);
+						normChan.setEnabled(true);
+					}
+					normChan.setSelection(calDet.getNormChannel());
 					Display dsp = normChan.getDisplay();
 					if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
-					// Update normalisation channel setting in case it was reset by new limits
-					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
 				}
 			}
 		});
 		
 		
-		Label normChanLabel = new Label(subContainer, SWT.NONE);
+		normChanLabel = new Label(subContainer, SWT.NONE);
 		normChanLabel.setText("Channel");
 		normChanLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 		normChan = new Spinner(subContainer, SWT.BORDER);
 		normChan.setToolTipText("Select the channel number with calibration data");
 		normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-		Integer tmpNormChannel = ncdNormChannelSourceProvider.getNormChannel();
-		if (tmpNormChannel != null) {
-			normChan.setSelection(tmpNormChannel);
+		String scaler = ncdScalerSourceProvider.getScaler();
+		NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+		if (calDet != null) {
+			normChan.setSelection(calDet.getNormChannel());
 		}
 		normChan.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
+				String scaler = ncdScalerSourceProvider.getScaler();
+				NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+				if (calDet != null) {
+					calDet.setNormChannel(normChan.getSelection());
+					ncdDetectorSourceProvider.addNcdDetector(calDet);
+				}
 			}
 		});
 		

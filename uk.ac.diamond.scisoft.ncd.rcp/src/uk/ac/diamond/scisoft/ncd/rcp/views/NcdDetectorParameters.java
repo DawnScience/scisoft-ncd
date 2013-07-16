@@ -444,6 +444,12 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 
 	@Override
 	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
+		for (Object key : sourceValuesByName.keySet()) {
+			if (key instanceof String) {
+				String name = (String) key;
+				sourceChanged(sourcePriority, name, sourceValuesByName.get(name));
+			}
+		}
 	}
 
 	@Override

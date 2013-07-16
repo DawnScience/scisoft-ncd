@@ -24,6 +24,7 @@ import java.util.Set;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
+import javax.xml.bind.annotation.XmlAnyAttribute;
 
 import org.jscience.physics.amount.Amount;
 
@@ -32,6 +33,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistan
 
 public class CalibrationResultsBean implements Serializable {
 	
+	@XmlAnyAttribute
 	private HashMap<String, CalibrationResultsData> results;
 
 	public CalibrationResultsBean() {
@@ -49,32 +51,37 @@ public class CalibrationResultsBean implements Serializable {
 	}
 	
 	public ArrayList<CalibrationPeak> getPeakList(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			return results.get(experiment).getPeakList();
+		}
 		return null;
 	}
 
 	public Amount<ScatteringVectorOverDistance> getGradient(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			return results.get(experiment).getGradient();
+		}
 		return null;
 	}
 	
 	public Amount<ScatteringVector> getIntercept(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			return results.get(experiment).getIntercept();
+		}
 		return null;
 	}
 	
 	public Amount<Length> getMeanCameraLength(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			return results.get(experiment).getMeanCameraLength();
+		}
 		return null;
 	}
 	
 	public Unit<Length> getUnit(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			return results.get(experiment).getUnit();
+		}
 		return null;
 	}
 	
@@ -83,8 +90,9 @@ public class CalibrationResultsBean implements Serializable {
 	}
 	
 	public void clearData(String experiment) {
-		if (results.containsKey(experiment))
+		if (results.containsKey(experiment)) {
 			results.remove(experiment);
+		}
 	}
 	
 	public Set<String> keySet() {
@@ -93,6 +101,5 @@ public class CalibrationResultsBean implements Serializable {
 	
 	public void clearAllData() {
 		results.clear();
-	}
-	
+	}	
 }

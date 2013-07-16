@@ -23,6 +23,9 @@ import java.util.Map;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
@@ -33,12 +36,16 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistan
 import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.data.xml.CalibrationResultsXmlAdapter;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 
 public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 
 	public final static String CALIBRATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.calibrationBean";
 	public final static String NCDDETECTORS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.ncdDetectors";
 	
+	@XmlJavaTypeAdapter(CalibrationResultsXmlAdapter.class)
 	private CalibrationResultsBean calibrationResults; 
 	private HashMap<String, NcdDetectorSettings> ncdDetectors;
 
@@ -118,5 +125,17 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 
 	public HashMap<String, NcdDetectorSettings> getNcdDetectors() {
 		return ncdDetectors;
+	}
+	
+	public void setAll(NcdCalibrationSourceProvider sourceProvider) {
+		
+		Map<String, Object> sourceState = sourceProvider.getCurrentState();
+		
+		ncdDetectors       = (HashMap<String, NcdDetectorSettings>) sourceState.get(NCDDETECTORS_STATE);
+		updateNcdDetectors();
+		
+		calibrationResults = (CalibrationResultsBean) sourceState.get(CALIBRATION_STATE);
+		fireSourceChanged(ISources.WORKBENCH, CALIBRATION_STATE, calibrationResults);
+		
 	}
 }

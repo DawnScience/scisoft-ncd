@@ -25,7 +25,6 @@ import java.util.Map.Entry;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
@@ -94,7 +93,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdSectorSourceProvider;
 	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
-	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
@@ -209,20 +207,21 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
 			Double sampleThicknessVal = getSampleThickness();
-			if (sampleThicknessVal != null)
+			if (sampleThicknessVal != null) {
 				memento.putFloat(NcdPreferences.NCD_SAMPLETHICKNESS, sampleThicknessVal.floatValue());
-			
+			}
 			Double absScaleVal = getAbsScale();
-			if (absScaleVal != null)
+			if (absScaleVal != null) {
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScaleVal.floatValue());
+			}
 			Double absOffsetVal = getAbsOffset();
-			if (absOffsetVal != null)
+			if (absOffsetVal != null) {
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffsetVal.floatValue());
-			
+			}
 			Double bgScaleVal = getBgScale();
-			if (bgScaleVal != null)
+			if (bgScaleVal != null) {
 				memento.putFloat(NcdPreferences.NCD_BACKGROUNDSCALE, bgScaleVal.floatValue());
-			
+			}
 			memento.putString(NcdPreferences.NCD_BGFIRSTFRAME, bgFramesStart.getText());
 			memento.putString(NcdPreferences.NCD_BGLASTFRAME, bgFramesStop.getText());
 			memento.putString(NcdPreferences.NCD_BGFRAMESELECTION, bgAdvanced.getText());
@@ -259,11 +258,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_NORM_DETECTOR, tmpDet.getKey());
-					int maxChannel = tmpDet.getValue().getMaxChannel();
+					Integer maxChannel = tmpDet.getValue().getMaxChannel();
 					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL, maxChannel);
+					Integer normChannel = tmpDet.getValue().getNormChannel();
+					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChannel);
 				}
 			}
-			memento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChan.getSelection());
 			
 			memento.putString(NcdPreferences.NCD_DIRECTORY, inputDirectory);
 		}
@@ -282,21 +282,21 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			String tmp;
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_NORMALISATION);
-			if (val!=null)
+			if (val!=null) {
 				ncdNormalisationSourceProvider.setEnableNormalisation(val);
-			
+			}
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_BACKGROUND);
-			if (val!=null)
+			if (val!=null) {
 				ncdBackgroundSourceProvider.setEnableBackground(val);
-			
+			}
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_RESPONSE);
-			if (val!=null)
+			if (val!=null) {
 				ncdResponseSourceProvider.setEnableDetectorResponse(val);
-			
+			}
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_SECTOR);
-			if (val!=null)
+			if (val!=null) {
 				ncdSectorSourceProvider.setEnableSector(val);
-			
+			}
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_INVARIANT);
 			if (val!=null) {
 				invButton.setSelection(val);
@@ -304,9 +304,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_STAGE_AVERAGE);
-			if (val!=null)
+			if (val!=null) {
 				ncdAverageSourceProvider.setEnableAverage(val);
-			
+			}
 			val = memento.getBoolean(NcdPreferences.NCD_SECTOR_RADIAL);
 			if (val!=null) {
 				radialButton.setSelection(val);
@@ -337,6 +337,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				for (IMemento det: normMemento) {
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.CALIBRATION_DETECTOR, 1);
 					ncdDetector.setMaxChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
+					ncdDetector.setNormChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX));
 					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
 				}
 			}
@@ -345,12 +346,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			if (idx != null) {
 				calList.select(idx);
 				calList.notifyListeners(SWT.Selection, null);
-			}
-			
-			idx = memento.getInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX);
-			if (idx != null) {
-				normChan.setSelection(idx);
-				ncdNormChannelSourceProvider.setNormChannel(idx);
 			}
 			
 			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTESCALE);
@@ -683,17 +678,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
 						normChan.setMinimum(0);
 						normChan.setMaximum(calDet.getMaxChannel());
-						if (calDet.getMaxChannel()<1) {
+						if (calDet.getMaxChannel() < 1) {
 							normChanLabel.setEnabled(false);
 							normChan.setEnabled(false);
 						} else {
 							normChanLabel.setEnabled(true);
 							normChan.setEnabled(true);
 						}
+						normChan.setSelection(calDet.getNormChannel());
 						Display dsp = normChan.getDisplay();
 						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
-						// Update normalisation channel setting in case it was reset by new limits
-						ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
 					}
 				}
 			});
@@ -705,14 +699,20 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			normChan = new Spinner(g, SWT.BORDER);
 			normChan.setToolTipText("Select the channel number with calibration data");
 			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-			Integer tmpNormChannel = ncdNormChannelSourceProvider.getNormChannel();
-			if (tmpNormChannel != null) {
-				normChan.setSelection(tmpNormChannel);
+			String scaler = ncdScalerSourceProvider.getScaler();
+			NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+			if (calDet != null) {
+				normChan.setSelection(calDet.getNormChannel());
 			}
 			normChan.addSelectionListener(new SelectionAdapter() {
 				@Override
 				public void widgetSelected(SelectionEvent e) {
-					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
+					String scaler = ncdScalerSourceProvider.getScaler();
+					NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+					if (calDet != null) {
+						calDet.setNormChannel(normChan.getSelection());
+						ncdDetectorSourceProvider.addNcdDetector(calDet);
+					}
 				}
 			});
 			
@@ -1161,8 +1161,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		
-		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
-		
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
 		
 		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
@@ -1333,17 +1331,19 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	@Override
 	public void sourceChanged(int sourcePriority, @SuppressWarnings("rawtypes") Map sourceValuesByName) {
+		for (Object key : sourceValuesByName.keySet()) {
+			if (key instanceof String) {
+				String name = (String) key;
+				sourceChanged(sourcePriority, name, sourceValuesByName.get(name));
+			}
+		}
 	}
 
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
 		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
 			if (calList != null && !(calList.isDisposed())) {
-				int idxSel = calList.getSelectionIndex();
-				String saveSelection = null;
-				if (idxSel != -1) {
-					saveSelection = calList.getItem(idxSel);
-				}
+				String saveSelection = ncdScalerSourceProvider.getScaler();
 				calList.removeAll();
 				if (sourceValue instanceof HashMap<?, ?>) {
 					for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
@@ -1358,31 +1358,37 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						}
 					}
 				}
-				if (calList.getItemCount() > 0) {
-					idxSel = (idxSel != -1) ? ArrayUtils.indexOf(calList.getItems(), saveSelection) : 0;
-					idxSel = (idxSel == -1) ? 0 : idxSel;
-					calList.select(idxSel);
-					ncdScalerSourceProvider.setScaler(calList.getItem(idxSel));
+				if (calList.getItemCount() > 0 && saveSelection != null) {
+					int idxSel = calList.indexOf(saveSelection); 
+					if (idxSel != -1) {
+						calList.select(idxSel);
+					} else {
+						calList.select(0);
+						ncdScalerSourceProvider.setScaler(calList.getItem(0));
+					}
+				} else {
+					ncdScalerSourceProvider.setScaler(null);
 				}
 			}
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.SCALER_STATE)) {
 			if (sourceValue instanceof String) {
+				if ((calList != null) && !(calList.isDisposed())) {
+					int idxSel = calList.indexOf((String) sourceValue);
+					if (idxSel != -1) {
+						calList.select(idxSel);
+					} else {
+						return;
+					}
+				}
 				if ((normChan != null) && !(normChan.isDisposed())) {
 					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 					if (detSettings != null) {
 						int max = detSettings.getMaxChannel();
 						normChan.setMaximum(max);
+						normChan.setSelection(detSettings.getNormChannel());
 					}
-					Integer normChannel = ncdNormChannelSourceProvider.getNormChannel();
-					if (normChannel != null) {
-						normChan.setSelection(normChannel);
-					}
-					
-					// Update source provider in case the stored value
-					// is not applicable to the current detector
-					ncdNormChannelSourceProvider.setNormChannel(normChan.getSelection());
 				}
 			}
 		}

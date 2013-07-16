@@ -21,6 +21,12 @@ public class SliceInput {
 	private Integer startFrame, stopFrame;
 	private String advancedSlice;
 	
+	public SliceInput() {
+		startFrame = null;
+		stopFrame = null;
+		advancedSlice = null;
+	}
+
 	public SliceInput(SliceInput sliceInput) {
 		Integer tmpStartFrame = sliceInput.getStartFrame();
 		Integer tmpStopFrame = sliceInput.getStopFrame();

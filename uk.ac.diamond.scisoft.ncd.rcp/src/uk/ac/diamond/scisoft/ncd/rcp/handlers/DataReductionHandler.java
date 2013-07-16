@@ -130,7 +130,6 @@ public class DataReductionHandler extends AbstractHandler {
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
-	private NcdProcessingSourceProvider ncdNormChannelSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	
 	private void ConfigureNcdSourceProviders(IWorkbenchWindow window) {
@@ -148,7 +147,6 @@ public class DataReductionHandler extends AbstractHandler {
 		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		
-		ncdNormChannelSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMCHANNEL_STATE);
 		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
 		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
 		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
@@ -495,7 +493,7 @@ public class DataReductionHandler extends AbstractHandler {
 		return false;
 	}
 
-	public void readDataReductionStages(NcdReductionFlags flags) {
+	private void readDataReductionStages(NcdReductionFlags flags) {
 		flags.setEnableWaxs(ncdWaxsDetectorSourceProvider.isEnableWaxs());
 		flags.setEnableSaxs(ncdSaxsDetectorSourceProvider.isEnableSaxs());
 		
@@ -582,7 +580,7 @@ public class DataReductionHandler extends AbstractHandler {
 		
 	}
 
-	public void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws FileNotFoundException, IOException {
+	private void readDataReductionOptions(NcdReductionFlags flags, LazyNcdProcessing processing) throws FileNotFoundException, IOException {
 
 		workingDir = ncdWorkingDirSourceProvider.getWorkingDir();
 		if (workingDir == null || workingDir.isEmpty()) {
@@ -651,10 +649,13 @@ public class DataReductionHandler extends AbstractHandler {
 		Double absScaling = null;
 		Double thickness = null;
 		if (flags.isEnableNormalisation()) {
-			normChannel = ncdNormChannelSourceProvider.getNormChannel();
 			calibration = ncdScalerSourceProvider.getScaler();
 			absScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 			thickness = ncdSampleThicknessSourceProvider.getSampleThickness();
+			NcdDetectorSettings scalerData = ncdDetectorSourceProvider.getNcdDetectors().get(calibration);
+			if (scalerData != null) {
+				normChannel = scalerData.getNormChannel();
+			}
 		}
 		
 		boolean enableMask = ncdMaskSourceProvider.isEnableMask();

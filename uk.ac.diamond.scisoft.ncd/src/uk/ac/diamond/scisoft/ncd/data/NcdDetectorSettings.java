@@ -17,26 +17,49 @@
 package uk.ac.diamond.scisoft.ncd.data;
 
 import javax.measure.quantity.Length;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.jscience.physics.amount.Amount;
+
+import uk.ac.diamond.scisoft.ncd.data.xml.PxSizeXmlAdapter;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 
 public class NcdDetectorSettings {
 	
 	private String type;				// Type declared in DetectorTypes class 
 	private int dim;					// Detector dimensionality
 	private String name;				// Detector Name
+    @XmlElement
+    @XmlJavaTypeAdapter(PxSizeXmlAdapter.class)
 	private Amount<Length> pxSize;		// Detector pixel size
-	private Integer maxchannel;			// Number of recorded scaler channels
+	private Integer normChannel;        // Selected scaler channel
+	private Integer maxChannel;			// Number of recorded scaler channels
 
+	public NcdDetectorSettings() {
+		super();
+		this.type = null;
+		this.dim = -1;
+		this.name = null;
+		this.pxSize = null;
+		this.normChannel = 0;
+		this.maxChannel = 0;
+	}
+	
 	public NcdDetectorSettings(NcdDetectorSettings ncdDetector) {
 		super();
 		this.type = ncdDetector.getType();
 		this.dim = ncdDetector.getDimension();
 		this.name = ncdDetector.getName();
 		Amount<Length> tmpPxSize = ncdDetector.getPxSize();
-		if (tmpPxSize != null)
+		if (tmpPxSize != null) {
 			this.pxSize = tmpPxSize.copy();
-		this.maxchannel = ncdDetector.getMaxChannel();
+		}
+		setNormChannel(ncdDetector.getNormChannel());
+		setMaxChannel(ncdDetector.getMaxChannel());
 	}
 	
 	public NcdDetectorSettings(String name, String type, int dim) {
@@ -45,7 +68,7 @@ public class NcdDetectorSettings {
 		this.dim = dim;
 		this.name = name;
 		this.pxSize = null;
-		this.maxchannel = null;
+		this.maxChannel = null;
 	}
 	
 	public String getType() {
@@ -71,6 +94,7 @@ public class NcdDetectorSettings {
 	public void setName(String name) {
 		this.name = name;
 	}
+	
 	public Amount<Length> getPxSize() {
 		return pxSize;
 	}
@@ -79,12 +103,28 @@ public class NcdDetectorSettings {
 		this.pxSize = pxSize.copy();
 	}
 	
-	public Integer getMaxChannel() {
-		return maxchannel;
+	public Integer getNormChannel() {
+		return normChannel;
 	}
 	
-	public void setMaxChannel(Integer maxchannel) {
-		this.maxchannel = maxchannel;
+	public void setNormChannel(Integer normChannel) {
+		if (normChannel != null) {
+			this.normChannel = normChannel;
+		} else {
+			this.normChannel = 0;
+		}
+	}
+	
+	public Integer getMaxChannel() {
+		return maxChannel;
+	}
+	
+	public void setMaxChannel(Integer maxChannel) {
+		if (maxChannel != null) {
+			this.maxChannel = maxChannel;
+		} else {
+			this.maxChannel = 0;
+		}
 	}
 	
 }

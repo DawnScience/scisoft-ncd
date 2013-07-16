@@ -9,6 +9,7 @@ Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
 Export-Package: uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.calibration,
  uk.ac.diamond.scisoft.ncd.data,
+ uk.ac.diamond.scisoft.ncd.data.xml,
  uk.ac.diamond.scisoft.ncd.hdf5,
  uk.ac.diamond.scisoft.ncd.preferences,
  uk.ac.diamond.scisoft.ncd.reduction,

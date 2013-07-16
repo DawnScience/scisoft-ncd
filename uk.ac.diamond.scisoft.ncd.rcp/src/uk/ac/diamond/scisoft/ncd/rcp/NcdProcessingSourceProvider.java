@@ -17,14 +17,23 @@
 package uk.ac.diamond.scisoft.ncd.rcp;
 
 import java.util.HashMap;
+import java.util.Map;
 
 import javax.measure.quantity.Energy;
+import javax.xml.bind.annotation.XmlAccessorType;
+import javax.xml.bind.annotation.XmlAccessType;
+import javax.xml.bind.annotation.XmlElement;
+import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
+
 
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.data.xml.EnergyXmlAdapter;
+
+@XmlAccessorType(XmlAccessType.FIELD)
 
 public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
@@ -80,8 +89,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private String bgFile, drFile, workingDir;
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
-	private Integer normChannel;
 	private Double bgScaling, absScaling, absOffset, sampleThickness;
+    @XmlElement
+    @XmlJavaTypeAdapter(EnergyXmlAdapter.class)
 	private Amount<Energy> energy;
 
 	public NcdProcessingSourceProvider() {
@@ -92,7 +102,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	@Override
-	public HashMap<String, Object> getCurrentState() {
+	public Map<String, Object> getCurrentState() {
 		HashMap<String, Object> currentState = new HashMap<String, Object>();
 		currentState.put(AVERAGE_STATE, enableAverage);
 		currentState.put(BACKGROUD_STATE, enableBackground);
@@ -110,7 +120,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(SAXSDETECTOR_STATE, saxsDetector);
 		currentState.put(WAXSDETECTOR_STATE, waxsDetector);
 		currentState.put(ENERGY_STATE, energy);
-		currentState.put(NORMCHANNEL_STATE, normChannel);
+		//currentState.put(NORMCHANNEL_STATE, normChannel);
 		currentState.put(DATASLICE_STATE, dataSlice);
 		currentState.put(BKGSLICE_STATE, bkgSlice);
 		currentState.put(BKGFILE_STATE, bgFile);
@@ -237,10 +247,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
 	}
 
-	public void setNormChannel(Integer normChannel) {
-		this.normChannel = (normChannel != null) ? new Integer(normChannel) : null;
-		fireSourceChanged(ISources.WORKBENCH, NORMCHANNEL_STATE, this.normChannel);
-	}
+	//public void setNormChannel(Integer normChannel) {
+	//	this.normChannel = (normChannel != null) ? new Integer(normChannel) : null;
+	//	fireSourceChanged(ISources.WORKBENCH, NORMCHANNEL_STATE, this.normChannel);
+	//}
 
 	public void setDataSlice(SliceInput dataSlice) {
 		this.dataSlice = (dataSlice != null) ? new SliceInput(dataSlice) : null;
@@ -378,9 +388,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return gridAverage;
 	}
 
-	public Integer getNormChannel() {
-		return normChannel;
-	}
+	//public Integer getNormChannel() {
+	//	return normChannel;
+	//}
 
 	public Double getBgScaling() {
 		return bgScaling;
@@ -397,8 +407,42 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public Double getSampleThickness() {
 		return sampleThickness;
 	}
-
+	
 	public Amount<Energy> getEnergy() {
 		return energy;
+	}
+	
+	public void setAll(NcdProcessingSourceProvider sourceProvider) {
+		
+		Map<String, Object> sourceState = sourceProvider.getCurrentState();
+		
+		enableAverage          = (Boolean) sourceState.get(AVERAGE_STATE);      
+		enableBackground       = (Boolean) sourceState.get(BACKGROUD_STATE);     
+		enableDetectorResponse = (Boolean) sourceState.get(RESPONSE_STATE);      
+		enableInvariant        = (Boolean) sourceState.get(INVARIANT_STATE);     
+		enableNormalisation    = (Boolean) sourceState.get(NORMALISATION_STATE);
+		enableSector           = (Boolean) sourceState.get(SECTOR_STATE);               
+		enableRadial           = (Boolean) sourceState.get(RADIAL_STATE);               
+		enableAzimuthal        = (Boolean) sourceState.get(AZIMUTH_STATE);              
+		enableFastIntegration  = (Boolean) sourceState.get(FASTINT_STATE);              
+		enableWaxs             = (Boolean) sourceState.get(WAXS_STATE);                 
+		enableSaxs             = (Boolean) sourceState.get(SAXS_STATE);                 
+		enableMask             = (Boolean) sourceState.get(MASK_STATE);                 
+		scaler                 = (String) sourceState.get(SCALER_STATE);               
+		saxsDetector           = (String) sourceState.get(SAXSDETECTOR_STATE);         
+		waxsDetector           = (String) sourceState.get(WAXSDETECTOR_STATE);         
+		energy                 = (Amount<Energy>) sourceState.get(ENERGY_STATE);               
+		dataSlice              = (SliceInput) sourceState.get(DATASLICE_STATE);            
+		bkgSlice               = (SliceInput) sourceState.get(BKGSLICE_STATE);             
+		bgFile                 = (String) sourceState.get(BKGFILE_STATE);              
+		drFile                 = (String) sourceState.get(DRFILE_STATE);               
+		gridAverage            = (SliceInput) sourceState.get(GRIDAVERAGE_STATE);          
+		bgScaling              = (Double) sourceState.get(BKGSCALING_STATE);           
+		absScaling             = (Double) sourceState.get(ABSSCALING_STATE);           
+		absOffset              = (Double) sourceState.get(ABSOFFSET_STATE);            
+		sampleThickness        = (Double) sourceState.get(SAMPLETHICKNESS_STATE);      
+		workingDir             = (String) sourceState.get(WORKINGDIR_STATE);           
+		
+		fireSourceChanged(ISources.WORKBENCH, getCurrentState());
 	}
 }
