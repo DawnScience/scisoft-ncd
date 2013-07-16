@@ -211,12 +211,12 @@
                label="Save data reduction to XML"
                style="push">
          </command>
-         <command
+         <!--command
                commandId="uk.ac.diamond.scisoft.ncd.rcp.loadDataReductionParams"
                icon="icons/import-data-reduction.png"
                label="Load data reduction to XML"
                style="push">
-         </command>
+         </command-->
       </menuContribution>
    </extension>
    <extension
