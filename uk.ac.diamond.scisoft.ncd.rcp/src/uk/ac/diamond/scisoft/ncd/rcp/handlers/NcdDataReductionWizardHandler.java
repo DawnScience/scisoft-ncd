@@ -31,12 +31,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
 
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionWizard;
 
 public class NcdDataReductionWizardHandler extends AbstractHandler {
-
-	public static String COMMAND_ID = NcdProcessingSourceProvider.OPEN_NCD_WIZARD;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
