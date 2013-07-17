@@ -269,19 +269,25 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, DRFILE_STATE, this.drFile);
 	}
 
-	public void setGrigAverage(SliceInput gridAverage) {
+	public void setGrigAverage(SliceInput gridAverage, boolean notify) {
 		this.gridAverage = (gridAverage != null) ? new SliceInput(gridAverage.getAdvancedSlice()) : null;
-		fireSourceChanged(ISources.WORKBENCH, GRIDAVERAGE_STATE, this.gridAverage);
+		if (notify) {
+			fireSourceChanged(ISources.WORKBENCH, GRIDAVERAGE_STATE, this.gridAverage);
+		}
 	}
 
-	public void setBgScaling(Double bgScaling) {
+	public void setBgScaling(Double bgScaling, boolean notify) {
 		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
-		fireSourceChanged(ISources.WORKBENCH, BKGSCALING_STATE, this.bgScaling);
+		if (notify) {
+			fireSourceChanged(ISources.WORKBENCH, BKGSCALING_STATE, this.bgScaling);
+		}
 	}
 
-	public void setSampleThickness(Double sampleThickness) {
+	public void setSampleThickness(Double sampleThickness, boolean notify) {
 		this.sampleThickness = (sampleThickness != null) ? new Double(sampleThickness) : null;
-		fireSourceChanged(ISources.WORKBENCH, SAMPLETHICKNESS_STATE, this.sampleThickness);
+		if (notify) {
+			fireSourceChanged(ISources.WORKBENCH, SAMPLETHICKNESS_STATE, this.sampleThickness);
+		}
 	}
 
 	public void setAbsScaling(Double absScaling, boolean notify) {

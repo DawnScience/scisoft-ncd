@@ -80,7 +80,7 @@ public class NcdDataReductionAveragePage extends AbstractNcdDataReductionPage {
 			public void widgetSelected(SelectionEvent e) {
 				boolean sel = gridAverageButton.getSelection();
 				gridAverage.setEnabled(sel);
-				ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
+				ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()), false);
 			}
 		});
 		gridAverage = new Text(g, SWT.BORDER);
@@ -88,13 +88,14 @@ public class NcdDataReductionAveragePage extends AbstractNcdDataReductionPage {
 		gridAverage.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		gridAverage.setEnabled(false);
 		SliceInput tmpAverage = ncdGridAverageSourceProvider.getGridAverage();
-		if (tmpAverage != null && tmpAverage.getAdvancedSlice() != null)
+		if (tmpAverage != null && tmpAverage.getAdvancedSlice() != null) {
 			gridAverage.setText(tmpAverage.getAdvancedSlice());
+		}
 		gridAverage.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
+				ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()), false);
 			}
 		});
 		

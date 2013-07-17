@@ -137,47 +137,54 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Integer getBgFirstFrame() {
 		String input = bgFramesStart.getText();
-		if (bgFramesStart.isEnabled())
+		if (bgFramesStart.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private Integer getBgLastFrame() {
 		String input = bgFramesStop.getText();
-		if (bgFramesStop.isEnabled())
+		if (bgFramesStop.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private String getBgAdvancedSelection() {
-		if (bgAdvanced.isEnabled())
+		if (bgAdvanced.isEnabled()) {
 			return bgAdvanced.getText();
+		}
 		return null;
 	}
 	
 	private Integer getDetFirstFrame() {
 		String input = detFramesStart.getText();
-		if (detFramesStart.isEnabled())
+		if (detFramesStart.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private Integer getDetLastFrame() {
 		String input = detFramesStop.getText();
-		if (detFramesStop.isEnabled())
+		if (detFramesStop.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private String getDetAdvancedSelection() {
-		if (detAdvanced.isEnabled())
+		if (detAdvanced.isEnabled()) {
 			return detAdvanced.getText();
+		}
 		return null;
 	}
 	
 	private String getGridAverageSelection() {
-		if (gridAverage.isEnabled())
+		if (gridAverage.isEnabled()) {
 			return gridAverage.getText();
+		}
 		return null;
 	}
 	
@@ -269,11 +276,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 	}
 			
-	public void restoreState(IMemento memento) {
-		this.memento = memento;
-		restoreState();
-	}
-	
 	private void restoreState() {
 		if (memento != null) {
 			Boolean val;
@@ -363,7 +365,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			flt = memento.getFloat(NcdPreferences.NCD_SAMPLETHICKNESS);
 			if (flt != null) {
 				sampleThickness.setText(flt.toString());
-				ncdSampleThicknessSourceProvider.setSampleThickness(new Double(flt));
+				ncdSampleThicknessSourceProvider.setSampleThickness(new Double(flt), true);
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_BGFIRSTFRAME);
@@ -400,8 +402,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_GRIDAVERAGESELECTION);
-			if (tmp != null)
+			if (tmp != null) {
 				gridAverage.setText(tmp);
+			}
 			if (ncdGridAverageSourceProvider.getGridAverage() != null) {
 				aveEcomp.setExpanded(true);
 				expansionAdapter.expansionStateChanged(new ExpansionEvent(aveEcomp, true));
@@ -422,7 +425,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			flt = memento.getFloat(NcdPreferences.NCD_BACKGROUNDSCALE);
 			if (flt != null) {
 				bgScale.setText(flt.toString());
-				ncdBgScaleSourceProvider.setBgScaling(new Double(flt));
+				ncdBgScaleSourceProvider.setBgScaling(new Double(flt), true);
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_DETECTORRESPONSE);
@@ -730,7 +733,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				
 				@Override
 				public void modifyText(ModifyEvent e) {
-					ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness());
+					ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness(), false);
 				}
 			});
 			
@@ -831,13 +834,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			bgScale.setToolTipText("Scaling values for background data");
 			Double tmpBgScaling = ncdBgScaleSourceProvider.getBgScaling();
-			if (tmpBgScaling != null)
+			if (tmpBgScaling != null) {
 				bgScale.setText(tmpBgScaling.toString());
+			}
 			bgScale.addModifyListener(new ModifyListener() {
 				
 				@Override
 				public void modifyText(ModifyEvent e) {
-					ncdBgScaleSourceProvider.setBgScaling(getBgScale());
+					ncdBgScaleSourceProvider.setBgScaling(getBgScale(), false);
 				}
 			});
 			
@@ -1105,7 +1109,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					boolean sel = gridAverageButton.getSelection();
 					boolean aveSel = aveButton.getSelection();
 					gridAverage.setEnabled(sel && aveSel);
-					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
+					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()), false);
 				}
 			});
 			gridAverage = new Text(g, SWT.BORDER);
@@ -1113,13 +1117,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			gridAverage.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			gridAverage.setEnabled(false);
 			SliceInput tmpAverage = ncdGridAverageSourceProvider.getGridAverage();
-			if (tmpAverage != null && tmpAverage.getAdvancedSlice() != null)
+			if (tmpAverage != null && tmpAverage.getAdvancedSlice() != null) {
 				gridAverage.setText(tmpAverage.getAdvancedSlice());
+			}
 			gridAverage.addModifyListener(new ModifyListener() {
 				
 				@Override
 				public void modifyText(ModifyEvent e) {
-					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()));
+					ncdGridAverageSourceProvider.setGrigAverage(new SliceInput(getGridAverageSelection()), false);
 				}
 			});
 			aveEcomp.setClient(g);
@@ -1149,46 +1154,58 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		
 		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		ncdNormalisationSourceProvider.addSourceProviderListener(this);
 		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		ncdBackgroundSourceProvider.addSourceProviderListener(this);
 		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		ncdResponseSourceProvider.addSourceProviderListener(this);
 		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		ncdSectorSourceProvider.addSourceProviderListener(this);
 		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
+		ncdInvariantSourceProvider.addSourceProviderListener(this);
 		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
-		
-		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
-		
-		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
-		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
-		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
-		
-		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
-		
-		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
-		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
-		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
-		
-		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
-		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
-		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
-		
-		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
-		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
-		ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
-		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
+		ncdAverageSourceProvider.addSourceProviderListener(this);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-
 		ncdDetectorSourceProvider.addSourceProviderListener(this);
+		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 		ncdScalerSourceProvider.addSourceProviderListener(this);
-		ncdNormalisationSourceProvider.addSourceProviderListener(this);
-		ncdBackgroundSourceProvider.addSourceProviderListener(this);
-		ncdResponseSourceProvider.addSourceProviderListener(this);
-		ncdSectorSourceProvider.addSourceProviderListener(this);
-		ncdAverageSourceProvider.addSourceProviderListener(this);
+		
+		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
+		ncdRadialSourceProvider.addSourceProviderListener(this);
+		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
+		ncdAzimuthSourceProvider.addSourceProviderListener(this);
+		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
+		ncdFastIntSourceProvider.addSourceProviderListener(this);
+		
+		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
+		ncdMaskSourceProvider.addSourceProviderListener(this);
+		
+		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
+		ncdDataSliceSourceProvider.addSourceProviderListener(this);
+		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
+		ncdBkgSliceSourceProvider.addSourceProviderListener(this);
+		ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);
+		ncdGridAverageSourceProvider.addSourceProviderListener(this);
+		
+		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
 		ncdBgFileSourceProvider.addSourceProviderListener(this);
+		ncdDrFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DRFILE_STATE);
 		ncdDrFileSourceProvider.addSourceProviderListener(this);
+		
+		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
+		ncdWorkingDirSourceProvider.addSourceProviderListener(this);
+		
+		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
+		ncdSampleThicknessSourceProvider.addSourceProviderListener(this);
+		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
+		ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
 		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
+		
+		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
+		ncdBgScaleSourceProvider.addSourceProviderListener(this);
+		
 	}
 
 	@Override
@@ -1393,6 +1410,30 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 		}
 		
+		if (sourceName.equals(NcdProcessingSourceProvider.BKGSCALING_STATE)) {
+			if (sourceValue != null) {
+			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
+				String sourceText = sForm.format(sourceValue);
+				if (sourceText != null) {
+					bgScale.setText(sourceText);
+				}
+			} else {
+				bgScale.setText("");
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE)) {
+			if (sourceValue != null) {
+			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
+				String sourceText = sForm.format(sourceValue);
+				if (sourceText != null) {
+					sampleThickness.setText(sourceText);
+				}
+			} else {
+				sampleThickness.setText("");
+			}
+		}
+		
 		if (sourceName.equals(NcdProcessingSourceProvider.ABSSCALING_STATE)) {
 			if (sourceValue != null) {
 			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
@@ -1490,10 +1531,71 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					detFramesStop.setText(slice.getStopFrame().toString());
 				}
 			}
-			//advanceslice
-			
-			//
+			if(detAdvancedButton != null && !detAdvancedButton.isDisposed()){
+				boolean tmpBool = detAdvancedButton.getSelection();
+				if(slice != null && slice.isAdvanced() != tmpBool){
+					detAdvancedButton.setSelection(slice.isAdvanced());
+				}
+			}
+			if(detAdvanced != null && !detAdvanced.isDisposed()){
+				String tmpText = detAdvanced.getText();
+				if(slice != null && slice.getAdvancedSlice() != null 
+						&& !tmpText.equals(slice.getAdvancedSlice())){
+					detAdvanced.setText(slice.getAdvancedSlice());
+				}
+			}
 		}
+		
+		if(sourceName.equals(NcdProcessingSourceProvider.BKGSLICE_STATE)){
+			SliceInput slice = (SliceInput)sourceValue;
+			if(bgFramesStart != null && !bgFramesStart.isDisposed()){
+				String tmpText = bgFramesStart.getText();
+				
+				// TODO shield the text field so that only integers can be input
+				if(slice != null && slice.getStartFrame() != null 
+						&& !tmpText.equals(slice.getStartFrame().toString())){
+					bgFramesStart.setText(slice.getStartFrame().toString());
+				}
+			}
+			if(bgFramesStop != null && !bgFramesStop.isDisposed()){
+				String tmpText = bgFramesStop.getText();
+				if(slice != null && slice.getStopFrame() != null 
+						&& !tmpText.equals(slice.getStopFrame().toString())){
+					bgFramesStop.setText(slice.getStopFrame().toString());
+				}
+			}
+			if(bgAdvancedButton != null && !bgAdvancedButton.isDisposed()){
+				boolean tmpBool = bgAdvancedButton.getSelection();
+				if(slice != null && slice.isAdvanced() != tmpBool){
+					bgAdvancedButton.setSelection(slice.isAdvanced());
+				}
+			}
+			if(bgAdvanced != null && !bgAdvanced.isDisposed()){
+				String tmpText = bgAdvanced.getText();
+				if(slice != null && slice.getAdvancedSlice() != null 
+						&& !tmpText.equals(slice.getAdvancedSlice())){
+					bgAdvanced.setText(slice.getAdvancedSlice());
+				}
+			}
+		}
+		
+		if(sourceName.equals(NcdProcessingSourceProvider.GRIDAVERAGE_STATE)){
+			SliceInput slice = (SliceInput)sourceValue;
+			if(gridAverageButton != null && !gridAverageButton.isDisposed()){
+				boolean tmpBool = gridAverageButton.getSelection();
+				if(slice != null && slice.isAdvanced() != tmpBool){
+					gridAverageButton.setSelection(slice.isAdvanced());
+				}
+			}
+			if(gridAverage != null && !gridAverage.isDisposed()){
+				String tmpText = gridAverage.getText();
+				if(slice != null && slice.getAdvancedSlice() != null 
+						&& !tmpText.equals(slice.getAdvancedSlice())){
+					gridAverage.setText(slice.getAdvancedSlice());
+				}
+			}
+		}
+		
 		if(sourceName.equals(NcdProcessingSourceProvider.RADIAL_STATE)){
 			if(radialButton != null && !radialButton.isDisposed()){
 				boolean tmpBool = radialButton.getSelection();
@@ -1502,6 +1604,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			}
 		}
+		
 		if(sourceName.equals(NcdProcessingSourceProvider.AZIMUTH_STATE)){
 			if(azimuthalButton != null && !azimuthalButton.isDisposed()){
 				boolean tmpBool = azimuthalButton.getSelection();
@@ -1510,6 +1613,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			}
 		}
+		
 		if(sourceName.equals(NcdProcessingSourceProvider.FASTINT_STATE)){
 			if(fastIntButton != null && !fastIntButton.isDisposed()){
 				boolean tmpBool = fastIntButton.getSelection();
@@ -1518,6 +1622,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			}
 		}
+		
 		if(sourceName.equals(NcdProcessingSourceProvider.MASK_STATE)){
 			if(useMask != null && !useMask.isDisposed()){
 				boolean tmpBool = useMask.getSelection();
@@ -1525,10 +1630,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					useMask.setSelection((Boolean) sourceValue);
 				}
 			}
-		}
-		//normalisation
-		if(sourceName.equals(NcdProcessingSourceProvider.MASK_STATE)){
-			//TODO
 		}
 	}
 }

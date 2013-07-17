@@ -131,13 +131,14 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		bgScale.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false, 2, 1));
 		bgScale.setToolTipText("Scaling values for background data");
 		Double tmpBgScaling = ncdBgScaleSourceProvider.getBgScaling();
-		if (tmpBgScaling != null)
+		if (tmpBgScaling != null) {
 			bgScale.setText(tmpBgScaling.toString());
+		}
 		bgScale.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				ncdBgScaleSourceProvider.setBgScaling(getBgScale());
+				ncdBgScaleSourceProvider.setBgScaling(getBgScale(), false);
 			}
 		});
 

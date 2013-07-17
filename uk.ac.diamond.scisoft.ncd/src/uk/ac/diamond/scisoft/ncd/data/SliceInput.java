@@ -20,11 +20,13 @@ public class SliceInput {
 	
 	private Integer startFrame, stopFrame;
 	private String advancedSlice;
+	private boolean isAdvanced;
 	
 	public SliceInput() {
 		startFrame = null;
 		stopFrame = null;
 		advancedSlice = null;
+		isAdvanced = false;
 	}
 
 	public SliceInput(SliceInput sliceInput) {
@@ -34,17 +36,20 @@ public class SliceInput {
 		startFrame = (tmpStartFrame != null) ? new Integer(tmpStartFrame) : null;
 		stopFrame = (tmpStopFrame != null) ? new Integer(tmpStopFrame) : null;
 		advancedSlice = (tmpAdvancedSlice != null) ? new String(tmpAdvancedSlice) : null;
+		isAdvanced = sliceInput.isAdvanced();
 	}
 
 	public SliceInput(Integer startFrame, Integer stopFrame) {
 		super();
-		this.startFrame = (startFrame != null) ? new Integer(startFrame) : null;
-		this.stopFrame = (stopFrame != null) ? new Integer(stopFrame) : null;
+		setStartFrame(startFrame);
+		setStopFrame(stopFrame);
+		setAdvanced(false);
 	}
 
 	public SliceInput(String advancedSlice) {
 		super();
-		this.advancedSlice = (advancedSlice != null) ? new String(advancedSlice) : null;
+		setAdvancedSlice(advancedSlice);
+		setAdvanced(true);
 	}
 
 	public Integer getStartFrame() {
@@ -63,6 +68,14 @@ public class SliceInput {
 		this.stopFrame = (stopFrame != null) ? new Integer(stopFrame) : null;
 	}
 	
+	public boolean isAdvanced() {
+		return isAdvanced;
+	}
+
+	public void setAdvanced(boolean isAdvanced) {
+		this.isAdvanced = isAdvanced;
+	}
+
 	public String getAdvancedSlice() {
 		return advancedSlice;
 	}
@@ -70,4 +83,5 @@ public class SliceInput {
 	public void setAdvancedSlice(String advancedSlice) {
 		this.advancedSlice = (advancedSlice != null) ? new String(advancedSlice) : null;
 	}
+	
 }

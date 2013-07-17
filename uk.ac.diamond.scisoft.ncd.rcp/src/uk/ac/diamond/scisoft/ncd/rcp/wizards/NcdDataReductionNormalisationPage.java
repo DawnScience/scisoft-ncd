@@ -174,7 +174,7 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness());
+				ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness(), false);
 			}
 		});
 		
