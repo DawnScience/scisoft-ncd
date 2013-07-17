@@ -208,13 +208,13 @@
          <command
                commandId="uk.ac.diamond.scisoft.ncd.rcp.saveDataReductionParams"
                icon="icons/export-data-reduction.png"
-               label="Save data reduction to XML"
+               label="Export NCD data reduction parametrs to XML file"
                style="push">
          </command>
          <command
                commandId="uk.ac.diamond.scisoft.ncd.rcp.loadDataReductionParams"
                icon="icons/import-data-reduction.png"
-               label="Load data reduction to XML"
+               label="Import NCD data reduction parameters from XML file"
                style="push">
          </command>
       </menuContribution>
