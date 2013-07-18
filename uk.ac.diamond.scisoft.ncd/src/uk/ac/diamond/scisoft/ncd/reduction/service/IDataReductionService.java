@@ -25,13 +25,13 @@ import org.eclipse.core.runtime.IStatus;
  * This service is designed to run data reduction processing from
  * either the UI or from a headless java executable. The service
  * allows the algorithm in LazyNcdProcessing to be run in headless mode
- * by receiving an XML file file populates source providers. These
+ * by receiving an XML file which normally populates source providers. These
  * source providers are already available if the service is run in the 
  * UI because the NCD UI parts contribute them.
  * 
  * The service requires the following information:
  * 1. The XML file (this can be generated from source providers which are linked to the GUI).
- * 2. The mask and region, contributed via the persistence service.
+ * 2. The mask and region, contributed via the persistence service or from the UI.
  * 3. The raw nexus file contributed by file path.
  * 
  * This information is provided/configured by the IDataReductionContext
