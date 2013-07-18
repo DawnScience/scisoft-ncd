@@ -32,6 +32,9 @@ import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
  * required to run the data reduction algorithm. 
  * 
  * This data happens to be quite a lot.
+ * 
+ * TODO FIXME - this class contains data that is in NcdReductionFlags and
+ * also NcdDetectors. This seems inefficient.
  */
 class DataReductionContext implements IDataReductionContext {
 
@@ -520,22 +523,22 @@ class DataReductionContext implements IDataReductionContext {
 
 	@Override
 	public String getWaxsDetectorName() {
-		return waxsDetectorName;
+		return ncdDetectors.getDetectorWaxs();
 	}
 
 	@Override
 	public void setWaxsDetectorName(String waxsDetectorName) {
-		this.waxsDetectorName = waxsDetectorName;
+		ncdDetectors.setDetectorWaxs(waxsDetectorName);
 	}
 
 	@Override
 	public String getSaxsDetectorName() {
-		return saxsDetectorName;
+		return ncdDetectors.getDetectorSaxs();
 	}
 
 	@Override
 	public void setSaxsDetectorName(String saxsDetectorName) {
-		this.saxsDetectorName = saxsDetectorName;
+		ncdDetectors.setDetectorSaxs(saxsDetectorName);
 	}
 
 	@Override
