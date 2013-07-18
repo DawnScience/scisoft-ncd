@@ -85,7 +85,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	
 	@Override
 	public IDataReductionContext createContext() {
-		DataReductionContext context = new DataReductionContext();
+		DataReductionContext context   = new DataReductionContext();
 		LazyNcdProcessing processing   = new LazyNcdProcessing();
 		LazyNcdProcessing bgProcessing = new LazyNcdProcessing();
 		NcdReductionFlags flags        = new NcdReductionFlags();
@@ -105,7 +105,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		NcdReductionFlags flags        = context.getFlags();
 		NcdDetectors      ncdDetectors = context.getNcdDetectors();
 		 
-		readDataReductionStages(context,  flags);
+		checkStages(flags);
 		readDetectorInformation(context,  flags, ncdDetectors);
 		readDataReductionOptions(context, flags, processing);
 
@@ -114,10 +114,10 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 		if (flags.isEnableBackground()) {
 			
-			NcdReductionFlags bgFlags = new NcdReductionFlags();
-			NcdDetectors bgDetectors = new NcdDetectors();
+			NcdReductionFlags bgFlags = new NcdReductionFlags(flags);
+			NcdDetectors  bgDetectors = new NcdDetectors();
 
-			readDataReductionStages(context, bgFlags);
+			checkStages(bgFlags);
 			readDetectorInformation(context, bgFlags, bgDetectors);
 			readDataReductionOptions(context, bgFlags, bgProcessing);
 
@@ -672,15 +672,17 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		String detectorWaxs = null;
 		NcdDetectorSettings detWaxsInfo = null;
-		NcdDetectorSettings detSaxsInfo = null;
-		String detectorSaxs = null;
 		Amount<Length> pxWaxs = null;
-		Amount<Length> pxSaxs = null;
 		Integer dimWaxs = null ;
+		
+		String detectorSaxs = null;
+		NcdDetectorSettings detSaxsInfo = null;
+		Amount<Length> pxSaxs = null;		
 		Integer dimSaxs = null ;
 		
 		
 		if (flags.isEnableWaxs()) {
+			detectorWaxs = context.getWaxsDetectorName();
 			detWaxsInfo = context.getDetWaxsInfo();
 			if (detWaxsInfo != null) {
 				pxWaxs = detWaxsInfo.getPxSize();
@@ -694,6 +696,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		} 
 		
 		if (flags.isEnableSaxs()) {
+			detectorSaxs = context.getSaxsDetectorName();
 			detSaxsInfo = context.getDetSaxsInfo();
 			if (detSaxsInfo != null) {
 				pxSaxs = detSaxsInfo.getPxSize();
@@ -733,21 +736,9 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 
-	private void readDataReductionStages(IDataReductionContext context, NcdReductionFlags flags) {
-		flags.setEnableWaxs(context.isEnableWaxs());
-		flags.setEnableSaxs(context.isEnableSaxs());
-		
-		flags.setEnableNormalisation(context.isEnableNormalisation());
-		flags.setEnableBackground(context.isEnableBackground());
-		flags.setEnableDetectorResponse(context.isEnableDetectorResponse());
-		flags.setEnableSector(context.isEnableSector());
-		flags.setEnableInvariant(context.isEnableInvariant());
-		flags.setEnableAverage(context.isEnableAverage());
+	private void checkStages(NcdReductionFlags flags) {
 		
 		if (flags.isEnableSector()) {
-			flags.setEnableRadial(context.isEnableRadial());
-			flags.setEnableAzimuthal(context.isEnableAzimuthal());
-			flags.setEnableFastintegration(context.isEnableFastIntegration());
 			if (!flags.isEnableRadial() && !flags.isEnableAzimuthal()) {
 				throw new IllegalArgumentException(NcdMessages.NO_SEC_INT);
 			}
