@@ -169,7 +169,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		boolean enableWaxs = flags.isEnableWaxs();
 		boolean enableSaxs = flags.isEnableSaxs();
 		
-		String detectorWaxs=null, detectorSaxs=null, calibration=null;
+		String detectorWaxs=null, detectorSaxs=null;
 		int dimWaxs=0, dimSaxs=0;
 		if (enableWaxs) {
 			detectorWaxs = context.getWaxsDetectorName();
@@ -178,10 +178,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (enableSaxs) {
 			detectorSaxs = context.getSaxsDetectorName();
 			dimSaxs = ncdDetectors.getDimSaxs();
-		}
-		
-		if (flags.isEnableNormalisation()) {
-			calibration = context.getCalibrationName();
 		}
 		
 		final String bgPath = context.getBgPath();
