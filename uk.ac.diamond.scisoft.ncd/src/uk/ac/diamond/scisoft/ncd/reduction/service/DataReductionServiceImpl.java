@@ -118,16 +118,16 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			NcdDetectors  bgDetectors = new NcdDetectors();
 
 			checkStages(bgFlags);
-			readDetectorInformation(context, bgFlags, bgDetectors);
+			readDetectorInformation(context, bgFlags,  bgDetectors);
 			readDataReductionOptions(context, bgFlags, bgProcessing);
 
 			bgFlags.setEnableBackground(false);
 			bgProcessing.setFlags(bgFlags);
-			bgProcessing.setNcdDetectors(ncdDetectors);
+			bgProcessing.setNcdDetectors(bgDetectors);
 
 			SliceInput bgSliceInput = context.getBgSliceInput();
-			Integer bgFirstFrame = bgSliceInput.getStartFrame();
-			Integer bgLastFrame = bgSliceInput.getStopFrame();
+			Integer bgFirstFrame    = bgSliceInput.getStartFrame();
+			Integer bgLastFrame     = bgSliceInput.getStopFrame();
 			String bgFrameSelection = bgSliceInput.getAdvancedSlice();
 
 			bgProcessing.setFirstFrame(bgFirstFrame);
