@@ -13,6 +13,7 @@ Export-Package: uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.hdf5,
  uk.ac.diamond.scisoft.ncd.preferences,
  uk.ac.diamond.scisoft.ncd.reduction,
+ uk.ac.diamond.scisoft.ncd.reduction.service,
  uk.ac.diamond.scisoft.ncd.utils
 Require-Bundle: org.eclipse.core.runtime,
  org.apache.commons.validator;bundle-version="[1.4.0,2.0.0)",
@@ -30,3 +31,5 @@ Import-Package: ncsa.hdf.hdf5lib,
  org.slf4j;version="[1.5.0,2.0.0)"
 Bundle-Vendor: Diamond Light Source
 Bundle-ClassPath: .
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: uk.ac.diamond.scisoft.ncd.Activator

@@ -83,5 +83,45 @@ public class SliceInput {
 	public void setAdvancedSlice(String advancedSlice) {
 		this.advancedSlice = (advancedSlice != null) ? new String(advancedSlice) : null;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((advancedSlice == null) ? 0 : advancedSlice.hashCode());
+		result = prime * result + (isAdvanced ? 1231 : 1237);
+		result = prime * result + ((startFrame == null) ? 0 : startFrame.hashCode());
+		result = prime * result + ((stopFrame == null) ? 0 : stopFrame.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		SliceInput other = (SliceInput) obj;
+		if (advancedSlice == null) {
+			if (other.advancedSlice != null)
+				return false;
+		} else if (!advancedSlice.equals(other.advancedSlice))
+			return false;
+		if (isAdvanced != other.isAdvanced)
+			return false;
+		if (startFrame == null) {
+			if (other.startFrame != null)
+				return false;
+		} else if (!startFrame.equals(other.startFrame))
+			return false;
+		if (stopFrame == null) {
+			if (other.stopFrame != null)
+				return false;
+		} else if (!stopFrame.equals(other.stopFrame))
+			return false;
+		return true;
+	}
 	
 }

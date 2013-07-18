@@ -126,5 +126,57 @@ public class NcdDetectorSettings {
 			this.maxChannel = 0;
 		}
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + dim;
+		result = prime * result + ((maxChannel == null) ? 0 : maxChannel.hashCode());
+		result = prime * result + ((name == null) ? 0 : name.hashCode());
+		result = prime * result + ((normChannel == null) ? 0 : normChannel.hashCode());
+		result = prime * result + ((pxSize == null) ? 0 : pxSize.hashCode());
+		result = prime * result + ((type == null) ? 0 : type.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		NcdDetectorSettings other = (NcdDetectorSettings) obj;
+		if (dim != other.dim)
+			return false;
+		if (maxChannel == null) {
+			if (other.maxChannel != null)
+				return false;
+		} else if (!maxChannel.equals(other.maxChannel))
+			return false;
+		if (name == null) {
+			if (other.name != null)
+				return false;
+		} else if (!name.equals(other.name))
+			return false;
+		if (normChannel == null) {
+			if (other.normChannel != null)
+				return false;
+		} else if (!normChannel.equals(other.normChannel))
+			return false;
+		if (pxSize == null) {
+			if (other.pxSize != null)
+				return false;
+		} else if (!pxSize.equals(other.pxSize))
+			return false;
+		if (type == null) {
+			if (other.type != null)
+				return false;
+		} else if (!type.equals(other.type))
+			return false;
+		return true;
+	}
 	
 }

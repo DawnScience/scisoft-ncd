@@ -81,4 +81,53 @@ class CalibrationResultsData implements Serializable {
 	public Unit<Length> getUnit() {
 		return unit;
 	}
+
+	@Override
+	public int hashCode() {
+		final int prime = 31;
+		int result = 1;
+		result = prime * result + ((gradient == null) ? 0 : gradient.hashCode());
+		result = prime * result + ((intercept == null) ? 0 : intercept.hashCode());
+		result = prime * result + ((meanCameraLength == null) ? 0 : meanCameraLength.hashCode());
+		result = prime * result + ((peakList == null) ? 0 : peakList.hashCode());
+		result = prime * result + ((unit == null) ? 0 : unit.hashCode());
+		return result;
+	}
+
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)
+			return true;
+		if (obj == null)
+			return false;
+		if (getClass() != obj.getClass())
+			return false;
+		CalibrationResultsData other = (CalibrationResultsData) obj;
+		if (gradient == null) {
+			if (other.gradient != null)
+				return false;
+		} else if (!gradient.equals(other.gradient))
+			return false;
+		if (intercept == null) {
+			if (other.intercept != null)
+				return false;
+		} else if (!intercept.equals(other.intercept))
+			return false;
+		if (meanCameraLength == null) {
+			if (other.meanCameraLength != null)
+				return false;
+		} else if (!meanCameraLength.equals(other.meanCameraLength))
+			return false;
+		if (peakList == null) {
+			if (other.peakList != null)
+				return false;
+		} else if (!peakList.equals(other.peakList))
+			return false;
+		if (unit == null) {
+			if (other.unit != null)
+				return false;
+		} else if (!unit.equals(other.unit))
+			return false;
+		return true;
+	}
 }
