@@ -50,7 +50,7 @@ import org.eclipse.core.runtime.IStatus;
  
  // Loop over files - may be done in a job or thread.
  for(String rawFilePath : files) {
-     service.execute(rawFilePath, context, monitor);
+     service.execute(rawFilePath, context, new NullProgressMonitor());
  }
  
  </code>
@@ -79,5 +79,5 @@ public interface IDataReductionService {
 	 * @param monitor - may not be null, use NullProgressMonitor if not calling with thread.
 	 * @return if file was processed
 	 */
-	public IStatus execute(String filePath, IDataReductionContext context, IProgressMonitor monitor) throws Exception;
+	public IStatus process(String filePath, IDataReductionContext context, IProgressMonitor monitor) throws Exception;
 }

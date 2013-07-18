@@ -154,7 +154,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	 * @param context
 	 */
 	@Override
-	public IStatus execute(String rawFilePath, IDataReductionContext context, IProgressMonitor monitor) throws Exception {
+	public IStatus process(String rawFilePath, IDataReductionContext context, IProgressMonitor monitor) throws Exception {
 		
 	
 		LazyNcdProcessing processing   = context.getProcessing();

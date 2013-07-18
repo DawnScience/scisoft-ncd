@@ -127,7 +127,7 @@ public class DataReductionHandler extends AbstractHandler {
 						if (inputfilePath==null) continue;
 						
  					    try {
-							IStatus status = service.execute(inputfilePath, context, monitor);
+							IStatus status = service.process(inputfilePath, context, monitor);
 							if (status.getSeverity()==IStatus.CANCEL) {
 								monitor.done();
 								return status;
