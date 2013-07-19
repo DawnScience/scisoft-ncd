@@ -17,7 +17,10 @@ import org.dawb.common.services.IPersistentFile;
 import org.dawb.passerelle.common.actors.AbstractDataMessageTransformer;
 import org.dawb.passerelle.common.message.DataMessageComponent;
 import org.dawb.passerelle.common.message.DataMessageException;
+import org.dawb.passerelle.common.message.IVariable;
 import org.dawb.passerelle.common.message.MessageUtils;
+import org.dawb.passerelle.common.message.Variable;
+import org.dawb.passerelle.common.message.IVariable.VARIABLE_TYPE;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -58,6 +61,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	private ResourceParameter     xmlPathParam, persistenceParam;
 	private StringChoiceParameter maskName, sectorName;
 	private StringParameter       rawFilePath;
+	private StringParameter       resultsFileParam;
 
 	/**
 	 * Attributes:
@@ -103,12 +107,27 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		rawFilePath.setExpression("${file_path}");
 		registerConfigurableParameter(rawFilePath);
 		
+		resultsFileParam  = new StringParameter(this, "Results Output Name");
+		resultsFileParam.setExpression("results_path");
+		registerConfigurableParameter(resultsFileParam);
+		
 		memoryManagementParam.setVisibility(Settable.NONE);
 		dataSetNaming.setVisibility(Settable.NONE);
 		
 		// This forces only one data reduction file to run at a time.
 		receiverQueueCapacityParam.setToken(new IntToken(1)); // They can change this in expert mode if required.
 	}
+	
+	@Override
+	public List<IVariable> getOutputVariables() {
+		
+        final List<IVariable> ret = super.getOutputVariables();
+		ret.add(new Variable(resultsFileParam.getExpression(),  VARIABLE_TYPE.PATH,   "<path to data reduction results>", String.class));
+		ret.add(new Variable("results_file_name",  VARIABLE_TYPE.PATH,   "<name of results file written>", String.class));
+    
+        return ret;
+	}
+
 
 	private IDataReductionService service;
 	private IDataReductionContext context;
@@ -124,8 +143,8 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 			
 			final DataMessageComponent ret = MessageUtils.mergeAll(cache);
 			final String results = context.getResultsFile();
-			ret.putScalar("file_path", results);
-			ret.putScalar("file_name", (new File(results)).getName());
+			ret.putScalar(resultsFileParam.getExpression(), results);
+			ret.putScalar("results_file_name", (new File(results)).getName());
 			
 			return ret;
 			
