@@ -24,6 +24,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.swt.SWT;
 import org.jscience.physics.amount.Amount;
 
+import ptolemy.data.IntToken;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -104,7 +105,9 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		
 		memoryManagementParam.setVisibility(Settable.NONE);
 		dataSetNaming.setVisibility(Settable.NONE);
-
+		
+		// This forces only one data reduction file to run at a time.
+		receiverQueueCapacityParam.setToken(new IntToken(1)); // They can change this in expert mode if required.
 	}
 
 	private IDataReductionService service;
