@@ -45,6 +45,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.Attribute;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
+import ptolemy.kernel.util.Settable;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
@@ -82,6 +83,10 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		detectorName = new StringParameter(this,"Detector");
 		detectorName.setExpression("Pilatus2M");
 		registerConfigurableParameter(detectorName);
+		
+		memoryManagementParam.setVisibility(Settable.NONE);
+		dataSetNaming.setVisibility(Settable.NONE);
+
 	}
 
 	@Override

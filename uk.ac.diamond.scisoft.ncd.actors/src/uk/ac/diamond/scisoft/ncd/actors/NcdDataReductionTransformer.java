@@ -28,6 +28,7 @@ import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
+import ptolemy.kernel.util.Settable;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.monitor.IMonitor;
@@ -100,6 +101,10 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		rawFilePath = new StringParameter(this, "Raw file");
 		rawFilePath.setExpression("${file_path}");
 		registerConfigurableParameter(rawFilePath);
+		
+		memoryManagementParam.setVisibility(Settable.NONE);
+		dataSetNaming.setVisibility(Settable.NONE);
+
 	}
 
 	private IDataReductionService service;
@@ -152,12 +157,16 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		
 		final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 		final IPersistentFile     pfile    = pservice.createPersistentFile(path);
+		try {
 		
-		final IDataset mask = pfile.getMask(maskName.getExpression(), new IMonitor.Stub());
-		context.setMask((BooleanDataset)mask);
-		
-		final IROI sector = pfile.getROI(sectorName.getExpression());
-		context.setSector((SectorROI)sector);
+			final IDataset mask = pfile.getMask(maskName.getExpression(), new IMonitor.Stub());
+			context.setMask((BooleanDataset)mask);
+			
+			final IROI sector = pfile.getROI(sectorName.getExpression());
+			context.setSector((SectorROI)sector);
+		} finally {
+			pfile.close();
+		}
 	}
 	
 	
@@ -165,25 +174,38 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		try {
 			final String path = getPath(persistenceParam);
 			if (path==null) return new String[]{"Please define a persistence file first."};
-			
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
-			Collection<String> maskNames = pfile.getMaskNames(new IMonitor.Stub());
-			return maskNames.toArray(new String[maskNames.size()]);
+			try {
+				
+				Collection<String> maskNames = pfile.getMaskNames(new IMonitor.Stub());
+				return maskNames.toArray(new String[maskNames.size()]);
+			} catch (Exception ne) {
+				return new String[]{ne.getMessage()}; // Bit naughty, do not copy, but might be handy.
+			} finally {
+				pfile.close();
+			}
 		} catch (Exception ne) {
 			return new String[]{ne.getMessage()}; // Bit naughty, do not copy, but might be handy.
 		}
 	}
 	
 	protected String[] getRoiNames() {
+		
 		try {
 			final String path = getPath(persistenceParam);
 			if (path==null) return new String[]{"Please define a persistence file first."};
-			
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
-			Collection<String> roiNames = pfile.getROINames(new IMonitor.Stub());
-			return roiNames.toArray(new String[roiNames.size()]);
+			try {
+				
+				Collection<String> roiNames = pfile.getROINames(new IMonitor.Stub());
+				return roiNames.toArray(new String[roiNames.size()]);
+			} catch (Exception ne) {
+				return new String[]{ne.getMessage()}; // Bit naughty, do not copy, but might be handy.
+			} finally {
+				pfile.close();
+			}
 		} catch (Exception ne) {
 			return new String[]{ne.getMessage()}; // Bit naughty, do not copy, but might be handy.
 		}
