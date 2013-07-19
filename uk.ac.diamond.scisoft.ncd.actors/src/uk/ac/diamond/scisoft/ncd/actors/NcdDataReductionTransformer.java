@@ -162,10 +162,10 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
         
         try {
 	        context = service.createContext();
-	        final String xmlPath = getPath(xmlPathParam);    
+	        final String xmlPath = getPath(xmlPathParam, cache);    
 	        createData(context, xmlPath);
 	        
-			createMaskAndRegion(context);
+			createMaskAndRegion(context, cache);
 			service.configure(context);
 	        
         } catch (Exception ne) {
@@ -173,9 +173,9 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
         }
 	}
 
-	private void createMaskAndRegion(IDataReductionContext context)  throws Exception{
+	private void createMaskAndRegion(IDataReductionContext context, List<DataMessageComponent> cache)  throws Exception{
 		
-		final String path = getPath(persistenceParam);
+		final String path = getPath(persistenceParam, cache);
 		
 		final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 		final IPersistentFile     pfile    = pservice.createPersistentFile(path);
@@ -194,7 +194,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	
 	protected String[] getMaskNames() {
 		try {
-			final String path = getPath(persistenceParam);
+			final String path = getPath(persistenceParam, null);
 			if (path==null) return new String[]{"Please define a persistence file first."};
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
@@ -215,7 +215,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	protected String[] getRoiNames() {
 		
 		try {
-			final String path = getPath(persistenceParam);
+			final String path = getPath(persistenceParam, null);
 			if (path==null) return new String[]{"Please define a persistence file first."};
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
 			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
@@ -310,7 +310,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		return "NCD Data Reduction";
 	}
 	
-	private String getPath(ResourceParameter param) throws DataMessageException {
+	private String getPath(ResourceParameter param, List<DataMessageComponent> cache) throws DataMessageException {
 		
 		if (param.getExpression()==null||"".equals(param.getExpression())) return null;
 		try {
