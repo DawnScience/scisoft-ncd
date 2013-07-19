@@ -17,7 +17,7 @@
         <saxsDetector>Pilatus2M</saxsDetector>
         <bgFile>/dls/i22/data/2013/sm8174-1/i22-107002.nxs</bgFile>
         <drFile></drFile>
-        <workingDir>C:\Work\runtime-uk.ac.diamond.dawn.product\workflows\output</workingDir>
+        <workingDir>./output</workingDir>
         <dataSlice>
             <advanced>false</advanced>
         </dataSlice>
