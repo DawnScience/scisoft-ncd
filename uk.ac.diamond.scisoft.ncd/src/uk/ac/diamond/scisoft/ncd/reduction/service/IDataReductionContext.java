@@ -36,6 +36,10 @@ import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
  */
 public interface IDataReductionContext {
 	
+	public String getResultsFile();
+	
+	public void setResultsFile(String path);
+	
 	public boolean isEnableNormalisation();
 
 	public void setEnableNormalisation(boolean enableNormalisation);

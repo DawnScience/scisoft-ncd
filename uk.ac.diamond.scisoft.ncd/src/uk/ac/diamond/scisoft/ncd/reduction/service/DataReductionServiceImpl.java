@@ -244,6 +244,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		try {
 			dawbOutputReader = HierarchicalDataFactory.getReader(inputfilePath);
 			final String filename = createResultsFile(context, inputfileName, inputfilePath, "results");
+			context.setResultsFile(filename);
 			dawbOutputWriter = HierarchicalDataFactory.getWriter(filename);
 			if (context.getBgName() != null) {
 				dawbBgReader = HierarchicalDataFactory.getReader(context.getBgName());

@@ -54,6 +54,7 @@ class DataReductionContext implements IDataReductionContext {
 	private SliceInput             dataSliceInput, bgSliceInput, gridAverageSlice;
 	
 	private String bgPath, drFile, workingDir, calibrationName, waxsDetectorName, saxsDetectorName;
+	private String resultsFile;
 	
 	private Double absScaling, sampleThickness, bgScaling, energy;
 	
@@ -599,6 +600,16 @@ class DataReductionContext implements IDataReductionContext {
 	@Override
 	public void setBgName(String bgName) {
 		this.bgName = bgName;
+	}
+
+	@Override
+	public String getResultsFile() {
+		return resultsFile;
+	}
+
+	@Override
+	public void setResultsFile(String outputFilePath) {
+		this.resultsFile = outputFilePath;
 	}
 
 }

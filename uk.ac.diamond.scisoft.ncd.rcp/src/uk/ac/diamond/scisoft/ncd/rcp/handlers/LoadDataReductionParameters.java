@@ -79,11 +79,10 @@ public class LoadDataReductionParameters extends AbstractHandler {
 				Unmarshaller u = jc.createUnmarshaller ();
 				NcdSourceProviderAdapter data = (NcdSourceProviderAdapter) u.unmarshal(reader);
 				
-				ISourceProviderService service = (ISourceProviderService) PlatformUI.getWorkbench().getService(
-						ISourceProviderService.class);
-				NcdProcessingSourceProvider ncdProcessingSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
-				NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service
-						.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+				ISourceProviderService service = (ISourceProviderService) PlatformUI.getWorkbench().getService(ISourceProviderService.class);
+				
+				NcdProcessingSourceProvider   ncdProcessingSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
+				NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider)service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 				
 				ncdCalibrationSourceProvider.setAll(data.getNcdCalibrationSourceProvider());
 				ncdProcessingSourceProvider.setAll(data.getNcdProcessingSourceProvider());

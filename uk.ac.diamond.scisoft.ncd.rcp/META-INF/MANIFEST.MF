@@ -35,6 +35,7 @@ Import-Package:  ncsa.hdf.hdf5lib,
  org.eclipse.draw2d,
  org.slf4j;version="[1.5.0,2.0.0)"
 Bundle-ActivationPolicy: lazy
-Export-Package: uk.ac.diamond.scisoft.ncd.rcp.views
+Export-Package: uk.ac.diamond.scisoft.ncd.rcp,
+ uk.ac.diamond.scisoft.ncd.rcp.views
 Bundle-Vendor: Diamond Light Source
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.rcp.Activator
