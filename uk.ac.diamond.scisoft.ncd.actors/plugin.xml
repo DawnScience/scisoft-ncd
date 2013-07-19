@@ -2,6 +2,14 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
+         point="com.isencia.passerelle.engine.actorGroups">
+      <actorgroup
+            icon="icons/folder.gif"
+            id="uk.ac.diamond.scisoft.ncd.actors"
+            name="NCD">
+      </actorgroup>
+   </extension>
+   <extension
          point="com.isencia.passerelle.engine.actors">
       <actor
             class="uk.ac.diamond.scisoft.ncd.actors.NcdNexusTreeTransformer"
@@ -9,6 +17,13 @@
             icon="icons/ncd_icon.png"
             id="uk.ac.diamond.scisoft.ncd.actors.export"
             name="I22 Nexus Writer">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.actors.NcdDataReductionTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            icon="icons/ncd_reduction.png"
+            id="uk.ac.diamond.scisoft.ncd.actors.datareduction"
+            name="Data Reduction">
       </actor>
    </extension>
 
