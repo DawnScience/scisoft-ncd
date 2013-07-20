@@ -135,7 +135,7 @@ class DataReductionContext implements IDataReductionContext {
 
 	@Override
 	public boolean isEnableSaxs() {
-		return flags.isEnableWaxs();
+		return flags.isEnableSaxs();
 	}
 
 	@Override
