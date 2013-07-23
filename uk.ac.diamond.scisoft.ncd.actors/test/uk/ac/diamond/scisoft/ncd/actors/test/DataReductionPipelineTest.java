@@ -108,10 +108,9 @@ public class DataReductionPipelineTest {
 		System.setProperty("persistence.path", persPath);		
 		
 		final IProject workflows = ResourcesPlugin.getWorkspace().getRoot().getProject("workflows");
-		final IFolder  out  = workflows.getFolder("output");
-		if (!out.exists()) {
-			out.create(true, true, new NullProgressMonitor());
-		}
+		final IFolder  out       = workflows.getFolder("output");
+		if (!out.exists())  out.create(true, true, new NullProgressMonitor());
+		
 		final String outputPath = out.getLocation().toOSString();
 		System.setProperty("output.path", outputPath);
 
