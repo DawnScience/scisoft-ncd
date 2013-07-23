@@ -105,7 +105,15 @@ public class DataReductionPipelineTest {
 		
 		System.setProperty("xml.path",         xmlPath);
 		System.setProperty("raw.path",         rawPath);
-		System.setProperty("persistence.path", persPath);
+		System.setProperty("persistence.path", persPath);		
+		
+		final IProject workflows = ResourcesPlugin.getWorkspace().getRoot().getProject("workflows");
+		final IFolder  out  = workflows.getFolder("output");
+		if (!out.exists()) {
+			out.create(true, true, new NullProgressMonitor());
+		}
+		final String outputPath = out.getLocation().toOSString();
+		System.setProperty("output.path", outputPath);
 
 		
 		testScalarInjection("test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_model.moml",  "/entry/dictionary/results_path");

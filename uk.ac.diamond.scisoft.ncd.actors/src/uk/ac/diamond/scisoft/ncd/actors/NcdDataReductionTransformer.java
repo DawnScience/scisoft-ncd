@@ -11,21 +11,40 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.transform.Result;
+import javax.xml.transform.Source;
+import javax.xml.transform.Transformer;
+import javax.xml.transform.TransformerConfigurationException;
+import javax.xml.transform.TransformerException;
+import javax.xml.transform.TransformerFactory;
+import javax.xml.transform.TransformerFactoryConfigurationError;
+import javax.xml.transform.dom.DOMSource;
+import javax.xml.transform.stream.StreamResult;
+import javax.xml.xpath.XPath;
+import javax.xml.xpath.XPathConstants;
+import javax.xml.xpath.XPathExpression;
+import javax.xml.xpath.XPathFactory;
 
 import org.dawb.common.services.IPersistenceService;
 import org.dawb.common.services.IPersistentFile;
+import org.dawb.common.util.io.FileUtils;
 import org.dawb.passerelle.common.actors.AbstractDataMessageTransformer;
 import org.dawb.passerelle.common.message.DataMessageComponent;
 import org.dawb.passerelle.common.message.DataMessageException;
 import org.dawb.passerelle.common.message.IVariable;
+import org.dawb.passerelle.common.message.IVariable.VARIABLE_TYPE;
 import org.dawb.passerelle.common.message.MessageUtils;
 import org.dawb.passerelle.common.message.Variable;
-import org.dawb.passerelle.common.message.IVariable.VARIABLE_TYPE;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.swt.SWT;
 import org.jscience.physics.amount.Amount;
+import org.w3c.dom.Document;
+import org.w3c.dom.NodeList;
+import org.xml.sax.InputSource;
 
 import ptolemy.data.IntToken;
 import ptolemy.data.expr.StringParameter;
@@ -58,7 +77,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	 */
 	private static final long serialVersionUID = -5124463707332206927L;
 	
-	private ResourceParameter     xmlPathParam, persistenceParam;
+	private ResourceParameter     xmlPathParam, persistenceParam, outputPathParam;
 	private StringChoiceParameter maskName, sectorName;
 	private StringParameter       rawFilePath;
 	private StringParameter       resultsFileParam;
@@ -70,6 +89,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	 *  1. XML file, used to setup the actor.
 	 *  2. Mask and region, based into the actor in pipeline (normally the same)
 	 *  3. Raw file path, passed in during pipeline.
+	 *  4. Output directory
 	 *            
 	 * @param container
 	 * @param name
@@ -86,6 +106,10 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		persistenceParam = new ResourceParameter(this, "Persistence File");
 		persistenceParam.setResourceType(IResource.FILE);
 		registerConfigurableParameter(persistenceParam);
+		
+		outputPathParam = new ResourceParameter(this, "Output Directory");
+		outputPathParam.setResourceType(IResource.FOLDER);
+		registerConfigurableParameter(outputPathParam);
 		
 		maskName = new StringChoiceParameter(this, "Mask Name", new IAvailableChoices.Stub() {		
 			@Override
@@ -162,7 +186,11 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
         
         try {
 	        context = service.createContext();
-	        final String xmlPath = getPath(xmlPathParam, cache);    
+	        String xmlPath = getPath(xmlPathParam, cache);
+	        if (outputPathParam.getExpression()!=null && !"".equals(outputPathParam.getExpression())) {
+	    		final String outputDir =  getPath(outputPathParam, cache);
+	        	xmlPath = substituteOutputPath(xmlPath, outputDir);
+	        }
 	        createData(context, xmlPath);
 	        
 			createMaskAndRegion(context, cache);
@@ -309,6 +337,45 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	protected String getOperationName() {
 		return "NCD Data Reduction";
 	}
+	
+	/**
+	 * 
+	 * @param xmlFile
+	 * @param outputPath
+	 * @return a string path to the xml file in the output dir which has workingDir set properly.
+	 * @throws DataMessageException
+	 */
+	private String substituteOutputPath(String xmlPath, String outputPath) throws Exception {
+		
+		final File xmlFrom = new File(xmlPath);
+		File xmlTo   = new File(outputPath, xmlFrom.getName());
+		if (xmlTo.exists()) xmlTo = FileUtils.getUnique(new File(outputPath), FileUtils.getFileNameNoExtension(xmlFrom.getName()), "xml");
+		FileUtils.copyNio(xmlFrom, xmlTo);
+		
+		// Parse xml file
+		DocumentBuilderFactory docFactory = DocumentBuilderFactory.newInstance();
+		docFactory.setNamespaceAware(false); // never forget this!
+		docFactory.setValidating(false);
+		DocumentBuilder builder = docFactory.newDocumentBuilder();
+		Document doc = builder.parse(new InputSource(xmlTo.getAbsolutePath()));
+		
+		// In the new file we need to replace data_reduction_parameters/ncdProcessingSourceProvider/workingDir
+		// with this directory.
+		XPathFactory factory = XPathFactory.newInstance();
+		XPath        xpath   = factory.newXPath();
+		final XPathExpression exp = xpath.compile("/data_reduction_parameters/ncdProcessingSourceProvider/workingDir/text()");
+		
+		final NodeList nodeList = (NodeList)exp.evaluate(doc, XPathConstants.NODESET);
+		nodeList.item(0).setNodeValue(outputPath);
+		
+		Source source = new DOMSource(doc);
+		Result result = new StreamResult(xmlTo);
+		Transformer xformer = TransformerFactory.newInstance().newTransformer();
+		xformer.transform(source, result);
+				
+		return xmlTo.getAbsolutePath();
+	}
+
 	
 	private String getPath(ResourceParameter param, List<DataMessageComponent> cache) throws DataMessageException {
 		
