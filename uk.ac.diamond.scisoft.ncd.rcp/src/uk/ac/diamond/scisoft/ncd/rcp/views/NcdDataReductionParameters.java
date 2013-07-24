@@ -647,7 +647,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		secEcomp.setExpanded(false);
 		
 		normEcomp = new ExpandableComposite(c, SWT.NONE);
-		normEcomp.setText("Normlaisation");
+		normEcomp.setText("Normalisation");
 		normEcomp.setToolTipText("Set options for Normalisation stage");
 		gl = new GridLayout(4, false);
 		gl.horizontalSpacing = 15;
