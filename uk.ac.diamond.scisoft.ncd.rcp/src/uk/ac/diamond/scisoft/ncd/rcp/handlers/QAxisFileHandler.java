@@ -256,9 +256,10 @@ public class QAxisFileHandler extends AbstractHandler {
 						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
-						if (sector == null) {
-							sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
+						if (sector != null) {
+							plotSystem.removeRegion(sector);
 						}
+						sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
 						sector.setROI(roiData.copy());
 						sector.setUserRegion(true);
 						sector.setVisible(true);
