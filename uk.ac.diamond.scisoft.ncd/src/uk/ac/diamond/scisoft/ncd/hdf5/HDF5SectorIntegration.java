@@ -139,17 +139,15 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			
 			data = flattenGridData(data, dim);
 			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			data.setErrorBuffer(errors);
 			
 			roi.setAverageArea(false);
 			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
-			AbstractDataset[] myerrors = sec.process(errors, errors.getShape()[0], maskUsed);
-			
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
-				myazerrors = DatasetUtils.cast(myerrors[0], AbstractDataset.FLOAT64);
+				myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
 				if (myazdata != null) {
-					myazdata.setErrorBuffer(myazerrors);
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
 					resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
@@ -158,19 +156,20 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 					if (myazerrors != null) {
 						myazerrors = myazerrors.reshape(resAzShape);
 					}
+					myazdata.setErrorBuffer(myazerrors);
 				}
 			}
 			if (calculateRadial) {
 				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
-				myraderrors =  DatasetUtils.cast(myerrors[1], AbstractDataset.FLOAT64);
+				myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
 				if (myraddata != null) {
-					myraddata.setErrorBuffer(myraderrors);
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
 					myraddata = myraddata.reshape(resRadShape);
 					if (myraderrors != null) {
 						myraderrors = myraderrors.reshape(resRadShape);
 					}
+					myraddata.setErrorBuffer(myraderrors);
 				}
 			}
 			try {

@@ -69,7 +69,7 @@ public class LazyNcdProcessingTest {
 	private static boolean enableMask = false;
 	private static NcdReductionFlags flags;
 	private static SectorROI intSector;
-	private static int intPoints;
+	private static int intPoints, azPoints;
 	private static BooleanDataset mask;
 	private static NcdDetectors ncdDetectors;
 
@@ -94,7 +94,7 @@ public class LazyNcdProcessingTest {
 	private static long[] drFrames = new long[] {1, 1, 512, 512};
 	private static long[] framesCal = new long[] {1, 120, 9};
 	private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
-	private static long[] framesSec, framesAve, framesBg, framesInv;
+	private static long[] framesSec, framesSecAz, framesAve, framesBg, framesInv;
 	
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
@@ -144,9 +144,11 @@ public class LazyNcdProcessingTest {
 		ncdDetectors.setPxSaxs(pxSaxs);
 		ncdDetectors.setPxWaxs(null);
 
-		intSector = new SectorROI(262.0, 11.0, 20.0, 500.0, 60.0, 120.0);
+		intSector = new SectorROI(262.0, 11.0, 20.0, 500.0,  Math.toRadians(60.0), Math.toRadians(120.0));
 		intPoints = intSector.getIntRadius(1) - intSector.getIntRadius(0);
+		azPoints = (int) Math.ceil((intSector.getAngle(1) - intSector.getAngle(0)) * intSector.getRadius(1));
 		framesSec = new long[] {1, lastFrame - firstFrame + 1, intPoints};
+		framesSecAz = new long[] {1, lastFrame - firstFrame + 1, azPoints};
 		framesInv = new long[] {1,  lastFrame - firstFrame + 1};
 		framesAve = new long[] {1, 1, intPoints};
 		framesBg = new long[] {1, 1, intPoints};
@@ -244,9 +246,13 @@ public class LazyNcdProcessingTest {
 		    SliceSettings dataSlice = new SliceSettings(framesResult, 1, 1);
 		    int[] start = new int[] {0, frame, 0, 0};
 		    dataSlice.setStart(start);
-			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-			AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
+			AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
+			data.setError(dataErrors);
 			
+			intSector.setAverageArea(true);
+			AbstractDataset[] intResult = ROIProfile.sector(data, null, intSector, true, true, false, null, null, true);
+
 		    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazySectorIntegration.name);
 		    DataSliceIdentifiers result_id = array_id[0];
 		    DataSliceIdentifiers result_error_id = array_id[1];
@@ -256,20 +262,37 @@ public class LazyNcdProcessingTest {
 			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 			AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
-			intSector.setAverageArea(true);
-			AbstractDataset[] intResult = ROIProfile.sector(data.squeeze(), null, intSector);
-			AbstractDataset[] intResultError = ROIProfile.sector(dataErrors.ipower(2).squeeze(), null, intSector);
+			for (int j = 0; j < intPoints; j++) {
+				float  valResult      = result.getFloat(0, 0, j);
+				double valResultError = resultError.getDouble(0, 0, j);
+				float  valData        = intResult[0].getFloat(j);
+				double valDataError = Math.sqrt(((AbstractDataset) intResult[0].getErrorBuffer()).getDouble(j));
+				double acc    = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
+				double accerr = Math.max(1e-6 * Math.abs(Math.sqrt(valResultError * valResultError + valDataError * valDataError)),	1e-10);
+
+				assertEquals(String.format("Test radial sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
+				assertEquals(String.format("Test radial sector integration error for index (%d, %d)", frame, j), valResultError, valDataError, accerr);
+			}
+			
+		    array_id = readResultsIds(filename, detectorOut, LazySectorIntegration.name, "azimuth", "azimuth_errors");
+		    result_id = array_id[0];
+		    result_error_id = array_id[1];
+		    resultSlice = new SliceSettings(framesSecAz, 1, 1);
+		    start = new int[] {0, frame, 0};
+		    resultSlice.setStart(start);
+			result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+			resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 			for (int j = 0; j < intPoints; j++) {
-				float valResult = result.getFloat(0, 0, j);
+				float  valResult      = result.getFloat(0, 0, j);
 				double valResultError = resultError.getDouble(0, 0, j);
-				float valData = intResult[0].getFloat(j);
-				double valDataError = Math.sqrt(intResultError[0].getDouble(j));
-				double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
-				double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
+				float  valData        = intResult[1].getFloat(j);
+				double valDataError = Math.sqrt(((AbstractDataset) intResult[1].getErrorBuffer()).getDouble(j));
+				double acc    = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
+				double accerr = Math.max(1e-6 * Math.abs(Math.sqrt(valResultError * valResultError + valDataError * valDataError)),	1e-10);
 
-				assertEquals(String.format("Test sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
-				assertEquals(String.format("Test sector integration error for index (%d, %d)", frame, j), valResultError, valDataError, accerr);
+				assertEquals(String.format("Test azimuthal sector integration for index (%d, %d)", frame, j), valResult, valData, acc);
+				assertEquals(String.format("Test azimuthal sector integration error for index (%d, %d)", frame, j), valResultError, valDataError, accerr);
 			}
 		}
 	}
@@ -453,6 +476,21 @@ public class LazyNcdProcessingTest {
 		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
 		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		
+		DataSliceIdentifiers ids = new DataSliceIdentifiers();
+		ids.setIDs(detector_group_id, input_data_id);
+		DataSliceIdentifiers errors_ids = new DataSliceIdentifiers();
+		errors_ids.setIDs(detector_group_id, input_errors_id);
+		return 	readResultsIds(dataFile, detector, result, null, null);
+	}
+	
+	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result, String data, String errors) throws HDF5Exception {
+		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, (data == null ? "data" : data), HDF5Constants.H5P_DEFAULT);
+		int input_errors_id = H5.H5Dopen(detector_group_id, (errors == null ? "errors" : errors), HDF5Constants.H5P_DEFAULT);
 		
 		DataSliceIdentifiers ids = new DataSliceIdentifiers();
 		ids.setIDs(detector_group_id, input_data_id);

@@ -403,14 +403,14 @@ public class LazyNcdProcessing {
 		final LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 		    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
-			int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
+			int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
 			int[] intRadii = intSector.getIntRadii();
 			double[] radii = intSector.getRadii();
 			double dpp = intSector.getDpp();
 			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
-			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secRank, secFrames, true, "counts");
-		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secRank, secFrames, false, "counts");
+			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", typeFloat, secRank, secFrames, true, "counts");
+			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", typeDouble, secRank, secFrames, false, "counts");
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
@@ -418,9 +418,8 @@ public class LazyNcdProcessing {
 				angles[1] = angles[0] + 2 * Math.PI;
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
-			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, secRank, azFrames, false, "counts");
-		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, secRank, azFrames, false, "counts");
+			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", typeFloat, secRank, azFrames, false, "counts");
+			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", typeDouble, secRank, azFrames, false, "counts");
 			
 			intSector.setAverageArea(false);
 			lazySectorIntegration.setIntSector(intSector);

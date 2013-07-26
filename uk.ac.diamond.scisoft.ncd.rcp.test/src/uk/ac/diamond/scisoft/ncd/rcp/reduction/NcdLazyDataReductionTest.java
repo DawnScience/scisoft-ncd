@@ -557,15 +557,15 @@ public class NcdLazyDataReductionTest {
 			for (int k = 0; k < shape[2]; k++) {
 				int[] startImage = new int[] {h, g, k, 0, 0};
 				int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
-				AbstractDataset image = data.getSlice(startImage, stopImage, null);
-				AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null);
-				AbstractDataset[] intResult = ROIProfile.sector(image.squeeze(), null, intSector);
-				AbstractDataset[] errResult = ROIProfile.sector(errimage.squeeze(), null, intSector);
+				AbstractDataset image = data.getSlice(startImage, stopImage, null).squeeze();
+				AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
+				image.setErrorBuffer(errimage);
+				AbstractDataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
 				for (int i = 0; i < outDataset[1].getShape()[3]; i++) {
 						float value = outDataset[1].getFloat(h, g, k, i);
 						double error = outErrors[1].getDouble(h, g, k, i);
 						float expected = intResult[0].getFloat(i);
-						double expectederror = Math.sqrt(errResult[0].getDouble(i));
+						double expectederror = Math.sqrt(((AbstractDataset) intResult[0].getErrorBuffer()).getDouble(i));
 						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 						assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
@@ -573,7 +573,7 @@ public class NcdLazyDataReductionTest {
 					float value = outDataset[0].getFloat(h, g, k, i);
 					double error = outErrors[0].getDouble(h, g, k, i);
 					float expected = intResult[1].getFloat(i);
-					double expectederror = Math.sqrt(errResult[1].getDouble(i));
+					double expectederror = Math.sqrt(((AbstractDataset) intResult[1].getErrorBuffer()).getDouble(i));
 					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 					assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
