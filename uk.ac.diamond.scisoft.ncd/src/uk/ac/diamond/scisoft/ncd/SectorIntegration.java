@@ -72,6 +72,8 @@ public class SectorIntegration {
 			start[i] = 0;
 		}
 		int[] stop = parentdim.clone();
+		
+		boolean doErrors = parentdata.hasErrors(); 
 
 		AbstractDataset myraddata = null, myazdata = null;
 		DoubleDataset myraderrors = null, myazerrors = null;
@@ -80,54 +82,68 @@ public class SectorIntegration {
 			stop[0] = i + 1;
 			
 			AbstractDataset slice = parentdata.getSlice(start, stop, null);
-			AbstractDataset sliceErrors = ((AbstractDataset) parentdata.getErrorBuffer()).getSlice(start, stop, null);
 			slice.squeeze();
-			sliceErrors.squeeze();
-			slice.setErrorBuffer(sliceErrors);
+			if (doErrors) {
+				AbstractDataset sliceErrors = ((AbstractDataset) parentdata.getErrorBuffer()).getSlice(start, stop, null);
+				sliceErrors.squeeze();
+				slice.setErrorBuffer(sliceErrors);
+			}
 			
 			AbstractDataset[] intresult;
 			try {
-				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast, null, null, true);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast, null, null, doErrors);
 			} catch (IllegalArgumentException ill) {
 				logger.warn("mask and dataset incompatible rank", ill);
 				maskUsed = null;
-				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast, null, null, true);
+				intresult = ROIProfile.sector(slice, maskUsed, roi, calculateRadial, calculateAzimuthal, fast, null, null, doErrors);
 			}
+			
 			if (calculateRadial) {
 				AbstractDataset radset = intresult[0];
-				AbstractDataset raderr = (AbstractDataset) intresult[0].getErrorBuffer();
 				if (areaData != null && areaData[0] != null) {
 					radset = Maths.dividez(radset, areaData[0]);
-					raderr = Maths.dividez(raderr, areaDataSq[0]);
 				}
 				int radrange = radset.getShape()[0];
 				radset.resize(new int[] { 1, radrange });
 				if (myraddata  == null) {
 					myraddata  = AbstractDataset.zeros(new int[] { frames, radrange }, radset.getDtype());
 				}
-				if (myraderrors == null) {
-					myraderrors = (DoubleDataset) AbstractDataset.zeros(myraddata, AbstractDataset.FLOAT64);
-				}
 				myraddata.setSlice(radset, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
-				myraderrors.setSlice(raderr, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
+				
+				if (doErrors) {
+					AbstractDataset raderr = (AbstractDataset) intresult[0].getErrorBuffer();
+					if (areaData != null && areaData[0] != null) {
+						raderr = Maths.dividez(raderr, areaDataSq[0]);
+					}
+					radset.resize(new int[] { 1, radrange });
+					if (myraderrors == null) {
+						myraderrors = (DoubleDataset) AbstractDataset.zeros(myraddata, AbstractDataset.FLOAT64);
+					}
+					myraderrors.setSlice(raderr, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
+				}
 			}
+			
 			if (calculateAzimuthal) {
 				AbstractDataset azset = intresult[1];
-				AbstractDataset azerr = (AbstractDataset) intresult[1].getErrorBuffer();
 				if (areaData !=null && areaData[1] != null) {
 					azset = Maths.dividez(azset, areaData[1]);
-					azerr = Maths.dividez(azerr, areaDataSq[1]);
 				}
 				int azrange = azset.getShape()[0];
 				azset.resize(new int[] { 1, azrange });
 				if (myazdata == null) {
 					myazdata   = AbstractDataset.zeros(new int[] { frames, azrange }, azset.getDtype());
 				}
-				if (myazerrors == null) {
-					myazerrors = (DoubleDataset) AbstractDataset.zeros(myazdata, AbstractDataset.FLOAT64);
-				}
 				myazdata.setSlice(azset, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
-				myazerrors.setSlice(azerr, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
+				if (doErrors) {
+					AbstractDataset azerr = (AbstractDataset) intresult[1].getErrorBuffer();
+					if (areaData !=null && areaData[1] != null) {
+						azerr = Maths.dividez(azerr, areaDataSq[1]);
+					}
+					if (myazerrors == null) {
+						myazerrors = (DoubleDataset) AbstractDataset.zeros(myazdata, AbstractDataset.FLOAT64);
+					}
+					myazerrors.setSlice(azerr, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
+				}
 			}
 		}
 		if (myraddata != null && myraderrors != null) {
