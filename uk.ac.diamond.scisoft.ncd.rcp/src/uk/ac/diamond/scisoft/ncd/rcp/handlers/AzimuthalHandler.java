@@ -32,8 +32,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 public class AzimuthalHandler extends AbstractHandler implements
 		IElementUpdater {
 	
-	public static String COMMAND_ID = NcdProcessingSourceProvider.AZIMUTH_STATE;
-	public static String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.azimuthal.state";
+	public static final String COMMAND_ID = NcdProcessingSourceProvider.AZIMUTH_STATE;
+	public static final String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.azimuthal.state";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {

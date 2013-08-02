@@ -124,7 +124,9 @@ public class DataReductionHandler extends AbstractHandler {
 						} else {
 							inputfilePath = ((File)selObjects[i]).getAbsolutePath();
 						}
-						if (inputfilePath==null) continue;
+						if (inputfilePath==null) {
+							continue;
+						}
 						
  					    try {
 							IStatus status = service.process(inputfilePath, context, monitor);
@@ -183,7 +185,7 @@ public class DataReductionHandler extends AbstractHandler {
 						mask = MaskingTool.getSavedMask();
 					} else {
 						ITrace imageTrace = imageTraces.iterator().next();
-						if (imageTrace != null && imageTrace instanceof IImageTrace) {
+						if (imageTrace instanceof IImageTrace) {
 							mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
 						}
 					}

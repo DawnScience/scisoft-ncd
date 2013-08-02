@@ -92,216 +92,214 @@ public class QAxisFileHandler extends AbstractHandler {
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 
-		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection)selection).toList().size() == 1) {
-				
-				final Object sel = ((IStructuredSelection)selection).getFirstElement();
-				
-				String qaxisFilename;
-				if (sel instanceof IFile) {
-					qaxisFilename = ((IFile)sel).getLocation().toString();
-				} else {
-					qaxisFilename = ((File)sel).getAbsolutePath();
-				}
-				try {
-					
-					String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					if (detectorSaxs == null) {
-						return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
-					}
-					CalibrationResultsBean crb = null;
-					
-					HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
-					HDF5NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-							+ "_processing/SectorIntegration/qaxis calibration");
-					
-					if (nodeLink == null) {
-						return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
-					}
-					
-					Amount<ScatteringVectorOverDistance> amountGradient = null;
-					Amount<ScatteringVector> amountIntercept = null;
-					Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
-					Amount<Length> cameraLength = null;
-					Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
-					Amount<Energy> energy = null;
-					HDF5Node node = nodeLink.getDestination();
-					if (node instanceof HDF5Dataset) {
-						AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-						double gradient = qaxis.getDouble(0);
-						double intercept = qaxis.getDouble(1);
-
-						// The default value that was used when unit setting was fixed.
-						UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-						HDF5Attribute unitsAttr = node.getAttribute("unit");
-						if (unitsAttr != null) {
-							String unitString = unitsAttr.getFirstElement();
-							unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
-						}
-						amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
-						amountIntercept = Amount.valueOf(intercept,  unit);
-						
-					} else if (node instanceof HDF5Group) {
-						HDF5Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/qaxis calibration/gradient").getDestination();
-						HDF5Node gradientError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/qaxis calibration/gradient_errors").getDestination();
-						HDF5Node interceptData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
-						HDF5Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
-						
-						double gradient = ((HDF5Dataset) gradientData).getDataset().getSlice().getDouble(0);
-						double errgradient = ((HDF5Dataset) gradientError).getDataset().getSlice().getDouble(0);
-						String strUnit = gradientData.getAttribute("units").getFirstElement();
-						Unit<ScatteringVectorOverDistance> gradientUnit = UnitFormat.getUCUMInstance()
-								.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
-						
-						double intercept = ((HDF5Dataset) interceptData).getDataset().getSlice().getDouble(0);
-						double erritercept = ((HDF5Dataset) interceptError).getDataset().getSlice().getDouble(0);
-						strUnit = interceptData.getAttribute("units").getFirstElement();
-						unit = UnitFormat.getUCUMInstance()
-								.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
-						
-						amountGradient = Amount.valueOf(gradient, errgradient, gradientUnit);
-						amountIntercept = Amount.valueOf(intercept,  erritercept, unit);
-					}
-					
-					if (amountGradient != null && amountIntercept != null) {
-						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/camera length");
-						if (nodeLink != null) {
-							node = nodeLink.getDestination();
-							if (node instanceof HDF5Dataset) {
-								double dataVal = ((HDF5Dataset) node).getDataset().getSlice().getDouble(0); 
-								if (node.containsAttribute("units")) {
-									cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
-											.asType(Length.class);
-								}
-								cameraLength = Amount.valueOf(dataVal, cameraLengthUnit);
-							} else if (node instanceof HDF5Group) {
-								HDF5Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-										+ "_processing/SectorIntegration/camera length/data").getDestination();
-								HDF5Node error = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-										+ "_processing/SectorIntegration/camera length/errors").getDestination();
-								
-								double dataVal = ((HDF5Dataset) data).getDataset().getSlice().getDouble(0); 
-								double errorVal = ((HDF5Dataset) error).getDataset().getSlice().getDouble(0); 
-								cameraLengthUnit = Unit.valueOf(data.getAttribute("units").getFirstElement())
-											.asType(Length.class);
-								cameraLength = Amount.valueOf(dataVal, errorVal, cameraLengthUnit);
-							}
-						}
-						
-						crb = new CalibrationResultsBean(detectorSaxs, amountGradient, amountIntercept, new ArrayList<CalibrationPeak>(), cameraLength, unit.inverse().asType(Length.class));
-						ncdCalibrationSourceProvider.putCalibrationResult(crb);
-						
-						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-								+ "_processing/SectorIntegration/energy");
-						if (nodeLink != null) {
-							node = nodeLink.getDestination();
-							if (node instanceof HDF5Dataset) {
-								energy = Amount.valueOf(
-										((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
-							}
-						}
-						ncdEnergySourceProvider.setEnergy(energy);
-					}
-
-					SectorROI roiData = new SectorROI();
-					roiData.setPlot(true);
-					roiData.setClippingCompensation(true);
-					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-							+ "_processing/SectorIntegration/beam centre");
-					if (nodeLink != null) {
-						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
-							AbstractDataset beam = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-							roiData.setPoint(beam.getDouble(0), beam.getDouble(1));
-						}
-					}
-					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-							+ "_processing/SectorIntegration/integration angles");
-					if (nodeLink != null) {
-						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
-							AbstractDataset angles = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-							roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
-						}
-					}
-					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-							+ "_processing/SectorIntegration/integration radii");
-					if (nodeLink != null) {
-						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
-							AbstractDataset radii = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
-							roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
-						}
-					}
-					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
-							+ "_processing/SectorIntegration/integration symmetry");
-					if (nodeLink != null) {
-						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
-							String symmetryText = ((AbstractDataset) ((HDF5Dataset) node).getDataset()).getString(0);
-							int symmetry = SectorROI.getSymmetry(symmetryText);
-							if (roiData.checkSymmetry(symmetry))
-								roiData.setSymmetry(symmetry);
-						}
-					}
-
-					IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
-					IViewPart activePlot = page.findView(PlotView.ID + "DP");
-					if (activePlot instanceof PlotView) {
-						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
-						plotSystem.setPlotType(PlotType.IMAGE);
-						IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
-						if (sector != null) {
-							plotSystem.removeRegion(sector);
-						}
-						sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
-						sector.setROI(roiData.copy());
-						sector.setUserRegion(true);
-						sector.setVisible(true);
-						plotSystem.addRegion(sector);
-					}
-					
-					// update locked diffraction metadata in Diffraction tool
-					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
-					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
-					if (lockedMeta == null) {
-						nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
-						if (nodeLink != null) {
-							int[] datashape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getShape();
-							loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
-						} else {
-							logger.info("SCISOFT NCD: Couldn't read calibration image shape for configuring diffraction metadata");
-							return null;
-						}
-					}
-					DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
-					DiffractionCrystalEnvironment crystalEnvironment = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
-					if (energy != null) {
-						crystalEnvironment.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
-					}
-					if (cameraLength != null) {
-						detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETRE));
-					}
-					double[] cp = roiData.getPoint();
-					if (cp != null) {
-						detectorProperties.setBeamCentreCoords(cp);
-					}
-				} catch (Exception e) {
-					return ErrorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
-				}
+		if (selection instanceof IStructuredSelection && ((IStructuredSelection)selection).toList().size() == 1) {
+			
+			final Object sel = ((IStructuredSelection)selection).getFirstElement();
+			
+			String qaxisFilename;
+			if (sel instanceof IFile) {
+				qaxisFilename = ((IFile)sel).getLocation().toString();
+			} else {
+				qaxisFilename = ((File)sel).getAbsolutePath();
 			}
+			try {
+				
+				String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+				if (detectorSaxs == null) {
+					return errorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
+				}
+				CalibrationResultsBean crb = null;
+				
+				HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
+				HDF5NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/qaxis calibration");
+				
+				if (nodeLink == null) {
+					return errorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
+				}
+				
+				Amount<ScatteringVectorOverDistance> amountGradient = null;
+				Amount<ScatteringVector> amountIntercept = null;
+				Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
+				Amount<Length> cameraLength = null;
+				Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
+				Amount<Energy> energy = null;
+				HDF5Node node = nodeLink.getDestination();
+				if (node instanceof HDF5Dataset) {
+					AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+					double gradient = qaxis.getDouble(0);
+					double intercept = qaxis.getDouble(1);
 
+					// The default value that was used when unit setting was fixed.
+					UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+					HDF5Attribute unitsAttr = node.getAttribute("unit");
+					if (unitsAttr != null) {
+						String unitString = unitsAttr.getFirstElement();
+						unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
+					}
+					amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+					amountIntercept = Amount.valueOf(intercept,  unit);
+					
+				} else if (node instanceof HDF5Group) {
+					HDF5Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/qaxis calibration/gradient").getDestination();
+					HDF5Node gradientError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/qaxis calibration/gradient_errors").getDestination();
+					HDF5Node interceptData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
+					HDF5Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
+					
+					double gradient = ((HDF5Dataset) gradientData).getDataset().getSlice().getDouble(0);
+					double errgradient = ((HDF5Dataset) gradientError).getDataset().getSlice().getDouble(0);
+					String strUnit = gradientData.getAttribute("units").getFirstElement();
+					Unit<ScatteringVectorOverDistance> gradientUnit = UnitFormat.getUCUMInstance()
+							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+					
+					double intercept = ((HDF5Dataset) interceptData).getDataset().getSlice().getDouble(0);
+					double erritercept = ((HDF5Dataset) interceptError).getDataset().getSlice().getDouble(0);
+					strUnit = interceptData.getAttribute("units").getFirstElement();
+					unit = UnitFormat.getUCUMInstance()
+							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+					
+					amountGradient = Amount.valueOf(gradient, errgradient, gradientUnit);
+					amountIntercept = Amount.valueOf(intercept,  erritercept, unit);
+				}
+				
+				if (amountGradient != null && amountIntercept != null) {
+					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/camera length");
+					if (nodeLink != null) {
+						node = nodeLink.getDestination();
+						if (node instanceof HDF5Dataset) {
+							double dataVal = ((HDF5Dataset) node).getDataset().getSlice().getDouble(0); 
+							if (node.containsAttribute("units")) {
+								cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
+										.asType(Length.class);
+							}
+							cameraLength = Amount.valueOf(dataVal, cameraLengthUnit);
+						} else if (node instanceof HDF5Group) {
+							HDF5Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+									+ "_processing/SectorIntegration/camera length/data").getDestination();
+							HDF5Node error = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+									+ "_processing/SectorIntegration/camera length/errors").getDestination();
+							
+							double dataVal = ((HDF5Dataset) data).getDataset().getSlice().getDouble(0); 
+							double errorVal = ((HDF5Dataset) error).getDataset().getSlice().getDouble(0); 
+							cameraLengthUnit = Unit.valueOf(data.getAttribute("units").getFirstElement())
+										.asType(Length.class);
+							cameraLength = Amount.valueOf(dataVal, errorVal, cameraLengthUnit);
+						}
+					}
+					
+					crb = new CalibrationResultsBean(detectorSaxs, amountGradient, amountIntercept, new ArrayList<CalibrationPeak>(), cameraLength, unit.inverse().asType(Length.class));
+					ncdCalibrationSourceProvider.putCalibrationResult(crb);
+					
+					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							+ "_processing/SectorIntegration/energy");
+					if (nodeLink != null) {
+						node = nodeLink.getDestination();
+						if (node instanceof HDF5Dataset) {
+							energy = Amount.valueOf(
+									((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
+						}
+					}
+					ncdEnergySourceProvider.setEnergy(energy);
+				}
+
+				SectorROI roiData = new SectorROI();
+				roiData.setPlot(true);
+				roiData.setClippingCompensation(true);
+				nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/beam centre");
+				if (nodeLink != null) {
+					node = nodeLink.getDestination();
+					if (node instanceof HDF5Dataset) {
+						AbstractDataset beam = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						roiData.setPoint(beam.getDouble(0), beam.getDouble(1));
+					}
+				}
+				nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/integration angles");
+				if (nodeLink != null) {
+					node = nodeLink.getDestination();
+					if (node instanceof HDF5Dataset) {
+						AbstractDataset angles = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
+					}
+				}
+				nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/integration radii");
+				if (nodeLink != null) {
+					node = nodeLink.getDestination();
+					if (node instanceof HDF5Dataset) {
+						AbstractDataset radii = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
+					}
+				}
+				nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						+ "_processing/SectorIntegration/integration symmetry");
+				if (nodeLink != null) {
+					node = nodeLink.getDestination();
+					if (node instanceof HDF5Dataset) {
+						String symmetryText = ((AbstractDataset) ((HDF5Dataset) node).getDataset()).getString(0);
+						int symmetry = SectorROI.getSymmetry(symmetryText);
+						if (roiData.checkSymmetry(symmetry)) {
+							roiData.setSymmetry(symmetry);
+						}
+					}
+				}
+
+				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
+				IViewPart activePlot = page.findView(PlotView.ID + "DP");
+				if (activePlot instanceof PlotView) {
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					plotSystem.setPlotType(PlotType.IMAGE);
+					IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
+					if (sector != null) {
+						plotSystem.removeRegion(sector);
+					}
+					sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
+					sector.setROI(roiData.copy());
+					sector.setUserRegion(true);
+					sector.setVisible(true);
+					plotSystem.addRegion(sector);
+				}
+				
+				// update locked diffraction metadata in Diffraction tool
+				ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+				IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
+				if (lockedMeta == null) {
+					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
+					if (nodeLink != null) {
+						int[] datashape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getShape();
+						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+					} else {
+						logger.info("SCISOFT NCD: Couldn't read calibration image shape for configuring diffraction metadata");
+						return null;
+					}
+				}
+				DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
+				DiffractionCrystalEnvironment crystalEnvironment = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
+				if (energy != null) {
+					crystalEnvironment.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+				}
+				if (cameraLength != null) {
+					detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETRE));
+				}
+				double[] cp = roiData.getPoint();
+				if (cp != null) {
+					detectorProperties.setBeamCentreCoords(cp);
+				}
+			} catch (Exception e) {
+				return errorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
+			}
 		}
 
 		return null;
 	}
 
-	private IStatus ErrorDialog(String msg, Exception e) {
+	private IStatus errorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);

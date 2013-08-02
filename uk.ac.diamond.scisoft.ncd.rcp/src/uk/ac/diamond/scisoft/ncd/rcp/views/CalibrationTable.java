@@ -16,7 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
-import java.util.ArrayList;
+import java.util.List;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
@@ -62,7 +62,7 @@ public class CalibrationTable {
 
 	}
 
-	final public void setInput(ArrayList<CalibrationPeak> cpl) {
+	public final void setInput(List<CalibrationPeak> cpl) {
 		if (tViewer == null || tViewer.getControl().isDisposed())
 			return;
 		if (cpl.size() > 0) {
@@ -75,9 +75,10 @@ public class CalibrationTable {
 	/**
 	 * Refresh table viewer
 	 */
-	final public void refresh() {
-		if (tViewer == null || tViewer.getControl().isDisposed())
+	public final void refresh() {
+		if (tViewer == null || tViewer.getControl().isDisposed()) {
 			return;
+		}
 		tViewer.refresh();
 	}
 }

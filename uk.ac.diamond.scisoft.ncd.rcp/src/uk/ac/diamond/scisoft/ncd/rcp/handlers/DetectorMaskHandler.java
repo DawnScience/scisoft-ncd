@@ -31,8 +31,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class DetectorMaskHandler extends AbstractHandler implements IElementUpdater {
 
-	public static String COMMAND_ID = NcdProcessingSourceProvider.MASK_STATE;
-	public static String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.mask.state";
+	public static final String COMMAND_ID = NcdProcessingSourceProvider.MASK_STATE;
+	public static final String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.mask.state";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {

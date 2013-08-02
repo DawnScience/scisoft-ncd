@@ -148,7 +148,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				maskingJob.setUser(true);
 				maskingJob.schedule();
 			} catch (Exception e) {
-				return ErrorDialog(e);
+				return errorDialog(e);
 			}
 			
 			
@@ -158,7 +158,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 		return null;
 	}
 
-	private IStatus ErrorDialog(Exception e) {
+	private IStatus errorDialog(Exception e) {
 		String msg = "Error loading detector mask!";
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);

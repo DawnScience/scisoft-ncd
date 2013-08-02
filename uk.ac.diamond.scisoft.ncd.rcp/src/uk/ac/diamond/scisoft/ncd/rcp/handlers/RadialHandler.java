@@ -32,8 +32,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 public class RadialHandler extends AbstractHandler implements
 		IElementUpdater {
 	
-	public static String COMMAND_ID = NcdProcessingSourceProvider.RADIAL_STATE;
-	public static String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.radial.state";
+	public static final String COMMAND_ID = NcdProcessingSourceProvider.RADIAL_STATE;
+	public static final String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.radial.state";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {

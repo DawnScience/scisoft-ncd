@@ -58,11 +58,10 @@ import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-//dascgitolite@dasc-git.diamond.ac.uk/scisoft/scisoft-ncd.git
 
 public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
-	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener"; //$NON-NLS-1$
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener";
 
 	protected static final String PLOT_NAME = "Dataset Plot";
 	

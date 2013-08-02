@@ -61,7 +61,9 @@ public class LoadDataReductionParameters extends AbstractHandler {
 			dialog.setFilterPath(filterPath);
 			
 			final String path = dialog.open();
-			if (path==null) return null;
+			if (path == null) {
+				return null;
+			}
 			
 			final File file = new File(path);
 			filterPath = file.getParent();

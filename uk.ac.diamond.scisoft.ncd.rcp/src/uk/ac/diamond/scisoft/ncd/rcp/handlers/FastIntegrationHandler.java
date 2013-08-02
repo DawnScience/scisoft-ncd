@@ -32,8 +32,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 public class FastIntegrationHandler extends AbstractHandler implements
 		IElementUpdater {
 	
-	public static String COMMAND_ID = NcdProcessingSourceProvider.FASTINT_STATE;
-	public static String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.fastintegration.state";
+	public static final String COMMAND_ID = NcdProcessingSourceProvider.FASTINT_STATE;
+	public static final String STATE_ID = "uk.ac.diamond.scisoft.ncd.rcp.fastintegration.state";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {

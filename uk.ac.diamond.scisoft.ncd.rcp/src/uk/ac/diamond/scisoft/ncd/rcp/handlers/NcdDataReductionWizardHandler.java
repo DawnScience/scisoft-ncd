@@ -1,19 +1,17 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
@@ -23,7 +21,6 @@ import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
-import org.eclipse.jface.window.Window;
 import org.eclipse.jface.wizard.WizardDialog;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPage;
@@ -52,20 +49,10 @@ public class NcdDataReductionWizardHandler extends AbstractHandler {
 						new String[] { "OK" }, 0);
 				dialog.open();
 			}
-		} else {
-			// Customized MessageDialog with configured buttons
-//			MessageDialog dialog = new MessageDialog(window.getShell(), "Information", null, "Please select a file with detector information", MessageDialog.INFORMATION,
-//					new String[] { "OK" }, 0);
-//			dialog.open();
-//			return null;
 		}
 
 		WizardDialog wizardDialog = new WizardDialog(Display.getDefault().getActiveShell(), new NcdDataReductionWizard());
-		if (wizardDialog.open() == Window.OK) {
-			System.out.println("Ok pressed");
-		} else {
-			System.out.println("Cancel pressed");
-		}
+		wizardDialog.open();
 
 		return null;
 	}

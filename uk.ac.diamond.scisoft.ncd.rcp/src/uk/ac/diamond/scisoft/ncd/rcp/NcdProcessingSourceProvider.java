@@ -37,33 +37,33 @@ import uk.ac.diamond.scisoft.ncd.data.xml.EnergyXmlAdapter;
 
 public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	
-	public final static String AVERAGE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableAverage";
-	public final static String BACKGROUD_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableBackgroundSubtraction";
-	public final static String RESPONSE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableDetectorResponse";
-	public final static String INVARIANT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableInvariant";
-	public final static String NORMALISATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableNormalisation";
-	public final static String SECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSectorIntegration";
-	public final static String RADIAL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableRadialIntegration";
-	public final static String AZIMUTH_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableAzimuthalIntegration";
-	public final static String FASTINT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableFastIntegration";
-	public final static String WAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableWaxsDataReduction";
-	public final static String SAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSaxsDataReduction";
-	public final static String MASK_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableMask";
-	
-	public final static String SCALER_STATE = "uk.ac.diamond.scisoft.ncd.rcp.scalerDetector";
-	public final static String SAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.saxsDetector";
-	public final static String WAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.waxsDetector";
-	
-	public final static String ENERGY_STATE = "uk.ac.diamond.scisoft.ncd.rcp.energy";
-	public final static String NORMCHANNEL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.normChannel";
-	
-	public final static String DATASLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.dataSlice";
-	public final static String BKGSLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgSlice";
-	public final static String GRIDAVERAGE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.gridAverage";
-	
-	public final static String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
-	public final static String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
-	public final static String ABSOFFSET_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absOffset";
+	public static final String AVERAGE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableAverage";
+	public static final String BACKGROUD_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableBackgroundSubtraction";
+	public static final String RESPONSE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableDetectorResponse";
+	public static final String INVARIANT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableInvariant";
+	public static final String NORMALISATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableNormalisation";
+	public static final String SECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSectorIntegration";
+	public static final String RADIAL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableRadialIntegration";
+	public static final String AZIMUTH_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableAzimuthalIntegration";
+	public static final String FASTINT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableFastIntegration";
+	public static final String WAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableWaxsDataReduction";
+	public static final String SAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSaxsDataReduction";
+	public static final String MASK_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableMask";
+	                    
+	public static final String SCALER_STATE = "uk.ac.diamond.scisoft.ncd.rcp.scalerDetector";
+	public static final String SAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.saxsDetector";
+	public static final String WAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.waxsDetector";
+	                    
+	public static final String ENERGY_STATE = "uk.ac.diamond.scisoft.ncd.rcp.energy";
+	public static final String NORMCHANNEL_STATE = "uk.ac.diamond.scisoft.ncd.rcp.normChannel";
+	                    
+	public static final String DATASLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.dataSlice";
+	public static final String BKGSLICE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgSlice";
+	public static final String GRIDAVERAGE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.gridAverage";
+	                    
+	public static final String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
+	public static final String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
+	public static final String ABSOFFSET_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absOffset";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
 	
 	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
@@ -225,17 +225,17 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	public void setScaler(String scaler) {
-		this.scaler = (scaler != null) ? new String(scaler) : null;
+		this.scaler = scaler;
 		fireSourceChanged(ISources.WORKBENCH, SCALER_STATE, this.scaler);
 	}
 	
 	public void setSaxsDetector(String saxsDetector) {
-		this.saxsDetector = (saxsDetector != null) ? new String(saxsDetector) : null;
+		this.saxsDetector = saxsDetector;
 		fireSourceChanged(ISources.WORKBENCH, SAXSDETECTOR_STATE, this.saxsDetector);
 	}
 	
 	public void setWaxsDetector(String waxsDetector) {
-		this.waxsDetector = (waxsDetector != null) ? new String(waxsDetector) : null;
+		this.waxsDetector = waxsDetector;
 		fireSourceChanged(ISources.WORKBENCH, WAXSDETECTOR_STATE, this.waxsDetector);
 	}
 	
@@ -243,11 +243,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		this.energy = (energy != null) ? energy.copy() : null;
 		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
 	}
-
-	//public void setNormChannel(Integer normChannel) {
-	//	this.normChannel = (normChannel != null) ? new Integer(normChannel) : null;
-	//	fireSourceChanged(ISources.WORKBENCH, NORMCHANNEL_STATE, this.normChannel);
-	//}
 
 	public void setDataSlice(SliceInput dataSlice) {
 		this.dataSlice = (dataSlice != null) ? new SliceInput(dataSlice) : null;
@@ -260,12 +255,12 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	public void setBgFile(String bgFile) {
-		this.bgFile = (bgFile != null) ? new String(bgFile) : null;
+		this.bgFile = bgFile;
 		fireSourceChanged(ISources.WORKBENCH, BKGFILE_STATE, this.bgFile);
 	}
 
 	public void setDrFile(String drFile) {
-		this.drFile = (drFile != null) ? new String(drFile) : null;
+		this.drFile = drFile;
 		fireSourceChanged(ISources.WORKBENCH, DRFILE_STATE, this.drFile);
 	}
 
@@ -303,7 +298,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	}
 
 	public void setWorkingDir(String workingDir) {
-		this.workingDir = (workingDir != null) ? new String(workingDir): null;
+		this.workingDir = workingDir;
 		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
 	}
 

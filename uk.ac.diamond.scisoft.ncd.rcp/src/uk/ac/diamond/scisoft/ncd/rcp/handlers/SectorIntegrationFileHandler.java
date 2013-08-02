@@ -75,14 +75,14 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 		NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
-		if (selection instanceof IStructuredSelection) {
-			if (((IStructuredSelection) selection).toList().size() == 1
-					&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
+		if (selection instanceof IStructuredSelection
+			&& ((IStructuredSelection) selection).toList().size() == 1
+			&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
 
 				final Object sel = ((IStructuredSelection) selection).getFirstElement();
 				String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
 				if (detectorSaxs == null) {
-					return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
+					return errorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
 				}
 				String dataFileName;
 				if (sel instanceof IFile) {
@@ -103,7 +103,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					}
 					nodeLink = dataTree.findNodeLink("/entry1/" + detectorSaxs + "/data");
 					if (nodeLink == null) {
-						return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), null);
+						return errorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), null);
 					}
 
 					// Open first frame if dataset has miltiple images
@@ -148,15 +148,13 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 						crystalProperties.setWavelengthFromEnergykeV(energy);
 					}
 				} catch (Exception e) {
-					return ErrorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), e);
+					return errorDialog(NLS.bind(NcdMessages.NO_IMAGE_DATA, dataFileName), e);
 				}
-			}
-
 		}
 		return null;
 	}
 	
-	private IStatus ErrorDialog(String msg, Exception e) {
+	private IStatus errorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);

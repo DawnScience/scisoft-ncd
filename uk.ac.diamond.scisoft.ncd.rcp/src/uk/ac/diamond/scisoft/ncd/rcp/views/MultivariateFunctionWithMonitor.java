@@ -56,11 +56,11 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 	
 	private String jobName = "Beam Position Refinement";
 	
-	int cmaesLambda = 5;
-	double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
-	int cmaesMaxIterations = 1000;
-	int cmaesCheckFeasableCount = 10;
-	ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2);
+	private int cmaesLambda = 5;
+	private double[] cmaesInputSigma = new double[] { 3.0, 3.0 };
+	private int cmaesMaxIterations = 1000;
+	private int cmaesCheckFeasableCount = 10;
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-2);
 	
 	private static final Logger logger = LoggerFactory.getLogger(MultivariateFunctionWithMonitor.class);
 	
@@ -70,8 +70,9 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		this.initPeaks = new ArrayList<IPeak>(initPeaks);
 		maxFWHM = -Double.MAX_VALUE;
 		for (IPeak peak : initPeaks) {
-			if (peak.getFWHM() > maxFWHM)
+			if (peak.getFWHM() > maxFWHM) {
 				maxFWHM = peak.getFWHM();
+			}
 		}
 	}
 
@@ -155,10 +156,12 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		//if (checkPeakOverlap(peaks))
 		//	return Double.NaN;
 		
-		if (beamxySourceProvider != null)
+		if (beamxySourceProvider != null) {
 			beamxySourceProvider.putBeamPosition(beamxy);
-		if (peaksSourceProvider != null)
+		}
+		if (peaksSourceProvider != null) {
 			peaksSourceProvider.putPeaks(peaks);
+		}
 		
 		logger.info("Error value for beam postion ({}, {}) is {}", new Object[] { beamxy[0], beamxy[1], error });
 		return error;

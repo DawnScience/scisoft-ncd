@@ -55,34 +55,35 @@ public class BackgroundSubtractionFileHandler extends AbstractHandler {
 		final ISelection selection = HandlerUtil.getCurrentSelection(event);
 		if (selection instanceof IStructuredSelection) {
 			String detectorSaxs = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-			if (detectorSaxs == null)
-				return ErrorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
-
+			if (detectorSaxs == null) {
+				return errorDialog(NcdMessages.NO_SAXS_DETECTOR, null);
+			}
 			NcdProcessingSourceProvider ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service
 					.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
 
 			String fileName;
-			if (((IStructuredSelection) selection).getFirstElement() instanceof IFile)
+			if (((IStructuredSelection) selection).getFirstElement() instanceof IFile) {
 				fileName = ((IFile) ((IStructuredSelection) selection).getFirstElement()).getLocation().toString();
-			else
+			} else {
 				fileName = ((File) ((IStructuredSelection) selection).getFirstElement()).getAbsolutePath();
+			}
 
 			try {
 				HDF5File bgFile = new HDF5Loader(fileName).loadTree();
 				HDF5NodeLink node = bgFile.findNodeLink("/entry1/" + detectorSaxs + "/data");
 				if (node == null) {
-					return ErrorDialog(NLS.bind(NcdMessages.NO_BG_DATA, fileName), null);
+					return errorDialog(NLS.bind(NcdMessages.NO_BG_DATA, fileName), null);
 				}
 
 				ncdBgFileSourceProvider.setBgFile(fileName);
 			} catch (Exception e) {
-				return ErrorDialog(NLS.bind(NcdMessages.NO_BG_DATA, fileName), e);
+				return errorDialog(NLS.bind(NcdMessages.NO_BG_DATA, fileName), e);
 			}
 		}
 		return null;
 	}
 
-	private IStatus ErrorDialog(String msg, Exception e) {
+	private IStatus errorDialog(String msg, Exception e) {
 		logger.error(msg, e);
 		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);

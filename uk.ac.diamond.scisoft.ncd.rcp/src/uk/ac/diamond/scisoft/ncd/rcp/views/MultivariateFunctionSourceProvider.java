@@ -20,6 +20,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.eclipse.ui.AbstractSourceProvider;
@@ -29,11 +30,11 @@ import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 
 public class MultivariateFunctionSourceProvider extends AbstractSourceProvider {
 
-	public final static String SECTORREFINEMENT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.beamxy";
-	public final static String PEAKREFINEMENT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.peaks";
+	public static final String SECTORREFINEMENT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.beamxy";
+	public static final String PEAKREFINEMENT_STATE = "uk.ac.diamond.scisoft.ncd.rcp.peaks";
 	
 	private double[] beamxy; 
-	private ArrayList<IPeak>  peaks;
+	private List<IPeak>  peaks;
 
 	public MultivariateFunctionSourceProvider() {
 		beamxy = new double[2];
@@ -67,11 +68,11 @@ public class MultivariateFunctionSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, SECTORREFINEMENT_STATE, beamxy);
 	}
 	
-	public ArrayList<IPeak> getPeaks() {
+	public List<IPeak> getPeaks() {
 		return peaks;
 	}
 
-	public void putPeaks(ArrayList<IPeak> peaks) {
+	public void putPeaks(List<IPeak> peaks) {
 		this.peaks = new ArrayList<IPeak>(peaks);
 		Collections.copy(this.peaks, peaks);
 		fireSourceChanged(ISources.WORKBENCH, PEAKREFINEMENT_STATE, peaks);

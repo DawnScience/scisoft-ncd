@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
@@ -58,7 +59,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 	private static final Logger logger = LoggerFactory.getLogger(DetectorInformationHandler.class);
 	
 	// Attribute value indicating detector data type 
-	private static final HashMap<String, Integer> INTERPRETATION = new HashMap<String, Integer>();
+	private static final Map<String, Integer> INTERPRETATION = new HashMap<String, Integer>();
 	static {
 		INTERPRETATION.put("spectrum", 1);
 		INTERPRETATION.put("image", 2);
@@ -72,7 +73,8 @@ public class DetectorInformationHandler extends AbstractHandler {
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection();
 		IWorkbenchPart part = page.getActivePart();
 		
-		int idxFiles = 0;	// Counter for a number of NeXus files in the selection
+		// Counter for a number of NeXus files in the selection
+		int idxFiles = 0;	
 		
 		if (sel != null) {
 			Object[] selObjects = sel.toArray();
@@ -108,9 +110,9 @@ public class DetectorInformationHandler extends AbstractHandler {
 									String nxClass = tmpTree.getAttribute(NexusUtils.NXCLASS).getFirstElement();
 									if (nxClass.equals(Nexus.DETECT) || nxClass.equals(Nexus.MONITOR)) {
 										if (detNames.containsKey(tmpName)) {
-											detNames.put(tmpName, new Integer(detNames.get(tmpName)) + 1);
+											detNames.put(tmpName, detNames.get(tmpName) + 1);
 										} else {
-											detNames.put(tmpName, new Integer(1));
+											detNames.put(tmpName, 1);
 											detInfo.put(tmpName, (HDF5Group) tmpTree);
 										}
 									}
@@ -140,7 +142,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private void updateDetectorInformation(HashMap<String, HDF5Group> detectors, IWorkbenchWindow window) {
+	private void updateDetectorInformation(Map<String, HDF5Group> detectors, IWorkbenchWindow window) {
 		
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
