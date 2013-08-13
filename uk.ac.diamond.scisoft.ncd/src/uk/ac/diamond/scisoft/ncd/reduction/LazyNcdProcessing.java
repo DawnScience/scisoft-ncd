@@ -432,15 +432,15 @@ public class LazyNcdProcessing {
 				lazySectorIntegration.setCalibrationData(slope, intercept);
 				lazySectorIntegration.setCameraLength(cameraLength);
 				lazySectorIntegration.setEnergy(energy);
-				lazySectorIntegration.writeQaxisData(sec_group_id);
+				lazySectorIntegration.writeQaxisData(secRank, sec_group_id);
 			}
 			
 			lazySectorIntegration.writeNcdMetadata(sec_group_id);
 			areaData = ROIProfile.area(Arrays.copyOfRange(frames_int, rank - dim, rank), mask,
 					intSector, flags.isEnableRadial(), flags.isEnableAzimuthal(), flags.isEnableFastintegration());
-		} else
+		} else {
 			areaData = null;
-		
+		}
 		final int invRank = flags.isEnableSector() ? secRank - 1: rank - dim;
 		final LazyInvariant lazyInvariant = new LazyInvariant();
 		if(flags.isEnableInvariant()) {
@@ -482,7 +482,7 @@ public class LazyNcdProcessing {
 			
 			if (qaxis != null) {
 				lazyNormalisation.setQaxis(qaxis, qaxisUnit);
-				lazyNormalisation.writeQaxisData(norm_group_id);
+				lazyNormalisation.writeQaxisData(flags.isEnableSector() ? secRank : rank, norm_group_id);
 			}
 			lazyNormalisation.writeNcdMetadata(norm_group_id);
 		}
@@ -524,7 +524,7 @@ public class LazyNcdProcessing {
 			
 			if (qaxis != null) {
 				lazyBackgroundSubtraction.setQaxis(qaxis, qaxisUnit);
-				lazyBackgroundSubtraction.writeQaxisData(bg_group_id);
+				lazyBackgroundSubtraction.writeQaxisData(bgRank, bg_group_id);
 			}
 			lazyBackgroundSubtraction.writeNcdMetadata(bg_group_id);
 			
@@ -722,7 +722,7 @@ public class LazyNcdProcessing {
 						lazyAverage.writeNcdMetadata(bgIds.datagroup_id);
 						if (qaxis != null) {
 							lazyAverage.setQaxis(qaxis, qaxisUnit);
-							lazyAverage.writeQaxisData(bgIds.datagroup_id);
+							lazyAverage.writeQaxisData(bgFrames.length, bgIds.datagroup_id);
 						}
 					}
 
@@ -928,7 +928,7 @@ public class LazyNcdProcessing {
 			
 			if (qaxis != null) {
 				lazyAverage.setQaxis(qaxis, qaxisUnit);
-				lazyAverage.writeQaxisData(input_ids.datagroup_id);
+				lazyAverage.writeQaxisData(frames_int.length, input_ids.datagroup_id);
 			}
 			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
 			monitor.done();

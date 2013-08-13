@@ -59,12 +59,12 @@ public abstract class LazyDataReduction {
 		this.qaxisUnit = unit;
 	}
 
-	public void writeQaxisData(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	public void writeQaxisData(int dim, int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape, new int[] { 1 },
+		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape, new int[] { dim },
 				1, units);
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
