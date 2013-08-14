@@ -112,6 +112,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
+		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
 
 		Group qParameters = new Group(dataParameters, SWT.NONE);
 		qParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -122,10 +123,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
+		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMinUnits = new Combo(qParameters, SWT.NONE);
 		qMinUnits.setItems(qOptionUnits);
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
+		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMaxUnits = new Combo(qParameters, SWT.NONE);
 		qMaxUnits.setItems(qOptionUnits);
 
@@ -135,14 +138,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pointsParameters.setText("Points");
 
 		new Label(pointsParameters, SWT.NONE).setText("First point");
+		startPoint = new Text(pointsParameters, SWT.NONE);
 		new Label(pointsParameters, SWT.NONE).setText("Last point");
+		endPoint = new Text(pointsParameters, SWT.NONE);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
-		numberOfThreads = new Text(compInput, SWT.NONE);
+		numberOfThreads = new Text(dataParameters, SWT.NONE);
+		numberOfThreads.setToolTipText("The maximum number of threads to be used for DAMMIF");
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
 		builderOptions = new Combo(dataParameters, SWT.NONE);
 		builderOptions.setItems(builderOptionsNames);
+		builderOptions.setToolTipText("Choice of analysis to run - GNOM alone or followed by DAMMIF");
 
 		Group gnomParameters = new Group(dataParameters, SWT.NONE);
 		gnomParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -153,19 +160,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(gnomParameters, SWT.NONE).setText("Minimum distance search");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
+		minDistanceSearch.setToolTipText("Initial value for Rmax to perform search");
 		minDistanceUnits = new Combo(gnomParameters, SWT.NONE);
 		minDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
+		minDistanceSearch.setToolTipText("Final value for Rmax to perform search");
 		maxDistanceUnits = new Combo(gnomParameters, SWT.NONE);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
+		numberOfSearch.setToolTipText("Number of intervals to use for Rmax search");
 
 		new Label(gnomParameters, SWT.NONE).setText("Tolerance");
 		tolerance = new Text(gnomParameters, SWT.NONE);
+		tolerance.setToolTipText("Stopping criterion for Rmax search");
 
 		Group dammifParameters = new Group(dataParameters, SWT.NONE);
 		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -176,6 +187,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(dammifParameters, SWT.NONE).setText("Symmetry");
 		symmetry = new Text(dammifParameters, SWT.NONE);
+		symmetry.setToolTipText("Symmetry of particle in DAMMIF. Must be Pn where n=1-19 or Pn2 where n=1-12.");
 		dammifMode = new Combo(dammifParameters, SWT.NONE);
 		dammifMode.setItems(dammifModeOptions);
 
