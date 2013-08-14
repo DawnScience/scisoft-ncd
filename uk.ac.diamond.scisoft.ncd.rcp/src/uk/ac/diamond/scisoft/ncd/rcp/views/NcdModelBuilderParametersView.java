@@ -329,6 +329,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
 
+		modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
+
+		double minDistance = Double.valueOf(minDistanceSearch.getText());
+		if (minDistanceUnits.getSelectionIndex() == 1) {
+			minDistance *= 10;
+		}
+		modelBuildingParameters.setStartDistanceAngstrom(minDistance);
+
+		double maxDistance = Double.valueOf(maxDistanceSearch.getText());
+		if (maxDistanceUnits.getSelectionIndex() == 1) {
+			maxDistance *= 10;
+		}
+		modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
+
+		modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
+
+		modelBuildingParameters.setTolerance(Double.valueOf(tolerance.getText()));
+
+		modelBuildingParameters.setSymmetry(symmetry.getText());
+
+		modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
+
 		return modelBuildingParameters;
 		//TODO save the info somewhere? saveCell();
 	}
