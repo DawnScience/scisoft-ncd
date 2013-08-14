@@ -29,8 +29,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
@@ -75,8 +77,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected Text numberOfSearch;
 	protected Text tolerance;
 
-	protected Text symmetry;
+	protected Combo symmetry;
 	private Combo dammifMode;
+
+	private Button btnResetParams;
 
 	private Button btnRunNcdModelBuilderJob;
 
@@ -113,6 +117,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
+		numberOfFrames.addListener(SWT.Verify, verifyInt);
 
 		Group qParameters = new Group(dataParameters, SWT.NONE);
 		GridData qLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
@@ -125,11 +130,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
+		qMin.addListener(SWT.Verify, verifyDouble);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMinUnits = new Combo(qParameters, SWT.NONE);
 		qMinUnits.setItems(qOptionUnits);
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
+		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMaxUnits = new Combo(qParameters, SWT.NONE);
 		qMaxUnits.setItems(qOptionUnits);
@@ -143,11 +150,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(pointsParameters, SWT.NONE).setText("First point");
 		startPoint = new Text(pointsParameters, SWT.NONE);
+		startPoint.addListener(SWT.Verify, verifyInt);
 		new Label(pointsParameters, SWT.NONE).setText("Last point");
 		endPoint = new Text(pointsParameters, SWT.NONE);
+		endPoint.addListener(SWT.Verify, verifyInt);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
+		numberOfThreads.addListener(SWT.Verify, verifyInt);
 		numberOfThreads.setToolTipText("The maximum number of threads to be used for DAMMIF");
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
@@ -167,17 +177,20 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(gnomParameters, SWT.NONE).setText("Minimum distance search");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		minDistanceSearch.setToolTipText("Initial value for Rmax to perform search");
+		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceUnits = new Combo(gnomParameters, SWT.NONE);
 		minDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
-		minDistanceSearch.setToolTipText("Final value for Rmax to perform search");
+		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
+		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
 		maxDistanceUnits = new Combo(gnomParameters, SWT.NONE);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
+		numberOfSearch.addListener(SWT.Verify, verifyInt);
 		GridData searchLayout = new GridData();
 		searchLayout.horizontalSpan = 2;
 		numberOfSearch.setLayoutData(searchLayout);
@@ -185,6 +198,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(gnomParameters, SWT.NONE).setText("Tolerance");
 		tolerance = new Text(gnomParameters, SWT.NONE);
+		tolerance.addListener(SWT.Verify, verifyDouble);
 		tolerance.setToolTipText("Stopping criterion for Rmax search");
 
 		Group dammifParameters = new Group(dataParameters, SWT.NONE);
@@ -193,23 +207,30 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dammifParameters.setText("DAMMIF");
 
 		String[] dammifModeOptions = new String[] {"Fast", "Slow"};
+		String[] symmetryOptions = new String[30];
+		for (int i=1; i< 20; ++i) {
+			symmetryOptions[i-1] = "P" + i;
+		}
+		for (int i=2; i< 13; ++i) {
+			symmetryOptions[i + 19 - 2] = "P" + i + "2";
+		}
 
 		new Label(dammifParameters, SWT.NONE).setText("Symmetry");
-		symmetry = new Text(dammifParameters, SWT.NONE);
-		symmetry.setToolTipText("Symmetry of particle in DAMMIF. Must be Pn where n=1-19 or Pn2 where n=1-12.");
+		symmetry = new Combo(dammifParameters, SWT.NONE);
+		symmetry.setItems(symmetryOptions);
+		symmetry.setToolTipText("Symmetry of particle in DAMMIF.");
 		dammifMode = new Combo(dammifParameters, SWT.NONE);
 		dammifMode.setItems(dammifModeOptions);
 
-		//TODO add option to restore default parameters
-//		btnResetParam = new Button(controls, SWT.NONE);
-//		btnResetParam.setText("Clear Sweep Parameters");
-//		btnResetParam.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-//		btnResetParam.addSelectionListener(new SelectionAdapter() {
-//			@Override
-//			public void widgetSelected(SelectionEvent e) {
-//				resetGUI();
-//			}
-//		});
+		btnResetParams = new Button(dataParameters, SWT.NONE);
+		btnResetParams.setText("Reset all parameters to defaults");
+		btnResetParams.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		btnResetParams.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				resetGUI();
+			}
+		});
 
 		btnRunNcdModelBuilderJob = new Button(dataParameters, SWT.NONE);
 		btnRunNcdModelBuilderJob.setText("Run Data Processing On Selected Sweep");
@@ -222,8 +243,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
-		
 		window.getSelectionService().addSelectionListener(listener);
+		
+		resetGUI();
 	}
 	
 	private ISelectionListener listener = new ISelectionListener() {
@@ -312,24 +334,56 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 			@Override
 			public void run() {
-				numberOfFrames.setText("");
-				qMin.setText("");
+				numberOfFrames.setText("1");
+				qMin.setText("0.1");
 				qMinUnits.select(0);
-				qMax.setText("");
+				qMax.setText("0.3");
 				qMaxUnits.select(0);
-				startPoint.setText("");
-				endPoint.setText("");
-				numberOfThreads.setText("");
+				startPoint.setText("1");
+				endPoint.setText("1000");
+				numberOfThreads.setText("10");
 				builderOptions.select(0);
-				minDistanceSearch.setText("");
+				minDistanceSearch.setText("20");
 				minDistanceUnits.select(0);
-				maxDistanceSearch.setText("");
+				maxDistanceSearch.setText("100");
 				maxDistanceUnits.select(0);
-				numberOfSearch.setText("");
-				tolerance.setText("");
-				symmetry.setText("P1");
+				numberOfSearch.setText("10");
+				tolerance.setText("0.1");
+				symmetry.select(0);
 				dammifMode.select(0);
 			}
 		});
 	}
+	
+	private Listener verifyDouble = new Listener() {
+
+		@Override
+		public void handleEvent(Event e) {
+			String string = e.text;
+			char[] chars = new char[string.length()];
+			string.getChars(0, chars.length, chars, 0);
+			for (int i = 0; i < chars.length; i++) {
+				if (!('0' <= chars[i] && chars[i] <= '9' || chars[i] == '.')) {
+					e.doit = false;
+					return;
+				}
+			}
+		}
+	};
+
+	private Listener verifyInt = new Listener() {
+
+		@Override
+		public void handleEvent(Event e) {
+			String string = e.text;
+			char[] chars = new char[string.length()];
+			string.getChars(0, chars.length, chars, 0);
+			for (int i = 0; i < chars.length; i++) {
+				if (!('0' <= chars[i] && chars[i] <= '9')) {
+					e.doit = false;
+					return;
+				}
+			}
+		}
+	};
 }
