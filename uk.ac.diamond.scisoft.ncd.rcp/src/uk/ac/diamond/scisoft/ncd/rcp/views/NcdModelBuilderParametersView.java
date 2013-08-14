@@ -236,7 +236,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 
 		btnRunNcdModelBuilderJob = new Button(dataParameters, SWT.NONE);
-		btnRunNcdModelBuilderJob.setText("Run Data Processing On Selected Sweep");
+		btnRunNcdModelBuilderJob.setText("Run NCD model building");
 		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		btnRunNcdModelBuilderJob.addSelectionListener(new SelectionAdapter() {
 			@Override
@@ -253,6 +253,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	
 	protected void runNcdModelBuilder() {
 		ModelBuildingParameters parameters = captureGUIInformation();
+		System.out.println(parameters);
 		// do something with the parameters
 	}
 
