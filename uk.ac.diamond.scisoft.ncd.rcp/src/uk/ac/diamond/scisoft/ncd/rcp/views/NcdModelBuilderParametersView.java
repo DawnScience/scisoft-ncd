@@ -107,7 +107,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataParameters = new Group(compInput, SWT.NONE);
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		dataParameters.setLayout(new GridLayout(4, true));
+		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
@@ -115,8 +115,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
 
 		Group qParameters = new Group(dataParameters, SWT.NONE);
-		qParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		qParameters.setLayout(new GridLayout(3, true));
+		GridData qLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
+		qLayout.horizontalSpan = 2;
+		qParameters.setLayoutData(qLayout);
+		qParameters.setLayout(new GridLayout(3, false));
 		qParameters.setText("q");
 
 		String[] qOptionUnits = new String[] {"Angstrom-1", "nm-1"};
@@ -133,7 +135,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMaxUnits.setItems(qOptionUnits);
 
 		Group pointsParameters = new Group(dataParameters, SWT.NONE);
-		pointsParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
+		pointsLayout.horizontalSpan = 2;
+		pointsParameters.setLayoutData(pointsLayout);
 		pointsParameters.setLayout(new GridLayout(2, true));
 		pointsParameters.setText("Points");
 
@@ -152,8 +156,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		builderOptions.setToolTipText("Choice of analysis to run - GNOM alone or followed by DAMMIF");
 
 		Group gnomParameters = new Group(dataParameters, SWT.NONE);
-		gnomParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		gnomParameters.setLayout(new GridLayout(4, true));
+		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
+		gnomLayout.horizontalSpan = 2;
+		gnomParameters.setLayoutData(gnomLayout);
+		gnomParameters.setLayout(new GridLayout(3, false));
 		gnomParameters.setText("GNOM");
 
 		String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
@@ -172,6 +178,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
+		GridData searchLayout = new GridData();
+		searchLayout.horizontalSpan = 2;
+		numberOfSearch.setLayoutData(searchLayout);
 		numberOfSearch.setToolTipText("Number of intervals to use for Rmax search");
 
 		new Label(gnomParameters, SWT.NONE).setText("Tolerance");
@@ -179,7 +188,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		tolerance.setToolTipText("Stopping criterion for Rmax search");
 
 		Group dammifParameters = new Group(dataParameters, SWT.NONE);
-		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 		dammifParameters.setLayout(new GridLayout(2, true));
 		dammifParameters.setText("DAMMIF");
 
