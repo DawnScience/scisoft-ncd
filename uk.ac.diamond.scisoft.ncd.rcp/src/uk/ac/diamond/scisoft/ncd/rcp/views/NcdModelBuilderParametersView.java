@@ -126,19 +126,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qParameters.setLayout(new GridLayout(3, false));
 		qParameters.setText("q");
 
-		String[] qOptionUnits = new String[] {"Angstrom-1", "nm-1"};
+		String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
 
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
-		qMinUnits = new Combo(qParameters, SWT.NONE);
+		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
-		qMaxUnits = new Combo(qParameters, SWT.NONE);
+		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
 
 		Group pointsParameters = new Group(dataParameters, SWT.NONE);
@@ -161,7 +161,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfThreads.setToolTipText("The maximum number of threads to be used for DAMMIF");
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
-		builderOptions = new Combo(dataParameters, SWT.NONE);
+		new Label(dataParameters, SWT.NONE).setText("Rmax or Rmax + model building");
+		builderOptions = new Combo(dataParameters, SWT.READ_ONLY);
 		builderOptions.setItems(builderOptionsNames);
 		builderOptions.setToolTipText("Choice of analysis to run - GNOM alone or followed by DAMMIF");
 
@@ -178,14 +179,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		minDistanceSearch.setToolTipText("Initial value for Rmax to perform search");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
-		minDistanceUnits = new Combo(gnomParameters, SWT.NONE);
+		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		minDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
-		maxDistanceUnits = new Combo(gnomParameters, SWT.NONE);
+		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
@@ -216,11 +217,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 
 		new Label(dammifParameters, SWT.NONE).setText("Symmetry");
-		symmetry = new Combo(dammifParameters, SWT.NONE);
+		symmetry = new Combo(dammifParameters, SWT.READ_ONLY);
 		symmetry.setItems(symmetryOptions);
 		symmetry.setToolTipText("Symmetry of particle in DAMMIF.");
-		dammifMode = new Combo(dammifParameters, SWT.NONE);
+		new Label(dammifParameters, SWT.NONE).setText("Speed");
+		dammifMode = new Combo(dammifParameters, SWT.READ_ONLY);
 		dammifMode.setItems(dammifModeOptions);
+		dammifMode.setToolTipText("Run DAMMIF analysis in either fast or slow modes");
 
 		btnResetParams = new Button(dataParameters, SWT.NONE);
 		btnResetParams.setText("Reset all parameters to defaults");
@@ -238,7 +241,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		btnRunNcdModelBuilderJob.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				//TODO implement this late runNcdModelBuilder();
+				runNcdModelBuilder();
 			}
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
@@ -248,6 +251,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		resetGUI();
 	}
 	
+	protected void runNcdModelBuilder() {
+		ModelBuildingParameters parameters = captureGUIInformation();
+		// do something with the parameters
+	}
+
 	private ISelectionListener listener = new ISelectionListener() {
 		@Override
 		public void selectionChanged(IWorkbenchPart sourcepart, ISelection selection) {
@@ -296,7 +304,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	};
 
 
-	protected void captureGUIInformation() {
+	protected ModelBuildingParameters captureGUIInformation() {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
@@ -320,7 +328,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
 
-		
+		return modelBuildingParameters;
 		//TODO save the info somewhere? saveCell();
 	}
 	
