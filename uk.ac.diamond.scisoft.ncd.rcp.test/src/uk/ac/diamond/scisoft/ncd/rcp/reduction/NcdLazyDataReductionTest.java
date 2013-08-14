@@ -543,7 +543,7 @@ public class NcdLazyDataReductionTest {
 		DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers(input_ids);
 		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
 		
-		AbstractDataset[] areaData = ROIProfile.area((int[])ConvertUtils.convert(imageShape, int[].class), null, intSector);
+		AbstractDataset[] areaData = ROIProfile.area((int[])ConvertUtils.convert(imageShape, int[].class), AbstractDataset.FLOAT32, null, intSector);
 		lazySectorIntegration.setAreaData(areaData);
 		lazySectorIntegration.setCalculateRadial(true);
 		lazySectorIntegration.setCalculateAzimuthal(true);

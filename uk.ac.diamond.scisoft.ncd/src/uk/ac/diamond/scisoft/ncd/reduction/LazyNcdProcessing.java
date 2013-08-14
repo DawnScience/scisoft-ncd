@@ -436,7 +436,7 @@ public class LazyNcdProcessing {
 			}
 			
 			lazySectorIntegration.writeNcdMetadata(sec_group_id);
-			areaData = ROIProfile.area(Arrays.copyOfRange(frames_int, rank - dim, rank), mask,
+			areaData = ROIProfile.area(Arrays.copyOfRange(frames_int, rank - dim, rank), AbstractDataset.FLOAT32, mask,
 					intSector, flags.isEnableRadial(), flags.isEnableAzimuthal(), flags.isEnableFastintegration());
 		} else {
 			areaData = null;
