@@ -114,6 +114,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
 
+		new Label(dataParameters, SWT.NONE).setText("Path to q");
+		pathToQ = new Text(dataParameters, SWT.NONE);
+		new Label(dataParameters, SWT.NONE).setText("Path to data");
+		pathToData = new Text(dataParameters, SWT.NONE);
+
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
@@ -252,9 +257,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 	
 	protected void runNcdModelBuilder() {
-		ModelBuildingParameters parameters = captureGUIInformation();
-		System.out.println(parameters);
-		// do something with the parameters
+		//TODO these two lines are for testing purposes only
+		modelBuildingParameters= captureGUIInformation();
+		System.out.println(modelBuildingParameters);
+		
+		runNcdModelBuilderPipeline = new RunNcdModelBuilderPipeline();
+		runNcdModelBuilderPipeline.runEdnaJob();
+	}
+
+	public ModelBuildingParameters getParameters() {
+		return modelBuildingParameters;
 	}
 
 	private ISelectionListener listener = new ISelectionListener() {
@@ -308,6 +320,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected ModelBuildingParameters captureGUIInformation() {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
+
+		//will populate parameters assuming that the Nexus type is being used
+		modelBuildingParameters.setPathToQ(pathToQ.getText());
+		modelBuildingParameters.setPathToData(pathToData.getText());
 
 		String resultDir = WSParameters.getViewInstance().getResultDirectory();
 		modelBuildingParameters.setOutputDir(resultDir);
