@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.actions;
 
+import org.eclipse.ui.PlatformUI;
+
+import uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView;
 import uk.ac.diamond.scisoft.ws.rcp.RunPipeline;
 
 public class RunNcdModelBuilderPipeline extends RunPipeline {
@@ -33,14 +36,15 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 	}
 	@Override
 	public String getParameters() {
-		// TODO Auto-generated method stub
-		return null;
+		final NcdModelBuilderParametersView ncdParametersView = (NcdModelBuilderParametersView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+				.getActivePage().findView(NcdModelBuilderParametersView.ID);
+		String inputParameters = ncdParametersView.getParameters().toString();
+		return inputParameters;
 	}
 
 	@Override
 	public String getWorkingDirectory() {
-		// TODO Auto-generated method stub
-		return null;
+		return "something";
 	}
 
 }
