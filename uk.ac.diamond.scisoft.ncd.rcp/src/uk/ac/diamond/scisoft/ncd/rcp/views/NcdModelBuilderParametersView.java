@@ -49,7 +49,7 @@ import uk.ac.diamond.scisoft.ws.rcp.WSParameters;
 public class NcdModelBuilderParametersView extends ViewPart {
 	private static Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
-	public static final String ID = "uk.ac.diamond.scisoft.ncd.views.NcdModelBuilderParametersView";
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView";
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 

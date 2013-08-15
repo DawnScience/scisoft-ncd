@@ -631,7 +631,7 @@
      <view
            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
            class="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
-           id="uk.ac.diamond.scisoft.ncd.rcp.views.NCDModelBuilderParametersView"
+           id="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
            name="NCD Model Builder Parameters"
            restorable="true">
      </view>
