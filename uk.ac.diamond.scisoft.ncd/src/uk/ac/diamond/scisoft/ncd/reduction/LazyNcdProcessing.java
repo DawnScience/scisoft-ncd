@@ -1006,20 +1006,6 @@ public class LazyNcdProcessing {
 	    	H5.H5Gclose(inv_group_id);
 		}
 		
-	    if (input_errors_ids != null && flags.isEnableAverage()) {
-		    if (input_errors_ids.dataset_id != -1) {
-		    	H5.H5Dclose(input_errors_ids.dataset_id);
-		    }
-	    }
-	    if (input_ids != null && flags.isEnableAverage()) {
-		    if (input_ids.dataset_id != -1) {
-		    	H5.H5Dclose(input_ids.dataset_id);
-		    }
-		    if (input_ids.datagroup_id != -1) {
-		    	H5.H5Gclose(input_ids.datagroup_id);
-		    }
-	    }
-	    
 		if (input_calibration_id != -1) {
 			H5.H5Dclose(input_calibration_id);
 		}
@@ -1080,13 +1066,17 @@ public class LazyNcdProcessing {
 		AbstractDataset qaxis = null;
 		AbstractDataset qaxisErr = null;
 		
-		if (crb != null) {
-			if (crb.containsKey(detector)) {
-				if (slope == null) slope = crb.getGradient(detector);
-				if (intercept == null) intercept = crb.getIntercept(detector);
-				if (qaxisUnit == null) setUnit(crb.getUnit(detector));
-				cameraLength = crb.getMeanCameraLength(detector);
+		if (crb != null && crb.containsKey(detector)) {
+			if (slope == null) {
+				slope = crb.getGradient(detector);
 			}
+			if (intercept == null) {
+				intercept = crb.getIntercept(detector);
+			}
+			if (qaxisUnit == null) {
+				setUnit(crb.getUnit(detector));
+			}
+			cameraLength = crb.getMeanCameraLength(detector);
 		}
 		
 		if (slope != null && intercept != null) {

@@ -21,6 +21,7 @@ import java.util.Arrays;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -36,8 +37,10 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyAverage extends LazyDataReduction {
 
-	public static String name = "Average";
+	public static final String name = "Average";
+	
 	private int[] averageIndices;
+	private int ave_group_id, ave_data_id, ave_errors_id;
 	
 	private IProgressMonitor monitor = new NullProgressMonitor();
 	
@@ -65,10 +68,10 @@ public class LazyAverage extends LazyDataReduction {
 		
 		int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
-	    int ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
+	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, "NXdetector");
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-		int ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
-		int ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
+		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
+		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
 		H5.H5Tclose(type);
 		
 		// Loop over dimensions that aren't averaged
@@ -104,6 +107,7 @@ public class LazyAverage extends LazyDataReduction {
 		while (iter.hasNext()) {
 			
 			if (monitor.isCanceled()) {
+				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -148,6 +152,7 @@ public class LazyAverage extends LazyDataReduction {
 			while (data_iter.hasNext()) {
 				
 				if (monitor.isCanceled()) {
+					closeHDF5Identifiers();
 					return;
 				}
 				
@@ -157,6 +162,7 @@ public class LazyAverage extends LazyDataReduction {
 				int data_slice_rank = data_slice.getRank();
 				
 				if (monitor.isCanceled()) {
+					closeHDF5Identifiers();
 					return;
 				}
 				
@@ -175,6 +181,7 @@ public class LazyAverage extends LazyDataReduction {
 			}
 			
 			if (monitor.isCanceled()) {
+				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -182,6 +189,7 @@ public class LazyAverage extends LazyDataReduction {
 			ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
 			
 			if (monitor.isCanceled()) {
+				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -211,10 +219,25 @@ public class LazyAverage extends LazyDataReduction {
 			H5.H5Dwrite(ave_errors_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
 					ave_errors_frame.getBuffer());
 			
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(type_id);
+			
 		}
 		
 		input_ids.setIDs(ave_group_id, ave_data_id);
 		input_errors_ids.setIDs(ave_group_id, ave_errors_id);
 	}
 
+	private void closeHDF5Identifiers() throws HDF5LibraryException {
+		if (ave_data_id != -1) {
+	    	H5.H5Dclose(ave_data_id);
+		}
+		if (ave_errors_id != -1) {
+	    	H5.H5Dclose(ave_errors_id);
+		}
+		if (ave_group_id != -1) {
+	    	H5.H5Gclose(ave_group_id);
+		}
+	}
 }
