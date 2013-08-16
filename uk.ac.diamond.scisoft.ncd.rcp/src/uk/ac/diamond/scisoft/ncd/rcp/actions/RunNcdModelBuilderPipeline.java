@@ -39,7 +39,8 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 		final NcdModelBuilderParametersView ncdParametersView = (NcdModelBuilderParametersView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().findView(NcdModelBuilderParametersView.ID);
 		String inputParameters = ncdParametersView.getParameters().toString();
-		return inputParameters;
+		//need to add working directory and html result directory to the front
+		return "/dls/tmp/rbv51579 /dls/tmp/rbv51579 " + inputParameters;
 	}
 
 	@Override
