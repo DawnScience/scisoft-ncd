@@ -150,10 +150,13 @@ public class ModelBuildingParameters {
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
 		String commandLineParameters = "--data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
-				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames + " --onlyGnom " + gnomOnly +
+				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
 		if (!gnomOnly) {
 			commandLineParameters += " --symmetry " + symmetry + " --mode " + (dammifFastMode ? "fast" : "slow");
+		}
+		else {
+			commandLineParameters += " --onlyGnom";
 		}
 		return commandLineParameters;
 	}
