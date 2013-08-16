@@ -488,7 +488,6 @@ public class LazyNcdProcessing {
 		}
 		    
 		
-	    int bgRank;
 	    DataSliceIdentifiers bgIds = null;
 	    DataSliceIdentifiers bgErrorsIds = null;
 		final long[] bgFrames;
@@ -516,7 +515,7 @@ public class LazyNcdProcessing {
 			bgErrorsIds = new DataSliceIdentifiers();
 			bgErrorsIds.setIDs(background_detector_group_id, background_input_errors_id);
 		    
-		    bgRank = H5.H5Sget_simple_extent_ndims(bgIds.dataspace_id);
+		    int bgRank = H5.H5Sget_simple_extent_ndims(bgIds.dataspace_id);
 			bgFrames = new long[bgRank];
 			H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgFrames, null);
 			bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
@@ -709,11 +708,14 @@ public class LazyNcdProcessing {
 		if (flags.isEnableBackground() && bgFrames != null && bgFrames_int != null) {
 			if (!Arrays.equals(bgFrames_int, frames_int)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
-				for (int i = 0; i < (rank - dim); i++)
-					if (bgFrames[i] != frames[i] && bgFrames[i] != 1) {
+				int bgRank = bgFrames.length;
+				for (int i = (bgRank - dim - 1); i >= 0; i--) {
+					int fi = i - bgRank + rank;
+					if ((bgFrames[i] != 1) && (fi < 0 || (bgFrames[i] != frames[fi]))) {
 						bgAverageIndices.add(i + 1);
 						bgFrames[i] = 1;
 					}
+				}
 				if (bgAverageIndices.size() > 0) {
 					LazyAverage lazyAverage = new LazyAverage();
 					lazyAverage.setAverageIndices(ArrayUtils.toPrimitive(bgAverageIndices.toArray(new Integer[] {})));
