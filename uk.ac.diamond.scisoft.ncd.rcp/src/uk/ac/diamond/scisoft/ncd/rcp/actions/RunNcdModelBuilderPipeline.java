@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.actions;
 
 import org.eclipse.jface.dialogs.MessageDialog;
-import org.eclipse.swt.widgets.MessageBox;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
@@ -35,7 +34,7 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 	}
 
 	public RunNcdModelBuilderPipeline() {
-		super("EDNA NCD Model Builder", "NCD Model Builder Pipeline");
+		super("BioSAXS Model Builder", "BioSAXS Model Builder Pipeline");
 	}
 	@Override
 	public String getParameters() {

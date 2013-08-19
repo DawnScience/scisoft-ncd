@@ -632,7 +632,7 @@
            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
            class="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
            id="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
-           name="NCD Model Builder Parameters"
+           name="BioSAXS Model Builder"
            restorable="true">
      </view>
   </extension>
