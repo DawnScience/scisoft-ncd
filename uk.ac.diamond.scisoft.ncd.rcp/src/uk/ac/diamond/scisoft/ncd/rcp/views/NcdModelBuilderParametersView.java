@@ -112,9 +112,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(dataParameters, SWT.NONE).setText("Path to q");
 		pathToQ = new Text(dataParameters, SWT.NONE);
+		pathToQ.setToolTipText("Path to q data (only used in Nexus file)");
 //		pathToQ.addSelectionListener(listener);
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToData = new Text(dataParameters, SWT.NONE);
+		pathToData.setToolTipText("Path to data (only used in Nexus file)");
 //		pathToQ.addSelectionListener(listener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
@@ -226,7 +228,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(dammifParameters, SWT.NONE).setText("Speed");
 		dammifMode = new Combo(dammifParameters, SWT.READ_ONLY);
 		dammifMode.setItems(dammifModeOptions);
-		dammifMode.setToolTipText("Run DAMMIF analysis in either fast or slow modes");
+		dammifMode.setToolTipText("Run DAMMIF analysis in either fast or slow mode");
 
 		btnResetParams = new Button(dataParameters, SWT.NONE);
 		btnResetParams.setText("Reset all parameters to defaults");
@@ -388,6 +390,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 			@Override
 			public void run() {
+				pathToQ.setText("/entry1/detector_result/q");
+				pathToData.setText("/entry1/detector_result/data");
 				numberOfFrames.setText("1");
 				qMin.setText("0.1");
 				qMinUnits.select(0);
@@ -396,7 +400,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				startPoint.setText("1");
 				endPoint.setText("1000");
 				numberOfThreads.setText("10");
-				builderOptions.select(0);
+				builderOptions.select(1);
 				minDistanceSearch.setText("20");
 				minDistanceUnits.select(0);
 				maxDistanceSearch.setText("100");
