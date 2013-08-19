@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.actions;
 
+import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.swt.widgets.MessageBox;
+import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView;
@@ -39,7 +42,12 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 		final NcdModelBuilderParametersView ncdParametersView = (NcdModelBuilderParametersView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage().findView(NcdModelBuilderParametersView.ID);
 		String inputParameters = ncdParametersView.getParameters().toString();
-		//need to add working directory and html result directory to the front
+		if (!ncdParametersView.getParameters().isValid()) {
+			final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
+			MessageDialog.openError(shell, "Bad parameters", ncdParametersView.getParameters().invalidMessage());
+			throw new IllegalArgumentException(ncdParametersView.getParameters().invalidMessage());
+		}
+		//TODO need to add working directory and html result directory to the front
 		return "/dls/tmp/rbv51579 /dls/tmp/rbv51579 " + inputParameters;
 	}
 

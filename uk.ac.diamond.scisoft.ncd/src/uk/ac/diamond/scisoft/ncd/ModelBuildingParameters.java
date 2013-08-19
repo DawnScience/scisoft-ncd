@@ -160,4 +160,33 @@ public class ModelBuildingParameters {
 		}
 		return commandLineParameters;
 	}
+	
+	public boolean isValid() {
+		if (!invalidMessage().isEmpty()) {
+			return false;
+		}
+		return true;
+	}
+	
+	public String invalidMessage() {
+		String returnMessage = "";
+		//TODO in the future, check file for validity of qMin, qMax, pathToQ, pathToData, but for now, basic checks will be fine
+		if (qMinAngstrom >= qMaxAngstrom) {
+			returnMessage += "qMax must be larger than qMin" + System.lineSeparator();
+		}
+
+		if (pathToQ.isEmpty()) {
+			returnMessage += "pathToQ must not be empty" + System.lineSeparator();
+		}
+
+		if (pathToData.isEmpty()) {
+			returnMessage += "pathToData must not be empty" + System.lineSeparator();
+		}
+
+		if (startDistanceAngstrom >= endDistanceAngstrom) {
+			returnMessage += "Minimum distance must be less than maximum distance";
+		}
+
+		return returnMessage;
+	}
 }
