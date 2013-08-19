@@ -90,7 +90,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	@Override
 	public void createPartControl(Composite parent) {
-		//TODO add all of the tooltips for boxes
 		window = getSite().getWorkbenchWindow();
 
 		compInput = new Composite(parent, SWT.FILL);
@@ -159,6 +158,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(pointsParameters, SWT.NONE).setText("Last point");
 		endPoint = new Text(pointsParameters, SWT.NONE);
 		endPoint.addListener(SWT.Verify, verifyInt);
+		
+		//TODO for now, disable the points
+		startPoint.setEnabled(false);
+		endPoint.setEnabled(false);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
