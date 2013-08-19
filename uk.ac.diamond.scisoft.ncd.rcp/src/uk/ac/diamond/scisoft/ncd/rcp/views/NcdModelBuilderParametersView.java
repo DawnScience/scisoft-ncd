@@ -118,10 +118,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToQ = new Text(dataParameters, SWT.NONE);
 		pathToQ.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQ.addModifyListener(pathListener);
+		pathToQ.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToData = new Text(dataParameters, SWT.NONE);
 		pathToData.setToolTipText("Path to data (only used in Nexus file)");
-		pathToQ.addModifyListener(pathListener);
+		pathToData.addModifyListener(pathListener);
+		pathToData.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
