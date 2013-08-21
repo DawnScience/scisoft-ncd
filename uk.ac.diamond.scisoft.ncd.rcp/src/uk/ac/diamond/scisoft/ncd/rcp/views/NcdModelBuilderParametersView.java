@@ -16,6 +16,11 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
+import java.io.File;
+
+import org.eclipse.core.resources.IFile;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.ITreeSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -27,17 +32,24 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
+import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.actions.RunNcdModelBuilderPipeline;
+import uk.ac.diamond.scisoft.ws.rcp.WSParameters;
 
 public class NcdModelBuilderParametersView extends ViewPart {
 	private static Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.views.NcdModelBuilderParametersView";
+
+	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 
 	private IWorkbenchWindow window;
 
@@ -69,6 +81,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Button btnRunNcdModelBuilderJob;
 
 	private Composite compInput;
+
+	private ModelBuildingParameters modelBuildingParameters;
 
 	private RunNcdModelBuilderPipeline runNcdModelBuilderPipeline;
 	
@@ -188,9 +202,85 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
 		
-		//TODO do this later : window.getSelectionService().addSelectionListener(listener);
-}
+		window.getSelectionService().addSelectionListener(listener);
+	}
+	
+	private ISelectionListener listener = new ISelectionListener() {
+		@Override
+		public void selectionChanged(IWorkbenchPart sourcepart, ISelection selection) {
 
+			if (sourcepart != NcdModelBuilderParametersView.this) {
+				if (selection instanceof ITreeSelection) {
+					ITreeSelection treeSelection = (ITreeSelection) selection;
+					if (treeSelection.getFirstElement() instanceof IFile) {
+						IFile file = (IFile) treeSelection.getFirstElement();
+						for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
+							if (file.getName().endsWith(suffix)) {
+								//TODO fix the following so that the data type is correct
+//								createmodelBuildingParameters(file.getName(), file.getLocation().removeLastSegments(1).toString());
+								compInput.getDisplay().asyncExec(new Runnable() {
+									@Override
+									public void run() {
+										btnRunNcdModelBuilderJob.setEnabled(true);
+									}
+								});
+							} else
+								btnRunNcdModelBuilderJob.setEnabled(false);
+						}
+					}
+					if (treeSelection.getFirstElement() instanceof File) {
+						File file = (File) treeSelection.getFirstElement();
+						if (file.isFile()) {
+							String ending = FileUtils.getFileExtension(file);
+							for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
+								if (ending.equals(suffix)) {
+									//TODO not sure if this is needed
+//									createmodelBuildingParameters(file.getName(),FileUtils.getParentDirName(file.getAbsolutePath()));
+									compInput.getDisplay().asyncExec(new Runnable() {
+										@Override
+										public void run() {
+											btnRunNcdModelBuilderJob.setEnabled(true);
+										}
+									});
+								}
+							}
+						}
+					} else
+						btnRunNcdModelBuilderJob.setEnabled(false);
+				}
+			}
+		}
+	};
+
+
+	protected void captureGUIInformation() {
+		if (modelBuildingParameters == null)
+			modelBuildingParameters = new ModelBuildingParameters();
+
+		String resultDir = WSParameters.getViewInstance().getResultDirectory();
+		modelBuildingParameters.setOutputDir(resultDir);
+
+		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
+
+		double qMinValue = Double.valueOf(qMin.getText());
+		if (qMinUnits.getSelectionIndex() == 1) {
+			qMinValue /= 10;
+		}
+		modelBuildingParameters.setqMinAngstrom(qMinValue);
+
+		
+		double qMaxValue = Double.valueOf(qMax.getText());
+		if (qMaxUnits.getSelectionIndex() == 1) {
+			qMaxValue /= 10;
+		}
+		modelBuildingParameters.setqMaxAngstrom(qMaxValue);
+
+		modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
+
+		
+		//TODO save the info somewhere? saveCell();
+	}
+	
 	@Override
 	public void setFocus() {
 		// do nothing here
