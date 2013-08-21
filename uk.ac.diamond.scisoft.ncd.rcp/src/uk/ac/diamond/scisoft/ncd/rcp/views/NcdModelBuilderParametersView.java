@@ -44,7 +44,6 @@ import org.eclipse.ui.part.ViewPart;
 import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
 import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.actions.RunNcdModelBuilderPipeline;
-import uk.ac.diamond.scisoft.ws.rcp.WSParameters;
 
 public class NcdModelBuilderParametersView extends ViewPart {
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView";
@@ -349,14 +348,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
+		//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
 		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
 		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
 		//will populate parameters assuming that the Nexus type is being used
 		modelBuildingParameters.setPathToQ(pathToQ.getText());
 		modelBuildingParameters.setPathToData(pathToData.getText());
-
-		String resultDir = WSParameters.getViewInstance().getResultDirectory();
 
 		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
