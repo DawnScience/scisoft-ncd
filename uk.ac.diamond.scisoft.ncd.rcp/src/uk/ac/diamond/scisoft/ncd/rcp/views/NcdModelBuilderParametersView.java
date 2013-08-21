@@ -53,6 +53,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private IWorkbenchWindow window;
 
+	protected Text workingDirectory;
+	protected Text htmlResultsDirectory;
 	protected Text pathToQ;
 	protected Text pathToData;
 
@@ -113,6 +115,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
+
+		new Label(dataParameters, SWT.NONE).setText("Working directory");
+		workingDirectory = new Text(dataParameters, SWT.NONE);
+		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
+		pathToQ.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		new Label(dataParameters, SWT.NONE).setText("HTML results directory");
+		htmlResultsDirectory = new Text(dataParameters, SWT.NONE);
+		htmlResultsDirectory.setToolTipText("Directory where HTML results files are left. Must be network accessible (not /scratch or /tmp)");
+		htmlResultsDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Path to q");
 		pathToQ = new Text(dataParameters, SWT.NONE);
@@ -338,12 +349,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
+		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
+		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
+
 		//will populate parameters assuming that the Nexus type is being used
 		modelBuildingParameters.setPathToQ(pathToQ.getText());
 		modelBuildingParameters.setPathToData(pathToData.getText());
 
 		String resultDir = WSParameters.getViewInstance().getResultDirectory();
-		modelBuildingParameters.setOutputDir(resultDir);
 
 		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
@@ -398,6 +411,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 			@Override
 			public void run() {
+				String fedId = System.getenv("USER");
+				workingDirectory.setText("/dls/tmp/" + fedId);
+				htmlResultsDirectory.setText("/dls/tmp/");
 				pathToQ.setText("/entry1/detector_result/q");
 				pathToData.setText("/entry1/detector_result/data");
 				numberOfFrames.setText("1");

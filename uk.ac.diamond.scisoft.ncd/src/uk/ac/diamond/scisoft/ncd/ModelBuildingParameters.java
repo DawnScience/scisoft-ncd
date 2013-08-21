@@ -17,6 +17,8 @@
 package uk.ac.diamond.scisoft.ncd;
 
 public class ModelBuildingParameters {
+	private String workingDirectory;
+	private String htmlResultsDirectory;
 	private String dataFilename;
 	private String pathToQ;
 	private String pathToData;
@@ -38,10 +40,12 @@ public class ModelBuildingParameters {
 	private String symmetry;
 	private boolean dammifFastMode;
 	
-	public ModelBuildingParameters(String dataFilename, String pathToQ, String pathToData, int numberOfFrames,
+	public ModelBuildingParameters(String workingDirectory, String htmlResultsDirectory, String dataFilename, String pathToQ, String pathToData, int numberOfFrames,
 			double qMinAngstrom, double qMaxAngstrom, int numberOfThreads,
 			boolean gnomOnly, double startDistanceAngstrom, double endDistanceAngstrom, int numberOfSearch, double tolerance,
 			String symmetry, boolean dammifFastMode) {
+		this.workingDirectory = workingDirectory;
+		this.htmlResultsDirectory = htmlResultsDirectory;
 		this.dataFilename = dataFilename;
 		this.pathToQ = pathToQ;
 		this.pathToData = pathToData;
@@ -64,6 +68,22 @@ public class ModelBuildingParameters {
 	public String getDataFilename() {
 		return dataFilename;
 	}
+	public String getWorkingDirectory() {
+		return workingDirectory;
+	}
+
+	public void setWorkingDirectory(String workingDirectory) {
+		this.workingDirectory = workingDirectory;
+	}
+
+	public String getHtmlResultsDirectory() {
+		return htmlResultsDirectory;
+	}
+
+	public void setHtmlResultsDirectory(String htmlResultsDirectory) {
+		this.htmlResultsDirectory = htmlResultsDirectory;
+	}
+
 	public void setDataFilename(String dataFilename) {
 		this.dataFilename = dataFilename;
 	}
@@ -149,7 +169,7 @@ public class ModelBuildingParameters {
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
-		String commandLineParameters = "--data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
+		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
 				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
 		if (!gnomOnly) {
@@ -171,6 +191,14 @@ public class ModelBuildingParameters {
 	public String invalidMessage() {
 		String returnMessage = "";
 		//TODO in the future, check file for validity of qMin, qMax, pathToQ, pathToData, but for now, basic checks will be fine
+		if (workingDirectory.isEmpty()) {
+			returnMessage += "Working directory must not be null" + System.lineSeparator();
+		}
+
+		if (htmlResultsDirectory.isEmpty()) {
+			returnMessage += "HTML results directory must not be empty" + System.lineSeparator();
+		}
+
 		if (qMinAngstrom >= qMaxAngstrom) {
 			returnMessage += "qMax must be larger than qMin" + System.lineSeparator();
 		}

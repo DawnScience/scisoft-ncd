@@ -46,8 +46,7 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 			MessageDialog.openError(shell, "Bad parameters", ncdParametersView.getParameters().invalidMessage());
 			throw new IllegalArgumentException(ncdParametersView.getParameters().invalidMessage());
 		}
-		//TODO need to add working directory and html result directory to the front
-		return "/dls/tmp/rbv51579 /dls/tmp/rbv51579 " + inputParameters;
+		return inputParameters;
 	}
 
 	@Override
