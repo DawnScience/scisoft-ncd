@@ -38,8 +38,6 @@ import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.part.ViewPart;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
 import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
@@ -47,8 +45,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.actions.RunNcdModelBuilderPipeline;
 import uk.ac.diamond.scisoft.ws.rcp.WSParameters;
 
 public class NcdModelBuilderParametersView extends ViewPart {
-	private static Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
-
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView";
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
@@ -116,8 +112,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		new Label(dataParameters, SWT.NONE).setText("Path to q");
 		pathToQ = new Text(dataParameters, SWT.NONE);
+//		pathToQ.addSelectionListener(listener);
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToData = new Text(dataParameters, SWT.NONE);
+//		pathToQ.addSelectionListener(listener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -272,7 +270,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private ISelectionListener listener = new ISelectionListener() {
 		@Override
 		public void selectionChanged(IWorkbenchPart sourcepart, ISelection selection) {
-
+			if (isPathToDataOrPathToQEmpty()) {
+				compInput.getDisplay().asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						btnRunNcdModelBuilderJob.setEnabled(false);
+					}
+				});
+				return;
+			}
 			if (sourcepart != NcdModelBuilderParametersView.this) {
 				if (selection instanceof ITreeSelection) {
 					ITreeSelection treeSelection = (ITreeSelection) selection;
@@ -280,8 +286,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						IFile file = (IFile) treeSelection.getFirstElement();
 						for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
 							if (file.getName().endsWith(suffix)) {
-								//TODO fix the following so that the data type is correct
-//								createmodelBuildingParameters(file.getName(), file.getLocation().removeLastSegments(1).toString());
+								setDataFilename(file.getLocation().toFile());
 								compInput.getDisplay().asyncExec(new Runnable() {
 									@Override
 									public void run() {
@@ -298,8 +303,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 							String ending = FileUtils.getFileExtension(file);
 							for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
 								if (ending.equals(suffix)) {
-									//TODO not sure if this is needed
-//									createmodelBuildingParameters(file.getName(),FileUtils.getParentDirName(file.getAbsolutePath()));
+									setDataFilename(file);
 									compInput.getDisplay().asyncExec(new Runnable() {
 										@Override
 										public void run() {
@@ -316,6 +320,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 	};
 
+	private boolean isPathToDataOrPathToQEmpty() {
+		return (pathToData.getText().isEmpty() || pathToQ.getText().isEmpty());
+	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
 		if (modelBuildingParameters == null)
@@ -402,6 +409,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 	}
 	
+	private void setDataFilename(File file) {
+		captureGUIInformation();
+		modelBuildingParameters.setDataFilename(FileUtils.getParentDirName(file.getAbsolutePath()) + file.getName());
+	}
+
 	private Listener verifyDouble = new Listener() {
 
 		@Override
