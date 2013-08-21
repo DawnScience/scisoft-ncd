@@ -22,6 +22,8 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.ITreeSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.ModifyEvent;
+import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
@@ -86,6 +88,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private RunNcdModelBuilderPipeline runNcdModelBuilderPipeline;
 	
+	private boolean fileSelected = false;
+	private boolean pathEmpty = true;
+
 	private static final String WELCOMETEXT = "Select a file in Project Explorer to define data file.";
 
 	@Override
@@ -112,11 +117,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(dataParameters, SWT.NONE).setText("Path to q");
 		pathToQ = new Text(dataParameters, SWT.NONE);
 		pathToQ.setToolTipText("Path to q data (only used in Nexus file)");
-//		pathToQ.addSelectionListener(listener);
+		pathToQ.addModifyListener(pathListener);
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToData = new Text(dataParameters, SWT.NONE);
 		pathToData.setToolTipText("Path to data (only used in Nexus file)");
-//		pathToQ.addSelectionListener(listener);
+		pathToQ.addModifyListener(pathListener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -260,10 +265,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 	
 	protected void runNcdModelBuilder() {
-		//TODO these two lines are for testing purposes only
-		modelBuildingParameters= captureGUIInformation();
-		System.out.println(modelBuildingParameters);
-		
 		runNcdModelBuilderPipeline = new RunNcdModelBuilderPipeline();
 		runNcdModelBuilderPipeline.runEdnaJob();
 	}
@@ -272,18 +273,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		return modelBuildingParameters;
 	}
 
+	private ModifyListener pathListener = new ModifyListener() {
+		@Override
+		public void modifyText(ModifyEvent e) {
+			checkWhetherPathsAreEmpty();
+			refreshRunButton();
+		}
+	};
 	private ISelectionListener listener = new ISelectionListener() {
 		@Override
 		public void selectionChanged(IWorkbenchPart sourcepart, ISelection selection) {
-			if (isPathToDataOrPathToQEmpty()) {
-				compInput.getDisplay().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						btnRunNcdModelBuilderJob.setEnabled(false);
-					}
-				});
-				return;
-			}
+			checkWhetherPathsAreEmpty();
 			if (sourcepart != NcdModelBuilderParametersView.this) {
 				if (selection instanceof ITreeSelection) {
 					ITreeSelection treeSelection = (ITreeSelection) selection;
@@ -292,41 +292,44 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
 							if (file.getName().endsWith(suffix)) {
 								setDataFilename(file.getLocation().toFile());
-								compInput.getDisplay().asyncExec(new Runnable() {
-									@Override
-									public void run() {
-										btnRunNcdModelBuilderJob.setEnabled(true);
-									}
-								});
-							} else
-								btnRunNcdModelBuilderJob.setEnabled(false);
+								fileSelected = true;
+								break;
+							}
+							fileSelected = false;
 						}
 					}
-					if (treeSelection.getFirstElement() instanceof File) {
+					else if (treeSelection.getFirstElement() instanceof File) {
 						File file = (File) treeSelection.getFirstElement();
 						if (file.isFile()) {
 							String ending = FileUtils.getFileExtension(file);
 							for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
 								if (ending.equals(suffix)) {
 									setDataFilename(file);
-									compInput.getDisplay().asyncExec(new Runnable() {
-										@Override
-										public void run() {
-											btnRunNcdModelBuilderJob.setEnabled(true);
-										}
-									});
+									fileSelected = true;
+									break;
 								}
+								fileSelected = false;
 							}
 						}
-					} else
-						btnRunNcdModelBuilderJob.setEnabled(false);
+					}
 				}
+				refreshRunButton();
 			}
 		}
 	};
 
-	private boolean isPathToDataOrPathToQEmpty() {
-		return (pathToData.getText().isEmpty() || pathToQ.getText().isEmpty());
+	private void checkWhetherPathsAreEmpty() {
+		pathEmpty = (pathToData.getText().isEmpty() || pathToQ.getText().isEmpty());
+	}
+
+	protected void refreshRunButton() {
+		final boolean currentState = fileSelected && !pathEmpty;
+		compInput.getDisplay().asyncExec(new Runnable() {
+			@Override
+			public void run() {
+				btnRunNcdModelBuilderJob.setEnabled(currentState);
+			}
+		});
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
