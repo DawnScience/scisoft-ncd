@@ -119,7 +119,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(dataParameters, SWT.NONE).setText("Working directory");
 		workingDirectory = new Text(dataParameters, SWT.NONE);
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
-		pathToQ.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		new Label(dataParameters, SWT.NONE).setText("HTML results directory");
 		htmlResultsDirectory = new Text(dataParameters, SWT.NONE);
 		htmlResultsDirectory.setToolTipText("Directory where HTML results files are left. Must be network accessible (not /scratch or /tmp)");
@@ -413,7 +413,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			public void run() {
 				String fedId = System.getenv("USER");
 				workingDirectory.setText("/dls/tmp/" + fedId);
-				htmlResultsDirectory.setText("/dls/tmp/");
+				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
 				pathToQ.setText("/entry1/detector_result/q");
 				pathToData.setText("/entry1/detector_result/data");
 				numberOfFrames.setText("1");
