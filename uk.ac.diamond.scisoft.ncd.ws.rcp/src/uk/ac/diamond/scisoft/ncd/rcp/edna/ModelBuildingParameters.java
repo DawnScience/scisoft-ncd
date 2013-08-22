@@ -169,8 +169,9 @@ public class ModelBuildingParameters {
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
-		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
-				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames +
+		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" " + 
+				" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
+				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames + " --threads " + numberOfThreads +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
 		if (!gnomOnly) {
 			commandLineParameters += " --symmetry " + symmetry + " --mode " + (dammifFastMode ? "fast" : "slow");
