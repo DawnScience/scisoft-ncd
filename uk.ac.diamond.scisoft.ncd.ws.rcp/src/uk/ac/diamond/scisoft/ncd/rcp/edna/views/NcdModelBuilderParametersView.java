@@ -42,7 +42,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.part.ViewPart;
 
 import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
-import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
+import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 
 public class NcdModelBuilderParametersView extends ViewPart {

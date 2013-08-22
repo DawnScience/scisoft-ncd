@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd;
+package uk.ac.diamond.scisoft.ncd.rcp.edna;
 
 public class ModelBuildingParameters {
 	private String workingDirectory;
