@@ -1,0 +1,9 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.ws.rcp;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-Vendor: Diamond Light Source
+Bundle-Name: RCP components for running BioSAXS model building pipeline
+Eclipse-PlatformFilter: (osgi.os=linux)
+Bundle-ActivationPolicy: lazy
