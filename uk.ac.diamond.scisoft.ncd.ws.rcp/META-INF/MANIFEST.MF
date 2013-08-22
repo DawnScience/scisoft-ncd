@@ -7,3 +7,9 @@ Bundle-Vendor: Diamond Light Source
 Bundle-Name: RCP components for running BioSAXS model building pipeline
 Eclipse-PlatformFilter: (osgi.os=linux)
 Bundle-ActivationPolicy: lazy
+Require-Bundle: org.eclipse.ui,
+ uk.ac.diamond.scisoft.ws.rcp;bundle-version="1.3.0",
+ uk.ac.diamond.scisoft.analysis,
+ uk.ac.diamond.scisoft.ncd,
+ org.eclipse.core.resources,
+ org.eclipse.core.runtime;bundle-version="3.8.0"

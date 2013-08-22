@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.views;
+package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
 
@@ -43,7 +43,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
 import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
-import uk.ac.diamond.scisoft.ncd.rcp.actions.RunNcdModelBuilderPipeline;
+import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 
 public class NcdModelBuilderParametersView extends ViewPart {
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView";

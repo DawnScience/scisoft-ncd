@@ -14,13 +14,13 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.actions;
+package uk.ac.diamond.scisoft.ncd.rcp.edna.actions;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView;
+import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
 import uk.ac.diamond.scisoft.ws.rcp.RunPipeline;
 
 public class RunNcdModelBuilderPipeline extends RunPipeline {
