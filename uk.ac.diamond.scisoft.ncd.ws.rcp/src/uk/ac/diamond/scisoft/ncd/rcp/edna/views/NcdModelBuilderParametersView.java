@@ -46,7 +46,7 @@ import uk.ac.diamond.scisoft.ncd.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 
 public class NcdModelBuilderParametersView extends ViewPart {
-	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView";
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView";
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 

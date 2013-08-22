@@ -5,8 +5,8 @@
          point="org.eclipse.ui.views">
      <view
            category="org.dawb.workbench.ui.beta.views.category"
-           class="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
-           id="uk.ac.diamond.scisoft.ncd.rcp.views.NcdModelBuilderParametersView"
+           class="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
+           id="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
            name="BioSAXS Model Builder"
            restorable="true">
      </view>
