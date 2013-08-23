@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
+import java.io.File;
+
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -34,6 +36,7 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Event;
+import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
@@ -89,6 +92,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
+
+	private Button browseDataFile;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -198,6 +203,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					for (int i = 0; i < files.length; i++) {
 						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
 							setFilenameString(files[i]);
+					}
+				}
+			}
+		});
+		
+		browseDataFile = new Button(dataParameters, SWT.NONE);
+		browseDataFile.setText("...");
+		browseDataFile.addSelectionListener(new SelectionAdapter() {
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				FileDialog fChooser = new FileDialog(getSite().getWorkbenchWindow().getShell());
+				fChooser.setText("Choose NXS or DAT file");
+				fChooser.setFilterPath(dataFilename);
+				String extensions[] = { "*.nxs;*.dat", "*.*" };
+				fChooser.setFilterExtensions(extensions);
+				String fileStr = fChooser.open();
+				if (fileStr != null) {
+					final File file = new File(fileStr);
+					if (file.isFile()) {
+						setFilenameString(file.toString());
 					}
 				}
 			}
