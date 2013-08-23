@@ -107,14 +107,7 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="uk.ac.diamond.scisoft.ws"
-         os="linux"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"/>
-
-   <plugin
-         id="uk.ac.diamond.scisoft.ws.rcp"
+         id="uk.ac.diamond.scisoft.ncd.ws.rcp"
          os="linux"
          download-size="0"
          install-size="0"
