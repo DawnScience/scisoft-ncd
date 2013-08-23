@@ -47,13 +47,21 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.part.ViewPart;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Slice;
+import uk.ac.diamond.scisoft.analysis.io.DataHolder;
+import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 import uk.ac.gda.ui.content.FileContentProposalProvider;
 
 public class NcdModelBuilderParametersView extends ViewPart {
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView";
+	protected static final Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 
@@ -442,13 +450,38 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected void refreshRunButton() {
-		final boolean currentState = fileSelected && !pathEmpty;
+		final boolean fileValidAndPathsPopulated = fileSelected && !pathEmpty;
 		compInput.getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				btnRunNcdModelBuilderJob.setEnabled(currentState);
+				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
+		if (fileValidAndPathsPopulated) {
+			DataHolder holder = null;
+			try {
+				holder = LoaderFactory.getData(dataFilename);
+			} catch (Exception e) {
+				logger.error("Problem while trying to load information from the file");
+				return;
+			}
+			//check that the q and data paths are in the file
+			String qPath = pathToQ.getText();
+			String dataPath = pathToData.getText();
+			if (holder.contains(qPath) && holder.contains(dataPath)) {
+				startPoint.setText("1");
+				holder.getList().iterator();
+				for (ILazyDataset listItem: holder.getList()) {
+					if (listItem.getName().equals(qPath)) {
+						IDataset slice = listItem.getSlice(new Slice());
+						qMin.setText(String.valueOf(slice.min()));
+						qMax.setText(String.valueOf(slice.max()));
+						endPoint.setText(String.valueOf(slice.getSize()));
+						break;
+					}
+				}
+			}
+		}
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
