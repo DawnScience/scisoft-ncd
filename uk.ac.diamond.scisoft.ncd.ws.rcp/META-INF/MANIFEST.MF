@@ -13,3 +13,4 @@ Require-Bundle: org.eclipse.ui,
  uk.ac.diamond.scisoft.ncd,
  org.eclipse.core.resources,
  org.eclipse.core.runtime;bundle-version="3.8.0"
+Import-Package: uk.ac.gda.ui.content

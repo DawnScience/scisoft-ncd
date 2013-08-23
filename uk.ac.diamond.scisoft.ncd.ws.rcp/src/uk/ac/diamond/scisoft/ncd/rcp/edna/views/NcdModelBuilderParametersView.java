@@ -18,6 +18,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
 
+import org.eclipse.jface.fieldassist.ContentProposalAdapter;
+import org.eclipse.jface.fieldassist.IContentProposal;
+import org.eclipse.jface.fieldassist.IContentProposalListener;
+import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -45,6 +49,7 @@ import org.eclipse.ui.part.ViewPart;
 
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
+import uk.ac.gda.ui.content.FileContentProposalProvider;
 
 public class NcdModelBuilderParametersView extends ViewPart {
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView";
@@ -205,6 +210,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 							setFilenameString(files[i]);
 					}
 				}
+			}
+		});
+		
+		FileContentProposalProvider prov = new FileContentProposalProvider();
+		ContentProposalAdapter ad2 = new ContentProposalAdapter(dataFile,
+				new TextContentAdapter(), prov, null, null);
+		ad2.setProposalAcceptanceStyle(ContentProposalAdapter.PROPOSAL_REPLACE);
+		ad2.addContentProposalListener(new IContentProposalListener() {
+			@Override
+			public void proposalAccepted(IContentProposal proposal) {
+				setFilenameString(proposal.getContent());
 			}
 		});
 		
