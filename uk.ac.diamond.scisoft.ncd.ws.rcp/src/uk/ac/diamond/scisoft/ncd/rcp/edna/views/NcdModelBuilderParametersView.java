@@ -34,6 +34,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -107,7 +108,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		// Data parameters
 
-		Group dataParameters = new Group(compInput, SWT.NONE);
+		final Group dataParameters = new Group(compInput, SWT.NONE);
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
@@ -118,14 +119,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataFile.setText(dataFilename);
 		dataFile.setToolTipText("Location of input file");
 		dataFile.addModifyListener(new ModifyListener() {
+			File file = null;
+			Color red = new Color(dataParameters.getDisplay(), 255, 0, 0);
+			Color white = new Color(dataParameters.getDisplay(), 255, 255, 255);
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				if (dataFile.getText().isEmpty()) {
-					fileSelected = false;
-				}
-				else {
+				file = new File(dataFile.getText());
+				if (file.isFile() && !dataFile.getText().isEmpty()) {
+					dataFile.setBackground(white);
 					fileSelected = true;
+				} else {
+					dataFile.setBackground(red);
+					fileSelected = false;
 				}
 				refreshRunButton();
 			}
