@@ -116,20 +116,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		// Data parameters
 
-		final Group dataParameters = new Group(compInput, SWT.NONE);
+		Group dataParameters = new Group(compInput, SWT.NONE);
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
 
-		new Label(dataParameters, SWT.NONE).setText("Data file");
-		dataFile = new Text(dataParameters, SWT.BORDER);
+		final Group dataFileGroup = new Group(dataParameters, SWT.NONE);
+		GridData dataFileGroupData = new GridData(SWT.FILL, SWT.TOP, true, false);
+		dataFileGroupData.horizontalSpan = 2;
+		dataFileGroup.setLayoutData(dataFileGroupData);
+		dataFileGroup.setLayout(new GridLayout(3, false));
+		new Label(dataFileGroup, SWT.NONE).setText("Data file");
+		dataFile = new Text(dataFileGroup, SWT.BORDER);
 		dataFile.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		dataFile.setText(dataFilename);
 		dataFile.setToolTipText("Location of input file");
 		dataFile.addModifyListener(new ModifyListener() {
 			File file = null;
-			Color red = new Color(dataParameters.getDisplay(), 255, 0, 0);
-			Color white = new Color(dataParameters.getDisplay(), 255, 255, 255);
+			Color red = new Color(dataFileGroup.getDisplay(), 255, 0, 0);
+			Color white = new Color(dataFileGroup.getDisplay(), 255, 255, 255);
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
@@ -238,7 +243,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		
-		browseDataFile = new Button(dataParameters, SWT.NONE);
+		browseDataFile = new Button(dataFileGroup, SWT.NONE);
 		browseDataFile.setText("...");
 		browseDataFile.addSelectionListener(new SelectionAdapter() {
 			@Override
