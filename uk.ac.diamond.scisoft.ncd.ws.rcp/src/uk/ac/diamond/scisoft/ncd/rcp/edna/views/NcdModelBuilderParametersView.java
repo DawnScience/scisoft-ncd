@@ -16,12 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
-import java.io.File;
-
-import org.eclipse.core.resources.IFile;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.ITreeSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.DropTargetListener;
+import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -36,12 +38,8 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
-import org.eclipse.ui.ISelectionListener;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.part.ViewPart;
 
-import uk.ac.diamond.scisoft.analysis.utils.FileUtils;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 
@@ -50,8 +48,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 
-	private IWorkbenchWindow window;
-
+	protected Text dataFile;
+	protected String dataFilename = "";
 	protected Text workingDirectory;
 	protected Text htmlResultsDirectory;
 	protected Text pathToQ;
@@ -92,21 +90,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
 
-	private static final String WELCOMETEXT = "Select a file in Project Explorer to define data file.";
-
 	@Override
 	public void createPartControl(Composite parent) {
-		window = getSite().getWorkbenchWindow();
-
 		compInput = new Composite(parent, SWT.FILL);
 		compInput.setLayout(new GridLayout(1, false));
-
-		Group gpWelcome = new Group(compInput, SWT.NONE);
-		gpWelcome.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 1, 1));
-		gpWelcome.setLayout(new GridLayout(1, true));
-
-		Label lblWelcome = new Label(gpWelcome, SWT.WRAP);
-		lblWelcome.setText(WELCOMETEXT);
 
 		// Data parameters
 
@@ -115,6 +102,107 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataParameters.setLayout(new GridLayout(2, true));
 		dataParameters.setText("Data parameters");
 
+		new Label(dataParameters, SWT.NONE).setText("Data file");
+		dataFile = new Text(dataParameters, SWT.BORDER);
+		dataFile.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		dataFile.setText(dataFilename);
+		dataFile.setToolTipText("Location of input file");
+		dataFile.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				if (dataFile.getText().isEmpty()) {
+					fileSelected = false;
+				}
+				else {
+					fileSelected = true;
+				}
+				refreshRunButton();
+			}
+		});
+
+		int style = DND.DROP_COPY | DND.DROP_DEFAULT;
+		DropTarget target = new org.eclipse.swt.dnd.DropTarget(dataParameters, style);
+		final TextTransfer textTransfer = TextTransfer.getInstance();
+		final FileTransfer fileTransfer = FileTransfer.getInstance();
+		Transfer[] types = new Transfer[] { fileTransfer, textTransfer };
+		target.setTransfer(types);
+
+		target.addDropListener(new DropTargetListener() {
+
+			public void dragEnter(DropTargetEvent event) {
+				if (event.detail == DND.DROP_DEFAULT) {
+					if ((event.operations & DND.DROP_COPY) != 0) {
+						event.detail = DND.DROP_COPY;
+					} else {
+						event.detail = DND.DROP_NONE;
+					}
+				}
+				// will accept text but prefer to have files dropped
+				for (int i = 0; i < event.dataTypes.length; i++) {
+					if (fileTransfer.isSupportedType(event.dataTypes[i])) {
+						event.currentDataType = event.dataTypes[i];
+						// files should only be copied
+						if (event.detail != DND.DROP_COPY) {
+							event.detail = DND.DROP_NONE;
+						}
+						break;
+					}
+				}
+			}
+
+			public void dragOver(DropTargetEvent event) {
+				event.feedback = DND.FEEDBACK_SELECT | DND.FEEDBACK_SCROLL;
+				if (textTransfer.isSupportedType(event.currentDataType)) {
+					// NOTE: on unsupported platforms this will return null
+					Object o = textTransfer.nativeToJava(event.currentDataType);
+					String t = (String) o;
+					if (t != null)
+						System.out.println(t);
+				}
+			}
+
+			public void dragOperationChanged(DropTargetEvent event) {
+				if (event.detail == DND.DROP_DEFAULT) {
+					if ((event.operations & DND.DROP_COPY) != 0) {
+						event.detail = DND.DROP_COPY;
+					} else {
+						event.detail = DND.DROP_NONE;
+					}
+				}
+				// allow text to be moved but files should only be copied
+				if (fileTransfer.isSupportedType(event.currentDataType)) {
+					if (event.detail != DND.DROP_COPY) {
+						event.detail = DND.DROP_NONE;
+					}
+				}
+			}
+
+			public void dragLeave(DropTargetEvent event) {
+			}
+
+			public void dropAccept(DropTargetEvent event) {
+			}
+
+			public void drop(DropTargetEvent event) {
+				if (textTransfer.isSupportedType(event.currentDataType)) {
+					String[] files = (String[]) event.data;
+					for (int i = 0; i < files.length; i++) {
+						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+							setFilenameString(files[i]);
+					}
+				}
+
+				if (fileTransfer.isSupportedType(event.currentDataType)) {
+					String[] files = (String[]) event.data;
+					for (int i = 0; i < files.length; i++) {
+						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+							setFilenameString(files[i]);
+					}
+				}
+			}
+		});
+		
 		new Label(dataParameters, SWT.NONE).setText("Working directory");
 		workingDirectory = new Text(dataParameters, SWT.NONE);
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
@@ -271,11 +359,20 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
-		window.getSelectionService().addSelectionListener(listener);
-		
 		resetGUI();
 	}
 	
+	protected void setFilenameString(String filename) {
+		dataFilename = filename;
+		fileSelected = true;
+		captureGUIInformation();
+		modelBuildingParameters.setDataFilename(filename);
+		if (dataFile != null) {
+			dataFile.setText(filename);
+		}
+		refreshRunButton();
+	}
+
 	protected void runNcdModelBuilder() {
 		runNcdModelBuilderPipeline = new RunNcdModelBuilderPipeline();
 		runNcdModelBuilderPipeline.runEdnaJob();
@@ -290,43 +387,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		public void modifyText(ModifyEvent e) {
 			checkWhetherPathsAreEmpty();
 			refreshRunButton();
-		}
-	};
-	private ISelectionListener listener = new ISelectionListener() {
-		@Override
-		public void selectionChanged(IWorkbenchPart sourcepart, ISelection selection) {
-			checkWhetherPathsAreEmpty();
-			if (sourcepart != NcdModelBuilderParametersView.this) {
-				if (selection instanceof ITreeSelection) {
-					ITreeSelection treeSelection = (ITreeSelection) selection;
-					if (treeSelection.getFirstElement() instanceof IFile) {
-						IFile file = (IFile) treeSelection.getFirstElement();
-						for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
-							if (file.getName().endsWith(suffix)) {
-								setDataFilename(file.getLocation().toFile());
-								fileSelected = true;
-								break;
-							}
-							fileSelected = false;
-						}
-					}
-					else if (treeSelection.getFirstElement() instanceof File) {
-						File file = (File) treeSelection.getFirstElement();
-						if (file.isFile()) {
-							String ending = FileUtils.getFileExtension(file);
-							for (String suffix : NcdModelBuilderParametersView.DATA_TYPES) {
-								if (ending.equals(suffix)) {
-									setDataFilename(file);
-									fileSelected = true;
-									break;
-								}
-								fileSelected = false;
-							}
-						}
-					}
-				}
-				refreshRunButton();
-			}
 		}
 	};
 
@@ -435,11 +495,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 	}
 	
-	private void setDataFilename(File file) {
-		captureGUIInformation();
-		modelBuildingParameters.setDataFilename(FileUtils.getParentDirName(file.getAbsolutePath()) + file.getName());
-	}
-
 	private Listener verifyDouble = new Listener() {
 
 		@Override
