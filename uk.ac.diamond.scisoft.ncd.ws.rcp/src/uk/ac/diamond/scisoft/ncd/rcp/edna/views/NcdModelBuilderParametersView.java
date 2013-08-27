@@ -46,6 +46,9 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +67,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected static final Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
+
+	private IMemento memento = null;
 
 	protected Text dataFile;
 	protected String dataFilename = "";
@@ -419,7 +424,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
-		resetGUI();
+		if (modelBuildingParameters == null)
+			modelBuildingParameters = new ModelBuildingParameters();
+
+		if (memento != null) {
+			modelBuildingParameters.loadMementoParameters(memento);
+		}
+		else {
+			resetGUI();
+		}
 	}
 	
 	protected void setFilenameString(String filename) {
@@ -490,9 +503,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
-		if (modelBuildingParameters == null)
-			modelBuildingParameters = new ModelBuildingParameters();
-
 		//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
 		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
 		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
@@ -611,4 +621,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		}
 	};
+
+	@Override
+	public void init(IViewSite site, IMemento memento) throws PartInitException {
+		init(site);
+		this.memento = memento;
+	}
+
+	@Override
+	public void saveState(IMemento memento) {
+		if (memento != null) {
+			modelBuildingParameters.storeMementoParameters(memento);
+		}
+	}
 }
