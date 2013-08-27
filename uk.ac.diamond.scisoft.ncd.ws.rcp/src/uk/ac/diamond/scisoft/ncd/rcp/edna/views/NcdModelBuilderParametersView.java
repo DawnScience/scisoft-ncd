@@ -301,7 +301,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qParameters.setLayout(new GridLayout(3, false));
 		qParameters.setText("q");
 
-		String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
+		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
 
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
@@ -309,12 +309,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
+		qMinUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setqMinInverseAngstromUnits(qMinUnits.getText().equals(qOptionUnits[0]));
+			}
+		});
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
+		qMaxUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setqMaxInverseAngstromUnits(qMaxUnits.getText().equals(qOptionUnits[0]));
+			}
+		});
 
 		Group pointsParameters = new Group(dataParameters, SWT.NONE);
 		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
@@ -352,7 +366,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		gnomParameters.setLayout(new GridLayout(3, false));
 		gnomParameters.setText("GNOM");
 
-		String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
+		final String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
 
 		new Label(gnomParameters, SWT.NONE).setText("Minimum distance search");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
@@ -360,6 +374,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		minDistanceUnits.setItems(distanceOptionsUnits);
+		minDistanceUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setStartDistanceAngstromUnits(minDistanceUnits.getText().equals(distanceOptionsUnits[0]));
+			}
+		});
 
 		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
@@ -367,6 +388,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
 		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
+		maxDistanceUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setEndDistanceAngstromUnits(maxDistanceUnits.getText().equals(distanceOptionsUnits[0]));
+			}
+		});
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
@@ -658,17 +686,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToData.setText(modelBuildingParameters.getPathToData());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
 		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
-//		qMinUnits.select(modelBuildingParameters.);
+		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);
 		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
-//		qMaxUnits.select(0);
+		qMaxUnits.select(modelBuildingParameters.isqMaxInverseAngstromUnits() ? 0 : 1);
 //		startPoint.setText(modelBuildingParameters.get);
 //		endPoint.setText("1000");
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
 		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
-//		minDistanceUnits.select(0);
+		minDistanceUnits.select(modelBuildingParameters.isStartDistanceAngstromUnits() ? 0 : 1);
 		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
-//		maxDistanceUnits.select(0);
+		maxDistanceUnits.select(modelBuildingParameters.isEndDistanceAngstromUnits() ? 0 : 1);
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
 		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
 //		symmetry.select(0);

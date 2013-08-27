@@ -128,6 +128,22 @@ public class ModelBuildingParameters {
 	public void setqMaxAngstrom(double qMaxAngstrom) {
 		this.qMaxAngstrom = qMaxAngstrom;
 	}
+	public boolean isqMinInverseAngstromUnits() {
+		return qMinInverseAngstromUnits;
+	}
+
+	public void setqMinInverseAngstromUnits(boolean qMinInverseAngstromUnits) {
+		this.qMinInverseAngstromUnits = qMinInverseAngstromUnits;
+	}
+
+	public boolean isqMaxInverseAngstromUnits() {
+		return qMaxInverseAngstromUnits;
+	}
+
+	public void setqMaxInverseAngstromUnits(boolean qMaxInverseAngstromUnits) {
+		this.qMaxInverseAngstromUnits = qMaxInverseAngstromUnits;
+	}
+
 	public int getNumberOfThreads() {
 		return numberOfThreads;
 	}
@@ -152,6 +168,22 @@ public class ModelBuildingParameters {
 	public void setEndDistanceAngstrom(double endDistanceAngstrom) {
 		this.endDistanceAngstrom = endDistanceAngstrom;
 	}
+	public boolean isStartDistanceAngstromUnits() {
+		return startDistanceAngstromUnits;
+	}
+
+	public void setStartDistanceAngstromUnits(boolean startDistanceAngstromUnits) {
+		this.startDistanceAngstromUnits = startDistanceAngstromUnits;
+	}
+
+	public boolean isEndDistanceAngstromUnits() {
+		return endDistanceAngstromUnits;
+	}
+
+	public void setEndDistanceAngstromUnits(boolean endDistanceAngstromUnits) {
+		this.endDistanceAngstromUnits = endDistanceAngstromUnits;
+	}
+
 	public int getNumberOfSearch() {
 		return numberOfSearch;
 	}
