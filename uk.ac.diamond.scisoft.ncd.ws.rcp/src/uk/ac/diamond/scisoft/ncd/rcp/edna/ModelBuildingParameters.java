@@ -51,28 +51,6 @@ public class ModelBuildingParameters {
 	private int symmetryIndex;
 	private boolean dammifFastMode;
 	
-	public ModelBuildingParameters(String workingDirectory, String htmlResultsDirectory, String dataFilename, String pathToQ, String pathToData, int numberOfFrames,
-			double qMinAngstrom, double qMaxAngstrom, int numberOfThreads,
-			boolean gnomOnly, double startDistanceAngstrom, double endDistanceAngstrom, int numberOfSearch, double tolerance,
-			String symmetry, boolean dammifFastMode) {
-		this.workingDirectory = workingDirectory;
-		this.htmlResultsDirectory = htmlResultsDirectory;
-		this.dataFilename = dataFilename;
-		this.pathToQ = pathToQ;
-		this.pathToData = pathToData;
-		this.numberOfFrames = numberOfFrames;
-		this.qMinAngstrom = qMinAngstrom;
-		this.qMaxAngstrom = qMaxAngstrom;
-		this.numberOfThreads = numberOfThreads;
-		this.gnomOnly = gnomOnly;
-		this.startDistanceAngstrom = startDistanceAngstrom;
-		this.endDistanceAngstrom = endDistanceAngstrom;
-		this.numberOfSearch = numberOfSearch;
-		this.tolerance = tolerance;
-		this.symmetry = symmetry;
-		this.dammifFastMode = dammifFastMode;
-	}
-	
 	public ModelBuildingParameters() {
 	}
 
