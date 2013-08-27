@@ -48,7 +48,6 @@ public class ModelBuildingParameters {
 	private double tolerance;
 
 	private String symmetry;
-	private int symmetryIndex;
 	private boolean dammifFastMode;
 	
 	public ModelBuildingParameters() {
@@ -262,7 +261,7 @@ public class ModelBuildingParameters {
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS, endDistanceAngstromUnits);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH, numberOfSearch);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE, (float) tolerance);
-			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY_INDEX, symmetryIndex);
+			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY, symmetry);
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST, dammifFastMode);
 		}
 	}
@@ -289,7 +288,7 @@ public class ModelBuildingParameters {
 			endDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS);
 			numberOfSearch = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH);
 			tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
-			symmetryIndex = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY_INDEX);
+			symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);
 			dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
 		}
 	}

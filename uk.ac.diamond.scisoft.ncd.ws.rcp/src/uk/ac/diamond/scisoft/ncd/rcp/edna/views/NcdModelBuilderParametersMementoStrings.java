@@ -37,6 +37,6 @@ public class NcdModelBuilderParametersMementoStrings {
 	public static final String BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS = "biosaxs.gnom.max.distance.angstrom.units";
 	public static final String BIOSAXS_GNOM_NUMBER_SEARCH = "biosaxs.gnom.number.search";
 	public static final String BIOSAXS_GNOM_TOLERANCE = "biosaxs.gnom.tolerance";
-	public static final String BIOSAXS_DAMMIF_SYMMETRY_INDEX = "biosaxs.dammif.symmetry.index";
+	public static final String BIOSAXS_DAMMIF_SYMMETRY = "biosaxs.dammif.symmetry";
 	public static final String BIOSAXS_DAMMIF_FAST = "biosaxs.dammif.fast";
 }

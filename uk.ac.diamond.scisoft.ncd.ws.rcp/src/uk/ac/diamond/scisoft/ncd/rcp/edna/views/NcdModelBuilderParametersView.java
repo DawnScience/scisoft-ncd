@@ -415,13 +415,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dammifParameters.setText("DAMMIF");
 
 		String[] dammifModeOptions = new String[] {"Fast", "Slow"};
-		String[] symmetryOptions = new String[30];
-		for (int i=1; i< 20; ++i) {
-			symmetryOptions[i-1] = "P" + i;
-		}
-		for (int i=2; i< 13; ++i) {
-			symmetryOptions[i + 19 - 2] = "P" + i + "2";
-		}
+		String[] symmetryOptions = getSymmetryOptions();
 
 		new Label(dammifParameters, SWT.NONE).setText("Symmetry");
 		symmetry = new Combo(dammifParameters, SWT.READ_ONLY);
@@ -468,6 +462,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
+	}
+
+	private String[] getSymmetryOptions() {
+		String[] symmetryOptions = new String[30];
+		for (int i=1; i< 20; ++i) {
+			symmetryOptions[i-1] = "P" + i;
+		}
+		for (int i=2; i< 13; ++i) {
+			symmetryOptions[i + 19 - 2] = "P" + i + "2";
+		}
+		return symmetryOptions;
 	}
 	
 	protected void setFilenameString(String filename) {
@@ -699,7 +704,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceUnits.select(modelBuildingParameters.isEndDistanceAngstromUnits() ? 0 : 1);
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
 		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
-//		symmetry.select(0);
-		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 1 : 0);
+		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
+		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
+	}
+
+	private void refreshSymmetryCombo(String symmetry2) {
+		String[] options = getSymmetryOptions();
+		for (int i=0; i< options.length; ++i) {
+			if (options[i].equals(symmetry2)) {
+				symmetry.select(i);
+				break;
+			}
+		}
 	}
 }
