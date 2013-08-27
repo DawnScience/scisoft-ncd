@@ -148,12 +148,20 @@
                label="NCD">
             <visibleWhen
                   checkEnabled="false">
-               <with
-                     variable="activeWorkbenchWindow.activePerspective">
-                  <equals
-                        value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
-                  </equals>
-               </with>
+               <or>
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective">
+                     </equals>
+                  </with>
+               </or>
             </visibleWhen>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo"
@@ -164,16 +172,43 @@
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.setBackgroundSubtractionFile"
                   label="Set as Background Subtraction File"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.setDetectorResponseFile"
                   label="Set as Detector Response File"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.setSectorIntegration"
                   label="Load Calibration Image"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.setDetectorMask"
@@ -184,6 +219,15 @@
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.readQAxisCalibration"
                   label="Load QAxis Calibration"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
             <separator
                   name="uk.ac.diamond.scisoft.ncd.rcp.separator1"
@@ -193,12 +237,30 @@
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.process"
                   label="Run Data Reduction"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
             <command
                   commandId="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
                   icon="icons/new_wiz.gif"
                   label="Run Data Reduction Wizard"
                   style="push">
+               <visibleWhen
+                     checkEnabled="false">
+                  <with
+                        variable="activeWorkbenchWindow.activePerspective">
+                     <equals
+                           value="uk.ac.diamond.scisoft.ncd.rcp.ncdperspective">
+                     </equals>
+                  </with>
+               </visibleWhen>
             </command>
          </menu>
       </menuContribution>
