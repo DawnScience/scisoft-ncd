@@ -21,7 +21,6 @@ import org.eclipse.ui.IMemento;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersMementoStrings;
 
 public class ModelBuildingParameters {
-	private String filename;
 	private String workingDirectory;
 	private String htmlResultsDirectory;
 	private String dataFilename;
@@ -233,7 +232,7 @@ public class ModelBuildingParameters {
 
 	public void storeMementoParameters(IMemento memento) {
 		if (memento != null) {
-			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE, filename);
+			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE, dataFilename);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY, workingDirectory);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY, htmlResultsDirectory);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q, pathToQ);
@@ -260,7 +259,7 @@ public class ModelBuildingParameters {
 	
 	public void loadMementoParameters(IMemento memento) {
 		if (memento != null) {
-			filename = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE);
+			dataFilename = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE);
 			workingDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY);
 			htmlResultsDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY);
 			pathToQ  = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q);

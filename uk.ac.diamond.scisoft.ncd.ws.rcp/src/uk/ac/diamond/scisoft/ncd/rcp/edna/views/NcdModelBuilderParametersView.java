@@ -514,6 +514,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
 		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
+		modelBuildingParameters.setDataFilename(dataFile.getText());
+
 		//will populate parameters assuming that the Nexus type is being used
 		modelBuildingParameters.setPathToQ(pathToQ.getText());
 		modelBuildingParameters.setPathToData(pathToData.getText());
@@ -572,6 +574,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			@Override
 			public void run() {
 				String fedId = System.getenv("USER");
+				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
 				pathToQ.setText("/entry1/detector_result/q");
@@ -645,7 +648,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	
 	
 	protected void restoreState() {
-//		filename.setText(modelBuildingParameters.getDataFilename());
+		String dataFilename = modelBuildingParameters.getDataFilename();
+		if (dataFilename != null) {
+			dataFile.setText(dataFilename);
+		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		htmlResultsDirectory.setText(modelBuildingParameters.getHtmlResultsDirectory());
 		pathToQ.setText(modelBuildingParameters.getPathToQ());
