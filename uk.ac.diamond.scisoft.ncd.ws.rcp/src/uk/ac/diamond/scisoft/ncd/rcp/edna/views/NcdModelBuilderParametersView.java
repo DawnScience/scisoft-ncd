@@ -49,6 +49,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -429,6 +430,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		if (memento != null) {
 			modelBuildingParameters.loadMementoParameters(memento);
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
+				public void run() {
+					restoreState();
+				}
+			});
 		}
 		else {
 			resetGUI();
@@ -631,7 +638,34 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	@Override
 	public void saveState(IMemento memento) {
 		if (memento != null) {
+			captureGUIInformation();
 			modelBuildingParameters.storeMementoParameters(memento);
 		}
+	}
+	
+	
+	protected void restoreState() {
+//		filename.setText(modelBuildingParameters.getDataFilename());
+		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
+		htmlResultsDirectory.setText(modelBuildingParameters.getHtmlResultsDirectory());
+		pathToQ.setText(modelBuildingParameters.getPathToQ());
+		pathToData.setText(modelBuildingParameters.getPathToData());
+		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
+		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
+//		qMinUnits.select(modelBuildingParameters.);
+		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
+//		qMaxUnits.select(0);
+//		startPoint.setText(modelBuildingParameters.get);
+//		endPoint.setText("1000");
+		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
+		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
+		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
+//		minDistanceUnits.select(0);
+		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
+//		maxDistanceUnits.select(0);
+		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
+		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
+//		symmetry.select(0);
+		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 1 : 0);
 	}
 }
