@@ -492,7 +492,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	public ModelBuildingParameters getParameters() {
-		return modelBuildingParameters;
+		return captureGUIInformation();
 	}
 
 	private ModifyListener pathListener = new ModifyListener() {
