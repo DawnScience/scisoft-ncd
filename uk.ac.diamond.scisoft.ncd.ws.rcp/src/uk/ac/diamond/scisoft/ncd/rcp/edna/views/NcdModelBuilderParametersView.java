@@ -144,7 +144,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				file = new File(dataFile.getText());
+				String filename = dataFile.getText();
+				file = new File(filename);
 				if (file.isFile() && !dataFile.getText().isEmpty()) {
 					dataFile.setBackground(white);
 					fileSelected = true;
@@ -152,6 +153,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					dataFile.setBackground(red);
 					fileSelected = false;
 				}
+				boolean isDatFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
+				pathToQ.setEditable(isDatFile);
+				pathToQ.setEnabled(isDatFile);
+				pathToData.setEditable(isDatFile);
+				pathToData.setEnabled(isDatFile);
 				refreshRunButton();
 			}
 		});
@@ -223,7 +229,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if (textTransfer.isSupportedType(event.currentDataType)) {
 					String[] files = (String[]) event.data;
 					for (int i = 0; i < files.length; i++) {
-						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+						if (files[i].toLowerCase().endsWith(DATA_TYPES[0]) || files[i].toLowerCase().endsWith(DATA_TYPES[1])) 
 							setFilenameString(files[i]);
 					}
 				}
@@ -231,7 +237,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if (fileTransfer.isSupportedType(event.currentDataType)) {
 					String[] files = (String[]) event.data;
 					for (int i = 0; i < files.length; i++) {
-						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+						if (files[i].toLowerCase().endsWith(DATA_TYPES[0]) || files[i].toLowerCase().endsWith(DATA_TYPES[1])) 
 							setFilenameString(files[i]);
 					}
 				}
