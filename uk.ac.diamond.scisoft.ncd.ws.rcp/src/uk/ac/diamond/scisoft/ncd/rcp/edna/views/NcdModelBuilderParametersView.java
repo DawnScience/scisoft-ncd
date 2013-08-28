@@ -46,6 +46,10 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.ui.IMemento;
+import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.PartInitException;
+import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -64,6 +68,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected static final Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
+
+	private IMemento memento = null;
 
 	protected Text dataFile;
 	protected String dataFilename = "";
@@ -138,7 +144,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				file = new File(dataFile.getText());
+				String filename = dataFile.getText();
+				file = new File(filename);
 				if (file.isFile() && !dataFile.getText().isEmpty()) {
 					dataFile.setBackground(white);
 					fileSelected = true;
@@ -146,6 +153,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					dataFile.setBackground(red);
 					fileSelected = false;
 				}
+				boolean isDatFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
+				pathToQ.setEditable(isDatFile);
+				pathToQ.setEnabled(isDatFile);
+				pathToData.setEditable(isDatFile);
+				pathToData.setEnabled(isDatFile);
 				refreshRunButton();
 			}
 		});
@@ -217,7 +229,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if (textTransfer.isSupportedType(event.currentDataType)) {
 					String[] files = (String[]) event.data;
 					for (int i = 0; i < files.length; i++) {
-						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+						if (files[i].toLowerCase().endsWith(DATA_TYPES[0]) || files[i].toLowerCase().endsWith(DATA_TYPES[1])) 
 							setFilenameString(files[i]);
 					}
 				}
@@ -225,7 +237,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if (fileTransfer.isSupportedType(event.currentDataType)) {
 					String[] files = (String[]) event.data;
 					for (int i = 0; i < files.length; i++) {
-						if (files[i].toLowerCase().endsWith(".nxs") || files[i].toLowerCase().endsWith(".dat")) 
+						if (files[i].toLowerCase().endsWith(DATA_TYPES[0]) || files[i].toLowerCase().endsWith(DATA_TYPES[1])) 
 							setFilenameString(files[i]);
 					}
 				}
@@ -295,7 +307,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qParameters.setLayout(new GridLayout(3, false));
 		qParameters.setText("q");
 
-		String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
+		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
 
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
@@ -303,12 +315,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
+		qMinUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setqMinInverseAngstromUnits(qMinUnits.getText().equals(qOptionUnits[0]));
+			}
+		});
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
+		qMaxUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setqMaxInverseAngstromUnits(qMaxUnits.getText().equals(qOptionUnits[0]));
+			}
+		});
 
 		Group pointsParameters = new Group(dataParameters, SWT.NONE);
 		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
@@ -346,7 +372,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		gnomParameters.setLayout(new GridLayout(3, false));
 		gnomParameters.setText("GNOM");
 
-		String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
+		final String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
 
 		new Label(gnomParameters, SWT.NONE).setText("Minimum distance search");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
@@ -354,6 +380,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		minDistanceUnits.setItems(distanceOptionsUnits);
+		minDistanceUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setStartDistanceAngstromUnits(minDistanceUnits.getText().equals(distanceOptionsUnits[0]));
+			}
+		});
 
 		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
@@ -361,6 +394,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
 		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
+		maxDistanceUnits.addModifyListener(new ModifyListener() {
+			
+			@Override
+			public void modifyText(ModifyEvent e) {
+				modelBuildingParameters.setEndDistanceAngstromUnits(maxDistanceUnits.getText().equals(distanceOptionsUnits[0]));
+			}
+		});
 
 		new Label(gnomParameters, SWT.NONE).setText("Number of search");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
@@ -381,13 +421,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dammifParameters.setText("DAMMIF");
 
 		String[] dammifModeOptions = new String[] {"Fast", "Slow"};
-		String[] symmetryOptions = new String[30];
-		for (int i=1; i< 20; ++i) {
-			symmetryOptions[i-1] = "P" + i;
-		}
-		for (int i=2; i< 13; ++i) {
-			symmetryOptions[i + 19 - 2] = "P" + i + "2";
-		}
+		String[] symmetryOptions = getSymmetryOptions();
 
 		new Label(dammifParameters, SWT.NONE).setText("Symmetry");
 		symmetry = new Combo(dammifParameters, SWT.READ_ONLY);
@@ -419,7 +453,32 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
-		resetGUI();
+		if (modelBuildingParameters == null)
+			modelBuildingParameters = new ModelBuildingParameters();
+
+		if (memento != null) {
+			modelBuildingParameters.loadMementoParameters(memento);
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
+				public void run() {
+					restoreState();
+				}
+			});
+		}
+		else {
+			resetGUI();
+		}
+	}
+
+	private String[] getSymmetryOptions() {
+		String[] symmetryOptions = new String[30];
+		for (int i=1; i< 20; ++i) {
+			symmetryOptions[i-1] = "P" + i;
+		}
+		for (int i=2; i< 13; ++i) {
+			symmetryOptions[i + 19 - 2] = "P" + i + "2";
+		}
+		return symmetryOptions;
 	}
 	
 	protected void setFilenameString(String filename) {
@@ -439,7 +498,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	public ModelBuildingParameters getParameters() {
-		return modelBuildingParameters;
+		return captureGUIInformation();
 	}
 
 	private ModifyListener pathListener = new ModifyListener() {
@@ -490,12 +549,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
-		if (modelBuildingParameters == null)
-			modelBuildingParameters = new ModelBuildingParameters();
-
 		//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
 		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
 		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
+
+		modelBuildingParameters.setDataFilename(dataFile.getText());
 
 		//will populate parameters assuming that the Nexus type is being used
 		modelBuildingParameters.setPathToQ(pathToQ.getText());
@@ -555,6 +613,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			@Override
 			public void run() {
 				String fedId = System.getenv("USER");
+				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
 				pathToQ.setText("/entry1/detector_result/q");
@@ -611,4 +670,57 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		}
 	};
+
+	@Override
+	public void init(IViewSite site, IMemento memento) throws PartInitException {
+		init(site);
+		this.memento = memento;
+	}
+
+	@Override
+	public void saveState(IMemento memento) {
+		if (memento != null) {
+			captureGUIInformation();
+			modelBuildingParameters.storeMementoParameters(memento);
+		}
+	}
+	
+	
+	protected void restoreState() {
+		String dataFilename = modelBuildingParameters.getDataFilename();
+		if (dataFilename != null) {
+			dataFile.setText(dataFilename);
+		}
+		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
+		htmlResultsDirectory.setText(modelBuildingParameters.getHtmlResultsDirectory());
+		pathToQ.setText(modelBuildingParameters.getPathToQ());
+		pathToData.setText(modelBuildingParameters.getPathToData());
+		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
+		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
+		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);
+		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
+		qMaxUnits.select(modelBuildingParameters.isqMaxInverseAngstromUnits() ? 0 : 1);
+//		startPoint.setText(modelBuildingParameters.get);
+//		endPoint.setText("1000");
+		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
+		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
+		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
+		minDistanceUnits.select(modelBuildingParameters.isStartDistanceAngstromUnits() ? 0 : 1);
+		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
+		maxDistanceUnits.select(modelBuildingParameters.isEndDistanceAngstromUnits() ? 0 : 1);
+		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
+		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
+		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
+		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
+	}
+
+	private void refreshSymmetryCombo(String symmetry2) {
+		String[] options = getSymmetryOptions();
+		for (int i=0; i< options.length; ++i) {
+			if (options[i].equals(symmetry2)) {
+				symmetry.select(i);
+				break;
+			}
+		}
+	}
 }
