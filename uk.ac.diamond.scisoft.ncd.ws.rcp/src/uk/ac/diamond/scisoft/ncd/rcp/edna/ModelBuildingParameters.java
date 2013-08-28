@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.edna;
 import org.eclipse.ui.IMemento;
 
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersMementoStrings;
+import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
 
 public class ModelBuildingParameters {
 	private String workingDirectory;
@@ -189,7 +190,7 @@ public class ModelBuildingParameters {
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
-		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\"  --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" " + 
+		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\" " + 
 				" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
 				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames + " --threads " + numberOfThreads +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
@@ -198,6 +199,9 @@ public class ModelBuildingParameters {
 		}
 		else {
 			commandLineParameters += " --onlyGnom";
+		}
+		if (dataFilename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[1])) { //nxs format
+			commandLineParameters += " --nxsQ \"" + pathToQ + "\" --nxsData \"" + pathToData + "\" ";
 		}
 		return commandLineParameters;
 	}
