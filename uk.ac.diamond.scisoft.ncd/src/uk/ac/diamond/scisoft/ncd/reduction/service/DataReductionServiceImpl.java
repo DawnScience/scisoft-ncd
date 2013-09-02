@@ -645,9 +645,12 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 
 		CalibrationResultsBean crb = context.getCalibrationResults();
-		Amount<Energy> energy = Amount.valueOf(context.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT));
 		processing.setCrb(crb);
-		processing.setEnergy(energy);
+		Double valEnergy = context.getEnergy();
+		if (valEnergy != null) {
+			Amount<Energy> energy = Amount.valueOf(context.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT));
+			processing.setEnergy(energy);
+		}
 		
 		
 		processing.setBgFile(bgFile);

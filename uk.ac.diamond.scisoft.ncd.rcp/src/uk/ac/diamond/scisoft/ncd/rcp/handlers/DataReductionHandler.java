@@ -289,7 +289,9 @@ public class DataReductionHandler extends AbstractHandler {
 		
 		NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 		Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
-		context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+		if (energy != null) {
+			context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
+		}
 	}
 
 }
