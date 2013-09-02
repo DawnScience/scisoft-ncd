@@ -611,7 +611,7 @@ public class LazyNcdProcessing {
 							}
 
 							if (flags.isEnableDetectorResponse()) {
-								monitor.setTaskName(monitorFile + " : Correct for detector response");
+								jobmonitor.setTaskName(monitorFile + " : Correct for detector response");
 
 								tmp_ids.setIDs(dr_group_id, dr_data_id);
 								tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
@@ -622,7 +622,7 @@ public class LazyNcdProcessing {
 							DataSliceIdentifiers sector_errors_id = new DataSliceIdentifiers(tmp_errors_ids);
 							DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(tmp_ids);
 							DataSliceIdentifiers azimuth_errors_id = new DataSliceIdentifiers(tmp_errors_ids);
-							monitor.setTaskName(monitorFile + " : Performing sector integration");
+							jobmonitor.setTaskName(monitorFile + " : Performing sector integration");
 							sector_id.setIDs(sec_group_id, sec_data_id);
 							sector_errors_id.setIDs(sec_group_id, sec_errors_id);
 							azimuth_id.setIDs(sec_group_id, az_data_id);
@@ -653,7 +653,7 @@ public class LazyNcdProcessing {
 				
 			}
 			
-			monitor.beginTask("Running Sector Integration Stage", sectorJobList.size());
+			monitor.beginTask(monitorFile + " : Running Sector Integration Stage", sectorJobList.size());
 			for (Job job : sectorJobList) {
 				if (monitor.isCanceled()) {
 					sectorJobList.clear();
@@ -672,8 +672,7 @@ public class LazyNcdProcessing {
 					}
 				}
 				job.schedule();
-				runningJobList.add(job);
-				
+				runningJobList.add(job);				
 			}
 			
 			for (Job job : sectorJobList) {
@@ -775,7 +774,7 @@ public class LazyNcdProcessing {
 						}
 
 						if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
-							monitor.setTaskName(monitorFile + " : Correct for detector response");
+							jobmonitor.setTaskName(monitorFile + " : Correct for detector response");
 
 							tmp_ids.setIDs(dr_group_id, dr_data_id);
 							tmp_errors_ids.setIDs(dr_group_id, dr_errors_id);
@@ -783,7 +782,7 @@ public class LazyNcdProcessing {
 						}
 
 						if (flags.isEnableNormalisation()) {
-							monitor.setTaskName(monitorFile + " : Normalising data");
+							jobmonitor.setTaskName(monitorFile + " : Normalising data");
 
 							SliceSettings calibrationSliceParams = new SliceSettings(currentSliceParams);
 							calibrationSliceParams.setFrames(framesCal);
@@ -796,7 +795,7 @@ public class LazyNcdProcessing {
 						}
 
 						if (flags.isEnableBackground() && final_bgFrames_int != null) {
-							monitor.setTaskName(monitorFile + " : Subtracting background");
+							jobmonitor.setTaskName(monitorFile + " : Subtracting background");
 
 							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
 							int[] bgStart = new int[finalSliceDim + 1];
@@ -830,7 +829,7 @@ public class LazyNcdProcessing {
 						}
 
 						if (flags.isEnableInvariant()) {
-							monitor.setTaskName(monitorFile + " : Calculating invariant");
+							jobmonitor.setTaskName(monitorFile + " : Calculating invariant");
 
 							DataSliceIdentifiers invId = new DataSliceIdentifiers(tmp_ids);
 							invId.setIDs(inv_group_id, inv_data_id);
@@ -871,7 +870,7 @@ public class LazyNcdProcessing {
 			processingJobList.add(processingJob);
 		}
 
-		monitor.beginTask("Running NCD Data Reduction stages", processingJobList.size());
+		monitor.beginTask(monitorFile + " : Running NCD Data Reduction stages", processingJobList.size());
 		for (DataReductionJob job : processingJobList) {
 			if (monitor.isCanceled()) {
 				processingJobList.clear();
@@ -935,7 +934,6 @@ public class LazyNcdProcessing {
 				lazyAverage.writeQaxisData(frames_int.length, input_ids.datagroup_id);
 			}
 			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
-			monitor.done();
 		}
 		
 	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
