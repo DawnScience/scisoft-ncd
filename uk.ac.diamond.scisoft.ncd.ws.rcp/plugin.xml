@@ -11,5 +11,13 @@
            restorable="true">
      </view>
    </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            class="uk.ac.diamond.scisoft.ncd.rcp.edna.NcdModelBuilderPerspective"
+            id="uk.ac.diamond.scisoft.ncd.ws.rcp.NcdModelBuilderPerspective"
+            name="NCD Model Builder Perspective">
+      </perspective>
+   </extension>
 
 </plugin>
