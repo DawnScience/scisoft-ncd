@@ -548,8 +548,10 @@ public class LazyNcdProcessing {
 	    
 		int sliceDim = 0;
 		int sliceSize = (int) frames[0];
-		estimateFrameBatchSize(dim, frames);
-
+		if (flags.isEnableSector()) {
+			estimateFrameBatchSize(dim, frames);
+		}
+		
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
 			// Find dimension that needs to be sliced
