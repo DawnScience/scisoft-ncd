@@ -369,37 +369,49 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_BGFIRSTFRAME);
-			if (tmp != null) bgFramesStart.setText(tmp);
+			if (tmp != null) {
+				bgFramesStart.setText(tmp);
+			}
 			tmp = memento.getString(NcdPreferences.NCD_BGLASTFRAME);
-			if (tmp != null) bgFramesStop.setText(tmp);
+			if (tmp != null) {
+				bgFramesStop.setText(tmp);
+			}
 			tmp = memento.getString(NcdPreferences.NCD_BGFRAMESELECTION);
-			if (tmp != null) bgAdvanced.setText(tmp);
+			if (tmp != null) {
+				bgAdvanced.setText(tmp);
+			}
+			val = memento.getBoolean(NcdPreferences.NCD_BGADVANCED);
+			if (val!=null) {
+				bgAdvancedButton.setSelection(val);
+			}
+			bgAdvancedButton.notifyListeners(SWT.Selection, null);
 			if (ncdBkgSliceSourceProvider.getBkgSlice() != null) {
 				bgEcomp.setExpanded(true);
 				expansionAdapter.expansionStateChanged(new ExpansionEvent(bgEcomp, true));
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_DATAFIRSTFRAME);
-			if (tmp != null) detFramesStart.setText(tmp);
+			if (tmp != null) {
+				detFramesStart.setText(tmp);
+			}
 			tmp = memento.getString(NcdPreferences.NCD_DATALASTFRAME);
-			if (tmp != null) detFramesStop.setText(tmp);
+			if (tmp != null) {
+				detFramesStop.setText(tmp);
+			}
 			tmp = memento.getString(NcdPreferences.NCD_DATAFRAMESELECTION);
-			if (tmp != null) detAdvanced.setText(tmp);
+			if (tmp != null) {
+				detAdvanced.setText(tmp);
+			}			
 			if (ncdDataSliceSourceProvider.getDataSlice() != null) {
 				ecomp.setExpanded(true);
 				expansionAdapter.expansionStateChanged(new ExpansionEvent(ecomp, true));
 			}
 			
-			val = memento.getBoolean(NcdPreferences.NCD_BGADVANCED);
-			if (val!=null) {
-				bgAdvancedButton.setSelection(val);
-				if (val.booleanValue()) bgAdvancedButton.notifyListeners(SWT.Selection, null);
-			}
 			val = memento.getBoolean(NcdPreferences.NCD_DATAADVANCED);
 			if (val!=null) {
 				detAdvancedButton.setSelection(val);
-				if (val.booleanValue()) detAdvancedButton.notifyListeners(SWT.Selection, null);
 			}
+			detAdvancedButton.notifyListeners(SWT.Selection, null);
 			
 			tmp = memento.getString(NcdPreferences.NCD_GRIDAVERAGESELECTION);
 			if (tmp != null) {
