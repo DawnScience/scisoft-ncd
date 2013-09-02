@@ -543,6 +543,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						endPoint.setText(String.valueOf(slice.getSize()));
 						break;
 					}
+					else if (listItem.getName().equals(dataPath)) {
+						IDataset slice = listItem.getSlice(new Slice());
+						numberOfFrames.setText(String.valueOf(slice.getShape()[1]));
+					}
 				}
 			}
 		}
