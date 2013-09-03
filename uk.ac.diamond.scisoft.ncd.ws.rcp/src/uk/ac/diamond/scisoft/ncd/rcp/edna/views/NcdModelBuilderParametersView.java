@@ -599,9 +599,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected void updateQ(Text qTextBox, String text) {
-		int index = Integer.valueOf(text);
-		if (currentQDataset != null) {
-			double qValue = currentQDataset.getDouble(index);
+		try {
+			int index = Integer.valueOf(text);
+			if (currentQDataset != null) {
+				double qValue;
+				qValue = currentQDataset.getDouble(index);
+				qTextBox.setText(String.valueOf(qValue));
+			}
+		} catch (Exception e) {
+			logger.error("Index was not valid. Using a default value instead.");
+			double qValue;
+			if (qTextBox == qMin) {
+				qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
+			}
+			else if (qTextBox == qMax) {
+				qValue = currentQDataset.getDouble(currentQDataset.maxPos()[0]);
+			}
+			else {
+				qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
+			}
 			qTextBox.setText(String.valueOf(qValue));
 		}
 	}
