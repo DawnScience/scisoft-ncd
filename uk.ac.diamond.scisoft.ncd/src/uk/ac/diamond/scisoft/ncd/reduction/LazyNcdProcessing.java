@@ -339,6 +339,7 @@ public class LazyNcdProcessing {
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
 		processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", "NXinstrument");
+	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
 		
 		if (firstFrame != null || lastFrame != null) {
 			frameSelection = StringUtils.leftPad("", rank - dim - 1, ";");
@@ -933,7 +934,6 @@ public class LazyNcdProcessing {
 			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
 		}
 		
-	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
 	    H5.H5Lcreate_hard(input_ids.datagroup_id, "./data", result_group_id, "./data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	    H5.H5Lcreate_hard(input_errors_ids.datagroup_id, "./errors", result_group_id, "./errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	    if (qaxis != null) {
