@@ -122,6 +122,22 @@ public class ModelBuildingParameters {
 		this.qMaxInverseAngstromUnits = qMaxInverseAngstromUnits;
 	}
 
+	public int getFirstPoint() {
+		return firstPoint;
+	}
+
+	public void setFirstPoint(int firstPoint) {
+		this.firstPoint = firstPoint;
+	}
+
+	public int getLastPoint() {
+		return lastPoint;
+	}
+
+	public void setLastPoint(int lastPoint) {
+		this.lastPoint = lastPoint;
+	}
+
 	public int getNumberOfThreads() {
 		return numberOfThreads;
 	}
