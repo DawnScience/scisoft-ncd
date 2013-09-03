@@ -54,6 +54,8 @@ import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Slice;
@@ -114,6 +116,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean pathEmpty = true;
 
 	private Button browseDataFile;
+
+	private IDataset currentQDataset;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -312,6 +316,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(qParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(qParameters, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
+		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
@@ -325,6 +330,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(qParameters, SWT.NONE).setText("q maximum");
 		qMax = new Text(qParameters, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
+		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
@@ -346,13 +352,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		new Label(pointsParameters, SWT.NONE).setText("First point");
 		startPoint = new Text(pointsParameters, SWT.NONE);
 		startPoint.addListener(SWT.Verify, verifyInt);
+		startPoint.addListener(SWT.KeyUp, startEndPointListener);
 		new Label(pointsParameters, SWT.NONE).setText("Last point");
 		endPoint = new Text(pointsParameters, SWT.NONE);
 		endPoint.addListener(SWT.Verify, verifyInt);
-		
-		//TODO for now, disable the points
-		startPoint.setEnabled(false);
-		endPoint.setEnabled(false);
+		endPoint.addListener(SWT.KeyUp, startEndPointListener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
@@ -513,6 +517,38 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathEmpty = (pathToData.getText().isEmpty() || pathToQ.getText().isEmpty());
 	}
 
+	private Listener startEndPointListener = new Listener() {
+
+		@Override
+		public void handleEvent(Event event) {
+			Text source = (Text) event.widget;
+			String sourceText = source.getText();
+			if (source == startPoint) {
+				updateQ(qMin, sourceText);
+			}
+			else if (source == endPoint) {
+				updateQ(qMax, sourceText);
+			}
+		}
+		
+	};
+	
+	private Listener qMinMaxListener = new Listener() {
+
+		@Override
+		public void handleEvent(Event event) {
+			Text source = (Text) event.widget;
+			String sourceText = source.getText();
+			if (source == qMin) {
+				updatePoint(startPoint, sourceText);
+			}
+			else if (source == qMax) {
+				updatePoint(endPoint, sourceText);
+			}
+		}
+		
+	};
+	
 	protected void refreshRunButton() {
 		final boolean fileValidAndPathsPopulated = fileSelected && !pathEmpty;
 		compInput.getDisplay().asyncExec(new Runnable() {
@@ -538,6 +574,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				for (ILazyDataset listItem: holder.getList()) {
 					if (listItem.getName().equals(qPath)) {
 						IDataset slice = listItem.getSlice(new Slice());
+						currentQDataset = slice;
 						qMin.setText(String.valueOf(slice.min()));
 						qMax.setText(String.valueOf(slice.max()));
 						endPoint.setText(String.valueOf(slice.getSize()));
@@ -549,6 +586,33 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					}
 				}
 			}
+		}
+	}
+
+	protected void updateQ(Text qTextBox, String text) {
+		int index = Integer.valueOf(text);
+		if (currentQDataset != null) {
+			double qValue = currentQDataset.getDouble(index);
+			qTextBox.setText(String.valueOf(qValue));
+		}
+	}
+
+	protected void updatePoint(Text pointBox, String text) {
+		double newQValue;
+		try {
+			newQValue = Double.valueOf(text);
+		} catch (NumberFormatException e) {
+			newQValue = 0;
+		}
+		if (currentQDataset != null) {
+			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue);
+			if (index < 1) {
+				index = 1;
+			}
+			else if (index > currentQDataset.getSize()) {
+				index = currentQDataset.getSize();
+			}
+			pointBox.setText(String.valueOf(index));
 		}
 	}
 
