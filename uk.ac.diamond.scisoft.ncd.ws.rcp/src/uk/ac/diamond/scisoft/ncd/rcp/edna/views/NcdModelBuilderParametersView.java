@@ -635,7 +635,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		modelBuildingParameters.setqMinAngstrom(qMinValue);
 
-		
+		modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
+		modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
+
 		double qMaxValue = Double.valueOf(qMax.getText());
 		if (qMaxUnits.getSelectionIndex() == 1) {
 			qMaxValue /= 10;
@@ -768,8 +770,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);
 		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
 		qMaxUnits.select(modelBuildingParameters.isqMaxInverseAngstromUnits() ? 0 : 1);
-//		startPoint.setText(modelBuildingParameters.get);
-//		endPoint.setText("1000");
+		startPoint.setText(Integer.toString(modelBuildingParameters.getFirstPoint()));
+		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
 		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
