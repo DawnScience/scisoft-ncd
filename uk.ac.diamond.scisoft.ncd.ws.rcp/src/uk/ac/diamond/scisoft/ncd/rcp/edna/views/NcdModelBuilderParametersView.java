@@ -577,21 +577,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			String dataPath = pathToData.getText();
 			if (holder.contains(qPath) && holder.contains(dataPath)) {
 				startPoint.setText("1");
-				holder.getList().iterator();
-				for (ILazyDataset listItem: holder.getList()) {
-					if (listItem.getName().equals(qPath)) {
-						IDataset slice = listItem.getSlice(new Slice());
-						currentQDataset = slice;
-						qMin.setText(String.valueOf(slice.min()));
-						qMax.setText(String.valueOf(slice.max()));
-						endPoint.setText(String.valueOf(slice.getSize()));
-						break;
-					}
-					else if (listItem.getName().equals(dataPath)) {
-						IDataset slice = listItem.getSlice(new Slice());
-						numberOfFrames.setText(String.valueOf(slice.getShape()[1]));
-					}
-				}
+				IDataset qSlice = holder.getLazyDataset(qPath).getSlice(new Slice());
+				currentQDataset = qSlice;
+				qMin.setText(String.valueOf(qSlice.min()));
+				qMax.setText(String.valueOf(qSlice.max()));
+				endPoint.setText(String.valueOf(qSlice.getSize()));
+
+				numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
 			}
 		}
 	}
