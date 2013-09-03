@@ -687,7 +687,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				pathToQ.setText("/entry1/detector_result/q");
 				pathToData.setText("/entry1/detector_result/data");
 				numberOfFrames.setText("1");
-				qMin.setText("0.1");
+				qMin.setText("0.01");
 				qMinUnits.select(0);
 				qMax.setText("0.3");
 				qMaxUnits.select(0);
