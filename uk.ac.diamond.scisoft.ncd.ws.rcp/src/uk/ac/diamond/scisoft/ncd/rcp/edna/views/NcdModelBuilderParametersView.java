@@ -468,6 +468,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					restoreState();
 				}
 			});
+			DataHolder holder;
+			try {
+				holder = loadDataFile();
+				retrieveQFromFile(holder);
+			} catch (Exception e1) {
+				logger.error("Exception while retrieving Q values from data file", e1);
+			}
 		}
 		else {
 			resetGUI();
@@ -560,9 +567,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (fileValidAndPathsPopulated) {
 			DataHolder holder = null;
 			try {
-				holder = LoaderFactory.getData(dataFilename);
+				holder = loadDataFile();
 			} catch (Exception e) {
-				logger.error("Problem while trying to load information from the file");
+				logger.error("Problem while trying to load information from the file", e);
 				return;
 			}
 			//check that the q and data paths are in the file
@@ -587,6 +594,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 			}
 		}
+	}
+
+	private DataHolder loadDataFile() throws Exception {
+		DataHolder holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
+		return holder;
+	}
+
+	private void retrieveQFromFile(DataHolder holder) {
+		ILazyDataset qDataset = holder.getLazyDataset(modelBuildingParameters.getPathToQ());
+		currentQDataset = qDataset.getSlice(new Slice());
 	}
 
 	protected void updateQ(Text qTextBox, String text) {
