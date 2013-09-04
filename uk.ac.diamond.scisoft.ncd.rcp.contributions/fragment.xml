@@ -466,5 +466,12 @@
           name="NCD Data Reduction Wizard">
     </wizard>
  </extension>
+ <extension
+       point="org.eclipse.ui.intro.configExtension">
+    <configExtension
+          configId="org.dawnsci.intro.universalConfig"
+          content="intro/introContribution.xml">
+    </configExtension>
+ </extension>
 
 </fragment>

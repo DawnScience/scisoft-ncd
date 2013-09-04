@@ -1,0 +1,6 @@
+a#scisoft-ncdreduc img { background-image : url(graphics/ncd_intro45.jpg); }
+a#scisoft-ncdreduc:hover img { background-image : url(graphics/ncd_intro52.jpg); }
+
+a#scisoft-ncdcalib img { background-image : url(graphics/ncd_calibration_intro45.jpg); }
+a#scisoft-ncdcalib:hover img { background-image : url(graphics/ncd_calibration_intro52.jpg); }
+
