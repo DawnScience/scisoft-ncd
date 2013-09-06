@@ -750,7 +750,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
 
 		return modelBuildingParameters;
-		//TODO save the info somewhere? saveCell();
 	}
 	
 	@Override
