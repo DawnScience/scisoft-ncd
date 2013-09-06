@@ -164,9 +164,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					dataFile.setBackground(red);
 					fileSelected = false;
 				}
-				boolean isDatFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				pathToQCombo.setEnabled(isDatFile);
-				pathToDataCombo.setEnabled(isDatFile);
+				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
+				if (isNxsFile) {
+					findQAndData();
+				}
+				pathToQCombo.setEnabled(isNxsFile);
+				pathToDataCombo.setEnabled(isNxsFile);
 				refreshRunButton();
 			}
 		});
@@ -473,10 +476,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					restoreState();
 				}
 			});
+			findQAndData();
 			DataHolder holder;
 			try {
 				holder = loadDataFile();
-				findQAndData();
 				retrieveQFromFile(holder);
 			} catch (Exception e1) {
 				logger.error("Exception while retrieving Q values from data file", e1);
@@ -768,8 +771,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
-				pathToQCombo.clearSelection();
-				pathToDataCombo.clearSelection();
+				pathToQCombo.removeAll();
+				pathToDataCombo.removeAll();
 				numberOfFrames.setText("1");
 				qMin.setText("0.01");
 				qMinUnits.select(0);
