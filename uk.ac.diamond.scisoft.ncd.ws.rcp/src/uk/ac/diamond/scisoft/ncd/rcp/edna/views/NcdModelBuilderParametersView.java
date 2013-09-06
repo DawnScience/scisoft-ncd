@@ -310,8 +310,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		pathToQCombo.addModifyListener(pathListener);
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		pathToDataCombo.addModifyListener(pathListener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -493,6 +495,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
+		findQAndData();
 	}
 
 	private String[] getSymmetryOptions() {
@@ -535,7 +538,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	};
 
 	private void checkWhetherPathsAreEmpty() {
-		pathEmpty = (pathToData.getText().isEmpty() || pathToQ.getText().isEmpty());
+		pathEmpty = (pathToDataCombo.getText().isEmpty() || pathToQCombo.getText().isEmpty());
 	}
 
 	private Listener startEndPointListener = new Listener() {
@@ -580,18 +583,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		if (fileValidAndPathsPopulated) {
 			DataHolder holder = null;
-			pathToQCombo.removeAll();
-			pathToDataCombo.removeAll();
-			try {
-				HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
-				HDF5File file = loader.loadTree();
-				HDF5Group group = file.getGroup();
-				HDF5NodeLink link = group.iterator().next(); //top level
-				findAxesAndSignals(link);
-					
-			} catch (Exception e1) {
-				logger.error("Problem while trying to populate Q and Data combo boxes", e1);
-			}
 			try {
 				holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
 			} catch (Exception e) {
@@ -599,8 +590,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				return;
 			}
 			//check that the q and data paths are in the file
-			String qPath = pathToQ.getText();
-			String dataPath = pathToData.getText();
+			String qPath = pathToQCombo.getText();
+			String dataPath = pathToDataCombo.getText();
 			if (holder.contains(qPath) && holder.contains(dataPath)) {
 				startPoint.setText("1");
 				IDataset qSlice = holder.getLazyDataset(qPath).getSlice(new Slice());
@@ -609,8 +600,30 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				qMax.setText(String.valueOf(qSlice.max()));
 				endPoint.setText(String.valueOf(qSlice.getSize()));
 
-				numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
+				try {
+					IDataset slicedSet = holder.getLazyDataset(dataPath).getSlice(new Slice());
+					if (slicedSet.getShape().length > 1) {
+						numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
+					}
+				} catch (Exception e) {
+					logger.error("Exception while attempting to retrieve number of frames from dataset", e);
+				}
 			}
+		}
+	}
+
+	private void findQAndData() {
+		pathToQCombo.removeAll();
+		pathToDataCombo.removeAll();
+		try {
+			HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
+			HDF5File file = loader.loadTree();
+			HDF5Group group = file.getGroup();
+			HDF5NodeLink link = group.iterator().next(); //top level
+			findAxesAndSignals(link);
+				
+		} catch (Exception e1) {
+			logger.error("Problem while trying to populate Q and Data combo boxes", e1);
 		}
 	}
 
@@ -705,8 +718,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		modelBuildingParameters.setDataFilename(dataFile.getText());
 
 		//will populate parameters assuming that the Nexus type is being used
-		modelBuildingParameters.setPathToQ(pathToQ.getText());
-		modelBuildingParameters.setPathToData(pathToData.getText());
+		modelBuildingParameters.setPathToQ(pathToQCombo.getText());
+		modelBuildingParameters.setPathToData(pathToDataCombo.getText());
 
 		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
@@ -766,8 +779,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
-				pathToQ.setText("/entry1/detector_result/q");
-				pathToData.setText("/entry1/detector_result/data");
+				pathToQCombo.clearSelection();
+				pathToDataCombo.clearSelection();
 				numberOfFrames.setText("1");
 				qMin.setText("0.01");
 				qMinUnits.select(0);
