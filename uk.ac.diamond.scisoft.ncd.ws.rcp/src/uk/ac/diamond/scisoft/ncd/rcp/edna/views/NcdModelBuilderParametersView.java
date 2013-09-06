@@ -311,6 +311,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
 		numberOfFrames.addListener(SWT.Verify, verifyInt);
+		numberOfFrames.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		Group qParameters = new Group(dataParameters, SWT.NONE);
 		GridData qLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
@@ -326,6 +327,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMin.addListener(SWT.Verify, verifyDouble);
 		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
+		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
 		qMinUnits.addModifyListener(new ModifyListener() {
@@ -340,6 +342,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
+		qMax.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
 		qMaxUnits.addModifyListener(new ModifyListener() {
@@ -361,15 +364,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startPoint = new Text(pointsParameters, SWT.NONE);
 		startPoint.addListener(SWT.Verify, verifyInt);
 		startPoint.addListener(SWT.KeyUp, startEndPointListener);
+		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		new Label(pointsParameters, SWT.NONE).setText("Last point");
 		endPoint = new Text(pointsParameters, SWT.NONE);
 		endPoint.addListener(SWT.Verify, verifyInt);
 		endPoint.addListener(SWT.KeyUp, startEndPointListener);
+		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
 		numberOfThreads.addListener(SWT.Verify, verifyInt);
 		numberOfThreads.setToolTipText("The maximum number of threads to be used for DAMMIF");
+		numberOfThreads.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
 		new Label(dataParameters, SWT.NONE).setText("Rmax or Rmax + model building");
@@ -390,6 +396,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		minDistanceSearch.setToolTipText("Initial value for Rmax to perform search");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
+		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+
 		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		minDistanceUnits.setItems(distanceOptionsUnits);
 		minDistanceUnits.addModifyListener(new ModifyListener() {
@@ -404,6 +412,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
+		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
 		maxDistanceUnits.addModifyListener(new ModifyListener() {
@@ -419,6 +428,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfSearch.addListener(SWT.Verify, verifyInt);
 		GridData searchLayout = new GridData();
 		searchLayout.horizontalSpan = 2;
+		searchLayout.grabExcessHorizontalSpace = true;
 		numberOfSearch.setLayoutData(searchLayout);
 		numberOfSearch.setToolTipText("Number of intervals to use for Rmax search");
 
@@ -426,6 +436,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		tolerance = new Text(gnomParameters, SWT.NONE);
 		tolerance.addListener(SWT.Verify, verifyDouble);
 		tolerance.setToolTipText("Stopping criterion for Rmax search");
+		tolerance.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		Group dammifParameters = new Group(dataParameters, SWT.NONE);
 		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
