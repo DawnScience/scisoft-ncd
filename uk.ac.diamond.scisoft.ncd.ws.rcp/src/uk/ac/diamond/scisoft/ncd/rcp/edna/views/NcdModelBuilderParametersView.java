@@ -60,14 +60,12 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Slice;
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.analysis.io.IMetaData;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
@@ -87,6 +85,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected Text htmlResultsDirectory;
 	protected Text pathToQ;
 	protected Text pathToData;
+	protected Combo pathToQCombo;
+	protected Combo pathToDataCombo;
 
 	protected Text numberOfFrames;
 	protected Text qMin;
@@ -306,6 +306,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToData.setToolTipText("Path to data (only used in Nexus file)");
 		pathToData.addModifyListener(pathListener);
 		pathToData.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+		pathToQCombo = new Combo(dataParameters, SWT.NONE);
+		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
+		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -574,25 +579,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		if (fileValidAndPathsPopulated) {
 			DataHolder holder = null;
+			pathToQCombo.removeAll();
+			pathToDataCombo.removeAll();
 			try {
-				HDF5Loader loader = new HDF5Loader(dataFilename);
+				HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
 				HDF5File file = loader.loadTree();
 				HDF5Group group = file.getGroup();
 				HDF5NodeLink link = group.iterator().next(); //top level
 				HDF5Node node = link.getDestination();
-//				System.out.println("node: " + node);
 				HDF5Group group2 = (HDF5Group) node;
-//				System.out.println("group2 : " + group2);
 				for (Iterator<String> nodeItr = group2.getNodeNameIterator(); nodeItr.hasNext();) {
 					String nodeName = nodeItr.next();
 					HDF5NodeLink link1 = group2.getNodeLink(nodeName);
 					HDF5Node dest1 = link1.getDestination();
-//					System.out.println("nodeName: " + nodeName + " destination: " + dest1);
 					for (Iterator<String> attItr = dest1.getAttributeNameIterator(); attItr.hasNext();){
 						String attName = attItr.next();
 						System.out.println("link1 attribute names: " + attName + " value: " + dest1.getAttribute(attName) + dest1.getAttribute(attName).getFirstElement());
 						if (dest1.getAttribute(attName).getFirstElement().equals("NXdata")) {
-							System.out.println("Eureka!");
 							HDF5Group group3 = (HDF5Group)dest1;
 							System.out.println("Group3: "+ group3);
 							for (Iterator<String> nodeNameItr = group3.getNodeNameIterator(); nodeNameItr.hasNext();) {
@@ -603,14 +606,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									String next = attItr1.next();
 									System.out.println("group3 node attribute: " + next);
 									if (next.equals("axis")) {
-										HDF5Attribute axis = nodeLink.getDestination().getAttribute(next);
-										System.out.println("found an axis: " + axis);
-										
+										System.out.println("found an axis: " + nodeLink.getFullName());
+										pathToQCombo.add(nodeLink.getFullName());
+										pathToQCombo.select(pathToQCombo.getItemCount() - 1);
 									}
 									else if (next.equals("signal")) {
-										HDF5Attribute axis = nodeLink.getDestination().getAttribute(next);
-										System.out.println("found a signal: " + axis);
-										
+										System.out.println("found a signal: " + nodeLink.getFullName());
+										pathToDataCombo.add(nodeLink.getFullName());
+										pathToDataCombo.select(pathToDataCombo.getItemCount() - 1);
 									}
 								}
 							}
@@ -620,11 +623,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 					
 			} catch (Exception e1) {
-				// TODO Auto-generated catch block
-				e1.printStackTrace();
+				logger.error("Problem while trying to populate Q and Data combo boxes", e1);
 			}
 			try {
-				holder = LoaderFactory.getData(dataFilename);
+				holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
 			} catch (Exception e) {
 				logger.error("Problem while trying to load information from the file", e);
 				return;
