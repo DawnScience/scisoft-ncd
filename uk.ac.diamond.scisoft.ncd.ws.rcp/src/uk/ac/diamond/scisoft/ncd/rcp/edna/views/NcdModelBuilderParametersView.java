@@ -60,6 +60,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Slice;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
@@ -586,41 +587,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				HDF5File file = loader.loadTree();
 				HDF5Group group = file.getGroup();
 				HDF5NodeLink link = group.iterator().next(); //top level
-				HDF5Node node = link.getDestination();
-				HDF5Group group2 = (HDF5Group) node;
-				for (Iterator<String> nodeItr = group2.getNodeNameIterator(); nodeItr.hasNext();) {
-					String nodeName = nodeItr.next();
-					HDF5NodeLink link1 = group2.getNodeLink(nodeName);
-					HDF5Node dest1 = link1.getDestination();
-					for (Iterator<String> attItr = dest1.getAttributeNameIterator(); attItr.hasNext();){
-						String attName = attItr.next();
-						System.out.println("link1 attribute names: " + attName + " value: " + dest1.getAttribute(attName) + dest1.getAttribute(attName).getFirstElement());
-						if (dest1.getAttribute(attName).getFirstElement().equals("NXdata")) {
-							HDF5Group group3 = (HDF5Group)dest1;
-							System.out.println("Group3: "+ group3);
-							for (Iterator<String> nodeNameItr = group3.getNodeNameIterator(); nodeNameItr.hasNext();) {
-								String nodeName1 = nodeNameItr.next();
-								HDF5NodeLink nodeLink = group3.getNodeLink(nodeName1);
-								System.out.println("group3 node: " + nodeLink);
-								for (Iterator<String> attItr1 = nodeLink.getDestination().getAttributeNameIterator();attItr1.hasNext();) {
-									String next = attItr1.next();
-									System.out.println("group3 node attribute: " + next);
-									if (next.equals("axis")) {
-										System.out.println("found an axis: " + nodeLink.getFullName());
-										pathToQCombo.add(nodeLink.getFullName());
-										pathToQCombo.select(pathToQCombo.getItemCount() - 1);
-									}
-									else if (next.equals("signal")) {
-										System.out.println("found a signal: " + nodeLink.getFullName());
-										pathToDataCombo.add(nodeLink.getFullName());
-										pathToDataCombo.select(pathToDataCombo.getItemCount() - 1);
-									}
-								}
-							}
-						}
-					}
-					System.out.println();
-				}
+				findAxesAndSignals(link);
 					
 			} catch (Exception e1) {
 				logger.error("Problem while trying to populate Q and Data combo boxes", e1);
@@ -643,6 +610,36 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				endPoint.setText(String.valueOf(qSlice.getSize()));
 
 				numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
+			}
+		}
+	}
+
+	//recursive depth-first-search to find all possible axes and signals for q and data
+	private void findAxesAndSignals(HDF5NodeLink link) {
+		HDF5Node node = link.getDestination();
+		if (node instanceof HDF5Group) {
+			HDF5Group group2 = (HDF5Group) node;
+			for (Iterator<String> nodeItr = group2.getNodeNameIterator(); nodeItr
+					.hasNext();) {
+				String nodeName = nodeItr.next();
+				HDF5NodeLink link1 = group2.getNodeLink(nodeName);
+				findAxesAndSignals(link1);
+			}
+		}
+		else if (node instanceof HDF5Dataset) {
+			HDF5Node dest1 = node;
+			for (Iterator<String> attItr = dest1.getAttributeNameIterator(); attItr
+					.hasNext();) {
+				String attName = attItr.next();
+				if (attName.equals("axis")) {
+					pathToQCombo.add(link.getFullName());
+					pathToQCombo.select(pathToQCombo
+							.getItemCount() - 1);
+				} else if (attName.equals("signal")) {
+					pathToDataCombo.add(link.getFullName());
+					pathToDataCombo.select(pathToDataCombo
+							.getItemCount() - 1);
+				}
 			}
 		}
 	}
