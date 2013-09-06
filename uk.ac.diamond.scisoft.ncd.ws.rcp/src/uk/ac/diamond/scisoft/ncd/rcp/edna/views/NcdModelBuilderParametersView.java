@@ -84,8 +84,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected String dataFilename = "";
 	protected Text workingDirectory;
 	protected Text htmlResultsDirectory;
-	protected Text pathToQ;
-	protected Text pathToData;
 	protected Combo pathToQCombo;
 	protected Combo pathToDataCombo;
 
@@ -167,10 +165,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					fileSelected = false;
 				}
 				boolean isDatFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				pathToQ.setEditable(isDatFile);
-				pathToQ.setEnabled(isDatFile);
-				pathToData.setEditable(isDatFile);
-				pathToData.setEnabled(isDatFile);
+				pathToQCombo.setEnabled(isDatFile);
+				pathToDataCombo.setEnabled(isDatFile);
 				refreshRunButton();
 			}
 		});
@@ -298,20 +294,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		htmlResultsDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Path to q");
-		pathToQ = new Text(dataParameters, SWT.NONE);
-		pathToQ.setToolTipText("Path to q data (only used in Nexus file)");
-		pathToQ.addModifyListener(pathListener);
-		pathToQ.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		new Label(dataParameters, SWT.NONE).setText("Path to data");
-		pathToData = new Text(dataParameters, SWT.NONE);
-		pathToData.setToolTipText("Path to data (only used in Nexus file)");
-		pathToData.addModifyListener(pathListener);
-		pathToData.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
+		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToQCombo.addModifyListener(pathListener);
+		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
+		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToDataCombo.addModifyListener(pathListener);
 
@@ -478,7 +467,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		if (memento != null) {
 			modelBuildingParameters.loadMementoParameters(memento);
-			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+			PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
 				@Override
 				public void run() {
 					restoreState();
@@ -487,6 +476,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			DataHolder holder;
 			try {
 				holder = loadDataFile();
+				findQAndData();
 				retrieveQFromFile(holder);
 			} catch (Exception e1) {
 				logger.error("Exception while retrieving Q values from data file", e1);
@@ -495,7 +485,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
-		findQAndData();
 	}
 
 	private String[] getSymmetryOptions() {
@@ -856,8 +845,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		htmlResultsDirectory.setText(modelBuildingParameters.getHtmlResultsDirectory());
-		pathToQ.setText(modelBuildingParameters.getPathToQ());
-		pathToData.setText(modelBuildingParameters.getPathToData());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
 		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
 		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);
