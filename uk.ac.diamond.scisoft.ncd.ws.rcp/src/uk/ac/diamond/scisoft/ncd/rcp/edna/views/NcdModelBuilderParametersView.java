@@ -487,10 +487,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					restoreState();
 				}
 			});
-			findQAndData();
 			DataHolder holder;
 			try {
 				holder = loadDataFile();
+				boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+				if (isNxsFile) {
+					findQAndData();
+				}
 				retrieveQFromFile(holder);
 			} catch (Exception e1) {
 				logger.error("Exception while retrieving Q values from data file", e1);
@@ -673,9 +676,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected void updateQ(Text qTextBox, String text) {
 		try {
 			int index = Integer.valueOf(text);
-			if (currentQDataset != null) {
+			if ((currentQDataset != null) && (index > 0 && index <= currentQDataset.getShape()[0])) {
 				double qValue;
-				qValue = currentQDataset.getDouble(index);
+				qValue = currentQDataset.getDouble(index - 1);
 				qTextBox.setText(String.valueOf(qValue));
 			}
 		} catch (Exception e) {
