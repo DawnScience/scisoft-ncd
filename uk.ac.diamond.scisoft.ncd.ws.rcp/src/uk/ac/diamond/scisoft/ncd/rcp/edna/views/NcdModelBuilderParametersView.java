@@ -539,6 +539,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		@Override
 		public void modifyText(ModifyEvent e) {
 			checkWhetherPathsAreEmpty();
+			String pathToData = pathToDataCombo.getText();
+			String pathToQ = pathToQCombo.getText();
+			modelBuildingParameters.setPathToData(pathToData);
+			modelBuildingParameters.setPathToQ(pathToQ);
 			refreshRunButton();
 		}
 	};
