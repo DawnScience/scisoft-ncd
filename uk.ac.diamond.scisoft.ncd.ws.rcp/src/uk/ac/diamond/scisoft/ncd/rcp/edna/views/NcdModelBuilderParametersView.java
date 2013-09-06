@@ -166,7 +166,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
 				if (isNxsFile) {
-					findQAndData();
+					findQAndDataPaths();
 				}
 				pathToQCombo.setEnabled(isNxsFile);
 				pathToDataCombo.setEnabled(isNxsFile);
@@ -492,7 +492,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				holder = loadDataFile();
 				boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
 				if (isNxsFile) {
-					findQAndData();
+					findQAndDataPaths();
 				}
 				retrieveQFromFile(holder);
 			} catch (Exception e1) {
@@ -588,37 +588,34 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		if (fileValidAndPathsPopulated) {
-			DataHolder holder = null;
 			try {
-				holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
+				DataHolder holder = loadDataFile();
+				retrieveQFromFile(holder);
+				qMin.setText(String.valueOf(currentQDataset.min()));
+				qMax.setText(String.valueOf(currentQDataset.max()));
+				endPoint.setText(String.valueOf(currentQDataset.getSize()));
+				//check that the q and data paths are in the file
+				String qPath = pathToQCombo.getText();
+				String dataPath = pathToDataCombo.getText();
+				if (holder.contains(qPath) && holder.contains(dataPath)) {
+					startPoint.setText("1");
+					try {
+						IDataset slicedSet = holder.getLazyDataset(dataPath).getSlice(new Slice());
+						if (slicedSet.getShape().length > 1) {
+							numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
+						}
+					} catch (Exception e) {
+						logger.error("Exception while attempting to retrieve number of frames from dataset", e);
+					}
+				}
 			} catch (Exception e) {
 				logger.error("Problem while trying to load information from the file", e);
 				return;
 			}
-			//check that the q and data paths are in the file
-			String qPath = pathToQCombo.getText();
-			String dataPath = pathToDataCombo.getText();
-			if (holder.contains(qPath) && holder.contains(dataPath)) {
-				startPoint.setText("1");
-				IDataset qSlice = holder.getLazyDataset(qPath).getSlice(new Slice());
-				currentQDataset = qSlice;
-				qMin.setText(String.valueOf(qSlice.min()));
-				qMax.setText(String.valueOf(qSlice.max()));
-				endPoint.setText(String.valueOf(qSlice.getSize()));
-
-				try {
-					IDataset slicedSet = holder.getLazyDataset(dataPath).getSlice(new Slice());
-					if (slicedSet.getShape().length > 1) {
-						numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
-					}
-				} catch (Exception e) {
-					logger.error("Exception while attempting to retrieve number of frames from dataset", e);
-				}
-			}
 		}
 	}
 
-	private void findQAndData() {
+	private void findQAndDataPaths() {
 		pathToQCombo.removeAll();
 		pathToDataCombo.removeAll();
 		try {
