@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
+import java.util.Iterator;
 
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -59,7 +60,14 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Slice;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
+import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.analysis.io.IMetaData;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
@@ -567,7 +575,56 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (fileValidAndPathsPopulated) {
 			DataHolder holder = null;
 			try {
-				holder = loadDataFile();
+				HDF5Loader loader = new HDF5Loader(dataFilename);
+				HDF5File file = loader.loadTree();
+				HDF5Group group = file.getGroup();
+				HDF5NodeLink link = group.iterator().next(); //top level
+				HDF5Node node = link.getDestination();
+//				System.out.println("node: " + node);
+				HDF5Group group2 = (HDF5Group) node;
+//				System.out.println("group2 : " + group2);
+				for (Iterator<String> nodeItr = group2.getNodeNameIterator(); nodeItr.hasNext();) {
+					String nodeName = nodeItr.next();
+					HDF5NodeLink link1 = group2.getNodeLink(nodeName);
+					HDF5Node dest1 = link1.getDestination();
+//					System.out.println("nodeName: " + nodeName + " destination: " + dest1);
+					for (Iterator<String> attItr = dest1.getAttributeNameIterator(); attItr.hasNext();){
+						String attName = attItr.next();
+						System.out.println("link1 attribute names: " + attName + " value: " + dest1.getAttribute(attName) + dest1.getAttribute(attName).getFirstElement());
+						if (dest1.getAttribute(attName).getFirstElement().equals("NXdata")) {
+							System.out.println("Eureka!");
+							HDF5Group group3 = (HDF5Group)dest1;
+							System.out.println("Group3: "+ group3);
+							for (Iterator<String> nodeNameItr = group3.getNodeNameIterator(); nodeNameItr.hasNext();) {
+								String nodeName1 = nodeNameItr.next();
+								HDF5NodeLink nodeLink = group3.getNodeLink(nodeName1);
+								System.out.println("group3 node: " + nodeLink);
+								for (Iterator<String> attItr1 = nodeLink.getDestination().getAttributeNameIterator();attItr1.hasNext();) {
+									String next = attItr1.next();
+									System.out.println("group3 node attribute: " + next);
+									if (next.equals("axis")) {
+										HDF5Attribute axis = nodeLink.getDestination().getAttribute(next);
+										System.out.println("found an axis: " + axis);
+										
+									}
+									else if (next.equals("signal")) {
+										HDF5Attribute axis = nodeLink.getDestination().getAttribute(next);
+										System.out.println("found a signal: " + axis);
+										
+									}
+								}
+							}
+						}
+					}
+					System.out.println();
+				}
+					
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+			try {
+				holder = LoaderFactory.getData(dataFilename);
 			} catch (Exception e) {
 				logger.error("Problem while trying to load information from the file", e);
 				return;
