@@ -17,11 +17,15 @@
 package uk.ac.diamond.scisoft.ncd.rcp.edna;
 
 import org.eclipse.ui.IMemento;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersMementoStrings;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
 
 public class ModelBuildingParameters {
+	protected static final Logger logger = LoggerFactory.getLogger(ModelBuildingParameters.class);
+			
 	private String workingDirectory;
 	private String htmlResultsDirectory;
 	private String dataFilename;
@@ -288,28 +292,33 @@ public class ModelBuildingParameters {
 	
 	public void loadMementoParameters(IMemento memento) {
 		if (memento != null) {
-			dataFilename = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE);
-			workingDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY);
-			htmlResultsDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY);
-			pathToQ  = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q);
-			pathToData = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA);
-			numberOfFrames = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES);
-			qMinAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN);
-			qMinInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN_INVERSE_ANGSTROM_UNITS);
-			qMaxAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX);
-			qMaxInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX_INVERSE_ANGSTROM_UNITS);
-			firstPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_FIRST_POINT);
-			lastPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_LAST_POINT);
-			numberOfThreads = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_THREADS);
-			gnomOnly = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_ONLY);
-			startDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE);
-			startDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE_ANGSTROM_UNITS);
-			endDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE);
-			endDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS);
-			numberOfSearch = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH);
-			tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
-			symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);
-			dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
+			try {
+				dataFilename = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE);
+				workingDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY);
+				htmlResultsDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY);
+				pathToQ  = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q);
+				pathToData = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA);
+				numberOfFrames = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES);
+				qMinAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN);
+				qMinInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN_INVERSE_ANGSTROM_UNITS);
+				qMaxAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX);
+				qMaxInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX_INVERSE_ANGSTROM_UNITS);
+				firstPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_FIRST_POINT);
+				lastPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_LAST_POINT);
+				numberOfThreads = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_THREADS);
+				gnomOnly = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_ONLY);
+				startDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE);
+				startDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE_ANGSTROM_UNITS);
+				endDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE);
+				endDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS);
+				numberOfSearch = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH);
+				tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
+				symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);
+				dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
+			}
+			catch (Exception e) {
+				logger.error("problem while restoring state", e);
+			}
 		}
 	}
 }
