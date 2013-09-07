@@ -147,9 +147,7 @@ public class LazyNcdProcessing {
 		
 		flags = new NcdReductionFlags();
 		ncdDetectors = new NcdDetectors();
-		
-		frameBatch = 1;
-		
+				
 		cores = Runtime.getRuntime().availableProcessors();
 		maxMemory = Runtime.getRuntime().maxMemory();
 		
@@ -549,9 +547,12 @@ public class LazyNcdProcessing {
 	    
 		int sliceDim = 0;
 		int sliceSize = (int) frames[0];
-		
+			 		
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (dim == 2) {
+			
+			estimateFrameBatchSize(dim, frames);
+			
 			// Find dimension that needs to be sliced
 			MultidimensionalCounter dimCounter = new MultidimensionalCounter(Arrays.copyOfRange(frames_int, 0, rank - dim));
 			if (dimCounter.getSize() > frameBatch) {
@@ -1048,14 +1049,17 @@ public class LazyNcdProcessing {
 	}
 	
 	private void estimateFrameBatchSize(int dim, long[] frames) {
-		
-		Runtime.getRuntime().gc();
-		
-		int batchSize = 4; // use 4 byte data size
+		int batchSize = 12; // use 12 byte for float data and double errors
 		for (int i = frames.length - dim; i < frames.length; i++) {
 			batchSize *= frames[i];
 		}
-		frameBatch = Math.max(1, (int) (maxMemory / (10 * batchSize * cores)));
+		int totalBatch = Math.max(1, (int) (maxMemory / (10 * batchSize)));
+		if (totalBatch <= cores) {
+			cores = totalBatch;
+			frameBatch = 1;
+		} else {
+			frameBatch = totalBatch / cores;
+		}
 	}
 
 	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
