@@ -130,6 +130,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Button browseDataFile;
 
 	private IDataset currentQDataset;
+	protected String currentPathToQ;
+	protected String currentPathToData;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -176,6 +178,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				pathToQCombo.setEnabled(isNxsFile);
 				pathToDataCombo.setEnabled(isNxsFile);
 				captureGUIInformation();
+				checkWhetherPathsAreEmpty();
 				refreshRunButton();
 			}
 		});
@@ -307,11 +310,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToQCombo.addListener(SWT.KeyUp, pathListener);
+		pathToQCombo.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				currentPathToQ = pathToQCombo.getText();
+			}
+		});
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
+		pathToDataCombo.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				currentPathToData = pathToDataCombo.getText();
+			}
+		});
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -542,6 +557,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (dataFile != null) {
 			dataFile.setText(filename);
 		}
+		DataHolder holder;
+		try {
+			holder = loadDataFile();
+			boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+			if (isNxsFile) {
+				Display.getDefault().syncExec(new Runnable() {
+					
+					@Override
+					public void run() {
+						findQAndDataPaths();
+						checkWhetherPathsAreEmpty();
+					}
+				});
+			}
+			retrieveQFromFile(holder);
+		} catch (Exception e1) {
+			logger.error("Exception while retrieving Q values from data file", e1);
+		}
+		checkWhetherPathsAreEmpty();
+		captureGUIInformation();
 		refreshRunButton();
 	}
 
@@ -558,8 +593,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		@Override
 		public void handleEvent(Event event) {
 			checkWhetherPathsAreEmpty();
-			String pathToData = pathToDataCombo.getText();
-			String pathToQ = pathToQCombo.getText();
+			String pathToData = currentPathToData;
+			String pathToQ = currentPathToQ;
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
 			refreshRunButton();
@@ -567,7 +602,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	};
 
 	private void checkWhetherPathsAreEmpty() {
-		pathEmpty = (pathToDataCombo.getText().isEmpty() || pathToQCombo.getText().isEmpty());
+		pathEmpty = (currentPathToData.isEmpty() || currentPathToQ.isEmpty());
 	}
 
 	private Listener startEndPointListener = new Listener() {
@@ -630,8 +665,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 							endPoint.setText(String.valueOf(currentQDataset
 									.getSize()));
 							//check that the q and data paths are in the file
-							String qPath = pathToQCombo.getText();
-							String dataPath = pathToDataCombo.getText();
+							String qPath = currentPathToQ;
+							String dataPath = currentPathToData;
 							if (holder.contains(qPath) && holder.contains(dataPath)) {
 								startPoint.setText("1");
 								try {
@@ -664,7 +699,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private void findQAndDataPaths() {
 		pathToQCombo.removeAll();
+		currentPathToQ = "";
 		pathToDataCombo.removeAll();
+		currentPathToData = "";
 		try {
 			HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
 			HDF5File file = loader.loadTree();
