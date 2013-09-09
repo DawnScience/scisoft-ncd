@@ -178,6 +178,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
 				refreshRunButton();
+				updateGuiParameters();
 			}
 		});
 
@@ -586,6 +587,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		checkWhetherPathsAreEmpty();
 		captureGUIInformation();
 		refreshRunButton();
+		updateGuiParameters();
 	}
 
 	protected void runNcdModelBuilder() {
@@ -606,6 +608,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
 			refreshRunButton();
+			updateGuiParameters();
 		}
 	};
 
@@ -653,56 +656,54 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
-		if (fileValidAndPathsPopulated) {
-			Job job = new Job("Update GUI parameters from data file") {
-				@Override
-				protected IStatus run(IProgressMonitor monitor) {
-					final DataHolder holder;
-					try {
-						holder = loadDataFile();
-					} catch (Exception e1) {
-						logger.error("Problem while loading file", e1);
-						return Status.CANCEL_STATUS;
-					}
-					retrieveQFromFile(holder);
-					Display.getDefault().asyncExec(new Runnable() {
-						@Override
-						public void run() {
-							qMin.setText(String.valueOf(currentQDataset.min()));
-							qMax.setText(String.valueOf(currentQDataset.max()));
-							endPoint.setText(String.valueOf(currentQDataset
-									.getSize()));
-							//check that the q and data paths are in the file
-							String qPath = currentPathToQ;
-							String dataPath = currentPathToData;
-							if (holder.contains(qPath) && holder.contains(dataPath)) {
-								startPoint.setText("1");
-								try {
-									IDataset slicedSet = holder.getLazyDataset(
-											dataPath).getSlice(new Slice());
-									if (slicedSet.getShape().length > 1) {
-										numberOfFrames.setText(String
-												.valueOf(holder
-														.getLazyDataset(dataPath)
-														.getSlice(new Slice())
-														.getShape()[1]));
-									}
-								} catch (Exception e) {
-									logger.error(
-											"Exception while attempting to retrieve number of frames from dataset",
-											e);
+	}
+
+	private void updateGuiParameters() {
+		Job job = new Job("Update GUI parameters from data file") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				final DataHolder holder;
+				try {
+					holder = loadDataFile();
+				} catch (Exception e1) {
+					logger.error("Problem while loading file", e1);
+					return Status.CANCEL_STATUS;
+				}
+				retrieveQFromFile(holder);
+				Display.getDefault().asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						qMin.setText(String.valueOf(currentQDataset.min()));
+						qMax.setText(String.valueOf(currentQDataset.max()));
+						endPoint.setText(String.valueOf(currentQDataset
+								.getSize()));
+						//check that the q and data paths are in the file
+						String qPath = currentPathToQ;
+						String dataPath = currentPathToData;
+						if (holder.contains(qPath) && holder.contains(dataPath)) {
+							startPoint.setText("1");
+							try {
+								IDataset slicedSet = holder.getLazyDataset(
+										dataPath).getSlice(new Slice());
+								if (slicedSet.getShape().length > 1) {
+									numberOfFrames.setText(String
+											.valueOf(holder
+													.getLazyDataset(dataPath)
+													.getSlice(new Slice())
+													.getShape()[1]));
 								}
+							} catch (Exception e) {
+								logger.error(
+										"Exception while attempting to retrieve number of frames from dataset",
+										e);
 							}
 						}
-					});
-					return Status.OK_STATUS;
-				}
-			};
-			job.schedule();
-		}
-		else if (fileSelected && pathEmpty) {
-			clearQAndPathItems();
-		}
+					}
+				});
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 
 	private void findQAndDataPaths() {
@@ -758,7 +759,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void retrieveQFromFile(DataHolder holder) {
-		ILazyDataset qDataset = holder.getLazyDataset(modelBuildingParameters.getPathToQ());
+		ILazyDataset qDataset = holder.getLazyDataset(currentPathToQ);
 		currentQDataset = qDataset.getSlice(new Slice());
 	}
 
