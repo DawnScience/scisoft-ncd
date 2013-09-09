@@ -175,6 +175,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 				pathToQCombo.setEnabled(isNxsFile);
 				pathToDataCombo.setEnabled(isNxsFile);
+				captureGUIInformation();
 				refreshRunButton();
 			}
 		});
@@ -501,7 +502,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						holder = loadDataFile();
 						boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
 						if (isNxsFile) {
-							findQAndDataPaths();
+							Display.getDefault().asyncExec(new Runnable() {
+								@Override
+								public void run() {
+									findQAndDataPaths();
+								}
+							});
 						}
 						retrieveQFromFile(holder);
 					} catch (Exception e1) {
@@ -651,6 +657,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			};
 			job.schedule();
 		}
+		else if (fileSelected && pathEmpty) {
+			clearQAndPathItems();
+		}
 	}
 
 	private void findQAndDataPaths() {
@@ -754,57 +763,62 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
-		//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
-		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
-		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
+		try {
+			//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
+			modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
+			modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
-		modelBuildingParameters.setDataFilename(dataFile.getText());
+			modelBuildingParameters.setDataFilename(dataFile.getText());
 
-		//will populate parameters assuming that the Nexus type is being used
-		modelBuildingParameters.setPathToQ(pathToQCombo.getText());
-		modelBuildingParameters.setPathToData(pathToDataCombo.getText());
+			//will populate parameters assuming that the Nexus type is being used
+			modelBuildingParameters.setPathToQ(pathToQCombo.getText());
+			modelBuildingParameters.setPathToData(pathToDataCombo.getText());
 
-		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
+			modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
-		double qMinValue = Double.valueOf(qMin.getText());
-		if (qMinUnits.getSelectionIndex() == 1) {
-			qMinValue /= 10;
+			double qMinValue = Double.valueOf(qMin.getText());
+			if (qMinUnits.getSelectionIndex() == 1) {
+				qMinValue /= 10;
+			}
+			modelBuildingParameters.setqMinAngstrom(qMinValue);
+
+			modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
+			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
+
+			double qMaxValue = Double.valueOf(qMax.getText());
+			if (qMaxUnits.getSelectionIndex() == 1) {
+				qMaxValue /= 10;
+			}
+			modelBuildingParameters.setqMaxAngstrom(qMaxValue);
+
+			modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
+
+			modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
+
+			double minDistance = Double.valueOf(minDistanceSearch.getText());
+			if (minDistanceUnits.getSelectionIndex() == 1) {
+				minDistance *= 10;
+			}
+			modelBuildingParameters.setStartDistanceAngstrom(minDistance);
+
+			double maxDistance = Double.valueOf(maxDistanceSearch.getText());
+			if (maxDistanceUnits.getSelectionIndex() == 1) {
+				maxDistance *= 10;
+			}
+			modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
+
+			modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
+
+			modelBuildingParameters.setTolerance(Double.valueOf(tolerance.getText()));
+
+			modelBuildingParameters.setSymmetry(symmetry.getText());
+
+			modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
+
+			return modelBuildingParameters;
+		} catch (NumberFormatException e) {
+			logger.error("Problems while capturing GUI information", e);
 		}
-		modelBuildingParameters.setqMinAngstrom(qMinValue);
-
-		modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
-		modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
-
-		double qMaxValue = Double.valueOf(qMax.getText());
-		if (qMaxUnits.getSelectionIndex() == 1) {
-			qMaxValue /= 10;
-		}
-		modelBuildingParameters.setqMaxAngstrom(qMaxValue);
-
-		modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
-
-		modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
-
-		double minDistance = Double.valueOf(minDistanceSearch.getText());
-		if (minDistanceUnits.getSelectionIndex() == 1) {
-			minDistance *= 10;
-		}
-		modelBuildingParameters.setStartDistanceAngstrom(minDistance);
-
-		double maxDistance = Double.valueOf(maxDistanceSearch.getText());
-		if (maxDistanceUnits.getSelectionIndex() == 1) {
-			maxDistance *= 10;
-		}
-		modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
-
-		modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
-
-		modelBuildingParameters.setTolerance(Double.valueOf(tolerance.getText()));
-
-		modelBuildingParameters.setSymmetry(symmetry.getText());
-
-		modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
-
 		return modelBuildingParameters;
 	}
 	
@@ -822,15 +836,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
-				pathToQCombo.removeAll();
-				pathToDataCombo.removeAll();
-				numberOfFrames.setText("1");
-				qMin.setText("0.01");
-				qMinUnits.select(0);
-				qMax.setText("0.3");
-				qMaxUnits.select(0);
-				startPoint.setText("1");
-				endPoint.setText("1000");
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
 				minDistanceSearch.setText("20");
@@ -843,7 +848,27 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				dammifMode.select(0);
 			}
 		});
+		clearQAndPathItems();
 	}
+	
+	public void clearQAndPathItems() {
+		compInput.getDisplay().asyncExec(new Runnable() {
+
+			@Override
+			public void run() {
+				pathToQCombo.removeAll();
+				pathToDataCombo.removeAll();
+				numberOfFrames.setText("1");
+				qMin.setText("0.01");
+				qMinUnits.select(0);
+				qMax.setText("0.3");
+				qMaxUnits.select(0);
+				startPoint.setText("1");
+				endPoint.setText("1000");
+			}
+		});
+	}
+
 	
 	private Listener verifyDouble = new Listener() {
 
