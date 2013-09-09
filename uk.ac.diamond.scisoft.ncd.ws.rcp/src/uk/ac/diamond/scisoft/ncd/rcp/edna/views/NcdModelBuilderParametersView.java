@@ -681,21 +681,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				double qValue;
 				qValue = currentQDataset.getDouble(index - 1);
 				qTextBox.setText(String.valueOf(qValue));
+				return;
 			}
 		} catch (Exception e) {
-			logger.error("Index was not valid. Using a default value instead.");
-			double qValue;
-			if (qTextBox == qMin) {
-				qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
-			}
-			else if (qTextBox == qMax) {
-				qValue = currentQDataset.getDouble(currentQDataset.maxPos()[0]);
-			}
-			else {
-				qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
-			}
-			qTextBox.setText(String.valueOf(qValue));
+			logger.error("Index was not valid.");
 		}
+		logger.error("Using a default value for q.");
+		double qValue;
+		if (qTextBox == qMin) {
+			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
+		}
+		else if (qTextBox == qMax) {
+			qValue = currentQDataset.getDouble(currentQDataset.maxPos()[0]);
+		}
+		else {
+			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
+		}
+		qTextBox.setText(String.valueOf(qValue));
 	}
 
 	protected void updatePoint(Text pointBox, String text) {
