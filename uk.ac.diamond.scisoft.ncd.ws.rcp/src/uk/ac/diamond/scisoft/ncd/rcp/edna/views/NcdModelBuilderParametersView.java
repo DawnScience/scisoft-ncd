@@ -19,6 +19,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 import java.io.File;
 import java.util.Iterator;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
@@ -41,6 +45,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -487,17 +492,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					restoreState();
 				}
 			});
-			DataHolder holder;
-			try {
-				holder = loadDataFile();
-				boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-				if (isNxsFile) {
-					findQAndDataPaths();
+			Job job = new Job("Retrieving q values and paths from data file") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+
+					DataHolder holder;
+					try {
+						holder = loadDataFile();
+						boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+						if (isNxsFile) {
+							findQAndDataPaths();
+						}
+						retrieveQFromFile(holder);
+					} catch (Exception e1) {
+						logger.error("Exception while retrieving Q values from data file", e1);
+					}
+					return Status.OK_STATUS;
 				}
-				retrieveQFromFile(holder);
-			} catch (Exception e1) {
-				logger.error("Exception while retrieving Q values from data file", e1);
-			}
+			};
+			job.schedule();
 		}
 		else {
 			resetGUI();
@@ -592,30 +605,51 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		if (fileValidAndPathsPopulated) {
-			try {
-				DataHolder holder = loadDataFile();
-				retrieveQFromFile(holder);
-				qMin.setText(String.valueOf(currentQDataset.min()));
-				qMax.setText(String.valueOf(currentQDataset.max()));
-				endPoint.setText(String.valueOf(currentQDataset.getSize()));
-				//check that the q and data paths are in the file
-				String qPath = pathToQCombo.getText();
-				String dataPath = pathToDataCombo.getText();
-				if (holder.contains(qPath) && holder.contains(dataPath)) {
-					startPoint.setText("1");
+			Job job = new Job("Update GUI parameters from data file") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+					final DataHolder holder;
 					try {
-						IDataset slicedSet = holder.getLazyDataset(dataPath).getSlice(new Slice());
-						if (slicedSet.getShape().length > 1) {
-							numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
-						}
-					} catch (Exception e) {
-						logger.error("Exception while attempting to retrieve number of frames from dataset", e);
+						holder = loadDataFile();
+					} catch (Exception e1) {
+						logger.error("Problem while loading file", e1);
+						return Status.CANCEL_STATUS;
 					}
+					retrieveQFromFile(holder);
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							qMin.setText(String.valueOf(currentQDataset.min()));
+							qMax.setText(String.valueOf(currentQDataset.max()));
+							endPoint.setText(String.valueOf(currentQDataset
+									.getSize()));
+							//check that the q and data paths are in the file
+							String qPath = pathToQCombo.getText();
+							String dataPath = pathToDataCombo.getText();
+							if (holder.contains(qPath) && holder.contains(dataPath)) {
+								startPoint.setText("1");
+								try {
+									IDataset slicedSet = holder.getLazyDataset(
+											dataPath).getSlice(new Slice());
+									if (slicedSet.getShape().length > 1) {
+										numberOfFrames.setText(String
+												.valueOf(holder
+														.getLazyDataset(dataPath)
+														.getSlice(new Slice())
+														.getShape()[1]));
+									}
+								} catch (Exception e) {
+									logger.error(
+											"Exception while attempting to retrieve number of frames from dataset",
+											e);
+								}
+							}
+						}
+					});
+					return Status.OK_STATUS;
 				}
-			} catch (Exception e) {
-				logger.error("Problem while trying to load information from the file", e);
-				return;
-			}
+			};
+			job.schedule();
 		}
 	}
 
