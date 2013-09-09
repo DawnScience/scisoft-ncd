@@ -153,13 +153,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataFile.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		dataFile.setText(dataFilename);
 		dataFile.setToolTipText("Location of input file");
-		dataFile.addModifyListener(new ModifyListener() {
+		dataFile.addListener(SWT.KeyUp, new Listener() {
 			File file = null;
 			Color red = new Color(dataFileGroup.getDisplay(), 255, 0, 0);
 			Color white = new Color(dataFileGroup.getDisplay(), 255, 255, 255);
 			
 			@Override
-			public void modifyText(ModifyEvent e) {
+			public void handleEvent(Event event) {
 				String filename = dataFile.getText();
 				file = new File(filename);
 				if (file.isFile() && !dataFile.getText().isEmpty()) {
@@ -306,12 +306,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		pathToQCombo.addModifyListener(pathListener);
+		pathToQCombo.addListener(SWT.KeyUp, pathListener);
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		pathToDataCombo.addModifyListener(pathListener);
+		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -554,9 +554,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		return captureGUIInformation();
 	}
 
-	private ModifyListener pathListener = new ModifyListener() {
+	private Listener pathListener = new Listener() {
 		@Override
-		public void modifyText(ModifyEvent e) {
+		public void handleEvent(Event event) {
 			checkWhetherPathsAreEmpty();
 			String pathToData = pathToDataCombo.getText();
 			String pathToQ = pathToQCombo.getText();
@@ -868,7 +868,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 	}
-
 	
 	private Listener verifyDouble = new Listener() {
 
