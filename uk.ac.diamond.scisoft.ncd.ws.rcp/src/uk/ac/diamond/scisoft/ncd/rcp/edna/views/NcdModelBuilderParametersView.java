@@ -156,21 +156,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataFile.setText(dataFilename);
 		dataFile.setToolTipText("Location of input file");
 		dataFile.addListener(SWT.KeyUp, new Listener() {
-			File file = null;
 			Color red = new Color(dataFileGroup.getDisplay(), 255, 0, 0);
 			Color white = new Color(dataFileGroup.getDisplay(), 255, 255, 255);
 			
 			@Override
 			public void handleEvent(Event event) {
-				String filename = dataFile.getText();
-				file = new File(filename);
-				if (file.isFile() && !dataFile.getText().isEmpty()) {
+				if (fileNameIsNotEmptyAndFileExists(dataFile.getText())) {
 					dataFile.setBackground(white);
 					fileSelected = true;
 				} else {
 					dataFile.setBackground(red);
 					fileSelected = false;
 				}
+				String filename = dataFile.getText();
 				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
 				if (isNxsFile) {
 					findQAndDataPaths();
@@ -512,19 +510,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 
-					DataHolder holder;
+					final DataHolder holder;
 					try {
 						holder = loadDataFile();
-						boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-						if (isNxsFile) {
-							Display.getDefault().asyncExec(new Runnable() {
-								@Override
-								public void run() {
+						Display.getDefault().syncExec(new Runnable() {
+
+							@Override
+							public void run() {
+								boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+								if (isNxsFile) {
 									findQAndDataPaths();
+									retrieveQFromFile(holder);
 								}
-							});
-						}
-						retrieveQFromFile(holder);
+								captureGUIInformation();
+							}
+						});
+						checkWhetherPathsAreEmpty();
+						refreshRunButton();
 					} catch (Exception e1) {
 						logger.error("Exception while retrieving Q values from data file", e1);
 					}
@@ -538,6 +540,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 	}
 
+	private boolean fileNameIsNotEmptyAndFileExists(String filename) {
+		if (!filename.isEmpty() && new File(filename).exists()) {
+			return true;
+		}
+		return false;
+	}
 	private String[] getSymmetryOptions() {
 		String[] symmetryOptions = new String[30];
 		for (int i=1; i< 20; ++i) {
@@ -805,7 +813,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
 			modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
-			modelBuildingParameters.setDataFilename(dataFile.getText());
+			String filename = dataFile.getText();
+			modelBuildingParameters.setDataFilename(filename);
+			fileSelected = fileNameIsNotEmptyAndFileExists(filename);
 
 			//will populate parameters assuming that the Nexus type is being used
 			modelBuildingParameters.setPathToQ(pathToQCombo.getText());
