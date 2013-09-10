@@ -19,6 +19,10 @@ package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 import java.io.File;
 import java.util.Iterator;
 
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
@@ -41,6 +45,7 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Event;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
@@ -125,6 +130,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Button browseDataFile;
 
 	private IDataset currentQDataset;
+	protected String currentPathToQ;
+	protected String currentPathToData;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -148,29 +155,30 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataFile.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		dataFile.setText(dataFilename);
 		dataFile.setToolTipText("Location of input file");
-		dataFile.addModifyListener(new ModifyListener() {
-			File file = null;
+		dataFile.addListener(SWT.KeyUp, new Listener() {
 			Color red = new Color(dataFileGroup.getDisplay(), 255, 0, 0);
 			Color white = new Color(dataFileGroup.getDisplay(), 255, 255, 255);
 			
 			@Override
-			public void modifyText(ModifyEvent e) {
-				String filename = dataFile.getText();
-				file = new File(filename);
-				if (file.isFile() && !dataFile.getText().isEmpty()) {
+			public void handleEvent(Event event) {
+				if (fileNameIsNotEmptyAndFileExists(dataFile.getText())) {
 					dataFile.setBackground(white);
 					fileSelected = true;
 				} else {
 					dataFile.setBackground(red);
 					fileSelected = false;
 				}
+				String filename = dataFile.getText();
 				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
 				if (isNxsFile) {
 					findQAndDataPaths();
 				}
 				pathToQCombo.setEnabled(isNxsFile);
 				pathToDataCombo.setEnabled(isNxsFile);
+				captureGUIInformation();
+				checkWhetherPathsAreEmpty();
 				refreshRunButton();
+				updateGuiParameters();
 			}
 		});
 
@@ -300,12 +308,24 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		pathToQCombo.addModifyListener(pathListener);
+		pathToQCombo.addListener(SWT.KeyUp, pathListener);
+		pathToQCombo.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				currentPathToQ = pathToQCombo.getText();
+			}
+		});
 		new Label(dataParameters, SWT.NONE).setText("Path to data");
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		pathToDataCombo.addModifyListener(pathListener);
+		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
+		pathToDataCombo.addModifyListener(new ModifyListener() {
+			@Override
+			public void modifyText(ModifyEvent e) {
+				currentPathToData = pathToDataCombo.getText();
+			}
+		});
 
 		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
@@ -487,23 +507,46 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					restoreState();
 				}
 			});
-			DataHolder holder;
-			try {
-				holder = loadDataFile();
-				boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-				if (isNxsFile) {
-					findQAndDataPaths();
+			Job job = new Job("Retrieving q values and paths from data file") {
+				@Override
+				protected IStatus run(IProgressMonitor monitor) {
+
+					final DataHolder holder;
+					try {
+						holder = loadDataFile();
+						Display.getDefault().syncExec(new Runnable() {
+
+							@Override
+							public void run() {
+								boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+								if (isNxsFile) {
+									findQAndDataPaths();
+									retrieveQFromFile(holder);
+								}
+								captureGUIInformation();
+							}
+						});
+						checkWhetherPathsAreEmpty();
+						refreshRunButton();
+					} catch (Exception e1) {
+						logger.error("Exception while retrieving Q values from data file", e1);
+					}
+					return Status.OK_STATUS;
 				}
-				retrieveQFromFile(holder);
-			} catch (Exception e1) {
-				logger.error("Exception while retrieving Q values from data file", e1);
-			}
+			};
+			job.schedule();
 		}
 		else {
 			resetGUI();
 		}
 	}
 
+	private boolean fileNameIsNotEmptyAndFileExists(String filename) {
+		if (!filename.isEmpty() && new File(filename).exists()) {
+			return true;
+		}
+		return false;
+	}
 	private String[] getSymmetryOptions() {
 		String[] symmetryOptions = new String[30];
 		for (int i=1; i< 20; ++i) {
@@ -523,7 +566,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (dataFile != null) {
 			dataFile.setText(filename);
 		}
+		DataHolder holder;
+		try {
+			holder = loadDataFile();
+			boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+			if (isNxsFile) {
+				Display.getDefault().syncExec(new Runnable() {
+					
+					@Override
+					public void run() {
+						findQAndDataPaths();
+						checkWhetherPathsAreEmpty();
+					}
+				});
+			}
+			retrieveQFromFile(holder);
+		} catch (Exception e1) {
+			logger.error("Exception while retrieving Q values from data file", e1);
+		}
+		checkWhetherPathsAreEmpty();
+		captureGUIInformation();
 		refreshRunButton();
+		updateGuiParameters();
 	}
 
 	protected void runNcdModelBuilder() {
@@ -535,20 +599,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		return captureGUIInformation();
 	}
 
-	private ModifyListener pathListener = new ModifyListener() {
+	private Listener pathListener = new Listener() {
 		@Override
-		public void modifyText(ModifyEvent e) {
+		public void handleEvent(Event event) {
 			checkWhetherPathsAreEmpty();
-			String pathToData = pathToDataCombo.getText();
-			String pathToQ = pathToQCombo.getText();
+			String pathToData = currentPathToData;
+			String pathToQ = currentPathToQ;
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
 			refreshRunButton();
+			updateGuiParameters();
 		}
 	};
 
 	private void checkWhetherPathsAreEmpty() {
-		pathEmpty = (pathToDataCombo.getText().isEmpty() || pathToQCombo.getText().isEmpty());
+		pathEmpty = (currentPathToData.isEmpty() || currentPathToQ.isEmpty());
 	}
 
 	private Listener startEndPointListener = new Listener() {
@@ -591,37 +656,64 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
-		if (fileValidAndPathsPopulated) {
-			try {
-				DataHolder holder = loadDataFile();
-				retrieveQFromFile(holder);
-				qMin.setText(String.valueOf(currentQDataset.min()));
-				qMax.setText(String.valueOf(currentQDataset.max()));
-				endPoint.setText(String.valueOf(currentQDataset.getSize()));
-				//check that the q and data paths are in the file
-				String qPath = pathToQCombo.getText();
-				String dataPath = pathToDataCombo.getText();
-				if (holder.contains(qPath) && holder.contains(dataPath)) {
-					startPoint.setText("1");
-					try {
-						IDataset slicedSet = holder.getLazyDataset(dataPath).getSlice(new Slice());
-						if (slicedSet.getShape().length > 1) {
-							numberOfFrames.setText(String.valueOf(holder.getLazyDataset(dataPath).getSlice(new Slice()).getShape()[1]));
-						}
-					} catch (Exception e) {
-						logger.error("Exception while attempting to retrieve number of frames from dataset", e);
-					}
-				}
-			} catch (Exception e) {
-				logger.error("Problem while trying to load information from the file", e);
-				return;
-			}
+		if (!fileValidAndPathsPopulated) {
+			clearQAndPathItems();
 		}
+	}
+
+	private void updateGuiParameters() {
+		Job job = new Job("Update GUI parameters from data file") {
+			@Override
+			protected IStatus run(IProgressMonitor monitor) {
+				final DataHolder holder;
+				try {
+					holder = loadDataFile();
+				} catch (Exception e1) {
+					logger.error("Problem while loading file", e1);
+					return Status.CANCEL_STATUS;
+				}
+				retrieveQFromFile(holder);
+				Display.getDefault().asyncExec(new Runnable() {
+					@Override
+					public void run() {
+						qMin.setText(String.valueOf(currentQDataset.min()));
+						qMax.setText(String.valueOf(currentQDataset.max()));
+						endPoint.setText(String.valueOf(currentQDataset
+								.getSize()));
+						//check that the q and data paths are in the file
+						String qPath = currentPathToQ;
+						String dataPath = currentPathToData;
+						if (holder.contains(qPath) && holder.contains(dataPath)) {
+							startPoint.setText("1");
+							try {
+								IDataset slicedSet = holder.getLazyDataset(
+										dataPath).getSlice(new Slice());
+								if (slicedSet.getShape().length > 1) {
+									numberOfFrames.setText(String
+											.valueOf(holder
+													.getLazyDataset(dataPath)
+													.getSlice(new Slice())
+													.getShape()[1]));
+								}
+							} catch (Exception e) {
+								logger.error(
+										"Exception while attempting to retrieve number of frames from dataset",
+										e);
+							}
+						}
+					}
+				});
+				return Status.OK_STATUS;
+			}
+		};
+		job.schedule();
 	}
 
 	private void findQAndDataPaths() {
 		pathToQCombo.removeAll();
+		currentPathToQ = "";
 		pathToDataCombo.removeAll();
+		currentPathToData = "";
 		try {
 			HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
 			HDF5File file = loader.loadTree();
@@ -670,7 +762,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void retrieveQFromFile(DataHolder holder) {
-		ILazyDataset qDataset = holder.getLazyDataset(modelBuildingParameters.getPathToQ());
+		ILazyDataset qDataset = holder.getLazyDataset(currentPathToQ);
 		currentQDataset = qDataset.getSlice(new Slice());
 	}
 
@@ -720,57 +812,64 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected ModelBuildingParameters captureGUIInformation() {
-		//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
-		modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
-		modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
+		try {
+			//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
+			modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
+			modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
-		modelBuildingParameters.setDataFilename(dataFile.getText());
+			String filename = dataFile.getText();
+			modelBuildingParameters.setDataFilename(filename);
+			fileSelected = fileNameIsNotEmptyAndFileExists(filename);
 
-		//will populate parameters assuming that the Nexus type is being used
-		modelBuildingParameters.setPathToQ(pathToQCombo.getText());
-		modelBuildingParameters.setPathToData(pathToDataCombo.getText());
+			//will populate parameters assuming that the Nexus type is being used
+			modelBuildingParameters.setPathToQ(pathToQCombo.getText());
+			modelBuildingParameters.setPathToData(pathToDataCombo.getText());
 
-		modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
+			modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
-		double qMinValue = Double.valueOf(qMin.getText());
-		if (qMinUnits.getSelectionIndex() == 1) {
-			qMinValue /= 10;
+			double qMinValue = Double.valueOf(qMin.getText());
+			if (qMinUnits.getSelectionIndex() == 1) {
+				qMinValue /= 10;
+			}
+			modelBuildingParameters.setqMinAngstrom(qMinValue);
+
+			modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
+			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
+
+			double qMaxValue = Double.valueOf(qMax.getText());
+			if (qMaxUnits.getSelectionIndex() == 1) {
+				qMaxValue /= 10;
+			}
+			modelBuildingParameters.setqMaxAngstrom(qMaxValue);
+
+			modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
+
+			modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
+
+			double minDistance = Double.valueOf(minDistanceSearch.getText());
+			if (minDistanceUnits.getSelectionIndex() == 1) {
+				minDistance *= 10;
+			}
+			modelBuildingParameters.setStartDistanceAngstrom(minDistance);
+
+			double maxDistance = Double.valueOf(maxDistanceSearch.getText());
+			if (maxDistanceUnits.getSelectionIndex() == 1) {
+				maxDistance *= 10;
+			}
+			modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
+
+			modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
+
+			modelBuildingParameters.setTolerance(Double.valueOf(tolerance.getText()));
+
+			modelBuildingParameters.setSymmetry(symmetry.getText());
+
+			modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
+
+			return modelBuildingParameters;
+		} catch (NumberFormatException e) {
+			logger.error("Problems while capturing GUI information", e);
 		}
-		modelBuildingParameters.setqMinAngstrom(qMinValue);
-
-		modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
-		modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
-
-		double qMaxValue = Double.valueOf(qMax.getText());
-		if (qMaxUnits.getSelectionIndex() == 1) {
-			qMaxValue /= 10;
-		}
-		modelBuildingParameters.setqMaxAngstrom(qMaxValue);
-
-		modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
-
-		modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
-
-		double minDistance = Double.valueOf(minDistanceSearch.getText());
-		if (minDistanceUnits.getSelectionIndex() == 1) {
-			minDistance *= 10;
-		}
-		modelBuildingParameters.setStartDistanceAngstrom(minDistance);
-
-		double maxDistance = Double.valueOf(maxDistanceSearch.getText());
-		if (maxDistanceUnits.getSelectionIndex() == 1) {
-			maxDistance *= 10;
-		}
-		modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
-
-		modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
-
-		modelBuildingParameters.setTolerance(Double.valueOf(tolerance.getText()));
-
-		modelBuildingParameters.setSymmetry(symmetry.getText());
-
-		modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
-
 		return modelBuildingParameters;
 	}
 	
@@ -788,15 +887,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
-				pathToQCombo.removeAll();
-				pathToDataCombo.removeAll();
-				numberOfFrames.setText("1");
-				qMin.setText("0.01");
-				qMinUnits.select(0);
-				qMax.setText("0.3");
-				qMaxUnits.select(0);
-				startPoint.setText("1");
-				endPoint.setText("1000");
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
 				minDistanceSearch.setText("20");
@@ -807,6 +897,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				tolerance.setText("0.1");
 				symmetry.select(0);
 				dammifMode.select(0);
+			}
+		});
+		clearQAndPathItems();
+	}
+	
+	public void clearQAndPathItems() {
+		compInput.getDisplay().asyncExec(new Runnable() {
+
+			@Override
+			public void run() {
+				pathToQCombo.removeAll();
+				pathToDataCombo.removeAll();
+				numberOfFrames.setText("1");
+				qMin.setText("0.01");
+				qMinUnits.select(0);
+				qMax.setText("0.3");
+				qMaxUnits.select(0);
+				startPoint.setText("1");
+				endPoint.setText("1000");
 			}
 		});
 	}
