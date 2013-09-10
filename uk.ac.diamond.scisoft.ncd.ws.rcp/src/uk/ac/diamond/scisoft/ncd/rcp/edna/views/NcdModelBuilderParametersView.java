@@ -656,6 +656,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
+		if (!fileValidAndPathsPopulated) {
+			clearQAndPathItems();
+		}
 	}
 
 	private void updateGuiParameters() {
