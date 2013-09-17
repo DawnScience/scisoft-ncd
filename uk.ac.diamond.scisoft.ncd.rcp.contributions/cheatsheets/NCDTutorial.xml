@@ -15,7 +15,7 @@
 			<task kind="cheatsheet" name="Importing data into DAWN workbench"
 				skip="true">
 				<intro>
-					In this section We need to create a data project pointing to
+					In this section we will create a data project pointing to
 					<b>/dls/sci-scratch/ExampleData/NCDExamples</b>
 					directory.
 				</intro>
@@ -117,9 +117,7 @@
 					- File to be used as a detector response data.
 					<br />
 					<b>i22-34774.nxs</b>
-					- File with sample data that we want to process. It is recommended
-					to select only part of dataset frames as processing the whole
-					dataset can take 10-15min.
+					- File with sample data that we want to process.
 					<br />
 				</intro>
 				<param name="path"

@@ -3,7 +3,7 @@
       title="Importing data into DAWN workbench">
    <intro>
       <description>
-         This tutorial explains how to import data files to start NCD data reduction
+         This tutorial explains how to import data files to start NCD data reduction.
       </description>
    </intro>
    <item
@@ -28,7 +28,7 @@
    <item
          title="Create new Data Project">
       <description>
-         Data project creates in Eclipse 
+         Data project creates new project in the Project Explorer view with a link to a specified data directory.   
       </description>
       <subitem
             label="Specify project name in Project field.">

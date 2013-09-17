@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <cheatsheet
-      title="Setup experiment information">
+      title="Loading Detector Information">
    <intro>
       <description>
          This tutorial explains how to read detector data from data files
