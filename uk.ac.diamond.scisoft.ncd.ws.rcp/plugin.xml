@@ -2,6 +2,16 @@
 <?eclipse version="3.4"?>
 <plugin>
    <extension
+         point="org.dawnsci.introRegister">
+      <introPageRegister
+            class="uk.ac.diamond.scisoft.ncd.rcp.edna.actions.NcdModelBuilderPerspectiveLaunch"
+            description="Opens the perspective for building envelopes from SAXS data"
+            icon="icons/ncd_envelope_intro.png"
+            id="uk.ac.diamond.scisoft.ncd.rcp.intro.ncdmodelbuildingperspective"
+            name="(Pre-release) NCD Model Building">
+      </introPageRegister>
+   </extension>
+   <extension
          point="org.eclipse.ui.views">
      <view
            category="org.dawb.workbench.ui.beta.views.category"
@@ -15,6 +25,7 @@
          point="org.eclipse.ui.perspectives">
       <perspective
             class="uk.ac.diamond.scisoft.ncd.rcp.edna.NcdModelBuilderPerspective"
+            icon="icons/ncd_envelope_small.png"
             id="uk.ac.diamond.scisoft.ncd.ws.rcp.NcdModelBuilderPerspective"
             name="NCD Model Builder Perspective">
       </perspective>
