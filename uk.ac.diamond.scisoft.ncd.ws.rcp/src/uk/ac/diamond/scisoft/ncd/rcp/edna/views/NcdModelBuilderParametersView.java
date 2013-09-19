@@ -521,7 +521,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
 								if (isNxsFile) {
 									findQAndDataPaths();
-									retrieveQFromFile(holder);
+									retrieveQFromHierarchicalData(holder);
+								}
+								else {
+									retrieveQFromData(holder);
 								}
 								captureGUIInformation();
 							}
@@ -566,7 +569,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (dataFile != null) {
 			dataFile.setText(filename);
 		}
-		DataHolder holder;
+		final DataHolder holder;
 		try {
 			holder = loadDataFile();
 			boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
@@ -577,10 +580,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					public void run() {
 						findQAndDataPaths();
 						checkWhetherPathsAreEmpty();
+						retrieveQFromHierarchicalData(holder);
 					}
 				});
 			}
-			retrieveQFromFile(holder);
+			else {
+				retrieveQFromData(holder);
+			}
 		} catch (Exception e1) {
 			logger.error("Exception while retrieving Q values from data file", e1);
 		}
@@ -672,7 +678,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					logger.error("Problem while loading file", e1);
 					return Status.CANCEL_STATUS;
 				}
-				retrieveQFromFile(holder);
+				boolean isNxsFile = !modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
+				if (isNxsFile) {
+					retrieveQFromHierarchicalData(holder);
+				}
+				else {
+					retrieveQFromData(holder);
+				}
 				Display.getDefault().asyncExec(new Runnable() {
 					@Override
 					public void run() {
@@ -761,9 +773,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		return holder;
 	}
 
-	private void retrieveQFromFile(DataHolder holder) {
-		ILazyDataset qDataset = holder.getLazyDataset(currentPathToQ);
-		currentQDataset = qDataset.getSlice(new Slice());
+	private void retrieveQFromHierarchicalData(DataHolder holder) {
+		currentQDataset = retrieveQ(holder, currentPathToQ);
+	}
+
+	private void retrieveQFromData(DataHolder holder) {
+		currentQDataset = retrieveQ(holder, "q");
+	}
+
+	private IDataset retrieveQ(DataHolder holder, String path) {
+		ILazyDataset qDataset = holder.getLazyDataset(path);
+		return qDataset.getSlice(new Slice());
 	}
 
 	protected void updateQ(Text qTextBox, String text) {
