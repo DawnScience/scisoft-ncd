@@ -626,5 +626,15 @@
           class="uk.ac.diamond.scisoft.ncd.rcp.preferences.NcdPreferenceInitializer">
     </initializer>
  	</extension>
+   <extension
+         point="org.dawnsci.plotting.api.toolPage">
+      <plotting_tool_page
+            class="uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.SaxsAnalysisTool"
+            icon="icons/saxs_tool.png"
+            id="uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.saxsplotting"
+            label="SAXS Analysis"
+            tooltip="Open viewer designed to show various plots for simple SAXS analysis.">
+      </plotting_tool_page>
+   </extension>
 
 </plugin>

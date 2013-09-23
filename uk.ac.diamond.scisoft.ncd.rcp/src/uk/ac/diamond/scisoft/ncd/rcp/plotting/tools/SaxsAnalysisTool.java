@@ -19,11 +19,16 @@ package uk.ac.diamond.scisoft.ncd.rcp.plotting.tools;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.math3.util.Pair;
+import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.tool.AbstractToolPage;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
+import org.dawnsci.plotting.api.trace.ITraceListener;
+import org.dawnsci.plotting.api.trace.TraceEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -36,13 +41,14 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.SDAPlotter;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -53,18 +59,44 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 
     private static final Logger logger = LoggerFactory.getLogger(SaxsAnalysisTool.class);
     
-	private Composite composite;
-	private Button loglog, guinier, porod, kratky, zimm, debyebuche;
+	private static Composite composite;
+	private static Button loglog, guinier, porod, kratky, zimm, debyebueche;
+	private static IPlottingSystem plottingSystem = null;
 	
 	private static final String LOGLOG_PLOT = "Log/Log Plot";
 	private static final String GUINIER_PLOT = "Guinier Plot";
 	private static final String POROD_PLOT = "Porod Plot";
 	private static final String KRATKY_PLOT = "Kratky Plot";
 	private static final String ZIMM_PLOT = "Zimm Plot";
-	private static final String DEBYE_BUCHE_PLOT = "Debye Buche Plot";
+	private static final String DEBYE_BUECHE_PLOT = "Debye-Bueche Plot";
 	
-	Map<String,Button> plotMap;
-	Map<String,SaxsPlotSelectionAdapter> plotListeners;
+	private static Map<String,Button> plotMap;
+	private static Map<String,Pair<String, String>> plotAxesNames;
+	private static Map<String,SaxsPlotSelectionAdapter> plotListeners;
+	
+	public SaxsAnalysisTool() {
+		plotAxesNames = new HashMap<String, Pair<String,String>>();
+		plotAxesNames.put(LOGLOG_PLOT, new Pair<String, String>("log\u2081\u2080(q)", "log\u2081\u2080(I)"));
+		plotAxesNames.put(GUINIER_PLOT, new Pair<String, String>("q\u00b2", "ln(I)"));
+		plotAxesNames.put(POROD_PLOT, new Pair<String, String>("q", "Iq\u2074"));
+		plotAxesNames.put(KRATKY_PLOT, new Pair<String, String>("q", "Iq\u00b2"));
+		plotAxesNames.put(ZIMM_PLOT, new Pair<String, String>("q\u00b2", "1/I"));
+		plotAxesNames.put(DEBYE_BUECHE_PLOT, new Pair<String, String>("q\u00b2", "1/\u221AI"));
+	}
+
+	private ITraceListener traceListener = new ITraceListener.Stub() {
+		@Override
+		protected void update(TraceEvent evt) {
+			if (plotMap != null) {
+				for (Button btn : plotMap.values()) {
+					if (btn != null && !(btn.isDisposed()) && btn.getSelection()) {
+						btn.notifyListeners(SWT.Selection, null);
+					}
+				}
+			}
+		}
+
+	};
 	
 	private class SaxsPlotSelectionAdapter extends SelectionAdapter {
 		
@@ -80,79 +112,60 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		
 		@Override
 		public void widgetSelected(SelectionEvent e) {
-			Collection<ITrace> traces = getPlottingSystem().getTraces();
-			
+			final Collection<ITrace> traces = plottingSystem.getTraces();
 			if (btn.getSelection()) {
-				try {
-					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-							.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
-				} catch (Exception ex) {
-					logger.error("Error creating SAXS {} plot view", plotName, ex);
-					return;
-				}
-				IDataset[] xData = new IDataset[] {};
-				IDataset[] yData = new IDataset[] {};
-				for (ITrace trace : traces) {
-					if (trace instanceof ILineTrace) {
-						ILineTrace lineTrace = (ILineTrace) trace;
-						AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
-						AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
-						
-						updatePlotData(xTraceData, yTraceData);
-						
-						xData = (IDataset[]) ArrayUtils.add(xData, xTraceData);
-						yData = (IDataset[]) ArrayUtils.add(yData, yTraceData);
+
+				Display.getDefault().asyncExec(new Runnable() {
+
+					@Override
+					public void run() {
+						PlotView pv;
+						IPlottingSystem ps;
+						try {
+							pv = (PlotView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+									.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
+							ps = pv.getPlottingSystem();
+							ps.setTitle(plotName);
+							Pair<String, String> axesTitles = plotAxesNames.get(plotName);
+							ps.getSelectedXAxis().setTitle(axesTitles.getFirst());
+							ps.getSelectedYAxis().setTitle(axesTitles.getSecond());
+							ps.clear();
+						} catch (Exception ex) {
+							logger.error("Error creating SAXS {} plot view", plotName, ex);
+							return;
+						}
+						IDataset[] xData = new IDataset[] {};
+						IDataset[] yData = new IDataset[] {};
+						for (ITrace trace : traces) {
+							if (trace instanceof ILineTrace) {
+								ILineTrace lineTrace = (ILineTrace) trace;
+								AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
+								AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
+
+								updatePlotData(xTraceData, yTraceData);
+								xTraceData.setErrorBuffer(null);
+								yTraceData.setErrorBuffer(null);
+								xData = (IDataset[]) ArrayUtils.add(xData, xTraceData);
+								yData = (IDataset[]) ArrayUtils.add(yData, yTraceData);
+								ILineTrace tr = ps.createLineTrace(lineTrace.getName());
+								tr.setData(xTraceData, yTraceData);
+								ps.addTrace(tr);
+							}
+						}
+						ps.repaint();
 					}
-				}
-				try {
-					SDAPlotter.plot(plotName, plotName, xData, yData);
-				} catch (Exception ex) {
-					logger.error("Error plotting SAXS data in {} view", plotName, ex);
-				}
+				});
 			} else {
-				IViewReference ivr = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
+				IViewReference ivr = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+						.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
 				if (ivr != null) {
 					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr.getView(false));
+
 				}
 			}
-		}
-
-		private String[] setPlotAxisNames() {
-			
-			String[] res = new String[] {"", ""};
-			
-			if (plotName.equals(LOGLOG_PLOT)) {
-				res[0] = "log10(q)";
-				res[1] = "log10(I)";
-			}
-			if (plotName.equals(GUINIER_PLOT)) {
-				res[0] = "q^2";
-				res[1] = "ln(I)";
-			}
-			if (plotName.equals(POROD_PLOT)) {
-				res[0] = "q";
-				res[1] = "Iq^4";
-			}
-			if (plotName.equals(KRATKY_PLOT)) {
-				res[0] = "q";
-				res[1] = "Iq^2";
-			}
-			if (plotName.equals(ZIMM_PLOT)) {
-				res[0] = "q^2";
-				res[1] = "1/I";
-			}
-			if (plotName.equals(DEBYE_BUCHE_PLOT)) {
-				res[0] = "q^2";
-				res[1] = "sqrt(1/I)";
-			}
-			
-			return res;
 		}
 
 		private void updatePlotData(AbstractDataset xTraceData, AbstractDataset yTraceData) {
-			String[] axisNames = setPlotAxisNames();
-			xTraceData.setName(axisNames[0]);
-			yTraceData.setName(axisNames[1]);
 			if (plotName.equals(LOGLOG_PLOT)) {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
@@ -196,7 +209,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				xTraceData.ipower(2);
 				return;
 			}
-			if (plotName.equals(DEBYE_BUCHE_PLOT)) {
+			if (plotName.equals(DEBYE_BUECHE_PLOT)) {
 				yTraceData.ipower(-0.5);
 				xTraceData.ipower(2);
 				return;
@@ -228,7 +241,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		createSaxsPlotWidget(properties, POROD_PLOT, porod);
 		createSaxsPlotWidget(properties, KRATKY_PLOT, kratky);
 		createSaxsPlotWidget(properties, ZIMM_PLOT, zimm);
-		createSaxsPlotWidget(properties, DEBYE_BUCHE_PLOT, debyebuche);
+		createSaxsPlotWidget(properties, DEBYE_BUECHE_PLOT, debyebueche);
 		
 		sc.setContent(properties);
 		sc.setExpandVertical(true);
@@ -240,13 +253,14 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				sc.setMinHeight(properties.computeSize(r.width, SWT.DEFAULT).y);
 			}
 		});
-		
 	}
 
 	private void createSaxsPlotWidget(Composite c, String plotName, Button btn) {
 		btn = new Button(c, SWT.CHECK);
 		btn.setText(plotName);
-		btn.setToolTipText(plotName);
+		Pair<String, String> axesNames = plotAxesNames.get(plotName);
+		String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+		btn.setToolTipText(toolTipText);
 		SaxsPlotSelectionAdapter adapter = new SaxsPlotSelectionAdapter(btn, plotName);
 		btn.addSelectionListener(new SaxsPlotSelectionAdapter(btn, plotName));
 		plotListeners.put(plotName, adapter);
@@ -263,7 +277,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 
 	@Override
 	public void setFocus() {
-		if (getControl()!=null && !getControl().isDisposed()) {
+		if (getControl() != null && !(getControl().isDisposed())) {
 			getControl().setFocus();
 		}
 	}
@@ -271,32 +285,63 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	@Override
 	public void activate() {
 		super.activate();
-		//if (plotMap != null) {
-		//	for (Entry<String, Button> entry : plotMap.entrySet()) {
-		//		String plotName = entry.getKey();
-		//		Button btn = entry.getValue();
-		//		if (btn.getSelection()) {
-		//			try {
-		//				PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-		//						.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
-		//			} catch (PartInitException e) {
-		//				logger.error("Error creating SAXS {} plot view", plotName, e);
-		//			}
-		//		}
-		//	}
-		//}
+		
+		if (plottingSystem == null) {
+			plottingSystem = getPlottingSystem();
+		}
+		
+		if (plottingSystem != null) {
+			plottingSystem.addTraceListener(traceListener);
+		}
+		
+		if (plotMap != null) {
+			for (Entry<String, Button> entry : plotMap.entrySet()) {
+				String plotName = entry.getKey();
+				Button btn = entry.getValue();
+				if (btn.getSelection()) {
+					try {
+						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+								.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
+					} catch (PartInitException e) {
+						logger.error("Error creating SAXS {} plot view", plotName, e);
+					}
+				}
+			}
+		}
 	}
 	
 	
 	@Override
 	public void deactivate() {
-		super.deactivate();
-		//if (plotMap != null) {
-		//	for (Entry<String, Button> entry : plotMap.entrySet()) {
-		//		String plotName = entry.getKey();
-		//		Button btn = entry.getValue();
-		//		btn.removeSelectionListener(plotListeners.get(plotName));
-		//	}
-		//}
+		if (plottingSystem != null) {
+			plottingSystem.removeTraceListener(traceListener);
+		}
+		
+		if (plotMap != null) {
+			for (Entry<String, Button> entry : plotMap.entrySet()) {
+				String plotName = entry.getKey();
+				Button btn = entry.getValue();
+				btn.removeSelectionListener(plotListeners.get(plotName));
+			}
+		}
+		super.deactivate();		
+	}
+	
+	
+	@Override
+	public boolean isStaticTool() {
+		return true;
+	}
+
+	@Override
+	public boolean isAlwaysSeparateView() {
+		return true;
+		
+	}
+	
+	@Override
+	public void dispose() {
+		plottingSystem = null;
+		super.dispose();
 	}
 }
