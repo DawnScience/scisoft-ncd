@@ -105,7 +105,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	private IJobManager jobManager;
 	
-	protected String GUI_PLOT_NAME = "Dataset Plot";
 	protected String ACTIVE_PLOT = "Dataset Plot";
 	private IPlottingSystem plottingSystem;
 	public static final  String SECTOR_NAME = "Calibration";
@@ -272,7 +271,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				}
 			}
 
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
 				IROI intBase = sectorRegions.iterator().next().getROI();
@@ -426,7 +425,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 				roiData.setSymmetry(roiMemento.getInteger(CalibrationPreferences.QAXIS_ROISYM));
 				try {
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 					if (plotSystem != null) {
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.createRegion(SECTOR_NAME, RegionType.SECTOR);
@@ -443,35 +442,34 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		}
 	}
 
-	protected Amount<Length> getLambda() {
-		Amount<Length> lambdaDim = Constants.ℎ.times(Constants.c).divide(
-				ncdEnergySourceProvider.getEnergy().to(SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT);
-		return lambdaDim;
+	@Override
+	protected Amount<Energy> getEnergy() {
+		return ncdEnergySourceProvider.getEnergy();
 	}
 	
 	@Override
 	protected void runJavaCommand() {
 		
 		try {
-			String saxsDet = ncdSaxsDetectorSourceProvider.getSaxsDetector();
+			String saxsDet = getDetectorName();
 			if (saxsDet == null) {
 				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
 			}
-			Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
+			Amount<Energy> energy = getEnergy();
 			if (energy == null) {
 				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_ENERGY_DATA, "calibration settings"));
 			}
-			NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDet);
-			if (detSettings == null) {
-				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
-			}
-			if (detSettings.getPxSize() == null) {
-				throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
-			}
+//			NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDet);
+//			if (detSettings == null) {
+//				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
+//			}
+//			if (detSettings.getPxSize() == null) {
+//				throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
+//			}
 
 			final boolean runRefinement = beamRefineButton.getSelection();
 
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions == null || sectorRegions.isEmpty()) {
 				throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
@@ -525,7 +523,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		plottingSystem.clear();
 		
 		Amount<Length> px = getPixel(false);
-		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
 		xAxis.imultiply(px.getEstimatedValue());
@@ -579,14 +577,16 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	}
 	
 	protected String getDetectorName() {
-		//  Override in subclass to refer to the calibrated detector
-		return null;
+		return ncdSaxsDetectorSourceProvider.getSaxsDetector();
 	}
 
 	@SuppressWarnings("unused")
 	protected Amount<Length> getPixel(boolean b) {
-		// Override in subclass to return the appropriate pixel size
-		return null;
+		NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName());
+		if (detSettings == null) {
+			throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
+		}
+		return detSettings.getPxSize();
 	}
 	
 	@Override
@@ -610,7 +610,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
-						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 						
 						 
 						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();
@@ -664,7 +664,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 						String calibrant = standard.getText();
 						CalibrationMethods calibrationMethod = new CalibrationMethods(newPeaks,
-								cs.getCalibrationPeakMap(calibrant), getLambda(), getPixel(false), getUnitScale());
+								cs.getCalibrationPeakMap(calibrant), Constants.ℎ.times(Constants.c).divide(getEnergy().to(SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT), getPixel(false), getUnitScale());
 						calibrationMethod.performCalibration(true);
 
 						CalibrationResultsBean crb = new CalibrationResultsBean();
