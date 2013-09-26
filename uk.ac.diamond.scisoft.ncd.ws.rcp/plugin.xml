@@ -30,5 +30,12 @@
             name="NCD Model Builder Perspective">
       </perspective>
    </extension>
+   <extension
+         point="org.eclipse.ui.intro.configExtension">
+      <configExtension
+            configId="org.dawnsci.intro.universalConfig"
+            content="intro/introContribution.xml">
+      </configExtension>
+   </extension>
 
 </plugin>
