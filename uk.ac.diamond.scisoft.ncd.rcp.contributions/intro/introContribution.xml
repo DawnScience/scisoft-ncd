@@ -2,10 +2,10 @@
 <introContent>
   	<extensionContent id="prerelease-perspectives" style="style.css" name="Pre-release Perspectives" path="perspectives/@">
 		<group id="prerelease-perspectives-group" style-id="content-group">
-       		<link label="(Pre-release) NCD Data Reduction" url="http://org.eclipse.ui.intro/runAction?pluginId=org.dawnsci.intro&amp;class=org.dawnsci.intro.actions.OpenPerspectiveAction&amp;name=uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch" id="scisoft-ncdreduc" style-id="content-link">
+       		<link label="(Pre-release) NCD Data Reduction" url="http://org.eclipse.ui.intro/runAction?pluginId=org.dawnsci.intro&amp;class=org.dawnsci.intro.actions.OpenPerspectiveAction&amp;name=uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch" id="ncdreduc" style-id="content-link">
           		<text>Opens the perspective for non-crystalline diffraction data processing</text>
        		</link>
-       		<link label="(Pre-release) NCD Calibration" url="http://org.eclipse.ui.intro/runAction?pluginId=org.dawnsci.intro&amp;class=org.dawnsci.intro.actions.OpenPerspectiveAction&amp;name=uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationPerspectiveLaunch" id="scisoft-ncdcalib" style-id="content-link">
+       		<link label="(Pre-release) NCD Calibration" url="http://org.eclipse.ui.intro/runAction?pluginId=org.dawnsci.intro&amp;class=org.dawnsci.intro.actions.OpenPerspectiveAction&amp;name=uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationPerspectiveLaunch" id="ncdcalib" style-id="content-link">
           		<text>Opens the perspective for calibration of non-crystalline diffraction data</text>
        		</link>
        	</group>
