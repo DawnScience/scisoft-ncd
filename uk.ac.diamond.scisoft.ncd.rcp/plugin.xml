@@ -636,5 +636,12 @@
             tooltip="Open viewer designed to show various plots for simple SAXS analysis.">
       </plotting_tool_page>
    </extension>
+   <extension
+         point="org.eclipse.ui.intro.configExtension">
+      <configExtension
+            configId="org.dawnsci.intro.universalConfig"
+            content="intro/introContribution.xml">
+      </configExtension>
+   </extension>
 
 </plugin>
