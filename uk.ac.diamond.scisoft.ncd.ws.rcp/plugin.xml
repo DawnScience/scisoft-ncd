@@ -15,6 +15,7 @@
          point="org.eclipse.ui.views">
      <view
            category="org.dawb.workbench.ui.beta.views.category"
+           icon="icons/ncd_envelope_small.png"
            class="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
            id="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
            name="BioSAXS Model Builder"
