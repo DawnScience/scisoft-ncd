@@ -120,4 +120,17 @@ public class SaxsPlotsSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, DEBYE_BUECHE_STATE, enableDebyeBueche);
 	}
 
+	public void setAll(SaxsPlotsSourceProvider sourceProvider) {
+		
+		Map<String, Object> sourceState = sourceProvider.getCurrentState();
+		
+		enableLogLog = (Boolean) sourceState.get(LOGLOG_STATE);
+		enableGuinier = (Boolean) sourceState.get(GUINIER_STATE);
+		enablePorod = (Boolean) sourceState.get(POROD_STATE);
+		enableKratky = (Boolean) sourceState.get(KRATKY_STATE);
+		enableZimm = (Boolean) sourceState.get(ZIMM_STATE);
+		enableDebyeBueche = (Boolean) sourceState.get(DEBYE_BUECHE_STATE);
+		
+		fireSourceChanged(ISources.WORKBENCH, getCurrentState());
+	}
 }

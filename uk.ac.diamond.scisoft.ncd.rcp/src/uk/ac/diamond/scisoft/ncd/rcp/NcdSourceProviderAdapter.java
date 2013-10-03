@@ -29,19 +29,23 @@ public class NcdSourceProviderAdapter {
 	
 	private NcdProcessingSourceProvider ncdProcessingSourceProvider;
 	private NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
+	private SaxsPlotsSourceProvider saxsPlotsSourceProvider;
 
 	public NcdSourceProviderAdapter() {
 		super();
 		this.setNcdProcessingSourceProvider(null);
 		this.setNcdCalibrationSourceProvider(null);
+		this.setSaxsPlotsSourceProvider(null);
 	}
 	
 	
 	public NcdSourceProviderAdapter(ISourceProvider ncdProcessingSourceProvider,
-			ISourceProvider ncdCalibrationSourceProvider) {
+			ISourceProvider ncdCalibrationSourceProvider,
+			ISourceProvider saxsPlotsSourceProvider) {
 		super();
 		this.setNcdProcessingSourceProvider((NcdProcessingSourceProvider) ncdProcessingSourceProvider);
 		this.setNcdCalibrationSourceProvider((NcdCalibrationSourceProvider) ncdCalibrationSourceProvider);
+		this.setSaxsPlotsSourceProvider((SaxsPlotsSourceProvider) saxsPlotsSourceProvider);
 	}
 
 
@@ -64,4 +68,13 @@ public class NcdSourceProviderAdapter {
 		this.ncdCalibrationSourceProvider = ncdCalibrationSourceProvider;
 	}
 
+	
+	public SaxsPlotsSourceProvider getSaxsPlotsSourceProvider() {
+		return saxsPlotsSourceProvider;
+	}
+
+
+	private void setSaxsPlotsSourceProvider(SaxsPlotsSourceProvider saxsPlotsSourceProvider) {
+		this.saxsPlotsSourceProvider = saxsPlotsSourceProvider;
+	}
 }
