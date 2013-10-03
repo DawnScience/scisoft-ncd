@@ -29,6 +29,12 @@ public class NcdReductionFlags {
 	private boolean enableFastintegration;
 	private boolean enableWaxs;
 	private boolean enableSaxs;
+	private boolean enableLogLogPlot;
+	private boolean enableGuinierPlot;
+	private boolean enablePorodPlot;
+	private boolean enableKratkyPlot;
+	private boolean enableZimmPlot;
+	private boolean enableDebyeBuechePlot;
 	
 	public NcdReductionFlags() {
 		enableAverage = false;
@@ -42,6 +48,12 @@ public class NcdReductionFlags {
 		enableFastintegration = false;
 		enableWaxs = false;
 		enableSaxs = false;
+		enableLogLogPlot = false;
+		enableGuinierPlot = false;
+		enablePorodPlot = false;
+		enableKratkyPlot = false;
+		enableZimmPlot = false;
+		enableDebyeBuechePlot = false;
 	}
 	
 	public NcdReductionFlags(NcdReductionFlags flags) {
@@ -56,6 +68,12 @@ public class NcdReductionFlags {
 		enableFastintegration = flags.enableFastintegration;
 		enableWaxs = flags.enableWaxs;
 		enableSaxs = flags.enableSaxs;
+		enableLogLogPlot = flags.enableLogLogPlot;
+		enableGuinierPlot = flags.enableGuinierPlot;
+		enablePorodPlot = flags.enablePorodPlot;
+		enableKratkyPlot = flags.enableKratkyPlot;
+		enableZimmPlot = flags.enableZimmPlot;
+		enableDebyeBuechePlot = flags.enableDebyeBuechePlot;
 	}
 	
 	public boolean isEnableAverage() {
@@ -141,5 +159,53 @@ public class NcdReductionFlags {
 	}
 	public void setEnableSaxs(boolean enableSaxs) {
 		this.enableSaxs = enableSaxs;
+	}
+
+	public boolean isEnableLogLogPlot() {
+		return enableLogLogPlot;
+	}
+
+	public void setEnableLogLogPlot(boolean enableLogLogPlot) {
+		this.enableLogLogPlot = enableLogLogPlot;
+	}
+
+	public boolean isEnableGuinierPlot() {
+		return enableGuinierPlot;
+	}
+
+	public void setEnableGuinierPlot(boolean enableGuinierPlot) {
+		this.enableGuinierPlot = enableGuinierPlot;
+	}
+
+	public boolean isEnablePorodPlot() {
+		return enablePorodPlot;
+	}
+
+	public void setEnablePorodPlot(boolean enablePorodPlot) {
+		this.enablePorodPlot = enablePorodPlot;
+	}
+
+	public boolean isEnableKratkyPlot() {
+		return enableKratkyPlot;
+	}
+
+	public void setEnableKratkyPlot(boolean enableKratkyPlot) {
+		this.enableKratkyPlot = enableKratkyPlot;
+	}
+
+	public boolean isEnableZimmPlot() {
+		return enableZimmPlot;
+	}
+
+	public void setEnableZimmPlot(boolean enableZimmPlot) {
+		this.enableZimmPlot = enableZimmPlot;
+	}
+
+	public boolean isEnableDebyeBuechePlot() {
+		return enableDebyeBuechePlot;
+	}
+
+	public void setEnableDebyeBuechePlot(boolean enableDebyeBuechePlot) {
+		this.enableDebyeBuechePlot = enableDebyeBuechePlot;
 	}
 }

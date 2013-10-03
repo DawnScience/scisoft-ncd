@@ -610,4 +610,64 @@ class DataReductionContext implements IDataReductionContext {
 		this.resultsFile = outputFilePath;
 	}
 
+	@Override
+	public boolean isEnableLogLogPlot() {
+		return flags.isEnableLogLogPlot();
+	}
+
+	@Override
+	public void setEnableLogLogPlot(boolean enableLogLogPlot) {
+		flags.setEnableLogLogPlot(enableLogLogPlot);
+	}
+
+	@Override
+	public boolean isEnableGuinierPlot() {
+		return flags.isEnableGuinierPlot();
+	}
+
+	@Override
+	public void setEnableGuinierPlot(boolean enableGuinierPlot) {
+		flags.setEnableGuinierPlot(enableGuinierPlot);
+	}
+
+	@Override
+	public boolean isEnablePorodPlot() {
+		return flags.isEnablePorodPlot();
+	}
+
+	@Override
+	public void setEnablePorodPlot(boolean enablePorodPlot) {
+		flags.setEnablePorodPlot(enablePorodPlot);
+	}
+
+	@Override
+	public boolean isEnableKratkyPlot() {
+		return flags.isEnableKratkyPlot();
+	}
+
+	@Override
+	public void setEnableKratkyPlot(boolean enableKratkyPlot) {
+		flags.setEnableKratkyPlot(enableKratkyPlot);
+	}
+
+	@Override
+	public boolean isEnableZimmPlot() {
+		return flags.isEnableZimmPlot();
+	}
+
+	@Override
+	public void setEnableZimmPlot(boolean enableZimmPlot) {
+		flags.setEnableZimmPlot(enableZimmPlot);
+	}
+
+	@Override
+	public boolean isEnableDebyeBuechePlot() {
+		return flags.isEnableDebyeBuechePlot();
+	}
+
+	@Override
+	public void setEnableDebyeBuechePlot(boolean enableDebyeBuechePlot) {
+		flags.setEnableDebyeBuechePlot(enableDebyeBuechePlot);
+	}
+
 }
