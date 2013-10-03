@@ -25,6 +25,7 @@ import java.util.Map.Entry;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
+import org.apache.commons.math3.util.Pair;
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
@@ -67,7 +68,9 @@ import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
@@ -86,6 +89,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Button browse;
 	private String inputDirectory = "Please specify results directory";
 	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr, runCalibratioin;
+	private Button loglogButton, guinierButton, porodButton, kratkyButton, zimmButton, debyebuecheButton;
 	
 	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
 	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
@@ -103,13 +107,20 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 	
+	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
+	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
+	private SaxsPlotsSourceProvider porodPlotSourceProvider;
+	private SaxsPlotsSourceProvider kratkyPlotSourceProvider;
+	private SaxsPlotsSourceProvider zimmPlotSourceProvider;
+	private SaxsPlotsSourceProvider debyebuechePlotSourceProvider;
+	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
 	private static Combo calList;
 	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
-	private ExpandableComposite ecomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
+	private ExpandableComposite ecomp, saxsPlotEcomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
 	private ExpansionAdapter expansionAdapter;
 	
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
@@ -550,6 +561,97 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 		}
 
+		saxsPlotEcomp = new ExpandableComposite(c, SWT.NONE);
+		saxsPlotEcomp.setText("1D SAXS Analysis Plots");
+		saxsPlotEcomp.setToolTipText("Include 1D SAXS analysis plots in results files");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		saxsPlotEcomp.setLayout(gl);
+		saxsPlotEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		saxsPlotEcomp.addExpansionListener(expansionAdapter);
+
+		{
+			Composite g = new Composite(saxsPlotEcomp, SWT.NONE);
+			g.setLayout(gl);
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
+			loglogButton = new Button(g, SWT.CHECK);
+			loglogButton.setText(SaxsAnalysisPlots.LOGLOG_PLOT);
+			Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.LOGLOG_PLOT);
+			String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			loglogButton.setToolTipText(toolTipText);
+			loglogButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					loglogPlotSourceProvider.setEnableLogLog(loglogButton.getSelection());
+				}
+			});
+			
+			guinierButton = new Button(g, SWT.CHECK);
+			guinierButton.setText(SaxsAnalysisPlots.GUINIER_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.GUINIER_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			guinierButton.setToolTipText(toolTipText);
+			guinierButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					guinierPlotSourceProvider.setEnableGuinier(guinierButton.getSelection());
+				}
+			});
+			
+			porodButton = new Button(g, SWT.CHECK);
+			porodButton.setText(SaxsAnalysisPlots.POROD_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.POROD_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			porodButton.setToolTipText(toolTipText);
+			porodButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					porodPlotSourceProvider.setEnablePorod(porodButton.getSelection());
+				}
+			});
+			
+			kratkyButton = new Button(g, SWT.CHECK);
+			kratkyButton.setText(SaxsAnalysisPlots.KRATKY_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.KRATKY_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			kratkyButton.setToolTipText(toolTipText);
+			kratkyButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					kratkyPlotSourceProvider.setEnableKratky(kratkyButton.getSelection());
+				}
+			});
+			
+			zimmButton = new Button(g, SWT.CHECK);
+			zimmButton.setText(SaxsAnalysisPlots.ZIMM_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.ZIMM_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			zimmButton.setToolTipText(toolTipText);
+			zimmButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					zimmPlotSourceProvider.setEnableZimm(zimmButton.getSelection());
+				}
+			});
+			
+			debyebuecheButton = new Button(g, SWT.CHECK);
+			debyebuecheButton.setText(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			debyebuecheButton.setToolTipText(toolTipText);
+			debyebuecheButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					debyebuechePlotSourceProvider.setEnableDebyeBueche(debyebuecheButton.getSelection());
+				}
+			});
+			
+			saxsPlotEcomp.setClient(g);
+		}
+		saxsPlotEcomp.setExpanded(false);
+		
+		
 		{
 			Group g = new Group(c, SWT.NONE);
 			g.setLayout(new GridLayout(3, false));
@@ -1218,6 +1320,18 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		ncdBgScaleSourceProvider.addSourceProviderListener(this);
 		
+		loglogPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
+		loglogPlotSourceProvider.addSourceProviderListener(this);
+		guinierPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.GUINIER_STATE);
+		guinierPlotSourceProvider.addSourceProviderListener(this);
+		porodPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.POROD_STATE);
+		porodPlotSourceProvider.addSourceProviderListener(this);
+		kratkyPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.KRATKY_STATE);
+		kratkyPlotSourceProvider.addSourceProviderListener(this);
+		zimmPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.ZIMM_STATE);
+		zimmPlotSourceProvider.addSourceProviderListener(this);
+		debyebuechePlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE);
+		debyebuechePlotSourceProvider.addSourceProviderListener(this);
 	}
 
 	@Override
@@ -1256,6 +1370,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	}
 
 	private void updateSectorIntegrationWidgets(boolean selection) {
+		if (saxsPlotEcomp != null && !(saxsPlotEcomp.isDisposed())) {
+			saxsPlotEcomp.setExpanded(selection);
+			saxsPlotEcomp.setEnabled(selection);
+			expansionAdapter.expansionStateChanged(new ExpansionEvent(saxsPlotEcomp, selection));
+		}
 		if (secEcomp != null && !(secEcomp.isDisposed())) {
 			secEcomp.setExpanded(selection);
 			secEcomp.setEnabled(selection);

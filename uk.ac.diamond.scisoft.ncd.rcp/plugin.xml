@@ -93,6 +93,54 @@
          </state>
       </command>
       <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableLogLogPlot"
+            name="LogLog Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.loglogplot.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableGuinierPlot"
+            name="Guinier Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.guinierplot.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enablePorodPlot"
+            name="Porod Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.porodplot.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableKratkyPlot"
+            name="Kratky Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.kratkyplot.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableZimmPlot"
+            name="Zimm Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.zimmplot.state">
+         </state>
+      </command>
+      <command
+            id="uk.ac.diamond.scisoft.ncd.rcp.enableDebyeBuechePlot"
+            name="DebyeBueche Plot">
+         <state
+               class="org.eclipse.jface.commands.ToggleState"
+               id="uk.ac.diamond.scisoft.ncd.rcp.debyebueche.state">
+         </state>
+      </command>
+      <command
             id="uk.ac.diamond.scisoft.ncd.rcp.enableMask"
             name="Mask">
          <state
@@ -280,6 +328,13 @@
          </variable>
          <variable
                name="uk.ac.diamond.scisoft.ncd.rcp.peaks"
+               priorityLevel="workbench">
+         </variable>
+      </sourceProvider>
+      <sourceProvider
+            provider="uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider">
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.variable1"
                priorityLevel="workbench">
          </variable>
       </sourceProvider>
@@ -609,6 +664,30 @@
                </with>
             </or>
          </enabledWhen>
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.LogLogPlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableLogLogPlot">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.GuinierPlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableGuinierPlot">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.PorodPlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enablePorodPlot">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.KratkyPlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableKratkyPlot">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.ZimmPlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableZimmPlot">
+      </handler>
+      <handler
+            class="uk.ac.diamond.scisoft.ncd.rcp.handlers.DebyeBuechePlotHandler"
+            commandId="uk.ac.diamond.scisoft.ncd.rcp.enableDebyeBuechePlot">
       </handler>
    </extension>
 	<extension
