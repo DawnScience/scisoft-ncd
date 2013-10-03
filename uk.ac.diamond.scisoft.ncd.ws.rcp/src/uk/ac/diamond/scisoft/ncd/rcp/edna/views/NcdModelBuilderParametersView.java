@@ -707,6 +707,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 													.getSlice(new Slice())
 													.getShape()[1]));
 								}
+								else {
+									numberOfFrames.setText("1");
+								}
 							} catch (Exception e) {
 								logger.error(
 										"Exception while attempting to retrieve number of frames from dataset",
