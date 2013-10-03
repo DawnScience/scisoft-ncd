@@ -221,6 +221,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putBoolean(NcdPreferences.NCD_SECTOR_FAST, fastIntButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_SECTOR_MASK, useMask.getSelection());
 			
+			memento.putBoolean(NcdPreferences.NCD_PLOT_LOGLOG, loglogButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_PLOT_GUINIER, guinierButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_PLOT_POROD, porodButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_PLOT_KRATKY, kratkyButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_PLOT_ZIMM, zimmButton.getSelection());
+			memento.putBoolean(NcdPreferences.NCD_PLOT_DEBYEBUECHE, debyebuecheButton.getSelection());
+			
 			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
 			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
 			
@@ -342,6 +349,32 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			if (val!=null) {
 				useMask.setSelection(val);
 				useMask.notifyListeners(SWT.Selection, null);
+			}
+			
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_LOGLOG);
+			if (val!=null) {
+				loglogPlotSourceProvider.setEnableLogLog(val);
+			}
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_GUINIER);
+			if (val!=null) {
+				guinierPlotSourceProvider.setEnableGuinier(val);
+			}
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_POROD);
+			if (val!=null) {
+				porodPlotSourceProvider.setEnablePorod(val);
+			}
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_KRATKY);
+			if (val!=null) {
+				kratkyPlotSourceProvider.setEnableKratky(val);
+			}
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_ZIMM);
+			if (val!=null) {
+				zimmPlotSourceProvider.setEnableZimm(val);
+			}
+			
+			val = memento.getBoolean(NcdPreferences.NCD_PLOT_DEBYEBUECHE);
+			if (val!=null) {
+				debyebuechePlotSourceProvider.setEnableDebyeBueche(val);
 			}
 			
 			IMemento[] normMemento = memento.getChildren(NcdPreferences.NCD_NORM_DETECTOR);
@@ -1617,6 +1650,36 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		if (sourceName.equals(NcdProcessingSourceProvider.AVERAGE_STATE)) {
 			boolean isEnableAverage = ncdAverageSourceProvider.isEnableAverage();
 			updateAverageWidgets(isEnableAverage);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.LOGLOG_STATE)) {
+			boolean isEnable = loglogPlotSourceProvider.isEnableLogLog();
+			loglogButton.setSelection(isEnable);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.GUINIER_STATE)) {
+			boolean isEnable = guinierPlotSourceProvider.isEnableGuinier();
+			guinierButton.setSelection(isEnable);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.POROD_STATE)) {
+			boolean isEnable = porodPlotSourceProvider.isEnablePorod();
+			porodButton.setSelection(isEnable);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.KRATKY_STATE)) {
+			boolean isEnable = kratkyPlotSourceProvider.isEnableKratky();
+			kratkyButton.setSelection(isEnable);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.ZIMM_STATE)) {
+			boolean isEnable = zimmPlotSourceProvider.isEnableZimm();
+			zimmButton.setSelection(isEnable);
+		}
+		
+		if (sourceName.equals(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE)) {
+			boolean isEnable = debyebuechePlotSourceProvider.isEnableDebyeBueche();
+			debyebuecheButton.setSelection(isEnable);
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.BKGFILE_STATE)) {
