@@ -336,8 +336,8 @@ public class LazyNcdProcessing {
 		H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
-		processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", "NXinstrument");
-	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
+		processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", Nexus.INST);
+	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", Nexus.DATA);
 		
 		if (firstFrame != null || lastFrame != null) {
 			frameSelection = StringUtils.leftPad("", rank - dim - 1, ";");
@@ -941,6 +941,14 @@ public class LazyNcdProcessing {
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q_errors", result_group_id, "./q_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	    }
+	    
+	    if (flags.isEnableLogLogPlot()) {
+	    	LogLogPlotTask loglogPlotTask = new LogLogPlotTask();
+	    	loglogPlotTask.setDetector(detector);
+	    	loglogPlotTask.setQaxis(qaxis, qaxisUnit);
+	    	loglogPlotTask.execute(frames_int, entry_group_id, input_ids);
+	    }
+	    
 	    closeHDF5Identifiers();
 	}
 	
