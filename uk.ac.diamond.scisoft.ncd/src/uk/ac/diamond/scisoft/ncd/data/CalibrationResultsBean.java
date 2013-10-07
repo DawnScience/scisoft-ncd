@@ -40,58 +40,58 @@ public class CalibrationResultsBean implements Serializable {
 		results = new HashMap<String, CalibrationResultsData>();
 	}
 	
-	public CalibrationResultsBean(String experiment, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+	public CalibrationResultsBean(String detector, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		results = new HashMap<String, CalibrationResultsData>();
-		putCalibrationResult(experiment, gradient, intercept, peaks, meanCameraLength, unit); 
+		putCalibrationResult(detector, gradient, intercept, peaks, meanCameraLength, unit); 
 	}
 	
-	public void putCalibrationResult(String experiment, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
+	public void putCalibrationResult(String detector, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		CalibrationResultsData newData = new CalibrationResultsData(gradient, intercept, peaks, meanCameraLength, unit);	
-		results.put(experiment, newData);
+		results.put(detector, newData);
 	}
 	
-	public ArrayList<CalibrationPeak> getPeakList(String experiment) {
-		if (results.containsKey(experiment)) {
-			return results.get(experiment).getPeakList();
+	public ArrayList<CalibrationPeak> getPeakList(String detector) {
+		if (results.containsKey(detector)) {
+			return results.get(detector).getPeakList();
 		}
 		return null;
 	}
 
-	public Amount<ScatteringVectorOverDistance> getGradient(String experiment) {
-		if (results.containsKey(experiment)) {
-			return results.get(experiment).getGradient();
+	public Amount<ScatteringVectorOverDistance> getGradient(String detector) {
+		if (results.containsKey(detector)) {
+			return results.get(detector).getGradient();
 		}
 		return null;
 	}
 	
-	public Amount<ScatteringVector> getIntercept(String experiment) {
-		if (results.containsKey(experiment)) {
-			return results.get(experiment).getIntercept();
+	public Amount<ScatteringVector> getIntercept(String detector) {
+		if (results.containsKey(detector)) {
+			return results.get(detector).getIntercept();
 		}
 		return null;
 	}
 	
-	public Amount<Length> getMeanCameraLength(String experiment) {
-		if (results.containsKey(experiment)) {
-			return results.get(experiment).getMeanCameraLength();
+	public Amount<Length> getMeanCameraLength(String detector) {
+		if (results.containsKey(detector)) {
+			return results.get(detector).getMeanCameraLength();
 		}
 		return null;
 	}
 	
-	public Unit<Length> getUnit(String experiment) {
-		if (results.containsKey(experiment)) {
-			return results.get(experiment).getUnit();
+	public Unit<Length> getUnit(String detector) {
+		if (results.containsKey(detector)) {
+			return results.get(detector).getUnit();
 		}
 		return null;
 	}
 	
-	public boolean containsKey(String experiment) {
-		return results.containsKey(experiment);
+	public boolean containsKey(String detector) {
+		return results.containsKey(detector);
 	}
 	
-	public void clearData(String experiment) {
-		if (results.containsKey(experiment)) {
-			results.remove(experiment);
+	public void clearData(String detector) {
+		if (results.containsKey(detector)) {
+			results.remove(detector);
 		}
 	}
 	
