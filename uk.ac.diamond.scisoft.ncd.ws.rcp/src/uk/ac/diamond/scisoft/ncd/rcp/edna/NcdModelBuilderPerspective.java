@@ -22,7 +22,9 @@ public class NcdModelBuilderPerspective implements IPerspectiveFactory {
 			layout.getViewLayout(explorer).setCloseable(false);
 		projectFolderLayout.addView(FileView_ID);
 
-		layout.addView(NcdModelBuilderParametersView.ID, IPageLayout.RIGHT, 0.6f, IPageLayout.ID_EDITOR_AREA);
+		IFolderLayout folderLayout = layout.createFolder("folder", IPageLayout.RIGHT, 0.6f, IPageLayout.ID_EDITOR_AREA);
+		folderLayout.addView(NcdModelBuilderParametersView.ID);
+		folderLayout.addView("org.dawb.workbench.views.dataSetView");
 
 		layout.setEditorAreaVisible(false);
 	}
