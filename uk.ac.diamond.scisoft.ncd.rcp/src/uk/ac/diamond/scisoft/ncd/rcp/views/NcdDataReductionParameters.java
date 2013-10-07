@@ -594,97 +594,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 		}
 
-		saxsPlotEcomp = new ExpandableComposite(c, SWT.NONE);
-		saxsPlotEcomp.setText("1D SAXS Analysis Plots");
-		saxsPlotEcomp.setToolTipText("Include 1D SAXS analysis plots in results files");
-		gl = new GridLayout(2, false);
-		gl.horizontalSpacing = 15;
-		saxsPlotEcomp.setLayout(gl);
-		saxsPlotEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-		saxsPlotEcomp.addExpansionListener(expansionAdapter);
-
-		{
-			Composite g = new Composite(saxsPlotEcomp, SWT.NONE);
-			g.setLayout(gl);
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
-			
-			loglogButton = new Button(g, SWT.CHECK);
-			loglogButton.setText(SaxsAnalysisPlots.LOGLOG_PLOT);
-			Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.LOGLOG_PLOT);
-			String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			loglogButton.setToolTipText(toolTipText);
-			loglogButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					loglogPlotSourceProvider.setEnableLogLog(loglogButton.getSelection());
-				}
-			});
-			
-			guinierButton = new Button(g, SWT.CHECK);
-			guinierButton.setText(SaxsAnalysisPlots.GUINIER_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.GUINIER_PLOT);
-			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			guinierButton.setToolTipText(toolTipText);
-			guinierButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					guinierPlotSourceProvider.setEnableGuinier(guinierButton.getSelection());
-				}
-			});
-			
-			porodButton = new Button(g, SWT.CHECK);
-			porodButton.setText(SaxsAnalysisPlots.POROD_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.POROD_PLOT);
-			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			porodButton.setToolTipText(toolTipText);
-			porodButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					porodPlotSourceProvider.setEnablePorod(porodButton.getSelection());
-				}
-			});
-			
-			kratkyButton = new Button(g, SWT.CHECK);
-			kratkyButton.setText(SaxsAnalysisPlots.KRATKY_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.KRATKY_PLOT);
-			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			kratkyButton.setToolTipText(toolTipText);
-			kratkyButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					kratkyPlotSourceProvider.setEnableKratky(kratkyButton.getSelection());
-				}
-			});
-			
-			zimmButton = new Button(g, SWT.CHECK);
-			zimmButton.setText(SaxsAnalysisPlots.ZIMM_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.ZIMM_PLOT);
-			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			zimmButton.setToolTipText(toolTipText);
-			zimmButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					zimmPlotSourceProvider.setEnableZimm(zimmButton.getSelection());
-				}
-			});
-			
-			debyebuecheButton = new Button(g, SWT.CHECK);
-			debyebuecheButton.setText(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
-			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-			debyebuecheButton.setToolTipText(toolTipText);
-			debyebuecheButton.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					debyebuechePlotSourceProvider.setEnableDebyeBueche(debyebuecheButton.getSelection());
-				}
-			});
-			
-			saxsPlotEcomp.setClient(g);
-		}
-		saxsPlotEcomp.setExpanded(false);
-		
-		
 		{
 			Group g = new Group(c, SWT.NONE);
 			g.setLayout(new GridLayout(3, false));
@@ -792,6 +701,96 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			secEcomp.setClient(g);
 		}
 		secEcomp.setExpanded(false);
+		
+		saxsPlotEcomp = new ExpandableComposite(c, SWT.NONE);
+		saxsPlotEcomp.setText("1D SAXS Analysis Plots");
+		saxsPlotEcomp.setToolTipText("Include 1D SAXS analysis plots in results files");
+		gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		saxsPlotEcomp.setLayout(gl);
+		saxsPlotEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		saxsPlotEcomp.addExpansionListener(expansionAdapter);
+
+		{
+			Composite g = new Composite(saxsPlotEcomp, SWT.NONE);
+			g.setLayout(gl);
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
+			loglogButton = new Button(g, SWT.CHECK);
+			loglogButton.setText(SaxsAnalysisPlots.LOGLOG_PLOT);
+			Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.LOGLOG_PLOT);
+			String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			loglogButton.setToolTipText(toolTipText);
+			loglogButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					loglogPlotSourceProvider.setEnableLogLog(loglogButton.getSelection());
+				}
+			});
+			
+			guinierButton = new Button(g, SWT.CHECK);
+			guinierButton.setText(SaxsAnalysisPlots.GUINIER_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.GUINIER_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			guinierButton.setToolTipText(toolTipText);
+			guinierButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					guinierPlotSourceProvider.setEnableGuinier(guinierButton.getSelection());
+				}
+			});
+			
+			porodButton = new Button(g, SWT.CHECK);
+			porodButton.setText(SaxsAnalysisPlots.POROD_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.POROD_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			porodButton.setToolTipText(toolTipText);
+			porodButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					porodPlotSourceProvider.setEnablePorod(porodButton.getSelection());
+				}
+			});
+			
+			kratkyButton = new Button(g, SWT.CHECK);
+			kratkyButton.setText(SaxsAnalysisPlots.KRATKY_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.KRATKY_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			kratkyButton.setToolTipText(toolTipText);
+			kratkyButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					kratkyPlotSourceProvider.setEnableKratky(kratkyButton.getSelection());
+				}
+			});
+			
+			zimmButton = new Button(g, SWT.CHECK);
+			zimmButton.setText(SaxsAnalysisPlots.ZIMM_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.ZIMM_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			zimmButton.setToolTipText(toolTipText);
+			zimmButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					zimmPlotSourceProvider.setEnableZimm(zimmButton.getSelection());
+				}
+			});
+			
+			debyebuecheButton = new Button(g, SWT.CHECK);
+			debyebuecheButton.setText(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			debyebuecheButton.setToolTipText(toolTipText);
+			debyebuecheButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					debyebuechePlotSourceProvider.setEnableDebyeBueche(debyebuecheButton.getSelection());
+				}
+			});
+			
+			saxsPlotEcomp.setClient(g);
+		}
+		saxsPlotEcomp.setExpanded(false);
 		
 		normEcomp = new ExpandableComposite(c, SWT.NONE);
 		normEcomp.setText("Normalisation");
