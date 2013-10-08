@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
@@ -906,6 +907,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private IDataset retrieveQ(DataHolder holder, String path) {
 		ILazyDataset qDataset = holder.getLazyDataset(path);
+		if (qDataset == null) {
+			MessageDialog.openError(this.getSite().getShell(), "No q field found", "No q field found in this data file.");
+			return null;
+		}
 		return qDataset.getSlice(new Slice());
 	}
 
