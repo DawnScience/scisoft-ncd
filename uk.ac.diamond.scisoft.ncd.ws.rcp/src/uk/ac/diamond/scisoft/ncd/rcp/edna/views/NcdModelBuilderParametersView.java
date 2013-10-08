@@ -104,7 +104,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected Text dataFile;
 	protected String dataFilename = "";
 	protected Text workingDirectory;
-	protected Text htmlResultsDirectory;
 	protected Combo pathToQCombo;
 	protected Combo pathToDataCombo;
 
@@ -329,10 +328,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		workingDirectory = new Text(dataParameters, SWT.NONE);
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
 		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		new Label(dataParameters, SWT.NONE).setText("HTML results directory");
-		htmlResultsDirectory = new Text(dataParameters, SWT.NONE);
-		htmlResultsDirectory.setToolTipText("Directory where HTML results files are left. Must be network accessible (not /scratch or /tmp)");
-		htmlResultsDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Nexus path to q");
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
@@ -962,7 +957,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		try {
 			//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
 			modelBuildingParameters.setWorkingDirectory(workingDirectory.getText());
-			modelBuildingParameters.setHtmlResultsDirectory(htmlResultsDirectory.getText());
 
 			String filename = dataFile.getText();
 			modelBuildingParameters.setDataFilename(filename);
@@ -1033,7 +1027,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				String fedId = System.getenv("USER");
 				dataFile.setText("");
 				workingDirectory.setText("/dls/tmp/" + fedId);
-				htmlResultsDirectory.setText("/dls/tmp/" + fedId);
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
 				minDistanceSearch.setText("20");
@@ -1120,7 +1113,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			dataFile.setText(dataFilename);
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
-		htmlResultsDirectory.setText(modelBuildingParameters.getHtmlResultsDirectory());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
 		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
 		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);

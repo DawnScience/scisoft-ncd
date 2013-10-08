@@ -19,7 +19,6 @@ package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 public class NcdModelBuilderParametersMementoStrings {
 	public static final String BIOSAXS_DATA_FILE = "biosaxs.dataFile";
 	public static final String BIOSAXS_WORKING_DIRECTORY = "biosaxs.working.directory";
-	public static final String BIOSAXS_RESULTS_DIRECTORY = "biosaxs.results.directory";
 	public static final String BIOSAXS_PATH_TO_Q = "biosaxs.pathToQ";
 	public static final String BIOSAXS_PATH_TO_DATA = "biosaxs.pathToData";
 	public static final String BIOSAXS_NUMBER_OF_FRAMES = "biosaxs.numberFrames";
