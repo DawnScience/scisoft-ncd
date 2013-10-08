@@ -330,7 +330,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Nexus path to q");
-		pathToQCombo = new Combo(dataParameters, SWT.NONE);
+		pathToQCombo = new Combo(dataParameters, SWT.READ_ONLY);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToQCombo.addListener(SWT.KeyUp, pathListener);
@@ -341,7 +341,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		new Label(dataParameters, SWT.NONE).setText("Nexus path to data");
-		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
+		pathToDataCombo = new Combo(dataParameters, SWT.READ_ONLY);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
