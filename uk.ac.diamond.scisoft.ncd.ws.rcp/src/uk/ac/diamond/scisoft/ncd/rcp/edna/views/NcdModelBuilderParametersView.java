@@ -870,12 +870,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				String attName = attItr.next();
 				if (attName.equals("axis")) {
 					pathToQCombo.add(link.getFullName());
-					pathToQCombo.select(pathToQCombo
-							.getItemCount() - 1);
 				} else if (attName.equals("signal")) {
 					pathToDataCombo.add(link.getFullName());
-					pathToDataCombo.select(pathToDataCombo
-							.getItemCount() - 1);
+				}
+			}
+			//find best match to q and select that
+			String qPathExpression = "(^/entry1/).*(_result/q$)";
+			String[] qComboItems = pathToQCombo.getItems();
+			for (String qItem : qComboItems) {
+				if (qItem.matches(qPathExpression)) {
+					System.out.println("matches: " + qItem + " " + qPathExpression);
+					pathToQCombo.select(pathToQCombo.indexOf(qItem));
+				}
+			}
+			//find best match to data and select that
+			String dataPathExpression = "(^/entry1/).*(_result/data$)";
+			String[] dataComboItems = pathToDataCombo.getItems();
+			for (String dataItem : dataComboItems) {
+				if (dataItem.matches(dataPathExpression)) {
+					System.out.println("matches: " + dataItem + " " + dataPathExpression);
+					pathToDataCombo.select(pathToDataCombo.indexOf(dataItem));
 				}
 			}
 		}
