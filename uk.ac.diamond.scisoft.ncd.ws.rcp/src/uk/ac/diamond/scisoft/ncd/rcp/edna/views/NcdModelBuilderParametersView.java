@@ -352,7 +352,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataParameters, SWT.NONE).setText("Number of Frames");
+		new Label(dataParameters, SWT.NONE).setText("Number of frames");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
 		numberOfFrames.addListener(SWT.Verify, verifyInt);
