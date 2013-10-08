@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.reduction;
+package uk.ac.diamond.scisoft.ncd.data.plots;
 
 import java.util.Arrays;
 
@@ -28,24 +28,26 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.reduction.LazyDataReduction;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
-public class LogLogPlotTask extends LazyDataReduction {
+public abstract class SaxsPlotData extends LazyDataReduction {
 
-	public static final String name = "LogLogPlot";
-	private int loglog_group_id, loglog_data_id;
+	protected String groupName, dataName, variableName;
+	private int group_id, data_id;
 	
 	public void execute(int[] frames_int, int entry_group_id, DataSliceIdentifiers input_ids) throws HDF5Exception {
 		
 		long[] frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		
-	    loglog_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_loglog", Nexus.DATA);
+	    group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-	    loglog_data_id = NcdNexusUtils.makedata(loglog_group_id, "data", type, frames.length, frames, true, "a.u.");
+	    data_id = NcdNexusUtils.makedata(group_id, "data", type, frames.length, frames, true, "a.u.");
 		H5.H5Tclose(type);
 		
     	SliceSettings sliceSettings = new SliceSettings(frames, frames.length - 2, 1);
@@ -65,11 +67,12 @@ public class LogLogPlotTask extends LazyDataReduction {
 			IndexIterator itr = data_slice.getIterator();
 			while (itr.hasNext()) {
 				int idx = itr.index;
-				tmpFrame.set(Math.log10(data_slice.getDouble(idx)), idx);
+				double val = getDataValue(idx, qaxis, data_slice);
+				tmpFrame.set(val, idx);
 			}
 			
-			int filespace_id = H5.H5Dget_space(loglog_data_id);
-			int type_id = H5.H5Dget_type(loglog_data_id);
+			int filespace_id = H5.H5Dget_space(data_id);
+			int type_id = H5.H5Dget_type(data_id);
 			long[] ave_start = (long[]) ConvertUtils.convert(slice, long[].class);
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 			long[] ave_count_data = new long[frames.length];
@@ -78,7 +81,7 @@ public class LogLogPlotTask extends LazyDataReduction {
 			
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
 					ave_step);
-			H5.H5Dwrite(loglog_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
+			H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
 					tmpFrame.getBuffer());
 			
 			H5.H5Sclose(filespace_id);
@@ -86,29 +89,73 @@ public class LogLogPlotTask extends LazyDataReduction {
 			H5.H5Tclose(type_id);
 		}
 		
-		writeQaxisData();
+		// add long_name attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attrtype_id, dataName.getBytes().length);
+			
+			int attr_id = H5.H5Acreate(data_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0) {
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			}
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, dataName.getBytes());
+			if (write_id < 0) {
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			}
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
+		
+		writeAxisData();
+		
+		H5.H5Dclose(data_id);
+		H5.H5Gclose(group_id);
 	}
 	
-	public void writeQaxisData() throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
+	private void writeAxisData() throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long[] axisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		AbstractDataset qaxisNew = AbstractDataset.zeros(qaxis.getShape(), AbstractDataset.FLOAT32);
 		IndexIterator itr = qaxis.getIterator();
 		while (itr.hasNext()) {
 			int idx = itr.index;
-			qaxisNew.set(Math.log10(qaxis.getDouble(idx)), idx);
+			double val = getAxisValue(idx, qaxis);
+			qaxisNew.set(val, idx);
 		}
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(loglog_group_id, "axis", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape,
+		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape.length, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
 		int type_id = H5.H5Dget_type(qaxis_id);
-		int memspace_id = H5.H5Screate_simple(qaxisNew.getRank(), qaxisShape, null);
+		int memspace_id = H5.H5Screate_simple(qaxisNew.getRank(), axisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxisNew.getBuffer());
+		
+		// add long_name attribute
+		{
+			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(attrtype_id, variableName.getBytes().length);
+			
+			int attr_id = H5.H5Acreate(qaxis_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+					HDF5Constants.H5P_DEFAULT);
+			if (attr_id < 0) {
+				throw new HDF5Exception("H5 putattr write error: can't create attribute");
+			}
+			int write_id = H5.H5Awrite(attr_id, attrtype_id, variableName.getBytes());
+			if (write_id < 0) {
+				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+			}
+			H5.H5Aclose(attr_id);
+			H5.H5Sclose(attrspace_id);
+			H5.H5Tclose(attrtype_id);
+		}
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
@@ -116,4 +163,9 @@ public class LogLogPlotTask extends LazyDataReduction {
 		H5.H5Dclose(qaxis_id);
 		
 	}
+	
+	abstract protected double getDataValue(int idx, IDataset axis, IDataset data);
+	
+	abstract protected double getAxisValue(int idx, IDataset axis);
+	
 }
