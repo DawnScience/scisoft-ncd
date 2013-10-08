@@ -29,6 +29,11 @@ import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
 import org.dawnsci.plotting.api.trace.ITraceListener;
 import org.dawnsci.plotting.api.trace.TraceEvent;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
+import org.eclipse.core.runtime.jobs.IJobManager;
+import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -69,13 +74,18 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	
 	private static Map<String,Button> plotMap;
 	private static Map<String,SaxsPlotSelectionAdapter> plotListeners;
+
+	private IJobManager jobManager;
+	private String plotJobName = "SaxsPlotUpdate";
 	
 	public SaxsAnalysisTool() {
+		jobManager = Job.getJobManager();
 	}
 
 	private ITraceListener traceListener = new ITraceListener.Stub() {
 		@Override
 		protected void update(TraceEvent evt) {
+			super.update(evt);
 			if (plotMap != null) {
 				for (Button btn : plotMap.values()) {
 					if (btn != null && !(btn.isDisposed()) && btn.getSelection()) {
@@ -84,7 +94,6 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				}
 			}
 		}
-
 	};
 	
 	private class SaxsPlotSelectionAdapter extends SelectionAdapter {
@@ -101,49 +110,75 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		
 		@Override
 		public void widgetSelected(SelectionEvent e) {
+			
 			final Collection<ITrace> traces = plottingSystem.getTraces();
 			if (btn.getSelection()) {
 
-				Display.getDefault().asyncExec(new Runnable() {
+				Job plotJob = new Job(plotJobName) {
 
 					@Override
-					public void run() {
-						PlotView pv;
-						IPlottingSystem ps;
-						try {
-							pv = (PlotView) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-									.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
-							ps = pv.getPlottingSystem();
-							ps.setTitle(plotName);
-							Pair<String, String> axesTitles = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
-							ps.getSelectedXAxis().setTitle(axesTitles.getFirst());
-							ps.getSelectedYAxis().setTitle(axesTitles.getSecond());
-							ps.clear();
-						} catch (Exception ex) {
-							logger.error("Error creating SAXS {} plot view", plotName, ex);
-							return;
-						}
-						IDataset[] xData = new IDataset[] {};
-						IDataset[] yData = new IDataset[] {};
-						for (ITrace trace : traces) {
-							if (trace instanceof ILineTrace) {
-								ILineTrace lineTrace = (ILineTrace) trace;
-								AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
-								AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
+					public IStatus run(IProgressMonitor monitor) {
+						Display.getDefault().syncExec(new Runnable() {
 
-								updatePlotData(xTraceData, yTraceData);
-								xTraceData.setErrorBuffer(null);
-								yTraceData.setErrorBuffer(null);
-								xData = (IDataset[]) ArrayUtils.add(xData, xTraceData);
-								yData = (IDataset[]) ArrayUtils.add(yData, yTraceData);
-								ILineTrace tr = ps.createLineTrace(lineTrace.getName());
-								tr.setData(xTraceData, yTraceData);
-								ps.addTrace(tr);
+							@Override
+							public void run() {
+								PlotView pv;
+								IPlottingSystem ps;
+								try {
+									pv = (PlotView) PlatformUI
+											.getWorkbench()
+											.getActiveWorkbenchWindow()
+											.getActivePage()
+											.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName,
+													IWorkbenchPage.VIEW_VISIBLE);
+									ps = pv.getPlottingSystem();
+									ps.setTitle(plotName);
+									Pair<String, String> axesTitles = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
+									ps.getSelectedXAxis().setTitle(axesTitles.getFirst());
+									ps.getSelectedYAxis().setTitle(axesTitles.getSecond());
+									ps.clear();
+								} catch (Exception ex) {
+									logger.error("Error creating SAXS {} plot view", plotName, ex);
+									return;
+								}
+								IDataset[] xData = new IDataset[] {};
+								IDataset[] yData = new IDataset[] {};
+								for (ITrace trace : traces) {
+									if (trace instanceof ILineTrace) {
+										ILineTrace lineTrace = (ILineTrace) trace;
+										AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
+										AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
+
+										updatePlotData(xTraceData, yTraceData);
+										xTraceData.setErrorBuffer(null);
+										yTraceData.setErrorBuffer(null);
+										xData = (IDataset[]) ArrayUtils.add(xData, xTraceData);
+										yData = (IDataset[]) ArrayUtils.add(yData, yTraceData);
+										ILineTrace tr = ps.createLineTrace(lineTrace.getName());
+										tr.setData(xTraceData, yTraceData);
+										ps.addTrace(tr);
+									}
+								}
+								ps.repaint();
 							}
-						}
-						ps.repaint();
+						});
+						return Status.OK_STATUS;
 					}
-				});
+
+					@Override
+					public boolean belongsTo(Object family) {
+						return family.equals(plotJobName);
+					}
+				};
+
+				plotJob.setPriority(Job.LONG);
+				plotJob.setSystem(true);
+				if (jobManager.find(plotJobName).length > 5) {
+					jobManager.cancel(plotJobName);
+					plotJob.schedule();
+				} else {
+					plotJob.schedule();
+				}
 			} else {
 				IViewReference ivr = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 						.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
@@ -281,10 +316,9 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		
 		if (plottingSystem == null) {
 			plottingSystem = getPlottingSystem();
-		}
-		
-		if (plottingSystem != null) {
-			plottingSystem.addTraceListener(traceListener);
+			if (plottingSystem != null) {
+				plottingSystem.addTraceListener(traceListener);
+			}
 		}
 		
 		if (plotMap != null) {
@@ -335,10 +369,6 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	
 	@Override
 	public void deactivate() {
-		if (plottingSystem != null) {
-			plottingSystem.removeTraceListener(traceListener);
-		}
-		
 		if (plotMap != null) {
 			for (Entry<String, Button> entry : plotMap.entrySet()) {
 				String plotName = entry.getKey();
@@ -365,6 +395,9 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	
 	@Override
 	public void dispose() {
+		if (plottingSystem != null) {
+			plottingSystem.removeTraceListener(traceListener);
+		}
 		plottingSystem = null;
 		super.dispose();
 	}
