@@ -53,6 +53,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
 
 
 public class SaxsAnalysisTool extends AbstractToolPage {
@@ -63,25 +64,10 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	private static Button loglog, guinier, porod, kratky, zimm, debyebueche;
 	private static IPlottingSystem plottingSystem = null;
 	
-	private static final String LOGLOG_PLOT = "Log/Log Plot";
-	private static final String GUINIER_PLOT = "Guinier Plot";
-	private static final String POROD_PLOT = "Porod Plot";
-	private static final String KRATKY_PLOT = "Kratky Plot";
-	private static final String ZIMM_PLOT = "Zimm Plot";
-	private static final String DEBYE_BUECHE_PLOT = "Debye-Bueche Plot";
-	
 	private static Map<String,Button> plotMap;
-	private static Map<String,Pair<String, String>> plotAxesNames;
 	private static Map<String,SaxsPlotSelectionAdapter> plotListeners;
 	
 	public SaxsAnalysisTool() {
-		plotAxesNames = new HashMap<String, Pair<String,String>>();
-		plotAxesNames.put(LOGLOG_PLOT, new Pair<String, String>("log\u2081\u2080(q)", "log\u2081\u2080(I)"));
-		plotAxesNames.put(GUINIER_PLOT, new Pair<String, String>("q\u00b2", "ln(I)"));
-		plotAxesNames.put(POROD_PLOT, new Pair<String, String>("q", "Iq\u2074"));
-		plotAxesNames.put(KRATKY_PLOT, new Pair<String, String>("q", "Iq\u00b2"));
-		plotAxesNames.put(ZIMM_PLOT, new Pair<String, String>("q\u00b2", "1/I"));
-		plotAxesNames.put(DEBYE_BUECHE_PLOT, new Pair<String, String>("q\u00b2", "1/\u221AI"));
 	}
 
 	private ITraceListener traceListener = new ITraceListener.Stub() {
@@ -126,7 +112,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 									.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
 							ps = pv.getPlottingSystem();
 							ps.setTitle(plotName);
-							Pair<String, String> axesTitles = plotAxesNames.get(plotName);
+							Pair<String, String> axesTitles = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
 							ps.getSelectedXAxis().setTitle(axesTitles.getFirst());
 							ps.getSelectedYAxis().setTitle(axesTitles.getSecond());
 							ps.clear();
@@ -166,7 +152,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		}
 
 		private void updatePlotData(AbstractDataset xTraceData, AbstractDataset yTraceData) {
-			if (plotName.equals(LOGLOG_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.LOGLOG_PLOT)) {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
@@ -179,7 +165,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				}
 				return;
 			}
-			if (plotName.equals(GUINIER_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.GUINIER_PLOT)) {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
@@ -188,28 +174,28 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				xTraceData.ipower(2);
 				return;
 			}
-			if (plotName.equals(POROD_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.POROD_PLOT)) {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
-					yTraceData.set(Math.pow(yTraceData.getDouble(idx), 4) * xTraceData.getDouble(idx), idx);
+					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 4) * yTraceData.getDouble(idx), idx);
 				}
 				return;
 			}
-			if (plotName.equals(KRATKY_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.KRATKY_PLOT)) {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
-					yTraceData.set(Math.pow(yTraceData.getDouble(idx), 2) * xTraceData.getDouble(idx), idx);
+					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 2) * yTraceData.getDouble(idx), idx);
 				}
 				return;
 			}
-			if (plotName.equals(ZIMM_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.ZIMM_PLOT)) {
 				yTraceData.ipower(-1);
 				xTraceData.ipower(2);
 				return;
 			}
-			if (plotName.equals(DEBYE_BUECHE_PLOT)) {
+			if (plotName.equals(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT)) {
 				yTraceData.ipower(-0.5);
 				xTraceData.ipower(2);
 				return;
@@ -236,12 +222,12 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		plotMap = new HashMap<String, Button>();
 		plotListeners = new HashMap<String, SaxsAnalysisTool.SaxsPlotSelectionAdapter>();
 		
-		createSaxsPlotWidget(properties, LOGLOG_PLOT, loglog);
-		createSaxsPlotWidget(properties, GUINIER_PLOT, guinier);
-		createSaxsPlotWidget(properties, POROD_PLOT, porod);
-		createSaxsPlotWidget(properties, KRATKY_PLOT, kratky);
-		createSaxsPlotWidget(properties, ZIMM_PLOT, zimm);
-		createSaxsPlotWidget(properties, DEBYE_BUECHE_PLOT, debyebueche);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.LOGLOG_PLOT, loglog);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.GUINIER_PLOT, guinier);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.POROD_PLOT, porod);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.KRATKY_PLOT, kratky);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.ZIMM_PLOT, zimm);
+		createSaxsPlotWidget(properties, SaxsAnalysisPlots.DEBYE_BUECHE_PLOT, debyebueche);
 		
 		sc.setContent(properties);
 		sc.setExpandVertical(true);
@@ -258,7 +244,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	private void createSaxsPlotWidget(Composite c, String plotName, Button btn) {
 		btn = new Button(c, SWT.CHECK);
 		btn.setText(plotName);
-		Pair<String, String> axesNames = plotAxesNames.get(plotName);
+		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
 		String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 		btn.setToolTipText(toolTipText);
 		SaxsPlotSelectionAdapter adapter = new SaxsPlotSelectionAdapter(btn, plotName);

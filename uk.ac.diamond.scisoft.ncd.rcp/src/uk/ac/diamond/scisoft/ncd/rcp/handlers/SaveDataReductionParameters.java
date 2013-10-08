@@ -36,6 +36,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
 
 /**
@@ -74,11 +75,11 @@ public class SaveDataReductionParameters extends AbstractHandler {
 		ISourceProviderService service = (ISourceProviderService) PlatformUI.getWorkbench().getService(
 				ISourceProviderService.class);
 		ISourceProvider ncdProcessingSourceProvider = service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
-		ISourceProvider ncdCalibrationSourceProvider = service
-				.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ISourceProvider ncdCalibrationSourceProvider = service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ISourceProvider saxsPlotsSourceProvider = service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
 
 		NcdSourceProviderAdapter data = new NcdSourceProviderAdapter(ncdProcessingSourceProvider,
-				ncdCalibrationSourceProvider);
+				ncdCalibrationSourceProvider, saxsPlotsSourceProvider);
 
 		// create JAXB context and instantiate marshaller
 		JAXBContext context;

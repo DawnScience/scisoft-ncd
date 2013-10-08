@@ -55,6 +55,13 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.data.plots.DebyeBuechePlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.KratkyPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.LogLogPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.PorodPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.SaxsPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.ZimmPlotData;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
@@ -336,8 +343,8 @@ public class LazyNcdProcessing {
 		H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
-		processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", "NXinstrument");
-	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", "NXdata");
+		processing_group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_processing", Nexus.INST);
+	    result_group_id = NcdNexusUtils.makegroup(entry_group_id, detector+"_result", Nexus.DATA);
 		
 		if (firstFrame != null || lastFrame != null) {
 			frameSelection = StringUtils.leftPad("", rank - dim - 1, ";");
@@ -941,7 +948,44 @@ public class LazyNcdProcessing {
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		    H5.H5Lcreate_hard(input_ids.datagroup_id, "./q_errors", result_group_id, "./q_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	    }
+	    
+	    if (flags.isEnableLogLogPlot()) {
+	    	SaxsPlotData plotData = new LogLogPlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
+	    if (flags.isEnableGuinierPlot()) {
+	    	SaxsPlotData plotData = new GuinierPlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
+	    if (flags.isEnablePorodPlot()) {
+	    	SaxsPlotData plotData = new PorodPlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
+	    if (flags.isEnableKratkyPlot()) {
+	    	SaxsPlotData plotData = new KratkyPlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
+	    if (flags.isEnableZimmPlot()) {
+	    	SaxsPlotData plotData = new ZimmPlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
+	    if (flags.isEnableDebyeBuechePlot()) {
+	    	SaxsPlotData plotData = new DebyeBuechePlotData();
+	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    }
+	    
 	    closeHDF5Identifiers();
+	}
+	
+	private void addPlotData(SaxsPlotData plotData, String detector, AbstractDataset qaxis, int[] frames_int) throws HDF5Exception {
+    	plotData.setDetector(detector);
+    	plotData.setQaxis(qaxis, qaxisUnit);
+    	plotData.execute(frames_int, entry_group_id, input_ids);
 	}
 	
 	private void closeHDF5Identifiers() throws HDF5LibraryException {

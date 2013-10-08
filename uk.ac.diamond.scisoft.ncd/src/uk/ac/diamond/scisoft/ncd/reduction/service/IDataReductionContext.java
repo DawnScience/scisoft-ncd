@@ -62,6 +62,30 @@ public interface IDataReductionContext {
 
 	public void setEnableAverage(boolean enableAverage);
 
+	public boolean isEnableLogLogPlot();
+	
+	public void setEnableLogLogPlot(boolean enableLogLogPlot);
+
+	public boolean isEnableGuinierPlot();
+
+	public void setEnableGuinierPlot(boolean enableGuinierPlot);
+
+	public boolean isEnablePorodPlot();
+
+	public void setEnablePorodPlot(boolean enablePorodPlot);
+
+	public boolean isEnableKratkyPlot();
+
+	public void setEnableKratkyPlot(boolean enableKratkyPlot);
+
+	public boolean isEnableZimmPlot();
+
+	public void setEnableZimmPlot(boolean enableZimmPlot);
+
+	public boolean isEnableDebyeBuechePlot();
+
+	public void setEnableDebyeBuechePlot(boolean enableDebyeBuechePlot);
+	
 	public boolean isEnableWaxs();
 
 	public void setEnableWaxs(boolean enableWax);

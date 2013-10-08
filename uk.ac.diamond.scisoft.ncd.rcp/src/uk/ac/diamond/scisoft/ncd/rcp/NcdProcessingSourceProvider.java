@@ -66,9 +66,9 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public static final String ABSOFFSET_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absOffset";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
 	
-	public final static String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
-	public final static String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
-	public final static String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
+	public static final String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
+	public static final String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
+	public static final String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
 	
 	private boolean enableAverage = false;
 	private boolean enableBackground = false;

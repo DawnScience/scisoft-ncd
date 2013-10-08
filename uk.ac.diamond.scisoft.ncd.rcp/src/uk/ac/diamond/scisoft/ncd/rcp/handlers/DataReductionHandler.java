@@ -60,6 +60,7 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.reduction.service.CalibrationAbsentException;
 import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionContext;
 import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionService;
@@ -227,6 +228,24 @@ public class DataReductionHandler extends AbstractHandler {
 
 		NcdProcessingSourceProvider ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
 		context.setEnableAverage(ncdAverageSourceProvider.isEnableAverage());
+		
+		SaxsPlotsSourceProvider loglogPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
+		context.setEnableLogLogPlot(loglogPlotSourceProvider.isEnableLogLog());
+		
+		SaxsPlotsSourceProvider guinierPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.GUINIER_STATE);
+		context.setEnableGuinierPlot(guinierPlotSourceProvider.isEnableGuinier());
+		
+		SaxsPlotsSourceProvider porodPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.POROD_STATE);
+		context.setEnablePorodPlot(porodPlotSourceProvider.isEnablePorod());
+		
+		SaxsPlotsSourceProvider kratkyPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.KRATKY_STATE);
+		context.setEnableKratkyPlot(kratkyPlotSourceProvider.isEnableKratky());
+		
+		SaxsPlotsSourceProvider zimmPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.ZIMM_STATE);
+		context.setEnableZimmPlot(zimmPlotSourceProvider.isEnableZimm());
+		
+		SaxsPlotsSourceProvider debyebuechePlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE);
+		context.setEnableDebyeBuechePlot(debyebuechePlotSourceProvider.isEnableDebyeBueche());
 		
 		NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);	
 		context.setCalibrationName(ncdScalerSourceProvider.getScaler());

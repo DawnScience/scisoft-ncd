@@ -38,6 +38,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 
 /**
@@ -85,9 +86,11 @@ public class LoadDataReductionParameters extends AbstractHandler {
 				
 				NcdProcessingSourceProvider   ncdProcessingSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
 				NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider)service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+				SaxsPlotsSourceProvider saxsPlotsSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
 				
 				ncdCalibrationSourceProvider.setAll(data.getNcdCalibrationSourceProvider());
 				ncdProcessingSourceProvider.setAll(data.getNcdProcessingSourceProvider());
+				saxsPlotsSourceProvider.setAll(data.getSaxsPlotsSourceProvider());
 				
 			} catch (Exception ne) {
 				throw new ExecutionException("Cannot export ncd parameters", ne);

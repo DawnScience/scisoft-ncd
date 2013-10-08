@@ -30,6 +30,13 @@ public class NcdPreferences {
 	public static final String NCD_SECTOR_FAST = "ncd.sector.fast";
 	public static final String NCD_SECTOR_MASK = "ncd.sector.mask";
 	
+	public static final String NCD_PLOT_LOGLOG = "ncd.plot.loglog";
+	public static final String NCD_PLOT_GUINIER = "ncd.plot.guinier";
+	public static final String NCD_PLOT_POROD = "ncd.plot.porod";
+	public static final String NCD_PLOT_KRATKY = "ncd.plot.kratky";
+	public static final String NCD_PLOT_ZIMM = "ncd.plot.zimm";
+	public static final String NCD_PLOT_DEBYEBUECHE = "ncd.plot.debyebueche";
+	
 	public static final String NCD_SAMPLETHICKNESS = "ncd.samplethickness";
 	public static final String NCD_ABSOLUTESCALE = "ncd.absolutescale";
 	public static final String NCD_ABSOLUTEOFFSET = "ncd.absoluteoffset";
