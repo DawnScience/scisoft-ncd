@@ -178,7 +178,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
-					yTraceData.set(Math.pow(yTraceData.getDouble(idx), 4) * xTraceData.getDouble(idx), idx);
+					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 4) * yTraceData.getDouble(idx), idx);
 				}
 				return;
 			}
@@ -186,7 +186,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				IndexIterator itr = yTraceData.getIterator();
 				while (itr.hasNext()) {
 					int idx = itr.index;
-					yTraceData.set(Math.pow(yTraceData.getDouble(idx), 2) * xTraceData.getDouble(idx), idx);
+					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 2) * yTraceData.getDouble(idx), idx);
 				}
 				return;
 			}
