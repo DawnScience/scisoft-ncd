@@ -42,8 +42,11 @@ import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
 import org.eclipse.swt.widgets.Display;
+import org.eclipse.ui.IPartListener;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.slf4j.Logger;
@@ -145,8 +148,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				IViewReference ivr = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 						.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
 				if (ivr != null) {
-					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr.getView(false));
-
+					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr);
 				}
 			}
 		}
@@ -222,12 +224,18 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		plotMap = new HashMap<String, Button>();
 		plotListeners = new HashMap<String, SaxsAnalysisTool.SaxsPlotSelectionAdapter>();
 		
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.LOGLOG_PLOT, loglog);
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.GUINIER_PLOT, guinier);
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.POROD_PLOT, porod);
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.KRATKY_PLOT, kratky);
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.ZIMM_PLOT, zimm);
-		createSaxsPlotWidget(properties, SaxsAnalysisPlots.DEBYE_BUECHE_PLOT, debyebueche);
+		loglog      = new Button(properties, SWT.CHECK); 
+		guinier     = new Button(properties, SWT.CHECK);
+		porod       = new Button(properties, SWT.CHECK);
+		kratky      = new Button(properties, SWT.CHECK);
+		zimm        = new Button(properties, SWT.CHECK);
+		debyebueche = new Button(properties, SWT.CHECK);
+		createSaxsPlotWidget(SaxsAnalysisPlots.LOGLOG_PLOT,       loglog);
+		createSaxsPlotWidget(SaxsAnalysisPlots.GUINIER_PLOT,      guinier);
+		createSaxsPlotWidget(SaxsAnalysisPlots.POROD_PLOT,        porod);
+		createSaxsPlotWidget(SaxsAnalysisPlots.KRATKY_PLOT,       kratky);
+		createSaxsPlotWidget(SaxsAnalysisPlots.ZIMM_PLOT,         zimm);
+		createSaxsPlotWidget(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT, debyebueche);
 		
 		sc.setContent(properties);
 		sc.setExpandVertical(true);
@@ -241,8 +249,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		});
 	}
 
-	private void createSaxsPlotWidget(Composite c, String plotName, Button btn) {
-		btn = new Button(c, SWT.CHECK);
+	private void createSaxsPlotWidget(String plotName, Button btn) {
 		btn.setText(plotName);
 		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
 		String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
@@ -283,11 +290,40 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		if (plotMap != null) {
 			for (Entry<String, Button> entry : plotMap.entrySet()) {
 				String plotName = entry.getKey();
-				Button btn = entry.getValue();
+				final Button btn = entry.getValue();
 				if (btn.getSelection()) {
 					try {
-						PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
+						final IViewPart ivp = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
 								.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
+						ivp.getViewSite().getPage().addPartListener(new IPartListener() {
+							
+							@Override
+							public void partClosed(IWorkbenchPart part) {
+								if (part != null && part.getTitle().equals(ivp.getTitle())) {
+									ivp.getViewSite().getPage().removePartListener(this);
+									if (!btn.isDisposed()) {
+										btn.setSelection(false);
+										btn.notifyListeners(SWT.Selection, null);
+									}
+								}
+							}
+
+							@Override
+							public void partActivated(IWorkbenchPart part) {
+							}
+
+							@Override
+							public void partBroughtToTop(IWorkbenchPart part) {
+							}
+
+							@Override
+							public void partDeactivated(IWorkbenchPart part) {
+							}
+
+							@Override
+							public void partOpened(IWorkbenchPart part) {
+							}
+						});
 					} catch (PartInitException e) {
 						logger.error("Error creating SAXS {} plot view", plotName, e);
 					}
@@ -307,7 +343,9 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 			for (Entry<String, Button> entry : plotMap.entrySet()) {
 				String plotName = entry.getKey();
 				Button btn = entry.getValue();
-				btn.removeSelectionListener(plotListeners.get(plotName));
+				if (btn != null && !btn.isDisposed()) {
+					btn.removeSelectionListener(plotListeners.get(plotName));
+				}
 			}
 		}
 		super.deactivate();		
