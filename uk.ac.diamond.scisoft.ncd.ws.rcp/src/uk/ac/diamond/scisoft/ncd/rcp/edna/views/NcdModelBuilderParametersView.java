@@ -309,7 +309,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		browseDataFile.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
-				FileDialog fChooser = new FileDialog(getSite().getWorkbenchWindow().getShell());
+				FileDialog fChooser = new FileDialog(Display.getDefault().getActiveShell());
 				fChooser.setText("Choose NXS or DAT file");
 				fChooser.setFilterPath(dataFilename);
 				String extensions[] = { "*.nxs;*.dat", "*.*" };
@@ -908,7 +908,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private IDataset retrieveQ(DataHolder holder, String path) {
 		ILazyDataset qDataset = holder.getLazyDataset(path);
 		if (qDataset == null) {
-			MessageDialog.openError(this.getSite().getShell(), "No q field found", "No q field found in this data file.");
+			MessageDialog.openError(Display.getDefault().getActiveShell(), "No q field found", "No q field found in this data file.");
 			return null;
 		}
 		return qDataset.getSlice(new Slice());
