@@ -334,7 +334,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		htmlResultsDirectory.setToolTipText("Directory where HTML results files are left. Must be network accessible (not /scratch or /tmp)");
 		htmlResultsDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		new Label(dataParameters, SWT.NONE).setText("Path to q");
+		new Label(dataParameters, SWT.NONE).setText("Nexus path to q");
 		pathToQCombo = new Combo(dataParameters, SWT.NONE);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -345,7 +345,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				currentPathToQ = pathToQCombo.getText();
 			}
 		});
-		new Label(dataParameters, SWT.NONE).setText("Path to data");
+		new Label(dataParameters, SWT.NONE).setText("Nexus path to data");
 		pathToDataCombo = new Combo(dataParameters, SWT.NONE);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
