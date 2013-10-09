@@ -17,8 +17,19 @@
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Map;
 
+import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.PlottingFactory;
+import org.dawnsci.plotting.api.region.IROIListener;
+import org.dawnsci.plotting.api.region.IROIListener.Stub;
+import org.dawnsci.plotting.api.region.IRegion;
+import org.dawnsci.plotting.api.region.ROIEvent;
+import org.dawnsci.plotting.api.region.IRegion.RegionType;
+import org.dawnsci.plotting.api.trace.IImageTrace;
+import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -27,6 +38,8 @@ import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
 import org.eclipse.jface.fieldassist.IContentProposalListener;
 import org.eclipse.jface.fieldassist.TextContentAdapter;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
@@ -53,7 +66,9 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
@@ -73,6 +88,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+import uk.ac.diamond.scisoft.analysis.roi.RectangularROI;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 import uk.ac.gda.ui.content.FileContentProposalProvider;
@@ -133,10 +149,24 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected String currentPathToQ;
 	protected String currentPathToData;
 
+	// plotting system
+	private IPlottingSystem qIntensityPlot;
+	private IROIListener qIntensityRegionListener;
+	protected IImageTrace imageTrace;
+	protected boolean regionDragging;
+
 	@Override
 	public void createPartControl(Composite parent) {
 		compInput = new Composite(parent, SWT.FILL);
 		compInput.setLayout(new GridLayout(1, false));
+
+		try {
+			qIntensityPlot = PlottingFactory.createPlottingSystem();
+
+
+		} catch (Exception ne) {
+			logger.error("Cannot locate any plotting systems!", ne);
+		}
 
 		// Data parameters
 
@@ -542,7 +572,87 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
+		
+		qIntensityRegionListener = new IROIListener.Stub() {
+
+			@Override
+			public void roiDragged(ROIEvent evt) {
+				//do nothing here - updating while dragging was slowing things down in HistogramToolPage
+			}
+
+			@Override
+			public void roiChanged(ROIEvent evt) {
+				if (evt.getROI() instanceof RectangularROI) {
+					regionDragging = true;
+					IRegion region = qIntensityPlot.getRegion("q Region");
+					RectangularROI roi = (RectangularROI) region.getROI();
+					qMin.setText(String.valueOf(roi.getPoint()[0]));
+					qMax.setText(String.valueOf(roi.getEndPoint()[0]));
+//					updateHistogramToolElements(null);
+					regionDragging=false;
+				}
+			}
+		};
+
 	}
+
+	private ISelectionListener selectionListener = new ISelectionListener() {
+
+		@Override
+		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+			if (selection instanceof IStructuredSelection) {
+				Object file = ((IStructuredSelection) selection).getFirstElement();
+				if (file instanceof IFile) {
+					String fileExtension = ((IFile) file).getFileExtension();
+					if(fileExtension != null && fileExtension.equals("nxs")){
+						String filename = ((IFile) file).getRawLocation().toOSString();
+//						if (ARPESFileDescriptor.isArpesFile(filename)) {
+							try {
+								dataFile.setText(filename);
+								DataHolder data = LoaderFactory.getData(filename);
+								Map<String, ILazyDataset> map = data.getMap();
+								ILazyDataset value = map.get("/entry1/instrument/analyser/data");
+								value = value.getSlice(new Slice(1)).squeeze();
+								ILazyDataset energies = map.get("/entry1/instrument/analyser/energies");
+								ILazyDataset angles = map.get("/entry1/instrument/analyser/angles");
+								qIntensityPlot.clear();
+								imageTrace = null;
+								if(value.getShape().length == 2) {
+									AbstractDataset image = DatasetUtils.convertToAbstractDataset(value.getSlice(new Slice(null)));
+									ArrayList<IDataset> axes = new ArrayList<IDataset>(2);
+									if (energies == null) {
+										axes.add(null);	
+									} else {
+										axes.add(DatasetUtils.convertToAbstractDataset(energies.getSlice(new Slice(null))));
+										
+									}
+									if (angles == null) {
+										axes.add(null);
+									} else {
+										axes.add(DatasetUtils.convertToAbstractDataset(angles.getSlice(new Slice(null))));
+									}
+									if (!qIntensityPlot.getTraces().contains(imageTrace)) {
+										if (imageTrace == null) {
+											imageTrace = qIntensityPlot.createImageTrace("data");
+										}
+										imageTrace.setData(image, axes, true);
+										qIntensityPlot.addTrace(imageTrace);
+										qIntensityPlot.repaint(true);
+									}
+								} else {
+									logger.warn("Dataset not the right shape for showing in the preview");
+								}
+								
+							} catch (Exception e) {
+								logger.error("Something went wrong when creating a overview plot",e);
+							}
+//						}
+					}
+				}
+			}
+
+		}
+	};
 
 	private boolean fileNameIsNotEmptyAndFileExists(String filename) {
 		if (!filename.isEmpty() && new File(filename).exists()) {
@@ -1024,5 +1134,27 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				break;
 			}
 		}
+	}
+
+	private void createRegion(){
+		try {
+			IRegion region = qIntensityPlot.getRegion("q Region");
+			//Test if the region is already there and update the currentRegion
+			if (region == null || !region.isVisible()) {
+				region = qIntensityPlot.createRegion("q Region", RegionType.XAXIS);
+				qIntensityPlot.addRegion(region);
+			}
+
+			RectangularROI rroi = new RectangularROI(Double.parseDouble(qMin.getText()), 0, Double.parseDouble(qMax.getText()) - Double.parseDouble(qMin.getText()), 1, 0);
+			region.setROI(rroi);
+			region.addROIListener(qIntensityRegionListener);
+		} catch (Exception e) {
+			logger.error("Couldn't open histogram view and create ROI", e);
+		}
+	}
+
+	@Override
+	public void dispose() {
+		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionListener);
 	}
 }
