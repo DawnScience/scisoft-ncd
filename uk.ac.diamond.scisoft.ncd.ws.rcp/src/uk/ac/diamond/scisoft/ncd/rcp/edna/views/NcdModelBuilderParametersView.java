@@ -207,6 +207,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
 				refreshRunButton();
+				checkFilenameAndColorDataFileBox(dataFileGroup.getDisplay());
 				updateGuiParameters();
 			}
 		});
@@ -715,12 +716,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Listener pathListener = new Listener() {
 		@Override
 		public void handleEvent(Event event) {
-			checkWhetherPathsAreEmpty();
 			String pathToData = currentPathToData;
 			String pathToQ = currentPathToQ;
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
 			refreshRunButton();
+			checkWhetherPathsAreEmpty();
 			updateGuiParameters();
 		}
 	};
@@ -1181,5 +1182,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			dataFile.setBackground(red);
 			fileSelected = false;
 		}
+		
+		enable(fileSelected);
+	}
+
+	private void enable(boolean enabled) {
+		workingDirectory.setEnabled(enabled);
+		numberOfFrames.setEnabled(enabled);
+		qMin.setEnabled(enabled);
+		qMinUnits.setEnabled(enabled);
+		qMax.setEnabled(enabled);
+		qMaxUnits.setEnabled(enabled);
+		startPoint.setEnabled(enabled);
+		endPoint.setEnabled(enabled);
+		numberOfThreads.setEnabled(enabled);
+		builderOptions.setEnabled(enabled);
+		minDistanceSearch.setEnabled(enabled);
+		minDistanceUnits.setEnabled(enabled);
+		maxDistanceSearch.setEnabled(enabled);
+		maxDistanceUnits.setEnabled(enabled);
+		numberOfSearch.setEnabled(enabled);
+		tolerance.setEnabled(enabled);
+		symmetry.setEnabled(enabled);
+		dammifMode.setEnabled(enabled);
 	}
 }
