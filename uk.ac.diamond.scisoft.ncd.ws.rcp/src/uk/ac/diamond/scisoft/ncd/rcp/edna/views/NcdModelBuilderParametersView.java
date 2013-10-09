@@ -22,6 +22,7 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IROIListener;
 import org.dawnsci.plotting.api.region.IRegion;
@@ -522,6 +523,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
+		qIntensityPlot.createPlotPart( compInput, 
+				getTitle(), 
+				null, 
+				PlotType.IMAGE,
+				null);
+		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
@@ -592,6 +600,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		};
 
+		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
+
 	}
 
 	private ISelectionListener selectionListener = new ISelectionListener() {
@@ -609,26 +619,27 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								dataFile.setText(filename);
 								DataHolder data = LoaderFactory.getData(filename);
 								Map<String, ILazyDataset> map = data.getMap();
-								ILazyDataset value = map.get("/entry1/instrument/analyser/data");
-								value = value.getSlice(new Slice(1)).squeeze();
-								ILazyDataset energies = map.get("/entry1/instrument/analyser/energies");
-								ILazyDataset angles = map.get("/entry1/instrument/analyser/angles");
+								ILazyDataset data1 = null;
+								ILazyDataset q = null;
+								for (String key : map.keySet()) {
+									if (key.matches("(^/entry1/).*(_result/q$)")) {
+										q = data.getLazyDataset(key);
+										System.out.println("q path is : " + key);
+									}
+									else if (key.matches("(^/entry1/).*(_result/data$)")) {
+										data1 = data.getLazyDataset(key);
+										System.out.println("data path is : " + key);
+									}
+									continue;
+								}
 								qIntensityPlot.clear();
 								imageTrace = null;
-								if(value.getShape().length == 2) {
-									AbstractDataset image = DatasetUtils.convertToAbstractDataset(value.getSlice(new Slice(null)));
-									ArrayList<IDataset> axes = new ArrayList<IDataset>(2);
-									if (energies == null) {
-										axes.add(null);	
-									} else {
-										axes.add(DatasetUtils.convertToAbstractDataset(energies.getSlice(new Slice(null))));
-										
-									}
-									if (angles == null) {
-										axes.add(null);
-									} else {
-										axes.add(DatasetUtils.convertToAbstractDataset(angles.getSlice(new Slice(null))));
-									}
+								ArrayList<IDataset> axes = new ArrayList<IDataset>(2);
+								axes.add(q.getSlice(new Slice()));
+								axes.add(data1.getSlice(new Slice()));
+
+									AbstractDataset image = (AbstractDataset) data1.getSlice(new Slice(null));
+									
 									if (!qIntensityPlot.getTraces().contains(imageTrace)) {
 										if (imageTrace == null) {
 											imageTrace = qIntensityPlot.createImageTrace("data");
@@ -637,9 +648,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 										qIntensityPlot.addTrace(imageTrace);
 										qIntensityPlot.repaint(true);
 									}
-								} else {
-									logger.warn("Dataset not the right shape for showing in the preview");
-								}
 								
 							} catch (Exception e) {
 								logger.error("Something went wrong when creating a overview plot",e);
@@ -877,7 +885,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			String[] qComboItems = pathToQCombo.getItems();
 			for (String qItem : qComboItems) {
 				if (qItem.matches(qPathExpression)) {
-					System.out.println("matches: " + qItem + " " + qPathExpression);
 					pathToQCombo.select(pathToQCombo.indexOf(qItem));
 				}
 			}
@@ -886,7 +893,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			String[] dataComboItems = pathToDataCombo.getItems();
 			for (String dataItem : dataComboItems) {
 				if (dataItem.matches(dataPathExpression)) {
-					System.out.println("matches: " + dataItem + " " + dataPathExpression);
 					pathToDataCombo.select(pathToDataCombo.indexOf(dataItem));
 				}
 			}
