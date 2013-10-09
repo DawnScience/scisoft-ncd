@@ -1181,7 +1181,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				qIntensityPlot.addRegion(region);
 			}
 
-			RectangularROI rroi = new RectangularROI(modelBuildingParameters.getqMinAngstrom(), modelBuildingParameters.getqMaxAngstrom() - modelBuildingParameters.getqMinAngstrom(), 0);
+			RectangularROI rroi = new RectangularROI(modelBuildingParameters.getqMinAngstrom(), 1, modelBuildingParameters.getqMaxAngstrom() - modelBuildingParameters.getqMinAngstrom(), 1, 0);
 			region.setROI(rroi);
 			region.addROIListener(qIntensityRegionListener);
 		} catch (Exception e) {
