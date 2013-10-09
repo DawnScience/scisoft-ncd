@@ -24,10 +24,9 @@ import java.util.Map;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IROIListener;
-import org.dawnsci.plotting.api.region.IROIListener.Stub;
 import org.dawnsci.plotting.api.region.IRegion;
-import org.dawnsci.plotting.api.region.ROIEvent;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
+import org.dawnsci.plotting.api.region.ROIEvent;
 import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -567,6 +566,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
+				
+		checkFilenameAndColorDataFileBox(this.getSite().getShell().getDisplay());
 		
 		qIntensityRegionListener = new IROIListener.Stub() {
 
@@ -1162,5 +1163,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	@Override
 	public void dispose() {
 		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionListener);
+	}
+	
+	private void checkFilenameAndColorDataFileBox(Display display) {
+		Color red = new Color(display, 255, 0, 0);
+		Color white = new Color(display, 255, 255, 255);
+		
+		if (fileNameIsNotEmptyAndFileExists(dataFile.getText())) {
+			dataFile.setBackground(white);
+			fileSelected = true;
+		} else {
+			dataFile.setBackground(red);
+			fileSelected = false;
+		}
 	}
 }
