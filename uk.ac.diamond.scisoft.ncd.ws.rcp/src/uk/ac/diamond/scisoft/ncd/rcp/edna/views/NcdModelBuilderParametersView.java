@@ -29,6 +29,7 @@ import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.dawnsci.plotting.api.region.ROIEvent;
 import org.dawnsci.plotting.api.trace.IImageTrace;
+import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -152,7 +153,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	// plotting system
 	private IPlottingSystem qIntensityPlot;
 	private IROIListener qIntensityRegionListener;
-	protected IImageTrace imageTrace;
+	protected ILineTrace lineTrace;
 	protected boolean regionDragging;
 
 	@Override
@@ -526,7 +527,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qIntensityPlot.createPlotPart( compInput, 
 				getTitle(), 
 				null, 
-				PlotType.IMAGE,
+				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
@@ -633,22 +634,20 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									continue;
 								}
 								qIntensityPlot.clear();
-								imageTrace = null;
+								lineTrace = null;
 								ArrayList<IDataset> axes = new ArrayList<IDataset>(2);
 								axes.add(q.getSlice(new Slice()));
 								axes.add(data1.getSlice(new Slice()));
 
-									AbstractDataset image = (AbstractDataset) data1.getSlice(new Slice(null));
-									
-									if (!qIntensityPlot.getTraces().contains(imageTrace)) {
-										if (imageTrace == null) {
-											imageTrace = qIntensityPlot.createImageTrace("data");
-										}
-										imageTrace.setData(image, axes, true);
-										qIntensityPlot.addTrace(imageTrace);
-										qIntensityPlot.repaint(true);
+								if (!qIntensityPlot.getTraces().contains(lineTrace)) {
+									if (lineTrace == null) {
+										lineTrace = qIntensityPlot.createLineTrace("data");
 									}
-								
+									lineTrace.setData((IDataset)data1, (IDataset)axes);
+									qIntensityPlot.addTrace(lineTrace);
+									qIntensityPlot.repaint(true);
+								}
+
 							} catch (Exception e) {
 								logger.error("Something went wrong when creating a overview plot",e);
 							}
@@ -966,6 +965,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 	}
 
+	protected void updatePlot() {
+		getSite().getShell().getDisplay().syncExec(new Runnable() {
+
+			@Override
+			public void run() {
+//				if (histogramDirty) {
+//					histoTrace.setData(histogramX, histogramY);
+//					histogramDirty = false;
+//				}
+				if(!regionDragging ) {
+					createRegion();
+				}
+//				qIntensityPlot.getSelectedXAxis().setRange(scaleMin, scaleMax);
+				qIntensityPlot.getSelectedXAxis().setLog10(true);
+				qIntensityPlot.getSelectedXAxis().setTitle("q");
+//				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
+				qIntensityPlot.getSelectedYAxis().setLog10(true);
+				qIntensityPlot.getSelectedYAxis().setTitle("Intensity");
+				qIntensityPlot.repaint();
+			}
+		});
+	}
 	protected ModelBuildingParameters captureGUIInformation() {
 		try {
 			//TODO use WSParameters for these fields? String resultDir = WSParameters.getViewInstance().getResultDirectory();
