@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
-import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -28,7 +27,6 @@ import org.dawnsci.plotting.api.region.IROIListener;
 import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.dawnsci.plotting.api.region.ROIEvent;
-import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
@@ -577,7 +575,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			resetGUI();
 		}
-				
+
 		checkFilenameAndColorDataFileBox(this.getSite().getShell().getDisplay());
 		
 		qIntensityRegionListener = new IROIListener.Stub() {
@@ -595,11 +593,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					RectangularROI roi = (RectangularROI) region.getROI();
 					qMin.setText(String.valueOf(roi.getPoint()[0]));
 					qMax.setText(String.valueOf(roi.getEndPoint()[0]));
-//					updateHistogramToolElements(null);
+					updatePlot();
 					regionDragging=false;
 				}
 			}
 		};
+
+		createRegion();
 
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
@@ -625,25 +625,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								for (String key : map.keySet()) {
 									if (key.matches("(^/entry1/).*(_result/q$)")) {
 										q = data.getLazyDataset(key);
-										System.out.println("q path is : " + key);
+										continue;
 									}
 									else if (key.matches("(^/entry1/).*(_result/data$)")) {
 										data1 = data.getLazyDataset(key);
-										System.out.println("data path is : " + key);
+										continue;
 									}
-									continue;
 								}
 								qIntensityPlot.clear();
 								lineTrace = null;
-								ArrayList<IDataset> axes = new ArrayList<IDataset>(2);
-								axes.add(q.getSlice(new Slice()));
-								axes.add(data1.getSlice(new Slice()));
 
 								if (!qIntensityPlot.getTraces().contains(lineTrace)) {
 									if (lineTrace == null) {
 										lineTrace = qIntensityPlot.createLineTrace("data");
 									}
-									lineTrace.setData((IDataset)data1, (IDataset)axes);
+									lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
 									qIntensityPlot.addTrace(lineTrace);
 									qIntensityPlot.repaint(true);
 								}
@@ -1185,11 +1181,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				qIntensityPlot.addRegion(region);
 			}
 
-			RectangularROI rroi = new RectangularROI(Double.parseDouble(qMin.getText()), 0, Double.parseDouble(qMax.getText()) - Double.parseDouble(qMin.getText()), 1, 0);
+			RectangularROI rroi = new RectangularROI(modelBuildingParameters.getqMinAngstrom(), modelBuildingParameters.getqMaxAngstrom() - modelBuildingParameters.getqMinAngstrom(), 0);
 			region.setROI(rroi);
 			region.addROIListener(qIntensityRegionListener);
 		} catch (Exception e) {
-			logger.error("Couldn't open histogram view and create ROI", e);
+			logger.error("Couldn't open q view and create ROI", e);
 		}
 	}
 
