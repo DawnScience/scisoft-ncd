@@ -52,6 +52,7 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.slf4j.Logger;
@@ -76,7 +77,6 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	private static Map<String,SaxsPlotSelectionAdapter> plotListeners;
 
 	private IJobManager jobManager;
-	private String plotJobName = "SaxsPlotUpdate";
 	
 	public SaxsAnalysisTool() {
 		jobManager = Job.getJobManager();
@@ -100,11 +100,13 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		
 		private Button btn;
 		private String plotName;
+		private String plotJobName;
 		
 		public SaxsPlotSelectionAdapter(Button btn, String plotName) {
 			super();
 			this.btn = btn;
 			this.plotName = plotName;
+			this.plotJobName = plotName + "PlotUpdate";
 			
 		}
 		
@@ -113,7 +115,6 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 			
 			final Collection<ITrace> traces = plottingSystem.getTraces();
 			if (btn.getSelection()) {
-
 				Job plotJob = new Job(plotJobName) {
 
 					@Override
@@ -173,17 +174,22 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 
 				plotJob.setPriority(Job.LONG);
 				plotJob.setSystem(true);
-				if (jobManager.find(plotJobName).length > 5) {
+				if (jobManager.find(plotJobName).length > 3) {
 					jobManager.cancel(plotJobName);
 					plotJob.schedule();
 				} else {
 					plotJob.schedule();
 				}
 			} else {
-				IViewReference ivr = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-						.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
-				if (ivr != null) {
-					PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr);
+				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+				if (window != null) {
+					IWorkbenchPage page = window.getActivePage();
+					if (page != null) {
+						IViewReference ivr = page.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
+						if (ivr != null) {
+							PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr);
+						}
+					}
 				}
 			}
 		}
