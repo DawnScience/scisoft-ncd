@@ -717,7 +717,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			checkWhetherPathsAreEmpty();
 			captureGUIInformation();
 			refreshRunButton();
-			updateGuiParameters();
+			Job updateJob = updateGuiParameters();
+			try {
+				updateJob.join(); // make sure job is finished so that ROI updates work correctly
+			} catch (InterruptedException e) {
+				logger.error("GUI update job interrupted");
+			}
 			checkFilenameAndColorDataFileBox(Display.getDefault());
 			Event trigger = new Event();
 			trigger.widget = endPoint;
@@ -798,7 +803,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 	}
 
-	private void updateGuiParameters() {
+	private Job updateGuiParameters() {
 		Job job = new Job("Update GUI parameters from data file") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
@@ -817,7 +822,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					retrieveQFromData(holder);
 				}
 				if (currentQDataset != null) {
-					Display.getDefault().asyncExec(new Runnable() {
+					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
 							qMin.setText(String.valueOf(currentQDataset.min()));
@@ -855,6 +860,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		};
 		job.schedule();
+		return job;
 	}
 
 	private void findQAndDataPaths() {
