@@ -23,6 +23,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 
 public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 	
@@ -42,9 +43,15 @@ public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 	}
 
 	@Override
-	protected Amount<Length> getPixel(boolean scale) {
-		NcdDetectorSettings detector = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
-		return detector.getPxSize().copy().to(SI.MILLIMETRE);
+	protected Amount<Length> getPixel() {
+		NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
+		if (detSettings == null) {
+			throw new IllegalArgumentException(NcdMessages.NO_WAXS_DETECTOR);
+		}
+		Amount<Length> pxSize = detSettings.getPxSize();
+		if (pxSize == null) {
+			throw new IllegalArgumentException(NcdMessages.NO_WAXS_PIXEL);
+		}
+		return pxSize.copy().to(SI.MILLIMETRE);
 	}
-	
 }

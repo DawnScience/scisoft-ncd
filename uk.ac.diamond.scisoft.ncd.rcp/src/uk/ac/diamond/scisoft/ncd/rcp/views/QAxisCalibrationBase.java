@@ -91,7 +91,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
 	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
 	private ILoaderService loaderService;
-	
+	protected String GUI_PLOT_NAME = "Dataset Plot";
+
 	private static CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
 
@@ -128,7 +129,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			}
 			return 0;
 		}
-
 	}
 
 	protected Amount<Energy> getEnergy() {
@@ -343,11 +343,11 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	
 	private boolean checkCalibrationObjectInput() {
 		try {
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 			
 			Collection<ITrace> traces = plotSystem.getTraces();
 			if (traces == null || traces.isEmpty()) {
-				String msg = "Please load calibration image into Dataset Plot view.";
+				String msg = "Please load calibration image into "+GUI_PLOT_NAME+" view.";
 				IllegalArgumentException e =  new IllegalArgumentException(msg); 
 				logger.error(msg, e);
 				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure", e);
@@ -356,7 +356,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			
 			Collection<IRegion> regions = plotSystem.getRegions(RegionType.SECTOR);
 			if (regions == null || regions.size() != 1) {
-				String msg = "Please specify single sector region in the Dataset Plot view.";
+				String msg = "Please specify single sector region in the "+GUI_PLOT_NAME+" view.";
 				IllegalArgumentException e =  new IllegalArgumentException(msg); 
 				logger.error(msg, e);
 				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure",e);
@@ -366,7 +366,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			return true;
 			
 		} catch (Exception e) {
-			String msg = "Error reading object parameters from Dataset Plot view. Try clearing existing regions an reload calibration image.";
+			String msg = "Error reading object parameters from "+GUI_PLOT_NAME+" view. Try clearing existing regions an reload calibration image.";
 			logger.error(msg, e);
 			ErrorDialog(msg, e);
 			return false;
@@ -374,7 +374,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 
 	private void storePeaks() {
-		IToolPage radialTool = PlottingFactory.getToolSystem("Dataset Plot").getToolPage(
+		IToolPage radialTool = PlottingFactory.getToolSystem(GUI_PLOT_NAME).getToolPage(
 				"org.dawb.workbench.plotting.tools.radialProfileTool");
 		IToolPage fittingTool = ((IToolPageSystem)radialTool.getToolPlottingSystem()).getToolPage(
 				"org.dawb.workbench.plotting.tools.fittingTool");
@@ -453,7 +453,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 						calTable.refresh();
 						
 						// update locked diffraction metadata in Diffraction tool
-						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 						IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 						if (lockedMeta == null) {
 							Collection<ITrace> traces = plotSystem.getTraces();
