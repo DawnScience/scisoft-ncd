@@ -94,6 +94,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 import uk.ac.gda.ui.content.FileContentProposalProvider;
 
 public class NcdModelBuilderParametersView extends ViewPart {
+	private static final String Q_REGION_NAME = "q Region";
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView";
 	protected static final Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
 
@@ -589,7 +590,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			public void roiChanged(ROIEvent evt) {
 				if (evt.getROI() instanceof RectangularROI) {
 					regionDragging = true;
-					IRegion region = qIntensityPlot.getRegion("q Region");
+					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 					RectangularROI roi = (RectangularROI) region.getROI();
 					qMin.setText( String.valueOf(roi.getPoint()[0]));
 					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
@@ -750,6 +751,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else if (source == endPoint) {
 				updateQ(qMax, sourceText);
 			}
+			updateRoi();
 		}
 		
 	};
@@ -766,6 +768,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else if (source == qMax) {
 				updatePoint(endPoint, sourceText);
 			}
+			updateRoi();
 		}
 		
 	};
@@ -1075,6 +1078,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		clearQAndPathItems();
+		updateRoi();
+		qIntensityPlot.clear();
 	}
 	
 	public void clearQAndPathItems() {
@@ -1179,15 +1184,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private void createRegion(){
 		try {
-			IRegion region = qIntensityPlot.getRegion("q Region");
+			IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 			//Test if the region is already there and update the currentRegion
 			if (region == null || !region.isVisible()) {
-				region = qIntensityPlot.createRegion("q Region", RegionType.XAXIS);
+				region = qIntensityPlot.createRegion(Q_REGION_NAME, RegionType.XAXIS);
 				qIntensityPlot.addRegion(region);
 			}
 
-			RectangularROI rroi = new RectangularROI(modelBuildingParameters.getqMinAngstrom(), 1, modelBuildingParameters.getqMaxAngstrom() - modelBuildingParameters.getqMinAngstrom(), 1, 0);
-			region.setROI(rroi);
+			updateRoi();
 			region.addROIListener(qIntensityRegionListener);
 		} catch (Exception e) {
 			logger.error("Couldn't open q view and create ROI", e);
@@ -1233,5 +1237,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		tolerance.setEnabled(enabled);
 		symmetry.setEnabled(enabled);
 		dammifMode.setEnabled(enabled);
+	}
+	private RectangularROI updateRoi() {
+		double qmin = Double.parseDouble(qMin.getText());
+		double qmax = Double.parseDouble(qMax.getText());
+		RectangularROI roi = new RectangularROI(qmin, 1, qmax - qmin, 1, 0);
+		qIntensityPlot.getRegion(Q_REGION_NAME).setROI(roi);
+		return roi;
 	}
 }
