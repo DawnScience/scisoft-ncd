@@ -619,7 +619,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						String filename = ((IFile) file).getRawLocation().toOSString();
 //						if (ARPESFileDescriptor.isArpesFile(filename)) {
 							try {
-								dataFile.setText(filename);
+								setFilenameString(filename);
 								DataHolder data = LoaderFactory.getData(filename);
 								Map<String, ILazyDataset> map = data.getMap();
 								ILazyDataset data1 = null;
