@@ -591,15 +591,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					regionDragging = true;
 					IRegion region = qIntensityPlot.getRegion("q Region");
 					RectangularROI roi = (RectangularROI) region.getROI();
-					qMin.setText(String.valueOf(roi.getPoint()[0]));
+					qMin.setText( String.valueOf(roi.getPoint()[0]));
+					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
 					qMax.setText(String.valueOf(roi.getEndPoint()[0]));
-					updatePlot();
+					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0]));
 					regionDragging=false;
 				}
 			}
 		};
 
-		createRegion();
+		updatePlot();
 
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
@@ -643,6 +644,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									qIntensityPlot.addTrace(lineTrace);
 									qIntensityPlot.repaint(true);
 								}
+								
+								IDataset qSlice = q.getSlice(new Slice());
+								qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
+								qIntensityPlot.repaint();
 
 							} catch (Exception e) {
 								logger.error("Something went wrong when creating a overview plot",e);
@@ -973,7 +978,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if(!regionDragging ) {
 					createRegion();
 				}
-//				qIntensityPlot.getSelectedXAxis().setRange(scaleMin, scaleMax);
+				qIntensityPlot.getSelectedXAxis().setRange(0, 1);
 				qIntensityPlot.getSelectedXAxis().setLog10(true);
 				qIntensityPlot.getSelectedXAxis().setTitle("q");
 //				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
