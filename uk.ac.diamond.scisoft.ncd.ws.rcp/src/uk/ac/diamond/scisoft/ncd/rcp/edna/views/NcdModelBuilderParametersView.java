@@ -624,35 +624,37 @@ public class NcdModelBuilderParametersView extends ViewPart {
 //						if (ARPESFileDescriptor.isArpesFile(filename)) {
 							try {
 								setFilenameString(filename);
-								DataHolder data = LoaderFactory.getData(filename);
-								Map<String, ILazyDataset> map = data.getMap();
-								ILazyDataset data1 = null;
-								ILazyDataset q = null;
-								for (String key : map.keySet()) {
-									if (key.matches("(^/entry1/).*(_result/q$)")) {
-										q = data.getLazyDataset(key);
-										continue;
+								if (currentQDataset != null) {
+									DataHolder data = LoaderFactory.getData(filename);
+									Map<String, ILazyDataset> map = data.getMap();
+									ILazyDataset data1 = null;
+									ILazyDataset q = null;
+									for (String key : map.keySet()) {
+										if (key.matches("(^/entry1/).*(_result/q$)")) {
+											q = data.getLazyDataset(key);
+											continue;
+										}
+										else if (key.matches("(^/entry1/).*(_result/data$)")) {
+											data1 = data.getLazyDataset(key);
+											continue;
+										}
 									}
-									else if (key.matches("(^/entry1/).*(_result/data$)")) {
-										data1 = data.getLazyDataset(key);
-										continue;
-									}
-								}
-								qIntensityPlot.clear();
-								lineTrace = null;
+									qIntensityPlot.clear();
+									lineTrace = null;
 
-								if (!qIntensityPlot.getTraces().contains(lineTrace)) {
-									if (lineTrace == null) {
-										lineTrace = qIntensityPlot.createLineTrace("data");
+									if (!qIntensityPlot.getTraces().contains(lineTrace)) {
+										if (lineTrace == null) {
+											lineTrace = qIntensityPlot.createLineTrace("data");
+										}
+										lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
+										qIntensityPlot.addTrace(lineTrace);
+										qIntensityPlot.repaint(true);
 									}
-									lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
-									qIntensityPlot.addTrace(lineTrace);
-									qIntensityPlot.repaint(true);
+
+									IDataset qSlice = q.getSlice(new Slice());
+									qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
+									qIntensityPlot.repaint();
 								}
-								
-								IDataset qSlice = q.getSlice(new Slice());
-								qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
-								qIntensityPlot.repaint();
 
 							} catch (Exception e) {
 								logger.error("Something went wrong when creating a overview plot",e);
@@ -687,9 +689,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		fileSelected = true;
 		captureGUIInformation();
 		modelBuildingParameters.setDataFilename(filename);
-		if (dataFile != null) {
-			dataFile.setText(filename);
-		}
 		final DataHolder holder;
 		try {
 			holder = loadDataFile();
@@ -711,14 +710,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		} catch (Exception e1) {
 			logger.error("Exception while retrieving Q values from data file", e1);
 		}
-		checkWhetherPathsAreEmpty();
-		captureGUIInformation();
-		refreshRunButton();
-		updateGuiParameters();
-		checkFilenameAndColorDataFileBox(Display.getDefault());
-		Event trigger = new Event();
-		trigger.widget = endPoint;
-		startEndPointListener.handleEvent(trigger);
+		if (currentQDataset != null) {
+			if (dataFile != null) {
+				dataFile.setText(filename);
+			}
+			checkWhetherPathsAreEmpty();
+			captureGUIInformation();
+			refreshRunButton();
+			updateGuiParameters();
+			checkFilenameAndColorDataFileBox(Display.getDefault());
+			Event trigger = new Event();
+			trigger.widget = endPoint;
+			startEndPointListener.handleEvent(trigger);
+		}
 	}
 
 	protected void runNcdModelBuilder() {
@@ -812,39 +816,41 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				else {
 					retrieveQFromData(holder);
 				}
-				Display.getDefault().asyncExec(new Runnable() {
-					@Override
-					public void run() {
-						qMin.setText(String.valueOf(currentQDataset.min()));
-						qMax.setText(String.valueOf(currentQDataset.max()));
-						endPoint.setText(String.valueOf(currentQDataset
-								.getSize()));
-						//check that the q and data paths are in the file
-						String qPath = currentPathToQ;
-						String dataPath = currentPathToData;
-						if (holder.contains(qPath) && holder.contains(dataPath)) {
-							startPoint.setText("1");
-							try {
-								IDataset slicedSet = holder.getLazyDataset(
-										dataPath).getSlice(new Slice());
-								if (slicedSet.getShape().length > 1) {
-									numberOfFrames.setText(String
-											.valueOf(holder
-													.getLazyDataset(dataPath)
-													.getSlice(new Slice())
-													.getShape()[1]));
+				if (currentQDataset != null) {
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							qMin.setText(String.valueOf(currentQDataset.min()));
+							qMax.setText(String.valueOf(currentQDataset.max()));
+							endPoint.setText(String.valueOf(currentQDataset
+									.getSize()));
+							//check that the q and data paths are in the file
+							String qPath = currentPathToQ;
+							String dataPath = currentPathToData;
+							if (holder.contains(qPath) && holder.contains(dataPath)) {
+								startPoint.setText("1");
+								try {
+									IDataset slicedSet = holder.getLazyDataset(
+											dataPath).getSlice(new Slice());
+									if (slicedSet.getShape().length > 1) {
+										numberOfFrames.setText(String
+												.valueOf(holder
+														.getLazyDataset(dataPath)
+														.getSlice(new Slice())
+														.getShape()[1]));
+									}
+									else {
+										numberOfFrames.setText("1");
+									}
+								} catch (Exception e) {
+									logger.error(
+											"Exception while attempting to retrieve number of frames from dataset",
+											e);
 								}
-								else {
-									numberOfFrames.setText("1");
-								}
-							} catch (Exception e) {
-								logger.error(
-										"Exception while attempting to retrieve number of frames from dataset",
-										e);
 							}
 						}
-					}
-				});
+					});
+				}
 				return Status.OK_STATUS;
 			}
 		};
