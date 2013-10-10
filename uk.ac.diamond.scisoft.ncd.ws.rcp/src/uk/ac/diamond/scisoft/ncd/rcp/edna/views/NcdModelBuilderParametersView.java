@@ -538,7 +538,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
 				@Override
 				public void run() {
-					restoreState();
+					try {
+						restoreState();
+					} catch (Exception e) {
+						resetGUI();
+					}
 				}
 			});
 			Job job = new Job("Retrieving q values and paths from data file") {
@@ -615,7 +619,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				Object file = ((IStructuredSelection) selection).getFirstElement();
 				if (file instanceof IFile) {
 					String fileExtension = ((IFile) file).getFileExtension();
-					if(fileExtension != null && fileExtension.equals("nxs")){
+					if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
 						String filename = ((IFile) file).getRawLocation().toOSString();
 //						if (ARPESFileDescriptor.isArpesFile(filename)) {
 							try {
@@ -711,6 +715,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		captureGUIInformation();
 		refreshRunButton();
 		updateGuiParameters();
+		checkFilenameAndColorDataFileBox(Display.getDefault());
 	}
 
 	protected void runNcdModelBuilder() {
@@ -1075,11 +1080,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				tolerance.setText("0.1");
 				symmetry.select(0);
 				dammifMode.select(0);
+				updateRoi();
 			}
 		});
 		clearQAndPathItems();
-		updateRoi();
 		qIntensityPlot.clear();
+		enable(false);
 	}
 	
 	public void clearQAndPathItems() {
