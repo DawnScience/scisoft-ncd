@@ -565,6 +565,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									retrieveQFromData(holder);
 								}
 								captureGUIInformation();
+
+								try {
+									updatePlot(modelBuildingParameters.getDataFilename());
+								} catch (Exception e) {
+									logger.error("exception while updating plot");
+								}
 							}
 						});
 						checkWhetherPathsAreEmpty();
@@ -624,37 +630,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 //						if (ARPESFileDescriptor.isArpesFile(filename)) {
 							try {
 								setFilenameString(filename);
-								if (currentQDataset != null) {
-									DataHolder data = LoaderFactory.getData(filename);
-									Map<String, ILazyDataset> map = data.getMap();
-									ILazyDataset data1 = null;
-									ILazyDataset q = null;
-									for (String key : map.keySet()) {
-										if (key.matches("(^/entry1/).*(_result/q$)")) {
-											q = data.getLazyDataset(key);
-											continue;
-										}
-										else if (key.matches("(^/entry1/).*(_result/data$)")) {
-											data1 = data.getLazyDataset(key);
-											continue;
-										}
-									}
-									qIntensityPlot.clear();
-									lineTrace = null;
-
-									if (!qIntensityPlot.getTraces().contains(lineTrace)) {
-										if (lineTrace == null) {
-											lineTrace = qIntensityPlot.createLineTrace("data");
-										}
-										lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
-										qIntensityPlot.addTrace(lineTrace);
-										qIntensityPlot.repaint(true);
-									}
-
-									IDataset qSlice = q.getSlice(new Slice());
-									qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
-									qIntensityPlot.repaint();
-								}
+								updatePlot(filename);
 
 							} catch (Exception e) {
 								logger.error("Something went wrong when creating a overview plot",e);
@@ -1265,5 +1241,38 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		RectangularROI roi = new RectangularROI(qmin, 1, qmax - qmin, 1, 0);
 		qIntensityPlot.getRegion(Q_REGION_NAME).setROI(roi);
 		return roi;
+	}
+	private void updatePlot(String filename) throws Exception {
+		if (currentQDataset != null) {
+			DataHolder data = LoaderFactory.getData(filename);
+			Map<String, ILazyDataset> map = data.getMap();
+			ILazyDataset data1 = null;
+			ILazyDataset q = null;
+			for (String key : map.keySet()) {
+				if (key.matches("(^/entry1/).*(_result/q$)")) {
+					q = data.getLazyDataset(key);
+					continue;
+				}
+				else if (key.matches("(^/entry1/).*(_result/data$)")) {
+					data1 = data.getLazyDataset(key);
+					continue;
+				}
+			}
+			qIntensityPlot.clear();
+			lineTrace = null;
+
+			if (!qIntensityPlot.getTraces().contains(lineTrace)) {
+				if (lineTrace == null) {
+					lineTrace = qIntensityPlot.createLineTrace("data");
+				}
+				lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
+				qIntensityPlot.addTrace(lineTrace);
+				qIntensityPlot.repaint(true);
+			}
+
+			IDataset qSlice = q.getSlice(new Slice());
+			qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
+			qIntensityPlot.repaint();
+		}
 	}
 }
