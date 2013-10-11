@@ -1054,7 +1054,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	public void resetGUI() {
-		compInput.getDisplay().asyncExec(new Runnable() {
+		compInput.getDisplay().syncExec(new Runnable() {
 
 			@Override
 			public void run() {
@@ -1077,6 +1077,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		clearQAndPathItems();
 		qIntensityPlot.clear();
 		enable(false);
+		checkFilenameAndColorDataFileBox(compInput.getDisplay());
 	}
 	
 	public void clearQAndPathItems() {
