@@ -142,6 +142,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
+	private boolean forgetLastSelection = false;
 
 	private Button browseDataFile;
 
@@ -199,12 +200,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					fileSelected = false;
 				}
 				String filename = dataFile.getText();
-				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				if (isNxsFile) {
+				boolean dataFileIsNxsFile = isNxsFile(filename);
+				if (dataFileIsNxsFile) {
 					findQAndDataPaths();
 				}
-				pathToQCombo.setEnabled(isNxsFile);
-				pathToDataCombo.setEnabled(isNxsFile);
+				enableNexusPathCombos(dataFileIsNxsFile);
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
 				refreshRunButton();
@@ -556,14 +556,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 							@Override
 							public void run() {
-								boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-								if (isNxsFile) {
+								boolean dataFileIsNxsFile = isNxsFile(modelBuildingParameters.getDataFilename());
+								if (dataFileIsNxsFile) {
 									findQAndDataPaths();
 									retrieveQFromHierarchicalData(holder);
 								}
 								else {
 									retrieveQFromData(holder);
 								}
+								enableNexusPathCombos(dataFileIsNxsFile);
 								captureGUIInformation();
 
 								try {
@@ -573,7 +574,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								}
 							}
 						});
-						checkWhetherPathsAreEmpty();
+						if (isNxsFile(modelBuildingParameters.getDataFilename())) {
+							checkWhetherPathsAreEmpty();
+						}
 						refreshRunButton();
 					} catch (Exception e1) {
 						logger.error("Exception while retrieving Q values from data file", e1);
@@ -623,7 +626,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 			if (selection instanceof IStructuredSelection) {
 				Object file = ((IStructuredSelection) selection).getFirstElement();
-				if (file instanceof IFile) {
+				if (file instanceof IFile && !forgetLastSelection) {
 					String fileExtension = ((IFile) file).getFileExtension();
 					if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
 						String filename = ((IFile) file).getRawLocation().toOSString();
@@ -638,6 +641,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 //						}
 					}
 				}
+				forgetLastSelection = false;
 			}
 
 		}
@@ -668,8 +672,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		final DataHolder holder;
 		try {
 			holder = loadDataFile();
-			boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-			if (isNxsFile) {
+			boolean dataFileIsNxsFile = isNxsFile(modelBuildingParameters.getDataFilename());
+			if (dataFileIsNxsFile) {
 				Display.getDefault().syncExec(new Runnable() {
 					
 					@Override
@@ -683,6 +687,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else {
 				retrieveQFromData(holder);
 			}
+			enableNexusPathCombos(dataFileIsNxsFile);
 		} catch (Exception e1) {
 			logger.error("Exception while retrieving Q values from data file", e1);
 		}
@@ -690,7 +695,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			if (dataFile != null) {
 				dataFile.setText(filename);
 			}
-			checkWhetherPathsAreEmpty();
+			if (isNxsFile(filename)) {
+				checkWhetherPathsAreEmpty();
+			}
 			captureGUIInformation();
 			refreshRunButton();
 			Job updateJob = updateGuiParameters();
@@ -700,10 +707,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				logger.error("GUI update job interrupted");
 			}
 			checkFilenameAndColorDataFileBox(Display.getDefault());
-			Event trigger = new Event();
-			trigger.widget = endPoint;
-			startEndPointListener.handleEvent(trigger);
+			refreshQAndPointFields();
 		}
+	}
+	private void refreshQAndPointFields() {
+		Event trigger = new Event();
+		trigger.widget = endPoint;
+		startEndPointListener.handleEvent(trigger);
 	}
 
 	protected void runNcdModelBuilder() {
@@ -767,14 +777,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	};
 	
 	protected void refreshRunButton() {
-		final boolean fileValidAndPathsPopulated = fileSelected && !pathEmpty;
+		final boolean fileValidAndPathsPopulated = (fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected;
 		compInput.getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
 				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
-		if (!fileValidAndPathsPopulated) {
+		if (!fileValidAndPathsPopulated && !modelBuildingParameters.getDataFilename().isEmpty() && isNxsFile(modelBuildingParameters.getDataFilename())) {
 			clearQAndPathItems();
 		}
 	}
@@ -790,8 +800,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					logger.error("Problem while loading file", e1);
 					return Status.CANCEL_STATUS;
 				}
-				boolean isNxsFile = !modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				if (isNxsFile) {
+				if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 					retrieveQFromHierarchicalData(holder);
 				}
 				else {
@@ -808,7 +817,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 							//check that the q and data paths are in the file
 							String qPath = currentPathToQ;
 							String dataPath = currentPathToData;
-							if (holder.contains(qPath) && holder.contains(dataPath)) {
+							if (holder.contains(qPath) && holder.contains(dataPath) && isNxsFile(modelBuildingParameters.getDataFilename())) {
 								startPoint.setText("1");
 								try {
 									IDataset slicedSet = holder.getLazyDataset(
@@ -828,6 +837,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 											"Exception while attempting to retrieve number of frames from dataset",
 											e);
 								}
+							}
+							else if (!isNxsFile(modelBuildingParameters.getDataFilename())) {
+								startPoint.setText("1");
+								numberOfFrames.setText("1");
 							}
 						}
 					});
@@ -904,14 +917,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void retrieveQFromHierarchicalData(DataHolder holder) {
-		currentQDataset = retrieveQ(holder, currentPathToQ);
+		currentQDataset = retrieveDataFromPath(holder, currentPathToQ);
 	}
 
 	private void retrieveQFromData(DataHolder holder) {
-		currentQDataset = retrieveQ(holder, "q");
+		currentQDataset = retrieveDataFromPath(holder, "q");
 	}
 
-	private IDataset retrieveQ(DataHolder holder, String path) {
+	private IDataset retrieveDataFromPath(DataHolder holder, String path) {
 		ILazyDataset qDataset = holder.getLazyDataset(path);
 		if (qDataset == null) {
 			MessageDialog.openError(Display.getDefault().getActiveShell(), "No q field found", "No q field found in this data file.");
@@ -1076,7 +1089,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		clearQAndPathItems();
 		qIntensityPlot.clear();
-		enable(false);
+		fileSelected = false;
+		enable(fileSelected);
+		refreshRunButton();
+		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
 	}
 	
@@ -1245,19 +1261,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 	private void updatePlot(String filename) throws Exception {
 		if (currentQDataset != null) {
-			DataHolder data = LoaderFactory.getData(filename);
-			Map<String, ILazyDataset> map = data.getMap();
-			ILazyDataset data1 = null;
-			ILazyDataset q = null;
-			for (String key : map.keySet()) {
-				if (key.matches("(^/entry1/).*(_result/q$)")) {
-					q = data.getLazyDataset(key);
-					continue;
+			DataHolder data = loadDataFile();
+			IDataset dataset = null;
+			if (isNxsFile(modelBuildingParameters.getDataFilename())) {
+				Map<String, ILazyDataset> map = data.getMap();
+				for (String key : map.keySet()) {
+					if (key.matches("(^/entry1/).*(_result/data$)")) {
+						dataset = data.getLazyDataset(key).getSlice(new Slice());
+						continue;
+					}
 				}
-				else if (key.matches("(^/entry1/).*(_result/data$)")) {
-					data1 = data.getLazyDataset(key);
-					continue;
-				}
+			}
+			else {
+				dataset = retrieveDataFromPath(data, "I");
 			}
 			qIntensityPlot.clear();
 			lineTrace = null;
@@ -1266,14 +1282,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				if (lineTrace == null) {
 					lineTrace = qIntensityPlot.createLineTrace("data");
 				}
-				lineTrace.setData(q.getSlice(new Slice()), data1.getSlice(new Slice()));
+				lineTrace.setData(currentQDataset, dataset);
 				qIntensityPlot.addTrace(lineTrace);
 				qIntensityPlot.repaint(true);
 			}
 
-			IDataset qSlice = q.getSlice(new Slice());
-			qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
+			qIntensityPlot.getSelectedXAxis().setRange(currentQDataset.getDouble(0), currentQDataset.getDouble(currentQDataset.getSize()-1));
 			qIntensityPlot.repaint();
 		}
+	}
+	
+	private boolean isNxsFile(String filename) {
+		return filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
+	}
+	private void enableNexusPathCombos(boolean dataFileIsNxsFile) {
+		pathToQCombo.setEnabled(dataFileIsNxsFile);
+		pathToDataCombo.setEnabled(dataFileIsNxsFile);
 	}
 }
