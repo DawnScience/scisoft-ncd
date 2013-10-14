@@ -27,7 +27,6 @@ public class ModelBuildingParameters {
 	protected static final Logger logger = LoggerFactory.getLogger(ModelBuildingParameters.class);
 			
 	private String workingDirectory;
-	private String htmlResultsDirectory;
 	private String dataFilename;
 	private String pathToQ;
 	private String pathToData;
@@ -67,14 +66,6 @@ public class ModelBuildingParameters {
 
 	public void setWorkingDirectory(String workingDirectory) {
 		this.workingDirectory = workingDirectory;
-	}
-
-	public String getHtmlResultsDirectory() {
-		return htmlResultsDirectory;
-	}
-
-	public void setHtmlResultsDirectory(String htmlResultsDirectory) {
-		this.htmlResultsDirectory = htmlResultsDirectory;
 	}
 
 	public void setDataFilename(String dataFilename) {
@@ -210,7 +201,7 @@ public class ModelBuildingParameters {
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
-		String commandLineParameters = "\"" + workingDirectory + "\" \"" + htmlResultsDirectory + "\" --data \"" + dataFilename + "\" " + 
+		String commandLineParameters = "\"" + workingDirectory + "\" --data \"" + dataFilename + "\" " + 
 				" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
 				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames + " --threads " + numberOfThreads +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
@@ -240,10 +231,6 @@ public class ModelBuildingParameters {
 			returnMessage += "Working directory must not be null" + System.lineSeparator();
 		}
 
-		if (htmlResultsDirectory.isEmpty()) {
-			returnMessage += "HTML results directory must not be empty" + System.lineSeparator();
-		}
-
 		if (qMinAngstrom >= qMaxAngstrom) {
 			returnMessage += "qMax must be larger than qMin" + System.lineSeparator();
 		}
@@ -267,7 +254,6 @@ public class ModelBuildingParameters {
 		if (memento != null) {
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE, dataFilename);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY, workingDirectory);
-			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY, htmlResultsDirectory);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q, pathToQ);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA, pathToData);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES, numberOfFrames);
@@ -295,7 +281,6 @@ public class ModelBuildingParameters {
 			try {
 				dataFilename = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DATA_FILE);
 				workingDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_WORKING_DIRECTORY);
-				htmlResultsDirectory = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_RESULTS_DIRECTORY);
 				pathToQ  = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q);
 				pathToData = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA);
 				numberOfFrames = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES);
