@@ -142,6 +142,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
+	private boolean forgetLastSelection = false;
 
 	private Button browseDataFile;
 
@@ -625,7 +626,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 			if (selection instanceof IStructuredSelection) {
 				Object file = ((IStructuredSelection) selection).getFirstElement();
-				if (file instanceof IFile) {
+				if (file instanceof IFile && !forgetLastSelection) {
 					String fileExtension = ((IFile) file).getFileExtension();
 					if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
 						String filename = ((IFile) file).getRawLocation().toOSString();
@@ -640,6 +641,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 //						}
 					}
 				}
+				forgetLastSelection = false;
 			}
 
 		}
@@ -1090,6 +1092,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		fileSelected = false;
 		enable(fileSelected);
 		refreshRunButton();
+		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
 	}
 	
