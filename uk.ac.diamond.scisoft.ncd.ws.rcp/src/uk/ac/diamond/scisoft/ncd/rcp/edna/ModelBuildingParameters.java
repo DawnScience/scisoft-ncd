@@ -235,12 +235,14 @@ public class ModelBuildingParameters {
 			returnMessage += "qMax must be larger than qMin" + System.lineSeparator();
 		}
 
-		if (pathToQ.isEmpty()) {
-			returnMessage += "pathToQ must not be empty" + System.lineSeparator();
-		}
-
-		if (pathToData.isEmpty()) {
-			returnMessage += "pathToData must not be empty" + System.lineSeparator();
+		if (dataFilename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[1])) { //nxs file
+			if (pathToQ.isEmpty()) {
+				returnMessage += "pathToQ must not be empty" + System.lineSeparator();
+			}
+	
+			if (pathToData.isEmpty()) {
+				returnMessage += "pathToData must not be empty" + System.lineSeparator();
+			}
 		}
 
 		if (startDistanceAngstrom >= endDistanceAngstrom) {
