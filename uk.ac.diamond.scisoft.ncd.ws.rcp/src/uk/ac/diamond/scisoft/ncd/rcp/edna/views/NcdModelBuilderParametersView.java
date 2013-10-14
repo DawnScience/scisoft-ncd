@@ -199,12 +199,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					fileSelected = false;
 				}
 				String filename = dataFile.getText();
-				boolean isNxsFile = !filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				if (isNxsFile) {
+				boolean dataFileIsNxsFile = isNxsFile(filename);
+				if (dataFileIsNxsFile) {
 					findQAndDataPaths();
 				}
-				pathToQCombo.setEnabled(isNxsFile);
-				pathToDataCombo.setEnabled(isNxsFile);
+				pathToQCombo.setEnabled(dataFileIsNxsFile);
+				pathToDataCombo.setEnabled(dataFileIsNxsFile);
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
 				refreshRunButton();
@@ -556,8 +556,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 							@Override
 							public void run() {
-								boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-								if (isNxsFile) {
+								if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 									findQAndDataPaths();
 									retrieveQFromHierarchicalData(holder);
 								}
@@ -668,8 +667,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		final DataHolder holder;
 		try {
 			holder = loadDataFile();
-			boolean isNxsFile = modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
-			if (isNxsFile) {
+			if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 				Display.getDefault().syncExec(new Runnable() {
 					
 					@Override
@@ -790,8 +788,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					logger.error("Problem while loading file", e1);
 					return Status.CANCEL_STATUS;
 				}
-				boolean isNxsFile = !modelBuildingParameters.getDataFilename().endsWith(NcdModelBuilderParametersView.DATA_TYPES[0]);
-				if (isNxsFile) {
+				if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 					retrieveQFromHierarchicalData(holder);
 				}
 				else {
@@ -1245,7 +1242,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 	private void updatePlot(String filename) throws Exception {
 		if (currentQDataset != null) {
-			DataHolder data = LoaderFactory.getData(filename);
+			DataHolder data = loadDataFile();
 			Map<String, ILazyDataset> map = data.getMap();
 			ILazyDataset data1 = null;
 			ILazyDataset q = null;
@@ -1275,5 +1272,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			qIntensityPlot.getSelectedXAxis().setRange(qSlice.getDouble(0), qSlice.getDouble(q.getSize()-1));
 			qIntensityPlot.repaint();
 		}
+	}
+	
+	private boolean isNxsFile(String filename) {
+		return filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
 	}
 }
