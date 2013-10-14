@@ -716,6 +716,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		refreshRunButton();
 		updateGuiParameters();
 		checkFilenameAndColorDataFileBox(Display.getDefault());
+		Event trigger = new Event();
+		trigger.widget = endPoint;
+		startEndPointListener.handleEvent(trigger);
 	}
 
 	protected void runNcdModelBuilder() {
