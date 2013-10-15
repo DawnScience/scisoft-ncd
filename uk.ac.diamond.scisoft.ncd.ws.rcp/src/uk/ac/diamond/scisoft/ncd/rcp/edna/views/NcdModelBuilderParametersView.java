@@ -436,9 +436,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		final String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
 
-		new Label(gnomParameters, SWT.NONE).setText("Minimum distance search");
+		new Label(gnomParameters, SWT.NONE).setText("Dmax search point start");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
-		minDistanceSearch.setToolTipText("Initial value for Rmax to perform search");
+		minDistanceSearch.setToolTipText("Initial value for the GNOM program, e.g. minimum possible size of protein");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
@@ -452,10 +452,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(gnomParameters, SWT.NONE).setText("Maximum distance search");
+		new Label(gnomParameters, SWT.NONE).setText("Dmax search point end");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
-		maxDistanceSearch.setToolTipText("Final value for Rmax to perform search");
+		maxDistanceSearch.setToolTipText("Final value for the GNOM program, e.g. maximum possible size of protein");
 		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
@@ -467,19 +467,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(gnomParameters, SWT.NONE).setText("Number of search");
+		new Label(gnomParameters, SWT.NONE).setText("Number of iterations");
 		numberOfSearch = new Text(gnomParameters, SWT.NONE);
 		numberOfSearch.addListener(SWT.Verify, verifyInt);
 		GridData searchLayout = new GridData();
 		searchLayout.horizontalSpan = 2;
 		searchLayout.grabExcessHorizontalSpace = true;
 		numberOfSearch.setLayoutData(searchLayout);
-		numberOfSearch.setToolTipText("Number of intervals to use for Rmax search");
+		numberOfSearch.setToolTipText("Maximum number of iterations for GNOM to calculate Dmax");
 
-		new Label(gnomParameters, SWT.NONE).setText("Tolerance");
+		new Label(gnomParameters, SWT.NONE).setText("Iteration tolerance");
 		tolerance = new Text(gnomParameters, SWT.NONE);
 		tolerance.addListener(SWT.Verify, verifyDouble);
-		tolerance.setToolTipText("Stopping criterion for Rmax search");
+		tolerance.setToolTipText("Tolerance criteria for completion of GNOM");
 		tolerance.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		Group dammifParameters = new Group(dataParameters, SWT.NONE);
