@@ -784,7 +784,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
 			}
 		});
-		if (!fileValidAndPathsPopulated && !modelBuildingParameters.getDataFilename().isEmpty() && isNxsFile(modelBuildingParameters.getDataFilename())) {
+		if (!fileValidAndPathsPopulated && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
 			clearQAndPathItems();
 		}
 	}
@@ -1084,7 +1084,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				tolerance.setText("0.1");
 				symmetry.select(0);
 				dammifMode.select(0);
-				updateRoi();
+				try {
+					updateRoi();
+				} catch (Exception e) {
+					logger.error("Exception while setting up ROI", e);
+				}
 			}
 		});
 		clearQAndPathItems();
