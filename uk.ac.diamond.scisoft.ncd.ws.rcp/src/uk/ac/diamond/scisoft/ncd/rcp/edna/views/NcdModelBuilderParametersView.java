@@ -354,13 +354,38 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataParameters, SWT.NONE).setText("Number of frames");
+		new Label(dataParameters, SWT.NONE).setText("Number of data columns");
 		numberOfFrames = new Text(dataParameters, SWT.NONE);
-		numberOfFrames.setToolTipText("Number of data columns to use in analysis");
+		numberOfFrames.setToolTipText("Number of data columns to use in analysis. For reduced data, this is 1");
 		numberOfFrames.addListener(SWT.Verify, verifyInt);
 		numberOfFrames.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		Group qParameters = new Group(dataParameters, SWT.NONE);
+		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
+		GridData dataChoiceLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
+		dataChoiceLayout.horizontalSpan = 5;
+		dataChoiceParameters.setLayoutData(dataChoiceLayout);
+		dataChoiceParameters.setLayout(new GridLayout(5, false));
+		dataChoiceParameters.setText("Data selection parameters");
+
+		Group pointsParameters = new Group(dataChoiceParameters, SWT.NONE);
+		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
+		pointsLayout.horizontalSpan = 2;
+		pointsParameters.setLayoutData(pointsLayout);
+		pointsParameters.setLayout(new GridLayout(2, true));
+		pointsParameters.setText("Points");
+
+		new Label(pointsParameters, SWT.NONE).setText("First point");
+		startPoint = new Text(pointsParameters, SWT.NONE);
+		startPoint.addListener(SWT.Verify, verifyInt);
+		startPoint.addListener(SWT.KeyUp, startEndPointListener);
+		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		new Label(pointsParameters, SWT.NONE).setText("Last point");
+		endPoint = new Text(pointsParameters, SWT.NONE);
+		endPoint.addListener(SWT.Verify, verifyInt);
+		endPoint.addListener(SWT.KeyUp, startEndPointListener);
+		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+
+		Group qParameters = new Group(dataChoiceParameters, SWT.NONE);
 		GridData qLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
 		qLayout.horizontalSpan = 2;
 		qParameters.setLayoutData(qLayout);
@@ -399,24 +424,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				modelBuildingParameters.setqMaxInverseAngstromUnits(qMaxUnits.getText().equals(qOptionUnits[0]));
 			}
 		});
-
-		Group pointsParameters = new Group(dataParameters, SWT.NONE);
-		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		pointsLayout.horizontalSpan = 2;
-		pointsParameters.setLayoutData(pointsLayout);
-		pointsParameters.setLayout(new GridLayout(2, true));
-		pointsParameters.setText("Points");
-
-		new Label(pointsParameters, SWT.NONE).setText("First point");
-		startPoint = new Text(pointsParameters, SWT.NONE);
-		startPoint.addListener(SWT.Verify, verifyInt);
-		startPoint.addListener(SWT.KeyUp, startEndPointListener);
-		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		new Label(pointsParameters, SWT.NONE).setText("Last point");
-		endPoint = new Text(pointsParameters, SWT.NONE);
-		endPoint.addListener(SWT.Verify, verifyInt);
-		endPoint.addListener(SWT.KeyUp, startEndPointListener);
-		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		new Label(dataParameters, SWT.NONE).setText("Number of threads");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
