@@ -38,5 +38,20 @@
             content="intro/introContribution.xml">
       </configExtension>
    </extension>
+   <extension
+         point="org.eclipse.core.runtime.preferences">
+      <initializer
+            class="uk.ac.diamond.scisoft.ncd.rcp.edna.preferences.NcdModelBuilderPreferenceInitializer">
+      </initializer>
+   </extension>
+   <extension
+         point="org.eclipse.ui.preferencePages">
+      <page
+            category="uk.ac.diamond.scisoft.analysis.rcp.preferences.root"
+            class="uk.ac.diamond.scisoft.ncd.rcp.edna.preferences.NcdModelBuilderPreferencePage"
+            id="uk.ac.diamond.scisoft.ncd.ncdModelBuildingPreferences"
+            name="NCD Model Building Preferences">
+      </page>
+   </extension>
 
 </plugin>

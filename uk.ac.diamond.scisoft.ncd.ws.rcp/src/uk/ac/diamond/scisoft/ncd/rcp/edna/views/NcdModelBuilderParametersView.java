@@ -89,8 +89,10 @@ import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.roi.RectangularROI;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
+import uk.ac.diamond.scisoft.ncd.ws.rcp.Activator;
 import uk.ac.gda.ui.content.FileContentProposalProvider;
 
 public class NcdModelBuilderParametersView extends ViewPart {
@@ -1322,7 +1324,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		return filename.endsWith(NcdModelBuilderParametersView.DATA_TYPES[1]);
 	}
 	private void enableNexusPathCombos(boolean dataFileIsNxsFile) {
-		pathToQCombo.setEnabled(dataFileIsNxsFile);
-		pathToDataCombo.setEnabled(dataFileIsNxsFile);
+		boolean toSet = dataFileIsNxsFile && Activator.getDefault().getPreferenceStore()
+		.getBoolean(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS);
+		pathToQCombo.setEnabled(toSet);
+		pathToDataCombo.setEnabled(toSet);
 	}
 }

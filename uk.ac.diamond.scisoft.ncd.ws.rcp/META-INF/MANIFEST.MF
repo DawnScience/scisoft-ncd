@@ -18,3 +18,4 @@ Import-Package: org.eclipse.ui.navigator.resources,
  org.slf4j;version="1.5.6",
  uk.ac.diamond.scisoft.analysis.rcp.views,
  uk.ac.gda.ui.content
+Bundle-Activator: uk.ac.diamond.scisoft.ncd.ws.rcp.Activator
