@@ -20,8 +20,10 @@ import org.eclipse.ui.IMemento;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersMementoStrings;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
+import uk.ac.diamond.scisoft.ws.rcp.Activator;
 
 public class ModelBuildingParameters {
 	protected static final Logger logger = LoggerFactory.getLogger(ModelBuildingParameters.class);
@@ -275,6 +277,8 @@ public class ModelBuildingParameters {
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE, (float) tolerance);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY, symmetry);
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST, dammifFastMode);
+			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS, Activator.getDefault().getPreferenceStore().
+					getBoolean(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS));
 		}
 	}
 	
@@ -302,6 +306,8 @@ public class ModelBuildingParameters {
 				tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
 				symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);
 				dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
+				Activator.getDefault().getPreferenceStore().setValue(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS,
+						memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS));
 			}
 			catch (Exception e) {
 				logger.error("problem while restoring state", e);
