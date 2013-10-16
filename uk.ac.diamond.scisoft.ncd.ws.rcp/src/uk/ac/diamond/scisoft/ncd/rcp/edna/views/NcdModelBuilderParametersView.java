@@ -374,7 +374,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startPoint.addListener(SWT.KeyUp, startEndPointListener);
 		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
+		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u00b9", "nm\u207b\u00b9"};
 
 		new Label(dataChoiceParameters, SWT.NONE).setText("q minimum");
 		qMin = new Text(dataChoiceParameters, SWT.NONE);
