@@ -42,7 +42,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
@@ -116,7 +115,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 				AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
 				AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
 
-				plotType.process(xTraceData, yTraceData);
+				plotType.process(xTraceData, yTraceData.squeeze());
 				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
 				tr.setData(xTraceData, yTraceData);
 				saxsPlottingSystem.addTrace(tr);
