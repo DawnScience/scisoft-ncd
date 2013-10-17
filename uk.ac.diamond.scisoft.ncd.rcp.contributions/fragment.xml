@@ -315,7 +315,7 @@
             icon="icons/saxs_tool_blue.png"
             id="uk.ac.diamond.scisoft.ncd.rcp.views.sasAnalysisStaticView"
             name="Saxs Analysis"
-            restorable="false">
+            restorable="true">
       </view>
       <!--
       <view

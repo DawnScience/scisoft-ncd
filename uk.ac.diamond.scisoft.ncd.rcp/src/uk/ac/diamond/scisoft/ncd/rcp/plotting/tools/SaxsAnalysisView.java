@@ -16,9 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.plotting.tools;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
+import org.dawnsci.plotting.api.PlottingFactory;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
@@ -37,10 +42,37 @@ public class SaxsAnalysisView extends ViewPart {
 	public SaxsAnalysisView() {
 		delegate = new SaxsAnalysisDelegate();
 	}
+	
+	private Pattern namePattern = Pattern.compile(SaxsAnalysisPlotType.getRegex()+" \\((.+)\\)");
 
 	@Override
 	public void createPartControl(Composite parent) {
 		delegate.createPlotPart(parent, getViewSite().getActionBars(), PlotType.XY, this);
+		
+		// We try at this point to get the plotting system that we were connected to
+		final String secondId = getViewSite().getSecondaryId();
+		if (secondId!=null && secondId.indexOf('(')>-1) {
+			setPartName(secondId);
+			final Matcher matcher = namePattern.matcher(secondId);
+			if (matcher.matches()) {
+				final String saxsName = matcher.group(1);
+				final String plotName = matcher.group(2);
+				
+				// We async this in case the plotting system is not there as yet.
+				Display.getDefault().asyncExec(new Runnable() {
+					@Override
+					public void run() {
+		                final IPlottingSystem sys = PlottingFactory.getPlottingSystem(plotName);
+		                if (sys!=null) {
+		                	delegate.setLinkedPlottingSystem(sys);
+		                	delegate.activate(false);
+		    				delegate.process(SaxsAnalysisPlotType.forName(saxsName));
+		               }				
+					}
+				});
+
+			}
+		}
 	}
 	
 	public void setLinkage(final IWorkbenchPart linkedPart, final SaxsAnalysisPlotType plotType) {

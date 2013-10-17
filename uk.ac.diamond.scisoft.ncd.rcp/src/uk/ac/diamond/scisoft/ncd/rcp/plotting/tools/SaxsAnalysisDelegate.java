@@ -29,8 +29,10 @@ import org.dawnsci.plotting.api.trace.TraceEvent;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.progress.UIJob;
@@ -146,6 +148,7 @@ class SaxsAnalysisDelegate {
 				}
 				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
 				tr.setData(xTraceData, yTraceData);
+				tr.setTraceColor(getColor(plotType));
 				saxsPlottingSystem.addTrace(tr);
 				saxsPlottingSystem.repaint();
 			}
@@ -169,6 +172,12 @@ class SaxsAnalysisDelegate {
 			if (process) process(plotType);
 		}	
 	}
+	
+	public Color getColor(SaxsAnalysisPlotType pt) {
+		final int[] col = pt.getRgb();
+		return new Color(Display.getDefault(), col[0], col[1], col[2]);
+	}
+
 	public void deactivate() {
 		if (linkage != null) {
 			linkage.removeTraceListener(traceListener);
