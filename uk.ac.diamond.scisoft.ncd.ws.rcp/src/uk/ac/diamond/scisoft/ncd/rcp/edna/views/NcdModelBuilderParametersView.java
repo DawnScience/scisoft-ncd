@@ -178,7 +178,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataParameters = new Group(compInput, SWT.NONE);
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		dataParameters.setLayout(new GridLayout(2, true));
+		dataParameters.setLayout(new GridLayout());
 		dataParameters.setText("Data parameters");
 
 		final Group dataFileGroup = new Group(dataParameters, SWT.NONE);
