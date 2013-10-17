@@ -17,6 +17,9 @@
 package uk.ac.diamond.scisoft.ncd.rcp.plotting.tools;
 
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 import org.dawb.common.ui.menu.CheckableActionGroup;
 import org.dawb.common.ui.menu.MenuAction;
 import org.dawb.common.ui.util.EclipseUtils;
@@ -26,6 +29,7 @@ import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
+import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
@@ -101,12 +105,41 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 							                                            IWorkbenchPage.VIEW_ACTIVATE);
 				    saxsView.setLinkage(getPart(), delegate.getPlotType());
 				} catch (Throwable e) {
-					logger.error("TODO put description of error here", e);
+					logger.error("Problem opening view '"+delegate.getPlotType().getName()+" ("+getPart().getTitle()+")'", e);
 				}
 			}
 		};
 		getSite().getActionBars().getToolBarManager().add(openSeparate);
 		
+
+		final Action closeAll = new Action("Close all saxs views linked to '"+getPart().getTitle()+"'", 
+			 	                             Activator.getImageDescriptor("icons/plot-close.png"))  {
+			@Override
+			public void run() {
+
+				try {
+					Pattern pattern = Pattern.compile(SaxsAnalysisPlotType.getRegex()+" \\((.+)\\)");
+					final IViewReference[] refs = EclipseUtils.getPage().getViewReferences();
+					for (IViewReference ivf : refs) {
+						if (!ivf.getId().equals(SaxsAnalysisView.ID))continue;
+						final String secondId = ivf.getSecondaryId();
+						final Matcher matcher = pattern.matcher(secondId);
+						if (matcher.matches()) {
+							final String plotName = matcher.group(2);
+							if (plotName.equals(getPlottingSystem().getPlotName())) {
+								EclipseUtils.getPage().hideView(ivf);
+							}
+						}
+					}
+					
+				
+				} catch (Throwable e) {
+					logger.error("Problem closing views", e);
+				}
+			}
+		};
+		getSite().getActionBars().getToolBarManager().add(closeAll);
+
 	}
 
 	@Override
