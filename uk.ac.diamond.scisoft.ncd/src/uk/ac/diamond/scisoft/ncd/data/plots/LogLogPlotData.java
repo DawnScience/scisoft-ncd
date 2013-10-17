@@ -19,13 +19,13 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class LogLogPlotData extends SaxsPlotData {
 
 	public LogLogPlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.LOGLOG_PLOT);
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.LOGLOG_PLOT.getAxisNames();
 		groupName = "loglog";
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();

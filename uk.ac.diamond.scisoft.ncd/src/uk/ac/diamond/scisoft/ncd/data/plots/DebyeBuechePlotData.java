@@ -19,13 +19,13 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class DebyeBuechePlotData extends SaxsPlotData {
 
 	public DebyeBuechePlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getAxisNames();
 		groupName = "debye_bueche";
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();

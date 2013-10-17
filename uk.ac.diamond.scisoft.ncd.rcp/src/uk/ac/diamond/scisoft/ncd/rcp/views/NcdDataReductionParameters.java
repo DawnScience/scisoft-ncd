@@ -70,7 +70,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 
@@ -716,9 +716,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			g.setLayout(gl);
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
 			
+			// TODO Replace all these Buttons with a loop over SaxsAnalysisPlotType.values()
 			loglogButton = new Button(g, SWT.CHECK);
-			loglogButton.setText(SaxsAnalysisPlots.LOGLOG_PLOT);
-			Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.LOGLOG_PLOT);
+			loglogButton.setText(SaxsAnalysisPlotType.LOGLOG_PLOT.getName());
+			Pair<String, String> axesNames = SaxsAnalysisPlotType.LOGLOG_PLOT.getAxisNames();
 			String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			loglogButton.setToolTipText(toolTipText);
 			loglogButton.addSelectionListener(new SelectionAdapter() {
@@ -729,8 +730,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			guinierButton = new Button(g, SWT.CHECK);
-			guinierButton.setText(SaxsAnalysisPlots.GUINIER_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.GUINIER_PLOT);
+			guinierButton.setText(SaxsAnalysisPlotType.GUINIER_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.GUINIER_PLOT.getAxisNames();
 			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			guinierButton.setToolTipText(toolTipText);
 			guinierButton.addSelectionListener(new SelectionAdapter() {
@@ -741,8 +742,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			porodButton = new Button(g, SWT.CHECK);
-			porodButton.setText(SaxsAnalysisPlots.POROD_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.POROD_PLOT);
+			porodButton.setText(SaxsAnalysisPlotType.POROD_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.POROD_PLOT.getAxisNames();
 			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			porodButton.setToolTipText(toolTipText);
 			porodButton.addSelectionListener(new SelectionAdapter() {
@@ -753,8 +754,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			kratkyButton = new Button(g, SWT.CHECK);
-			kratkyButton.setText(SaxsAnalysisPlots.KRATKY_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.KRATKY_PLOT);
+			kratkyButton.setText(SaxsAnalysisPlotType.KRATKY_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.KRATKY_PLOT.getAxisNames();
 			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			kratkyButton.setToolTipText(toolTipText);
 			kratkyButton.addSelectionListener(new SelectionAdapter() {
@@ -765,8 +766,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			zimmButton = new Button(g, SWT.CHECK);
-			zimmButton.setText(SaxsAnalysisPlots.ZIMM_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.ZIMM_PLOT);
+			zimmButton.setText(SaxsAnalysisPlotType.ZIMM_PLOT.getName());
+			axesNames =  SaxsAnalysisPlotType.ZIMM_PLOT.getAxisNames();
 			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			zimmButton.setToolTipText(toolTipText);
 			zimmButton.addSelectionListener(new SelectionAdapter() {
@@ -777,8 +778,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			debyebuecheButton = new Button(g, SWT.CHECK);
-			debyebuecheButton.setText(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
-			axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT);
+			debyebuecheButton.setText(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getAxisNames();
 			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
 			debyebuecheButton.setToolTipText(toolTipText);
 			debyebuecheButton.addSelectionListener(new SelectionAdapter() {

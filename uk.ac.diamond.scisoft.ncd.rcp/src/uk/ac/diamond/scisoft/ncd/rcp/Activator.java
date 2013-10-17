@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp;
 
+import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
 
@@ -38,5 +39,9 @@ public class Activator extends AbstractUIPlugin {
 
 	public static Activator getDefault() {
 		return plugin;
+	}
+
+	public static ImageDescriptor getImageDescriptor(String iconPath) {
+		return imageDescriptorFromPlugin("uk.ac.diamond.scisoft.ncd.rcp", iconPath);
 	}
 }

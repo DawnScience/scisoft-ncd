@@ -19,13 +19,13 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class GuinierPlotData extends SaxsPlotData {
 
 	public GuinierPlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.GUINIER_PLOT);
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.GUINIER_PLOT.getAxisNames();
 		groupName = "guinier";
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();

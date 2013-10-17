@@ -19,13 +19,13 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class KratkyPlotData extends SaxsPlotData {
 
 	public KratkyPlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.KRATKY_PLOT);
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.KRATKY_PLOT.getAxisNames();
 		groupName = "kratky";
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();

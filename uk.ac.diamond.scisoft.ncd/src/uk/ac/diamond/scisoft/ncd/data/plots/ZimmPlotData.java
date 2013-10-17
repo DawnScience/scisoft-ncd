@@ -19,13 +19,13 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class ZimmPlotData extends SaxsPlotData {
 
 	public ZimmPlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(SaxsAnalysisPlots.ZIMM_PLOT);
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.ZIMM_PLOT.getAxisNames();
 		groupName = "zimm";
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();

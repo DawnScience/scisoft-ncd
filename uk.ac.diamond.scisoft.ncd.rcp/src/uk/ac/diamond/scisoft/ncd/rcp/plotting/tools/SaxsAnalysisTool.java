@@ -16,14 +16,15 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.plotting.tools;
 
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
 
-import org.apache.commons.lang.ArrayUtils;
+import java.util.Collection;
+
 import org.apache.commons.math3.util.Pair;
+import org.dawb.common.ui.menu.CheckableActionGroup;
+import org.dawb.common.ui.menu.MenuAction;
 import org.dawnsci.plotting.api.IPlottingSystem;
+import org.dawnsci.plotting.api.PlotType;
+import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.tool.AbstractToolPage;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
@@ -32,217 +33,105 @@ import org.dawnsci.plotting.api.trace.TraceEvent;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.core.runtime.jobs.IJobManager;
-import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.swt.SWT;
-import org.eclipse.swt.custom.ScrolledComposite;
-import org.eclipse.swt.events.ControlAdapter;
-import org.eclipse.swt.events.ControlEvent;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
-import org.eclipse.swt.graphics.Rectangle;
-import org.eclipse.swt.layout.GridData;
-import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
+import org.eclipse.jface.action.Action;
+import org.eclipse.jface.action.IAction;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Control;
-import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.IPartListener;
-import org.eclipse.ui.IViewPart;
-import org.eclipse.ui.IViewReference;
-import org.eclipse.ui.IWorkbenchPage;
-import org.eclipse.ui.IWorkbenchPart;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PartInitException;
-import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.progress.UIJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
-import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlots;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 
 public class SaxsAnalysisTool extends AbstractToolPage {
 
     private static final Logger logger = LoggerFactory.getLogger(SaxsAnalysisTool.class);
+    private static final String PLOT_TYPE_PROP = "uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.plotType";
     
-	private static Composite composite;
-	private static Button loglog, guinier, porod, kratky, zimm, debyebueche;
-	private static IPlottingSystem plottingSystem = null;
-	
-	private static Map<String,Button> plotMap;
-	private static Map<String,SaxsPlotSelectionAdapter> plotListeners;
-
-	private IJobManager jobManager;
+	private SaxsAnalysisPlotType  plotType;
+	private ITraceListener     traceListener;
+	private IPlottingSystem    saxsPlottingSystem;
+	private SaxsJob            saxsUpdateJob;
 	
 	public SaxsAnalysisTool() {
-		jobManager = Job.getJobManager();
+		
+		String pt = Activator.getDefault().getPreferenceStore().getString(PLOT_TYPE_PROP);
+		if (pt==null || "".equals(pt)) pt = SaxsAnalysisPlotType.LOGLOG_PLOT.getName();
+		plotType = SaxsAnalysisPlotType.forName(pt);
+		
+		saxsUpdateJob = new SaxsJob();
+		traceListener = new ITraceListener.Stub() {
+			@Override
+			protected void update(TraceEvent evt) {
+				process(plotType);
+			}	
+		};
+		try {
+			saxsPlottingSystem = PlottingFactory.createPlottingSystem();
+		} catch (Exception e) {
+			logger.error("Cannot get a plotting system for the sas plot!", e);
+		}
+	}
+	
+	protected void process(final SaxsAnalysisPlotType plotType) {
+		
+		if (saxsPlottingSystem==null || saxsPlottingSystem.getPlotComposite()==null) return;
+		
+		final Collection<ITrace> traces = getPlottingSystem().getTraces(ILineTrace.class);
+		if (traces!=null && !traces.isEmpty()) {
+			saxsPlottingSystem.setTitle(plotType.getName());
+			Pair<String, String> axesTitles = plotType.getAxisNames();
+			saxsPlottingSystem.getSelectedXAxis().setTitle(axesTitles.getFirst());
+			saxsPlottingSystem.getSelectedYAxis().setTitle(axesTitles.getSecond());
+			saxsUpdateJob.schedule(traces, plotType);
+		} else {
+			saxsPlottingSystem.clear();
+		}
 	}
 
-	private ITraceListener traceListener = new ITraceListener.Stub() {
+	private class SaxsJob extends UIJob {
+
+		private Collection<ITrace> traces;
+		private SaxsAnalysisPlotType  plotType;
+		public SaxsJob() {
+			super("Process ");
+		}
+
+
 		@Override
-		protected void update(TraceEvent evt) {
-			super.update(evt);
-			if (plotMap != null) {
-				for (Button btn : plotMap.values()) {
-					if (btn != null && !(btn.isDisposed()) && btn.getSelection()) {
-						btn.notifyListeners(SWT.Selection, null);
-					}
-				}
-			}
-		}
-	};
-	
-	private class SaxsPlotSelectionAdapter extends SelectionAdapter {
-		
-		private Button btn;
-		private String plotName;
-		private String plotJobName;
-		
-		public SaxsPlotSelectionAdapter(Button btn, String plotName) {
-			super();
-			this.btn = btn;
-			this.plotName = plotName;
-			this.plotJobName = plotName + "PlotUpdate";
+		public IStatus runInUIThread(IProgressMonitor monitor) {
 			
+			if (monitor.isCanceled()) return Status.CANCEL_STATUS;
+			
+			saxsPlottingSystem.clear();
+			for (ITrace trace : traces) {
+				ILineTrace lineTrace = (ILineTrace) trace;
+				if (!lineTrace.isUserTrace())                                 return Status.CANCEL_STATUS;
+				if (lineTrace.getXData()==null || lineTrace.getYData()==null) return Status.CANCEL_STATUS;
+
+				AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
+				AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
+
+				plotType.process(xTraceData, yTraceData);
+				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
+				tr.setData(xTraceData, yTraceData);
+				saxsPlottingSystem.addTrace(tr);
+				saxsPlottingSystem.repaint();
+			}
+
+			
+			return Status.OK_STATUS;
 		}
 		
-		@Override
-		public void widgetSelected(SelectionEvent e) {
-			
-			final Collection<ITrace> traces = plottingSystem.getTraces();
-			if (btn.getSelection()) {
-				Job plotJob = new Job(plotJobName) {
-
-					@Override
-					public IStatus run(IProgressMonitor monitor) {
-						Display.getDefault().syncExec(new Runnable() {
-
-							@Override
-							public void run() {
-								PlotView pv;
-								IPlottingSystem ps;
-								try {
-									pv = (PlotView) PlatformUI
-											.getWorkbench()
-											.getActiveWorkbenchWindow()
-											.getActivePage()
-											.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName,
-													IWorkbenchPage.VIEW_VISIBLE);
-									ps = pv.getPlottingSystem();
-									ps.setTitle(plotName);
-									Pair<String, String> axesTitles = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
-									ps.getSelectedXAxis().setTitle(axesTitles.getFirst());
-									ps.getSelectedYAxis().setTitle(axesTitles.getSecond());
-									ps.clear();
-								} catch (Exception ex) {
-									logger.error("Error creating SAXS {} plot view", plotName, ex);
-									return;
-								}
-								IDataset[] xData = new IDataset[] {};
-								IDataset[] yData = new IDataset[] {};
-								for (ITrace trace : traces) {
-									if (trace instanceof ILineTrace) {
-										ILineTrace lineTrace = (ILineTrace) trace;
-										AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
-										AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
-
-										updatePlotData(xTraceData, yTraceData);
-										xTraceData.setErrorBuffer(null);
-										yTraceData.setErrorBuffer(null);
-										xData = (IDataset[]) ArrayUtils.add(xData, xTraceData);
-										yData = (IDataset[]) ArrayUtils.add(yData, yTraceData);
-										ILineTrace tr = ps.createLineTrace(lineTrace.getName());
-										tr.setData(xTraceData, yTraceData);
-										ps.addTrace(tr);
-									}
-								}
-								ps.repaint();
-							}
-						});
-						return Status.OK_STATUS;
-					}
-
-					@Override
-					public boolean belongsTo(Object family) {
-						return family.equals(plotJobName);
-					}
-				};
-
-				plotJob.setPriority(Job.LONG);
-				plotJob.setSystem(true);
-				if (jobManager.find(plotJobName).length > 3) {
-					jobManager.cancel(plotJobName);
-					plotJob.schedule();
-				} else {
-					plotJob.schedule();
-				}
-			} else {
-				IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-				if (window != null) {
-					IWorkbenchPage page = window.getActivePage();
-					if (page != null) {
-						IViewReference ivr = page.findViewReference(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName);
-						if (ivr != null) {
-							PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage().hideView(ivr);
-						}
-					}
-				}
-			}
-		}
-
-		private void updatePlotData(AbstractDataset xTraceData, AbstractDataset yTraceData) {
-			if (plotName.equals(SaxsAnalysisPlots.LOGLOG_PLOT)) {
-				IndexIterator itr = yTraceData.getIterator();
-				while (itr.hasNext()) {
-					int idx = itr.index;
-					yTraceData.set(Math.log10(yTraceData.getDouble(idx)), idx);
-				}
-				itr = xTraceData.getIterator();
-				while (itr.hasNext()) {
-					int idx = itr.index;
-					xTraceData.set(Math.log10(xTraceData.getDouble(idx)), idx);
-				}
-				return;
-			}
-			if (plotName.equals(SaxsAnalysisPlots.GUINIER_PLOT)) {
-				IndexIterator itr = yTraceData.getIterator();
-				while (itr.hasNext()) {
-					int idx = itr.index;
-					yTraceData.set(Math.log(yTraceData.getDouble(idx)), idx);
-				}
-				xTraceData.ipower(2);
-				return;
-			}
-			if (plotName.equals(SaxsAnalysisPlots.POROD_PLOT)) {
-				IndexIterator itr = yTraceData.getIterator();
-				while (itr.hasNext()) {
-					int idx = itr.index;
-					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 4) * yTraceData.getDouble(idx), idx);
-				}
-				return;
-			}
-			if (plotName.equals(SaxsAnalysisPlots.KRATKY_PLOT)) {
-				IndexIterator itr = yTraceData.getIterator();
-				while (itr.hasNext()) {
-					int idx = itr.index;
-					yTraceData.set(Math.pow(xTraceData.getDouble(idx), 2) * yTraceData.getDouble(idx), idx);
-				}
-				return;
-			}
-			if (plotName.equals(SaxsAnalysisPlots.ZIMM_PLOT)) {
-				yTraceData.ipower(-1);
-				xTraceData.ipower(2);
-				return;
-			}
-			if (plotName.equals(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT)) {
-				yTraceData.ipower(-0.5);
-				xTraceData.ipower(2);
-				return;
-			}
+		public void schedule(Collection<ITrace> traces, final SaxsAnalysisPlotType plotType) {
+			this.traces   = traces;
+			this.plotType = plotType;
+			SaxsJob.this.setName("Process "+plotType.getName());
+			schedule();
 		}
 	}
 
@@ -253,60 +142,43 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 
 	@Override
 	public void createControl(Composite parent) {
-		composite = new Composite(parent, SWT.NONE);
-		composite.setLayout(new GridLayout(1, false));
 		
-		final ScrolledComposite sc = new ScrolledComposite(composite, SWT.V_SCROLL);
-		sc.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		final Composite properties = new Composite(sc, SWT.NONE);
-		properties.setLayout(new GridLayout(2, true));
-		properties.setLayoutData(new GridData(SWT.LEFT, SWT.FILL, false, true));
-		
-		plotMap = new HashMap<String, Button>();
-		plotListeners = new HashMap<String, SaxsAnalysisTool.SaxsPlotSelectionAdapter>();
-		
-		loglog      = new Button(properties, SWT.CHECK); 
-		guinier     = new Button(properties, SWT.CHECK);
-		porod       = new Button(properties, SWT.CHECK);
-		kratky      = new Button(properties, SWT.CHECK);
-		zimm        = new Button(properties, SWT.CHECK);
-		debyebueche = new Button(properties, SWT.CHECK);
-		createSaxsPlotWidget(SaxsAnalysisPlots.LOGLOG_PLOT,       loglog);
-		createSaxsPlotWidget(SaxsAnalysisPlots.GUINIER_PLOT,      guinier);
-		createSaxsPlotWidget(SaxsAnalysisPlots.POROD_PLOT,        porod);
-		createSaxsPlotWidget(SaxsAnalysisPlots.KRATKY_PLOT,       kratky);
-		createSaxsPlotWidget(SaxsAnalysisPlots.ZIMM_PLOT,         zimm);
-		createSaxsPlotWidget(SaxsAnalysisPlots.DEBYE_BUECHE_PLOT, debyebueche);
-		
-		sc.setContent(properties);
-		sc.setExpandVertical(true);
-		sc.setExpandHorizontal(true);
-		composite.addControlListener(new ControlAdapter() {
-			@Override
-			public void controlResized(ControlEvent e) {
-				Rectangle r = sc.getClientArea();
-				sc.setMinHeight(properties.computeSize(r.width, SWT.DEFAULT).y);
-			}
-		});
+		createActions();
+		saxsPlottingSystem.createPlotPart(parent, plotType.getName(), getSite().getActionBars(), PlotType.XY, getViewPart());
 	}
 
-	private void createSaxsPlotWidget(String plotName, Button btn) {
-		btn.setText(plotName);
-		Pair<String, String> axesNames = SaxsAnalysisPlots.getSaxsPlotAxes(plotName);
-		String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
-		btn.setToolTipText(toolTipText);
-		SaxsPlotSelectionAdapter adapter = new SaxsPlotSelectionAdapter(btn, plotName);
-		btn.addSelectionListener(new SaxsPlotSelectionAdapter(btn, plotName));
-		plotListeners.put(plotName, adapter);
-		plotMap.put(plotName, btn);
-	}
 	
+	private void createActions() {
+		
+		final MenuAction    plotChoice = new MenuAction("Plot Type");
+		// It's a saxs barrow! Do you see what I have done there? Do you?
+		plotChoice.setImageDescriptor(Activator.getImageDescriptor("icons/baggage-cart-box.png"));
+		final CheckableActionGroup grp = new CheckableActionGroup();
+		
+		for (final SaxsAnalysisPlotType pt : SaxsAnalysisPlotType.values()) {
+			final IAction action = new Action(pt.getName(), IAction.AS_CHECK_BOX) {
+				@Override
+				public void run() {
+					plotType = pt;
+					Activator.getDefault().getPreferenceStore().setValue(PLOT_TYPE_PROP, pt.getName());
+					process(pt);
+					plotChoice.setToolTipText(pt.getName());
+				}
+			};
+			if (plotType==pt) {
+				plotChoice.setToolTipText(pt.getName());
+                action.setChecked(true);
+			}
+			plotChoice.add(action);
+			grp.add(action);
+		}
+		
+		getSite().getActionBars().getToolBarManager().add(plotChoice);
+	}
+
 	@Override
 	public Control getControl() {
-		if (composite == null) {
-			return null;
-		}
-		return composite;
+		return saxsPlottingSystem.getPlotComposite();
 	}
 
 	@Override
@@ -319,92 +191,22 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 	@Override
 	public void activate() {
 		super.activate();
-		
-		if (plottingSystem == null) {
-			plottingSystem = getPlottingSystem();
-			if (plottingSystem != null) {
-				plottingSystem.addTraceListener(traceListener);
-			}
-		}
-		
-		if (plotMap != null) {
-			for (Entry<String, Button> entry : plotMap.entrySet()) {
-				String plotName = entry.getKey();
-				final Button btn = entry.getValue();
-				if (btn.getSelection()) {
-					try {
-						final IViewPart ivp = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage()
-								.showView(PlotView.PLOT_VIEW_MULTIPLE_ID, plotName, IWorkbenchPage.VIEW_VISIBLE);
-						ivp.getViewSite().getPage().addPartListener(new IPartListener() {
-							
-							@Override
-							public void partClosed(IWorkbenchPart part) {
-								if (part != null && part.getTitle().equals(ivp.getTitle())) {
-									ivp.getViewSite().getPage().removePartListener(this);
-									if (!btn.isDisposed()) {
-										btn.setSelection(false);
-										btn.notifyListeners(SWT.Selection, null);
-									}
-								}
-							}
-
-							@Override
-							public void partActivated(IWorkbenchPart part) {
-							}
-
-							@Override
-							public void partBroughtToTop(IWorkbenchPart part) {
-							}
-
-							@Override
-							public void partDeactivated(IWorkbenchPart part) {
-							}
-
-							@Override
-							public void partOpened(IWorkbenchPart part) {
-							}
-						});
-					} catch (PartInitException e) {
-						logger.error("Error creating SAXS {} plot view", plotName, e);
-					}
-				}
-			}
+		if (getPlottingSystem() != null) {
+			getPlottingSystem().addTraceListener(traceListener);
+			process(plotType);
 		}
 	}
 	
-	
 	@Override
 	public void deactivate() {
-		if (plotMap != null) {
-			for (Entry<String, Button> entry : plotMap.entrySet()) {
-				String plotName = entry.getKey();
-				Button btn = entry.getValue();
-				if (btn != null && !btn.isDisposed()) {
-					btn.removeSelectionListener(plotListeners.get(plotName));
-				}
-			}
-		}
+		if (getPlottingSystem()!=null) getPlottingSystem().removeTraceListener(traceListener);
 		super.deactivate();		
 	}
 	
 	
 	@Override
-	public boolean isStaticTool() {
-		return true;
-	}
-
-	@Override
-	public boolean isAlwaysSeparateView() {
-		return true;
-		
-	}
-	
-	@Override
 	public void dispose() {
-		if (plottingSystem != null) {
-			plottingSystem.removeTraceListener(traceListener);
-		}
-		plottingSystem = null;
+		saxsPlottingSystem.dispose();
 		super.dispose();
 	}
 }
