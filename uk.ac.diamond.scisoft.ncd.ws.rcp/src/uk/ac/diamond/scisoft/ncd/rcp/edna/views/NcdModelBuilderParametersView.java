@@ -331,13 +331,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		
-		new Label(dataParameters, SWT.NONE).setText("Working directory");
-		workingDirectory = new Text(dataParameters, SWT.NONE);
+		Composite dataParametersComposite = new Composite(dataParameters, SWT.NONE);
+		dataParametersComposite.setLayout(new GridLayout(2, false));
+		GridData dataParametersGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		dataParametersComposite.setLayoutData(dataParametersGridData);
+		new Label(dataParametersComposite, SWT.NONE).setText("Working directory");
+		workingDirectory = new Text(dataParametersComposite, SWT.NONE);
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
 		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		new Label(dataParameters, SWT.NONE).setText("Nexus path to q");
-		pathToQCombo = new Combo(dataParameters, SWT.READ_ONLY);
+		new Label(dataParametersComposite, SWT.NONE).setText("Nexus path to q");
+		pathToQCombo = new Combo(dataParametersComposite, SWT.READ_ONLY);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToQCombo.addListener(SWT.KeyUp, pathListener);
@@ -347,8 +351,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				currentPathToQ = pathToQCombo.getText();
 			}
 		});
-		new Label(dataParameters, SWT.NONE).setText("Nexus path to data");
-		pathToDataCombo = new Combo(dataParameters, SWT.READ_ONLY);
+		new Label(dataParametersComposite, SWT.NONE).setText("Nexus path to data");
+		pathToDataCombo = new Combo(dataParametersComposite, SWT.READ_ONLY);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
@@ -359,8 +363,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataParameters, SWT.NONE).setText("Number of data columns");
-		numberOfFrames = new Text(dataParameters, SWT.NONE);
+		new Label(dataParametersComposite, SWT.NONE).setText("Number of data columns");
+		numberOfFrames = new Text(dataParametersComposite, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis. For reduced data, this is 1");
 		numberOfFrames.addListener(SWT.Verify, verifyInt);
 		numberOfFrames.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -445,8 +449,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
+		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
+		otherOptionsComposite.setLayout(new GridLayout(2, false));
+		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		otherOptionsComposite.setLayoutData(otherOptionsGridData);
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
-		plotOptions = new Combo(dataParameters, SWT.READ_ONLY);
+		plotOptions = new Combo(otherOptionsComposite, SWT.READ_ONLY);
 		plotOptions.setItems(plotOptionNames);
 		plotOptions.setToolTipText("Choice of plots to show - logI vs. logq or logI vs. q");
 		plotOptions.addSelectionListener(new SelectionListener() {
@@ -472,15 +480,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotOptionsLayout.horizontalSpan = 2;
 		plotOptions.setLayoutData(plotOptionsLayout);
 		
-		new Label(dataParameters, SWT.NONE).setText("Number of parallel processes");
-		numberOfThreads = new Text(dataParameters, SWT.NONE);
+		new Label(otherOptionsComposite, SWT.NONE).setText("Number of parallel processes");
+		numberOfThreads = new Text(otherOptionsComposite, SWT.NONE);
 		numberOfThreads.addListener(SWT.Verify, verifyInt);
 		numberOfThreads.setToolTipText("The maximum number of cluster processes used to run DAMMIF");
 		numberOfThreads.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
-		new Label(dataParameters, SWT.NONE).setText("Pipeline processes");
-		builderOptions = new Combo(dataParameters, SWT.READ_ONLY);
+		new Label(otherOptionsComposite, SWT.NONE).setText("Pipeline processes");
+		builderOptions = new Combo(otherOptionsComposite, SWT.READ_ONLY);
 		builderOptions.setItems(builderOptionsNames);
 		builderOptions.setToolTipText("Choice of analysis to run - GNOM only or GNOM followed by DAMMIF");
 
