@@ -58,7 +58,6 @@ import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
-import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -378,8 +377,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
+		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
 		dataChoiceParameters.setText("Data selection parameters");
 		SashForm plotSash = new SashForm(dataChoiceParameters, SWT.VERTICAL);
+		plotSash.setLayout(new GridLayout());
+		plotSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		SashForm pointsSash = new SashForm(plotSash, SWT.HORIZONTAL);
 		pointsSash.setLayout(new GridLayout(2, false));
 		pointsSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -608,8 +610,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		scrolledComposite.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
-				Rectangle r = scrolledComposite.getClientArea();
-				scrolledComposite.setMinSize(dataParameters.computeSize(r.width, SWT.DEFAULT));
+				scrolledComposite.setMinSize(dataParameters.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 			}
 		});
 
