@@ -445,6 +445,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
+		qIntensityPlot.createPlotPart( dataChoiceParameters, 
+				getTitle(), 
+				null, 
+				PlotType.XY,
+				null);
+		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
 		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
 		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -581,13 +588,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 		
-		qIntensityPlot.createPlotPart( compInput, 
-				getTitle(), 
-				null, 
-				PlotType.XY,
-				null);
-		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
