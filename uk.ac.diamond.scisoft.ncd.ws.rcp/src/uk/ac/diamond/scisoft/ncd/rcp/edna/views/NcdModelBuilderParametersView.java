@@ -41,6 +41,8 @@ import org.eclipse.jface.fieldassist.TextContentAdapter;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.custom.SashForm;
+import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.dnd.DND;
 import org.eclipse.swt.dnd.DropTarget;
 import org.eclipse.swt.dnd.DropTargetEvent;
@@ -48,12 +50,16 @@ import org.eclipse.swt.dnd.DropTargetListener;
 import org.eclipse.swt.dnd.FileTransfer;
 import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
+import org.eclipse.swt.events.ControlAdapter;
+import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
+import org.eclipse.swt.graphics.Rectangle;
+import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -164,7 +170,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	@Override
 	public void createPartControl(Composite parent) {
 		compInput = new Composite(parent, SWT.FILL);
-		compInput.setLayout(new GridLayout(1, false));
+		compInput.setLayout(new FillLayout());
 
 		try {
 			qIntensityPlot = PlottingFactory.createPlottingSystem();
@@ -176,7 +182,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		// Data parameters
 
-		Group dataParameters = new Group(compInput, SWT.NONE);
+		final ScrolledComposite scrolledComposite = new ScrolledComposite(compInput, SWT.H_SCROLL | SWT.V_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		scrolledComposite.setLayout(new GridLayout());
+		final Group dataParameters = new Group(scrolledComposite, SWT.NONE);
 		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataParameters.setLayout(new GridLayout());
 		dataParameters.setText("Data parameters");
@@ -368,14 +377,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfFrames.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
-		GridData dataChoiceLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		dataChoiceParameters.setLayoutData(dataChoiceLayout);
-		dataChoiceParameters.setLayout(new GridLayout(2, false));
+		dataChoiceParameters.setLayout(new GridLayout());
 		dataChoiceParameters.setText("Data selection parameters");
+		SashForm plotSash = new SashForm(dataChoiceParameters, SWT.VERTICAL);
+		SashForm pointsSash = new SashForm(plotSash, SWT.HORIZONTAL);
+		pointsSash.setLayout(new GridLayout(2, false));
+		pointsSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-		Group pointsGroup = new Group(dataChoiceParameters, SWT.NONE);
+		Group pointsGroup = new Group(pointsSash, SWT.NONE);
 		pointsGroup.setLayout(new GridLayout());
-		pointsGroup.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		GridData pointsGroupLayout = new GridData(GridData.FILL, SWT.CENTER, true, false);
+		pointsGroup.setLayoutData(pointsGroupLayout);
 		Composite firstPointComposite = new Composite(pointsGroup, SWT.NONE);
 		firstPointComposite.setLayout(new GridLayout(2, false));
 		firstPointComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -407,7 +419,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		Group pointsGroup2 = new Group(dataChoiceParameters, SWT.NONE);
+		Group pointsGroup2 = new Group(pointsSash, SWT.NONE);
 		pointsGroup2.setLayout(new GridLayout());
 		pointsGroup2.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		Composite lastPointComposite = new Composite(pointsGroup2, SWT.NONE);
@@ -445,12 +457,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		qIntensityPlot.createPlotPart( dataChoiceParameters, 
+		qIntensityPlot.createPlotPart( plotSash, 
 				getTitle(), 
 				null, 
 				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plotSash.setWeights(new int[]{1, 4});
 
 		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
@@ -587,7 +600,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
-		
+
+		scrolledComposite.setContent(dataParameters);
+		scrolledComposite.setExpandHorizontal(true);
+		scrolledComposite.setExpandVertical(true);
+		scrolledComposite.setSize(dataParameters.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		scrolledComposite.addControlListener(new ControlAdapter() {
+			@Override
+			public void controlResized(ControlEvent e) {
+				Rectangle r = scrolledComposite.getClientArea();
+				scrolledComposite.setMinSize(dataParameters.computeSize(r.width, SWT.DEFAULT));
+			}
+		});
+
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
