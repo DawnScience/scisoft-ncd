@@ -182,9 +182,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataParameters.setText("Data parameters");
 
 		final Group dataFileGroup = new Group(dataParameters, SWT.NONE);
-		GridData dataFileGroupData = new GridData(SWT.FILL, SWT.TOP, true, false);
-		dataFileGroupData.horizontalSpan = 2;
-		dataFileGroup.setLayoutData(dataFileGroupData);
+		dataFileGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataFileGroup.setLayout(new GridLayout(3, false));
 		new Label(dataFileGroup, SWT.NONE).setText("Data file");
 		dataFile = new Text(dataFileGroup, SWT.BORDER);
@@ -371,13 +369,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
 		GridData dataChoiceLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		dataChoiceLayout.horizontalSpan = 4;
 		dataChoiceParameters.setLayoutData(dataChoiceLayout);
-		dataChoiceParameters.setLayout(new GridLayout(4, false));
+		dataChoiceParameters.setLayout(new GridLayout(2, false));
 		dataChoiceParameters.setText("Data selection parameters");
 
 		Group pointsGroup = new Group(dataChoiceParameters, SWT.NONE);
-		pointsGroup.setLayout(new GridLayout(2, false));
+		pointsGroup.setLayout(new GridLayout());
 		pointsGroup.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		Composite firstPointComposite = new Composite(pointsGroup, SWT.NONE);
 		firstPointComposite.setLayout(new GridLayout(2, false));
@@ -411,7 +408,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		});
 
 		Group pointsGroup2 = new Group(dataChoiceParameters, SWT.NONE);
-		pointsGroup2.setLayout(new GridLayout(2, false));
+		pointsGroup2.setLayout(new GridLayout());
 		pointsGroup2.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		Composite lastPointComposite = new Composite(pointsGroup2, SWT.NONE);
 		lastPointComposite.setLayout(new GridLayout(2, false));
@@ -424,11 +421,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		GridData data = new GridData(GridData.FILL, SWT.CENTER, true, false);
-		data.horizontalSpan = 2;
 		pointsGroup.setLayoutData(data);
-		pointsGroup.setLayout(new GridLayout(2,false));
+		pointsGroup.setLayout(new GridLayout());
 		pointsGroup2.setLayoutData(data);
-		pointsGroup2.setLayout(new GridLayout(2, false));
+		pointsGroup2.setLayout(new GridLayout());
 
 		Composite qMaxComposite = new Composite(pointsGroup2, SWT.NONE);
 		new Label(qMaxComposite, SWT.NONE).setText("q maximum");
