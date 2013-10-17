@@ -52,6 +52,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.SelectionListener;
 import org.eclipse.swt.graphics.Color;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -157,6 +158,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private IROIListener qIntensityRegionListener;
 	protected ILineTrace lineTrace;
 	protected boolean regionDragging;
+	private Combo plotOptions;
+	protected boolean xAxisIsLog;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -442,6 +445,33 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
+		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
+		plotOptions = new Combo(dataParameters, SWT.READ_ONLY);
+		plotOptions.setItems(plotOptionNames);
+		plotOptions.setToolTipText("Choice of plots to show - logI vs. logq or logI vs. q");
+		plotOptions.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (plotOptions.getText().equals(plotOptionNames[0])) {
+					xAxisIsLog = true;
+				}
+				else {
+					xAxisIsLog = false;
+				}
+				updatePlot();
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				//do nothing
+			}
+		});
+		plotOptions.select(1); //default is logI/q
+		GridData plotOptionsLayout = new GridData(GridData.FILL, SWT.CENTER, true, false);
+		plotOptionsLayout.horizontalSpan = 2;
+		plotOptions.setLayoutData(plotOptionsLayout);
+		
 		new Label(dataParameters, SWT.NONE).setText("Number of parallel processes");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
 		numberOfThreads.addListener(SWT.Verify, verifyInt);
@@ -1015,7 +1045,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					createRegion();
 				}
 				qIntensityPlot.getSelectedXAxis().setRange(0, 1);
-				qIntensityPlot.getSelectedXAxis().setLog10(true);
+				qIntensityPlot.getSelectedXAxis().setLog10(xAxisIsLog);
 				qIntensityPlot.getSelectedXAxis().setTitle("q");
 //				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
 				qIntensityPlot.getSelectedYAxis().setLog10(true);
@@ -1077,6 +1107,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setSymmetry(symmetry.getText());
 
 			modelBuildingParameters.setDammifFastMode(dammifMode.getSelectionIndex() == 0);
+
+			modelBuildingParameters.setxAxisIsLog(plotOptions.getSelectionIndex() == 0);
 
 			return modelBuildingParameters;
 		} catch (NumberFormatException e) {
@@ -1212,6 +1244,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
 		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
+		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
 	}
 
 	private void refreshSymmetryCombo(String symmetry2) {
@@ -1279,6 +1312,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		tolerance.setEnabled(enabled);
 		symmetry.setEnabled(enabled);
 		dammifMode.setEnabled(enabled);
+		plotOptions.setEnabled(enabled);
 	}
 	private RectangularROI updateRoi() {
 		double qmin = Double.parseDouble(qMin.getText());

@@ -55,6 +55,7 @@ public class ModelBuildingParameters {
 
 	private String symmetry;
 	private boolean dammifFastMode;
+	private boolean xAxisIsLog;
 	
 	public ModelBuildingParameters() {
 	}
@@ -200,6 +201,14 @@ public class ModelBuildingParameters {
 		this.dammifFastMode = dammifFastMode;
 	}
 	
+	public boolean isxAxisIsLog() {
+		return xAxisIsLog;
+	}
+
+	public void setxAxisIsLog(boolean xAxisIsLog) {
+		this.xAxisIsLog = xAxisIsLog;
+	}
+
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
@@ -279,6 +288,7 @@ public class ModelBuildingParameters {
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST, dammifFastMode);
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS, Activator.getDefault().getPreferenceStore().
 					getBoolean(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS));
+			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_LOG_LOG_PLOT, xAxisIsLog);
 		}
 	}
 	
@@ -308,6 +318,7 @@ public class ModelBuildingParameters {
 				dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
 				Activator.getDefault().getPreferenceStore().setValue(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS,
 						memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS));
+				xAxisIsLog = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_LOG_LOG_PLOT);
 			}
 			catch (Exception e) {
 				logger.error("problem while restoring state", e);
