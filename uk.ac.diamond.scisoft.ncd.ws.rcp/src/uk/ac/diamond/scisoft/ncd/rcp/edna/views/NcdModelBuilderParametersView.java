@@ -459,20 +459,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		qIntensityPlot.createPlotPart( plotSash, 
-				getTitle(), 
-				null, 
-				PlotType.XY,
-				null);
-		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		plotSash.setWeights(new int[]{1, 4});
-
-		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
-		otherOptionsComposite.setLayout(new GridLayout(2, false));
-		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
-		otherOptionsComposite.setLayoutData(otherOptionsGridData);
+		Composite plotAndOptionComposite = new Composite(plotSash, SWT.NONE);
+		plotAndOptionComposite.setLayout(new GridLayout());
+		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
-		plotOptions = new Combo(otherOptionsComposite, SWT.READ_ONLY);
+		plotOptions = new Combo(plotAndOptionComposite, SWT.READ_ONLY);
 		plotOptions.setItems(plotOptionNames);
 		plotOptions.setToolTipText("Choice of plots to show - logI vs. logq or logI vs. q");
 		plotOptions.addSelectionListener(new SelectionListener() {
@@ -494,9 +485,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		plotOptions.select(1); //default is logI/q
-		GridData plotOptionsLayout = new GridData(GridData.FILL, SWT.CENTER, true, false);
+		GridData plotOptionsLayout = new GridData(GridData.CENTER, SWT.CENTER, true, false);
 		plotOptionsLayout.horizontalSpan = 2;
 		plotOptions.setLayoutData(plotOptionsLayout);
+
+		qIntensityPlot.createPlotPart( plotAndOptionComposite, 
+				getTitle(), 
+				null, 
+				PlotType.XY,
+				null);
+		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plotSash.setWeights(new int[]{1, 3});
+
+		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
+		otherOptionsComposite.setLayout(new GridLayout(2, false));
+		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		otherOptionsComposite.setLayoutData(otherOptionsGridData);
 		
 		new Label(otherOptionsComposite, SWT.NONE).setText("Number of parallel processes");
 		numberOfThreads = new Text(otherOptionsComposite, SWT.NONE);
