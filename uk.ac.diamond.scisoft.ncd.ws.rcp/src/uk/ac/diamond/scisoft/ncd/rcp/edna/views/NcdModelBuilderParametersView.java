@@ -77,6 +77,9 @@ import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.forms.events.ExpansionAdapter;
+import org.eclipse.ui.forms.events.ExpansionEvent;
+import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.part.ViewPart;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -165,6 +168,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected boolean regionDragging;
 	private Combo plotOptions;
 	protected boolean xAxisIsLog;
+	private ExpansionAdapter expansionAdapter;
+	private ExpandableComposite dataChoiceExpander;
+	private ExpandableComposite dataPathAndColumnParametersExpandableComposite;
+	private ExpandableComposite gnomParametersExpandableComposite;
+	private ExpandableComposite dammifParametersExpandableComposite;
 
 	@Override
 	public void createPartControl(Composite parent) {
@@ -346,8 +354,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
 		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		new Label(dataParametersComposite, SWT.NONE).setText("Nexus path to q");
-		pathToQCombo = new Combo(dataParametersComposite, SWT.READ_ONLY);
+		dataPathAndColumnParametersExpandableComposite = new ExpandableComposite(dataParametersComposite, SWT.NONE);
+		dataPathAndColumnParametersExpandableComposite.setLayout(new GridLayout());
+		dataPathAndColumnParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		Composite dataPathAndColumnParametersComposite = new Composite(dataPathAndColumnParametersExpandableComposite, SWT.NONE);
+		dataPathAndColumnParametersComposite.setLayout(new GridLayout());
+		dataPathAndColumnParametersComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+		new Label(dataPathAndColumnParametersComposite, SWT.NONE).setText("Nexus path to q");
+		pathToQCombo = new Combo(dataPathAndColumnParametersComposite, SWT.READ_ONLY);
 		pathToQCombo.setToolTipText("Path to q data (only used in Nexus file)");
 		pathToQCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToQCombo.addListener(SWT.KeyUp, pathListener);
@@ -357,8 +372,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				currentPathToQ = pathToQCombo.getText();
 			}
 		});
-		new Label(dataParametersComposite, SWT.NONE).setText("Nexus path to data");
-		pathToDataCombo = new Combo(dataParametersComposite, SWT.READ_ONLY);
+		new Label(dataPathAndColumnParametersComposite, SWT.NONE).setText("Nexus path to data");
+		pathToDataCombo = new Combo(dataPathAndColumnParametersComposite, SWT.READ_ONLY);
 		pathToDataCombo.setToolTipText("Path to data (only used in Nexus file)");
 		pathToDataCombo.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pathToDataCombo.addListener(SWT.KeyUp, pathListener);
@@ -369,13 +384,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataParametersComposite, SWT.NONE).setText("Number of data columns");
-		numberOfFrames = new Text(dataParametersComposite, SWT.NONE);
+		new Label(dataPathAndColumnParametersComposite, SWT.NONE).setText("Number of data columns");
+		numberOfFrames = new Text(dataPathAndColumnParametersComposite, SWT.NONE);
 		numberOfFrames.setToolTipText("Number of data columns to use in analysis. For reduced data, this is 1");
 		numberOfFrames.addListener(SWT.Verify, verifyInt);
 		numberOfFrames.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
+		// Specify the expansion Adapter
+		expansionAdapter = new ExpansionAdapter() {
+			@Override
+			public void expansionStateChanged(ExpansionEvent e) {
+				compInput.layout();
+				scrolledComposite.notifyListeners(SWT.Resize, null);
+			}
+		};
+
+		dataPathAndColumnParametersExpandableComposite.setClient(dataPathAndColumnParametersComposite);
+		dataPathAndColumnParametersExpandableComposite.addExpansionListener(expansionAdapter);
+
+		dataChoiceExpander = new ExpandableComposite(dataParameters, SWT.NONE);
+		dataChoiceExpander.setLayout(new GridLayout());
+		dataChoiceExpander.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
+		Group dataChoiceParameters = new Group(dataChoiceExpander, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
 		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
 		dataChoiceParameters.setText("Data selection parameters");
@@ -497,6 +527,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		plotSash.setWeights(new int[]{1, 3});
 
+		dataChoiceExpander.setClient(dataChoiceParameters);
+		dataChoiceExpander.addExpansionListener(expansionAdapter);
+
 		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
 		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
@@ -514,7 +547,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		builderOptions.setItems(builderOptionsNames);
 		builderOptions.setToolTipText("Choice of analysis to run - GNOM only or GNOM followed by DAMMIF");
 
-		Group gnomParameters = new Group(dataParameters, SWT.NONE);
+		gnomParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
+		gnomParametersExpandableComposite.setLayout(new GridLayout());
+		gnomParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		Group gnomParameters = new Group(gnomParametersExpandableComposite, SWT.NONE);
 		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
 		gnomLayout.horizontalSpan = 2;
 		gnomParameters.setLayoutData(gnomLayout);
@@ -529,7 +565,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
+		minDistanceUnits = new Combo(gnomParametersExpandableComposite, SWT.READ_ONLY);
 		minDistanceUnits.setItems(distanceOptionsUnits);
 		minDistanceUnits.addModifyListener(new ModifyListener() {
 			
@@ -544,7 +580,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for the GNOM program, e.g. maximum possible size of protein");
 		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
+		maxDistanceUnits = new Combo(gnomParametersExpandableComposite, SWT.READ_ONLY);
 		maxDistanceUnits.setItems(distanceOptionsUnits);
 		maxDistanceUnits.addModifyListener(new ModifyListener() {
 			
@@ -564,12 +600,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		numberOfSearch.setToolTipText("Maximum number of iterations for GNOM to calculate Dmax");
 
 		new Label(gnomParameters, SWT.NONE).setText("Iteration tolerance");
-		tolerance = new Text(gnomParameters, SWT.NONE);
+		tolerance = new Text(gnomParametersExpandableComposite, SWT.NONE);
 		tolerance.addListener(SWT.Verify, verifyDouble);
 		tolerance.setToolTipText("Tolerance criteria for completion of GNOM");
 		tolerance.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		Group dammifParameters = new Group(dataParameters, SWT.NONE);
+		gnomParametersExpandableComposite.setClient(gnomParameters);
+		gnomParametersExpandableComposite.addExpansionListener(expansionAdapter);
+
+		dammifParametersExpandableComposite = new ExpandableComposite(dataParametersComposite,  SWT.NONE);
+		dammifParametersExpandableComposite.setLayout(new GridLayout());
+		dammifParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		Group dammifParameters = new Group(dammifParametersExpandableComposite, SWT.NONE);
 		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 		dammifParameters.setLayout(new GridLayout(2, true));
 		dammifParameters.setText("DAMMIF");
@@ -585,6 +627,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dammifMode = new Combo(dammifParameters, SWT.READ_ONLY);
 		dammifMode.setItems(dammifModeOptions);
 		dammifMode.setToolTipText("Run DAMMIF analysis in either fast or slow mode");
+
+		dammifParametersExpandableComposite.setClient(dammifParameters);
+		dammifParametersExpandableComposite.addExpansionListener(expansionAdapter);
 
 		btnResetParams = new Button(dataParameters, SWT.NONE);
 		btnResetParams.setText("Reset all parameters to defaults");
