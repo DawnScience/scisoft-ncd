@@ -22,6 +22,7 @@ import java.util.regex.Pattern;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
+import org.dawnsci.plotting.api.tool.IToolPageSystem;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPart;
@@ -94,6 +95,14 @@ public class SaxsAnalysisView extends ViewPart {
 		delegate.deactivate();
 		delegate.dispose();
 		super.dispose();
+	}
+	
+	@Override
+	public Object getAdapter(Class  clazz) {
+		if (clazz==IToolPageSystem.class || clazz==IPlottingSystem.class) {
+			return delegate.getAdapter(clazz);
+		}
+		return super.getAdapter(clazz);
 	}
 
 }

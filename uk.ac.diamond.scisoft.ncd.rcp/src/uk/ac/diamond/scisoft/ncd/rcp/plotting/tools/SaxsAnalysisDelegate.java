@@ -22,6 +22,7 @@ import org.apache.commons.math3.util.Pair;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
+import org.dawnsci.plotting.api.tool.IToolPageSystem;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
 import org.dawnsci.plotting.api.trace.ITraceListener;
@@ -190,6 +191,13 @@ class SaxsAnalysisDelegate {
 
 	public SaxsAnalysisPlotType getPlotType() {
 		return plotType;
+	}
+
+	public Object getAdapter(Class clazz) {
+		if (clazz==IToolPageSystem.class || clazz==IPlottingSystem.class) {
+			return saxsPlottingSystem;
+		}
+		return null;
 	}
 
 }

@@ -23,8 +23,10 @@ import java.util.regex.Pattern;
 import org.dawb.common.ui.menu.CheckableActionGroup;
 import org.dawb.common.ui.menu.MenuAction;
 import org.dawb.common.ui.util.EclipseUtils;
+import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.tool.AbstractToolPage;
+import org.dawnsci.plotting.api.tool.IToolPageSystem;
 import org.eclipse.jface.action.Action;
 import org.eclipse.jface.action.IAction;
 import org.eclipse.swt.widgets.Composite;
@@ -172,4 +174,13 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 		delegate.dispose();
 		super.dispose();
 	}
+	
+	@Override
+	public Object getAdapter(Class  clazz) {
+		if (clazz==IToolPageSystem.class || clazz==IPlottingSystem.class) {
+			return delegate.getAdapter(clazz);
+		}
+		return super.getAdapter(clazz);
+	}
+
 }
