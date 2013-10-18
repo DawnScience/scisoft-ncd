@@ -175,6 +175,7 @@ class SaxsAnalysisDelegate {
 	}
 	
 	public Color getColor(SaxsAnalysisPlotType pt) {
+		// TODO FIXME This means that all the plots are the same color if multiple are being processed.
 		final int[] col = pt.getRgb();
 		return new Color(Display.getDefault(), col[0], col[1], col[2]);
 	}
