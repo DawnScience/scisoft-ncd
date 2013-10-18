@@ -361,7 +361,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		
 		Composite dataParametersComposite = new Composite(dataParameters, SWT.NONE);
 		dataParametersComposite.setLayout(new GridLayout(2, false));
-		GridData dataParametersGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		GridData dataParametersGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		dataParametersComposite.setLayoutData(dataParametersGridData);
 		new Label(dataParametersComposite, SWT.NONE).setText("Working directory");
 		workingDirectory = new Text(dataParametersComposite, SWT.NONE);
@@ -370,7 +370,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		dataPathAndColumnParametersExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		dataPathAndColumnParametersExpandableComposite.setLayout(new GridLayout());
-		dataPathAndColumnParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		dataPathAndColumnParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		dataPathAndColumnParametersExpandableComposite.setText("Data path and column parameters");
 
 		Composite dataPathAndColumnParametersComposite = new Composite(dataPathAndColumnParametersExpandableComposite, SWT.NONE);
@@ -411,15 +411,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		dataChoiceExpanderComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		dataChoiceExpanderComposite.setLayout(new GridLayout());
-		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
+		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		dataChoiceExpanderComposite.setText("Data selection parameters");
 		Group dataChoiceParameters = new Group(dataChoiceExpanderComposite, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
 		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
-		SashForm plotSash = new SashForm(dataChoiceParameters, SWT.VERTICAL);
-		plotSash.setLayout(new GridLayout());
-		plotSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		SashForm pointsSash = new SashForm(plotSash, SWT.HORIZONTAL);
+		SashForm pointsSash = new SashForm(dataChoiceParameters, SWT.HORIZONTAL);
 		pointsSash.setLayout(new GridLayout(2, false));
 		pointsSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
@@ -496,7 +493,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		Composite plotAndOptionComposite = new Composite(plotSash, SWT.NONE);
+		Composite plotAndOptionComposite = new Composite(dataParameters, SWT.NONE);
 		plotAndOptionComposite.setLayout(new GridLayout());
 		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
@@ -532,7 +529,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
-		plotSash.setWeights(new int[]{1, 3});
 
 		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
 		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
@@ -540,7 +536,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
-		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.FILL, true, true);
+		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		otherOptionsComposite.setLayoutData(otherOptionsGridData);
 		
 		new Label(otherOptionsComposite, SWT.NONE).setText("Number of parallel processes");
