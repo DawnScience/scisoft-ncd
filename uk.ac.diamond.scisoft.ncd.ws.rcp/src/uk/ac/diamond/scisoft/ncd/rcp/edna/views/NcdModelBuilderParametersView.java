@@ -415,18 +415,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataChoiceExpanderComposite.setLayout(new GridLayout());
 		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		dataChoiceExpanderComposite.setText("Data range");
-		Group dataChoiceParameters = new Group(dataChoiceExpanderComposite, SWT.NONE);
+		Composite dataChoiceParameters = new Composite(dataChoiceExpanderComposite, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
 		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.FILL, true, true));
 		SashForm pointsSash = new SashForm(dataChoiceParameters, SWT.HORIZONTAL);
 		pointsSash.setLayout(new GridLayout(2, false));
 		pointsSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
-		Group pointsGroup = new Group(pointsSash, SWT.NONE);
-		pointsGroup.setLayout(new GridLayout());
+		Group pointsComposite = new Group(pointsSash, SWT.NONE);
+		pointsComposite.setLayout(new GridLayout());
 		GridData pointsGroupLayout = new GridData(GridData.FILL, SWT.CENTER, true, false);
-		pointsGroup.setLayoutData(pointsGroupLayout);
-		Composite firstPointComposite = new Composite(pointsGroup, SWT.NONE);
+		pointsComposite.setLayoutData(pointsGroupLayout);
+		Composite firstPointComposite = new Composite(pointsComposite, SWT.NONE);
 		firstPointComposite.setLayout(new GridLayout(2, false));
 		firstPointComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		new Label(firstPointComposite, SWT.NONE).setText("First point");
@@ -438,7 +438,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u00b9", "nm\u207b\u00b9"};
 
-		Composite qMinComposite = new Composite(pointsGroup, SWT.NONE);
+		Composite qMinComposite = new Composite(pointsComposite, SWT.NONE);
 		new Label(qMinComposite, SWT.NONE).setText("q minimum");
 		qMinComposite.setLayout(new GridLayout(3, false));
 		qMinComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -471,8 +471,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		GridData data = new GridData(GridData.FILL, SWT.CENTER, true, false);
-		pointsGroup.setLayoutData(data);
-		pointsGroup.setLayout(new GridLayout());
+		pointsComposite.setLayoutData(data);
+		pointsComposite.setLayout(new GridLayout());
 		pointsGroup2.setLayoutData(data);
 		pointsGroup2.setLayout(new GridLayout());
 
@@ -578,7 +578,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		gnomParametersExpandableComposite.setLayout(new GridLayout());
 		gnomParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		gnomParametersExpandableComposite.setText("GNOM parameters");
-		Group gnomParameters = new Group(gnomParametersExpandableComposite, SWT.NONE);
+		Composite gnomParameters = new Composite(gnomParametersExpandableComposite, SWT.NONE);
 		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
 		gnomLayout.horizontalSpan = 2;
 		gnomParameters.setLayoutData(gnomLayout);
@@ -640,7 +640,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dammifParametersExpandableComposite.setLayout(new GridLayout());
 		dammifParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		dammifParametersExpandableComposite.setText("DAMMIF parameters");
-		Group dammifParameters = new Group(dammifParametersExpandableComposite, SWT.NONE);
+		Composite dammifParameters = new Composite(dammifParametersExpandableComposite, SWT.NONE);
 		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
 		dammifParameters.setLayout(new GridLayout(2, true));
 
