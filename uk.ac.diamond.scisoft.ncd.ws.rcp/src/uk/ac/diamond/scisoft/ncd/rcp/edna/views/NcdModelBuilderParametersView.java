@@ -362,45 +362,27 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
 		GridData dataChoiceLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		dataChoiceLayout.horizontalSpan = 5;
+		dataChoiceLayout.horizontalSpan = 6;
 		dataChoiceParameters.setLayoutData(dataChoiceLayout);
-		dataChoiceParameters.setLayout(new GridLayout(5, false));
+		dataChoiceParameters.setLayout(new GridLayout(6, false));
 		dataChoiceParameters.setText("Data selection parameters");
 
-		Group pointsParameters = new Group(dataChoiceParameters, SWT.NONE);
-		GridData pointsLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		pointsLayout.horizontalSpan = 2;
-		pointsParameters.setLayoutData(pointsLayout);
-		pointsParameters.setLayout(new GridLayout(2, true));
-		pointsParameters.setText("Points");
-
-		new Label(pointsParameters, SWT.NONE).setText("First point");
-		startPoint = new Text(pointsParameters, SWT.NONE);
+		new Label(dataChoiceParameters, SWT.NONE).setText("First point");
+		startPoint = new Text(dataChoiceParameters, SWT.NONE);
+		startPoint.setToolTipText("First point of data to be used for calculations.");
 		startPoint.addListener(SWT.Verify, verifyInt);
 		startPoint.addListener(SWT.KeyUp, startEndPointListener);
 		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		new Label(pointsParameters, SWT.NONE).setText("Last point");
-		endPoint = new Text(pointsParameters, SWT.NONE);
-		endPoint.addListener(SWT.Verify, verifyInt);
-		endPoint.addListener(SWT.KeyUp, startEndPointListener);
-		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-
-		Group qParameters = new Group(dataChoiceParameters, SWT.NONE);
-		GridData qLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		qLayout.horizontalSpan = 2;
-		qParameters.setLayoutData(qLayout);
-		qParameters.setLayout(new GridLayout(3, false));
-		qParameters.setText("q");
 
 		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u2071", "nm\u207b\u2071"};
 
-		new Label(qParameters, SWT.NONE).setText("q minimum");
-		qMin = new Text(qParameters, SWT.NONE);
+		new Label(dataChoiceParameters, SWT.NONE).setText("q minimum");
+		qMin = new Text(dataChoiceParameters, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
 		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qMinUnits = new Combo(qParameters, SWT.READ_ONLY);
+		qMinUnits = new Combo(dataChoiceParameters, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
 		qMinUnits.addModifyListener(new ModifyListener() {
 			
@@ -409,13 +391,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				modelBuildingParameters.setqMinInverseAngstromUnits(qMinUnits.getText().equals(qOptionUnits[0]));
 			}
 		});
-		new Label(qParameters, SWT.NONE).setText("q maximum");
-		qMax = new Text(qParameters, SWT.NONE);
+
+		new Label(dataChoiceParameters, SWT.NONE).setText("Last point");
+		endPoint = new Text(dataChoiceParameters, SWT.NONE);
+		endPoint.setToolTipText("Last point of data to be used for calculations");
+		endPoint.addListener(SWT.Verify, verifyInt);
+		endPoint.addListener(SWT.KeyUp, startEndPointListener);
+		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+
+		new Label(dataChoiceParameters, SWT.NONE).setText("q maximum");
+		qMax = new Text(dataChoiceParameters, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMax.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qMaxUnits = new Combo(qParameters, SWT.READ_ONLY);
+		qMaxUnits = new Combo(dataChoiceParameters, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
 		qMaxUnits.addModifyListener(new ModifyListener() {
 			
@@ -425,17 +415,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataParameters, SWT.NONE).setText("Number of threads");
+		new Label(dataParameters, SWT.NONE).setText("Number of parallel processes");
 		numberOfThreads = new Text(dataParameters, SWT.NONE);
 		numberOfThreads.addListener(SWT.Verify, verifyInt);
-		numberOfThreads.setToolTipText("The maximum number of threads to be used for DAMMIF");
+		numberOfThreads.setToolTipText("The maximum number of cluster processes used to run DAMMIF");
 		numberOfThreads.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		String[] builderOptionsNames = new String[]{"GNOM", "GNOM+DAMMIF"};
-		new Label(dataParameters, SWT.NONE).setText("Rmax or Rmax + model building");
+		new Label(dataParameters, SWT.NONE).setText("Pipeline processes");
 		builderOptions = new Combo(dataParameters, SWT.READ_ONLY);
 		builderOptions.setItems(builderOptionsNames);
-		builderOptions.setToolTipText("Choice of analysis to run - GNOM alone or followed by DAMMIF");
+		builderOptions.setToolTipText("Choice of analysis to run - GNOM only or GNOM followed by DAMMIF");
 
 		Group gnomParameters = new Group(dataParameters, SWT.NONE);
 		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
