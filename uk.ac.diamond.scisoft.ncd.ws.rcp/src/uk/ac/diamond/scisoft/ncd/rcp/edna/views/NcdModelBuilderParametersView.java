@@ -73,6 +73,7 @@ import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.PartInitException;
@@ -412,10 +413,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		dataChoiceExpanderComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		dataChoiceExpanderComposite.setLayout(new GridLayout());
 		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		dataChoiceExpanderComposite.setText("Data selection parameters");
+		dataChoiceExpanderComposite.setText("Data range");
 		Group dataChoiceParameters = new Group(dataChoiceExpanderComposite, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
-		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, true));
+		dataChoiceParameters.setLayoutData(new GridData(GridData.FILL, SWT.FILL, true, true));
 		SashForm pointsSash = new SashForm(dataChoiceParameters, SWT.HORIZONTAL);
 		pointsSash.setLayout(new GridLayout(2, false));
 		pointsSash.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -493,9 +494,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		Composite plotAndOptionComposite = new Composite(dataParameters, SWT.NONE);
+		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
+		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
+		dataChoiceExpanderComposite.setExpanded(true);
+
+		ExpandableComposite plotScrolledExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
+		plotScrolledExpandableComposite.setLayout(new GridLayout());
+		plotScrolledExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plotScrolledExpandableComposite.setText("Data plot");
+
+		Composite plotComposite = new Composite(plotScrolledExpandableComposite, SWT.NONE);
+		plotComposite.setLayout(new GridLayout());
+		plotComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		Composite plotAndOptionComposite = new Composite(plotComposite, SWT.NONE);
 		plotAndOptionComposite.setLayout(new GridLayout());
-		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
 		plotOptions = new Combo(plotAndOptionComposite, SWT.READ_ONLY);
 		plotOptions.setItems(plotOptionNames);
@@ -523,16 +537,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotOptionsLayout.horizontalSpan = 2;
 		plotOptions.setLayoutData(plotOptionsLayout);
 
-		qIntensityPlot.createPlotPart( plotAndOptionComposite, 
+		qIntensityPlot.createPlotPart( plotComposite, 
 				getTitle(), 
 				null, 
 				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
-		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
-		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
-		dataChoiceExpanderComposite.setExpanded(true);
+		plotScrolledExpandableComposite.setClient(plotComposite);
+		plotScrolledExpandableComposite.addExpansionListener(expansionAdapter);
+		plotScrolledExpandableComposite.setExpanded(true);
 
 		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
@@ -764,23 +778,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		@Override
 		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
 			if (selection instanceof IStructuredSelection) {
-				Object file = ((IStructuredSelection) selection).getFirstElement();
-				if (file instanceof IFile && !forgetLastSelection) {
-					String fileExtension = ((IFile) file).getFileExtension();
-					if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
-						String filename = ((IFile) file).getRawLocation().toOSString();
-//						if (ARPESFileDescriptor.isArpesFile(filename)) {
-							try {
-								setFilenameString(filename);
-								updatePlot(filename);
-
-							} catch (Exception e) {
-								logger.error("Something went wrong when creating a overview plot",e);
-							}
-//						}
+				if (getViewIsActive(part)) {
+					Object file = ((IStructuredSelection) selection).getFirstElement();
+					if (file instanceof IFile && !forgetLastSelection) {
+						String fileExtension = ((IFile) file).getFileExtension();
+						if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
+							String filename = ((IFile) file).getRawLocation().toOSString();
+	//						if (ARPESFileDescriptor.isArpesFile(filename)) {
+								try {
+									setFilenameString(filename);
+									updatePlot(filename);
+	
+								} catch (Exception e) {
+									logger.error("Something went wrong when creating a overview plot",e);
+								}
+	//						}
+						}
 					}
+					forgetLastSelection = false;
 				}
-				forgetLastSelection = false;
 			}
 
 		}
@@ -1447,5 +1463,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		.getBoolean(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS);
 		pathToQCombo.setEnabled(toSet);
 		pathToDataCombo.setEnabled(toSet);
+	}
+
+	private boolean getViewIsActive(IWorkbenchPart part) {
+		IViewPart view = part.getSite().getWorkbenchWindow().getActivePage().findView(ID);
+		return part.getSite().getWorkbenchWindow().getActivePage().isPartVisible(view);
 	}
 }
