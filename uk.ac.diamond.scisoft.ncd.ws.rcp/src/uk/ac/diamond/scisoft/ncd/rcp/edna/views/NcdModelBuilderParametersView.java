@@ -362,13 +362,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		Group dataChoiceParameters = new Group(dataParameters, SWT.NONE);
 		GridData dataChoiceLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
-		dataChoiceLayout.horizontalSpan = 6;
+		dataChoiceLayout.horizontalSpan = 4;
 		dataChoiceParameters.setLayoutData(dataChoiceLayout);
-		dataChoiceParameters.setLayout(new GridLayout(6, false));
+		dataChoiceParameters.setLayout(new GridLayout(4, false));
 		dataChoiceParameters.setText("Data selection parameters");
 
-		new Label(dataChoiceParameters, SWT.NONE).setText("First point");
-		startPoint = new Text(dataChoiceParameters, SWT.NONE);
+		Group pointsGroup = new Group(dataChoiceParameters, SWT.NONE);
+		pointsGroup.setLayout(new GridLayout(2, false));
+		pointsGroup.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		Composite firstPointComposite = new Composite(pointsGroup, SWT.NONE);
+		firstPointComposite.setLayout(new GridLayout(2, false));
+		firstPointComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		new Label(firstPointComposite, SWT.NONE).setText("First point");
+		startPoint = new Text(firstPointComposite, SWT.NONE);
 		startPoint.setToolTipText("First point of data to be used for calculations.");
 		startPoint.addListener(SWT.Verify, verifyInt);
 		startPoint.addListener(SWT.KeyUp, startEndPointListener);
@@ -376,13 +382,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u00b9", "nm\u207b\u00b9"};
 
-		new Label(dataChoiceParameters, SWT.NONE).setText("q minimum");
-		qMin = new Text(dataChoiceParameters, SWT.NONE);
+		Composite qMinComposite = new Composite(pointsGroup, SWT.NONE);
+		new Label(qMinComposite, SWT.NONE).setText("q minimum");
+		qMinComposite.setLayout(new GridLayout(3, false));
+		qMinComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		qMin = new Text(qMinComposite, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
 		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qMinUnits = new Combo(dataChoiceParameters, SWT.READ_ONLY);
+		qMinUnits = new Combo(qMinComposite, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
 		qMinUnits.addModifyListener(new ModifyListener() {
 			
@@ -392,20 +401,36 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		new Label(dataChoiceParameters, SWT.NONE).setText("Last point");
-		endPoint = new Text(dataChoiceParameters, SWT.NONE);
+		Group pointsGroup2 = new Group(dataChoiceParameters, SWT.NONE);
+		pointsGroup2.setLayout(new GridLayout(2, false));
+		pointsGroup2.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		Composite lastPointComposite = new Composite(pointsGroup2, SWT.NONE);
+		lastPointComposite.setLayout(new GridLayout(2, false));
+		lastPointComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		new Label(lastPointComposite, SWT.NONE).setText("Last point");
+		endPoint = new Text(lastPointComposite, SWT.NONE);
 		endPoint.setToolTipText("Last point of data to be used for calculations");
 		endPoint.addListener(SWT.Verify, verifyInt);
 		endPoint.addListener(SWT.KeyUp, startEndPointListener);
 		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
-		new Label(dataChoiceParameters, SWT.NONE).setText("q maximum");
-		qMax = new Text(dataChoiceParameters, SWT.NONE);
+		GridData data = new GridData(GridData.FILL, SWT.CENTER, true, false);
+		data.horizontalSpan = 2;
+		pointsGroup.setLayoutData(data);
+		pointsGroup.setLayout(new GridLayout(2,false));
+		pointsGroup2.setLayoutData(data);
+		pointsGroup2.setLayout(new GridLayout(2, false));
+
+		Composite qMaxComposite = new Composite(pointsGroup2, SWT.NONE);
+		new Label(qMaxComposite, SWT.NONE).setText("q maximum");
+		qMaxComposite.setLayout(new GridLayout(3, false));
+		qMaxComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		qMax = new Text(qMaxComposite, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
 		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMax.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qMaxUnits = new Combo(dataChoiceParameters, SWT.READ_ONLY);
+		qMaxUnits = new Combo(qMaxComposite, SWT.READ_ONLY);
 		qMaxUnits.setItems(qOptionUnits);
 		qMaxUnits.addModifyListener(new ModifyListener() {
 			
