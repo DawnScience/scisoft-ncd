@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.csstudio.swt.xygraph.undo.ZoomType;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -33,6 +34,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -71,6 +73,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewPart;
@@ -538,12 +541,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotOptionsLayout.horizontalSpan = 2;
 		plotOptions.setLayoutData(plotOptionsLayout);
 
+		ToolBarManager man = new ToolBarManager(SWT.FLAT|SWT.RIGHT|SWT.WRAP);
+		ToolBar toolBar = man.createControl(plotComposite);
+		toolBar.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+
 		qIntensityPlot.createPlotPart( plotComposite, 
 				getTitle(), 
 				null, 
 				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		qIntensityPlot.getPlotActionSystem().fillZoomActions(man);
+		qIntensityPlot.getPlotActionSystem().fillPrintActions(man);
+
+		removeZoomTypeIcons(man);
 
 		plotScrolledExpandableComposite.setClient(plotComposite);
 		plotScrolledExpandableComposite.addExpansionListener(expansionAdapter);
@@ -780,6 +792,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
+	}
+
+	private void removeZoomTypeIcons(ToolBarManager man) {
+		ZoomType[] z = ZoomType.values();
+		for (ZoomType zoomTypeName : z) {
+			man.remove(zoomTypeName.getId());
+		}
+		man.update(true);
 	}
 
 	private ISelectionListener selectionListener = new ISelectionListener() {
