@@ -20,8 +20,10 @@ import org.eclipse.ui.IMemento;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersMementoStrings;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
+import uk.ac.diamond.scisoft.ws.rcp.Activator;
 
 public class ModelBuildingParameters {
 	protected static final Logger logger = LoggerFactory.getLogger(ModelBuildingParameters.class);
@@ -53,6 +55,7 @@ public class ModelBuildingParameters {
 
 	private String symmetry;
 	private boolean dammifFastMode;
+	private boolean xAxisIsLog;
 	
 	public ModelBuildingParameters() {
 	}
@@ -198,6 +201,14 @@ public class ModelBuildingParameters {
 		this.dammifFastMode = dammifFastMode;
 	}
 	
+	public boolean isxAxisIsLog() {
+		return xAxisIsLog;
+	}
+
+	public void setxAxisIsLog(boolean xAxisIsLog) {
+		this.xAxisIsLog = xAxisIsLog;
+	}
+
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
@@ -275,6 +286,9 @@ public class ModelBuildingParameters {
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE, (float) tolerance);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY, symmetry);
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST, dammifFastMode);
+			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS, Activator.getDefault().getPreferenceStore().
+					getBoolean(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS));
+			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_LOG_LOG_PLOT, xAxisIsLog);
 		}
 	}
 	
@@ -302,6 +316,9 @@ public class ModelBuildingParameters {
 				tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
 				symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);
 				dammifFastMode = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_FAST);
+				Activator.getDefault().getPreferenceStore().setValue(NcdPreferences.NCD_ALLOWSELECTIONOFPATHS,
+						memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS));
+				xAxisIsLog = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_LOG_LOG_PLOT);
 			}
 			catch (Exception e) {
 				logger.error("problem while restoring state", e);

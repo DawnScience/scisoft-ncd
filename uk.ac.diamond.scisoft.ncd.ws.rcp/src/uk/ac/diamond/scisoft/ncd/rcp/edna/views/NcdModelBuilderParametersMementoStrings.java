@@ -38,4 +38,6 @@ public class NcdModelBuilderParametersMementoStrings {
 	public static final String BIOSAXS_GNOM_TOLERANCE = "biosaxs.gnom.tolerance";
 	public static final String BIOSAXS_DAMMIF_SYMMETRY = "biosaxs.dammif.symmetry";
 	public static final String BIOSAXS_DAMMIF_FAST = "biosaxs.dammif.fast";
+	public static final String BIOSAXS_ALLOW_USER_TO_CHANGE_PATHS = "biosaxs.allow.user.to.change.paths";
+	public static final String BIOSAXS_IS_LOG_LOG_PLOT = "biosaxs.is.log.log.plot";
 }
