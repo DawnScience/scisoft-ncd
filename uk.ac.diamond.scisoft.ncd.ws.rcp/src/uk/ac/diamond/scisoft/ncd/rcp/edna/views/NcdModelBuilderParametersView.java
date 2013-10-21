@@ -1156,10 +1156,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 				qIntensityPlot.getSelectedXAxis().setRange(0, 1);
 				qIntensityPlot.getSelectedXAxis().setLog10(xAxisIsLog);
-				qIntensityPlot.getSelectedXAxis().setTitle("q");
+				String qAxisLabel = "q (Angstrom)";
+				if (xAxisIsLog) {
+					qAxisLabel = "log q (Angstrom)";
+				}
+				qIntensityPlot.getSelectedXAxis().setTitle(qAxisLabel);
 //				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
 				qIntensityPlot.getSelectedYAxis().setLog10(true);
-				qIntensityPlot.getSelectedYAxis().setTitle("Intensity");
+				qIntensityPlot.getSelectedYAxis().setTitle("log Intensity");
 				qIntensityPlot.repaint();
 			}
 		});
