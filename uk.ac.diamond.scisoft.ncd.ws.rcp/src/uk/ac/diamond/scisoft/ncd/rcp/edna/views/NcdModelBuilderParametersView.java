@@ -176,6 +176,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private ExpandableComposite dataPathAndColumnParametersExpandableComposite;
 	private ExpandableComposite gnomParametersExpandableComposite;
 	private ExpandableComposite dammifParametersExpandableComposite;
+	private ExpandableComposite pipelineOptionsExpandableComposite;
 
 	public NcdModelBuilderParametersView() {
 		// Specify the expansion Adapter
@@ -548,7 +549,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotScrolledExpandableComposite.addExpansionListener(expansionAdapter);
 		plotScrolledExpandableComposite.setExpanded(true);
 
-		Composite otherOptionsComposite = new Composite(dataParameters, SWT.NONE);
+		pipelineOptionsExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
+		pipelineOptionsExpandableComposite.setLayout(new GridLayout());
+		pipelineOptionsExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		pipelineOptionsExpandableComposite.setText("Pipeline parameters");
+
+		Composite otherOptionsComposite = new Composite(pipelineOptionsExpandableComposite, SWT.NONE);
 		otherOptionsComposite.setLayout(new GridLayout(2, false));
 		GridData otherOptionsGridData = new GridData(SWT.FILL, SWT.CENTER, true, false);
 		otherOptionsComposite.setLayoutData(otherOptionsGridData);
@@ -564,6 +570,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		builderOptions = new Combo(otherOptionsComposite, SWT.READ_ONLY);
 		builderOptions.setItems(builderOptionsNames);
 		builderOptions.setToolTipText("Choice of analysis to run - GNOM only or GNOM followed by DAMMIF");
+
+		pipelineOptionsExpandableComposite.setClient(otherOptionsComposite);
+		pipelineOptionsExpandableComposite.addExpansionListener(expansionAdapter);
 
 		gnomParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
 		gnomParametersExpandableComposite.setLayout(new GridLayout());
