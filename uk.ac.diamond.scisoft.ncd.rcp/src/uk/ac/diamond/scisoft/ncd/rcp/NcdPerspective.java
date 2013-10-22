@@ -74,7 +74,7 @@ public class NcdPerspective implements IPerspectiveFactory {
 		if (layout.getViewLayout(plot) != null)
 			layout.getViewLayout(plot).setCloseable(false);
 		
-		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.8f, IPageLayout.ID_EDITOR_AREA);
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.75f, IPageLayout.ID_EDITOR_AREA);
 		
 		final ScopedPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.plotting");
 	    store.setValue("org.dawb.plotting.system.colourSchemeName", "NCD");

@@ -48,7 +48,7 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
 		layout.addView(ToolPageView1D_ID, IPageLayout.BOTTOM, 0.6f, ToolPageView2D_ID);
 		layout.getViewLayout(ToolPageView1D_ID).setCloseable(false);
-		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1D_ID);
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.55f, ToolPageView1D_ID);
 		
 		layout.addView(SaxsQAxisCalibration.ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
 		
