@@ -144,11 +144,11 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
 		}
-		for (int idx = idxLower; idx < idxUpper; idx++) {
+		for (int idx = idxLower; idx <= idxUpper; idx++) {
 			double val = dataQDataset.getDouble(idx);
 			dataQ.add(Amount.valueOf(val, unit));
 		}
-		dataI = ((AbstractDataset)dataTrace.getYData()).getSlice(new Slice(idxLower, idxUpper));
+		dataI = ((AbstractDataset)dataTrace.getYData()).getSlice(new Slice(idxLower, idxUpper + 1));
 		
 		final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 		try {
