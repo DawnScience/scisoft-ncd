@@ -40,8 +40,10 @@ import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
+import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
@@ -68,6 +70,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	
 	private NcdProcessingSourceProvider ncdWaxsSourceProvider, ncdWaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdSaxsSourceProvider, ncdSaxsDetectorSourceProvider;
+	private NcdProcessingSourceProvider ncdScalerSourceProvider;
 	
 	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
@@ -78,6 +81,10 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private static Text pxWaxs, pxSaxs;
 	private static Combo detListWaxs, detListSaxs;
 	private Label pxSaxsLabel, pxWaxsLabel;
+	
+	private static Combo calList;
+	private Label calListLabel, normChanLabel;
+	private static Spinner normChan;
 	
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 	
@@ -159,20 +166,31 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				if (tmpDet.getValue().getType().equals(DetectorTypes.WAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null)
+					if (pixels != null) {
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
+					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
 					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null)
+					if (pixels != null) {
 						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
+					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
+				if (tmpDet.getValue().getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+					IMemento detMemento = memento.createChild(NcdPreferences.NCD_NORM_DETECTOR, tmpDet.getKey());
+					Integer maxChannel = tmpDet.getValue().getMaxChannel();
+					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL, maxChannel);
+					Integer normChannel = tmpDet.getValue().getNormChannel();
+					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChannel);
+				}
 			}
+			
+			memento.putInteger(NcdPreferences.NCD_NORM_INDEX, calList.getSelectionIndex());
 		}
 	}
 	
@@ -234,6 +252,23 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			if (val!=null) {
 				detTypeSaxs.setSelection(val);
 				if (val.booleanValue()) detTypeSaxs.notifyListeners(SWT.Selection, null);
+			}
+			
+			IMemento[] normMemento = memento.getChildren(NcdPreferences.NCD_NORM_DETECTOR);
+			if (normMemento != null) {
+				calList.removeAll(); 
+				for (IMemento det: normMemento) {
+					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.CALIBRATION_DETECTOR, 1);
+					ncdDetector.setMaxChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
+					ncdDetector.setNormChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX));
+					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
+				}
+			}
+			ncdDetectorSourceProvider.updateNcdDetectors();
+			idx = memento.getInteger(NcdPreferences.NCD_NORM_INDEX);
+			if (idx != null) {
+				calList.select(idx);
+				calList.notifyListeners(SWT.Selection, null);
 			}
 		}
 	}
@@ -407,8 +442,82 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			}
 		});
 		
-		if (ncdSaxsSourceProvider.isEnableSaxs()) detTypeSaxs.setSelection(true);
-		else detTypeSaxs.setSelection(false);
+		Group gpNorm = new Group(c, SWT.NONE);
+		gpNorm.setLayout(new GridLayout(2, false));
+		gpNorm.setText("Beam Intensity Monitoring Data");
+		gpNorm.setToolTipText("Set dataset tha contains beam intensity monitoring data");
+		gpNorm.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 7, 1));
+		{
+			Composite g = new Composite(gpNorm, SWT.NONE);
+			g.setLayout(new GridLayout(4, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
+			
+			calListLabel = new Label(g, SWT.NONE);
+			calListLabel.setText("Normalisation Dataset");
+			calListLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+			calList = new Combo(g, SWT.READ_ONLY|SWT.BORDER);
+			calList.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			calList.setToolTipText("Select the detector with calibration data");
+			String tmpScaler = ncdScalerSourceProvider.getScaler();
+			if (tmpScaler != null) {
+				calList.add(tmpScaler);
+			}
+			calList.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					int idx = calList.getSelectionIndex();
+					if (idx >= 0) {
+						String detName = calList.getItem(idx);
+						ncdScalerSourceProvider.setScaler(detName);
+						
+						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
+						normChan.setMinimum(0);
+						normChan.setMaximum(calDet.getMaxChannel());
+						if (calDet.getMaxChannel() < 1) {
+							normChanLabel.setEnabled(false);
+							normChan.setEnabled(false);
+						} else {
+							normChanLabel.setEnabled(true);
+							normChan.setEnabled(true);
+						}
+						normChan.setSelection(calDet.getNormChannel());
+						Display dsp = normChan.getDisplay();
+						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
+					}
+				}
+			});
+			
+			
+			normChanLabel = new Label(g, SWT.NONE);
+			normChanLabel.setText("Channel");
+			normChanLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+			normChan = new Spinner(g, SWT.BORDER);
+			normChan.setToolTipText("Select the channel number with calibration data");
+			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
+			String scaler = ncdScalerSourceProvider.getScaler();
+			NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+			if (calDet != null) {
+				normChan.setSelection(calDet.getNormChannel());
+			}
+			normChan.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					String scaler = ncdScalerSourceProvider.getScaler();
+					NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+					if (calDet != null) {
+						calDet.setNormChannel(normChan.getSelection());
+						ncdDetectorSourceProvider.addNcdDetector(calDet);
+					}
+				}
+			});
+		}
+		
+		
+		if (ncdSaxsSourceProvider.isEnableSaxs()) {
+			detTypeSaxs.setSelection(true);
+		} else {
+			detTypeSaxs.setSelection(false);
+		}
 		modeSelectionListenerSaxs.widgetSelected(null);
 		
 		sc.setContent(c);
@@ -436,10 +545,12 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 
 		ncdDetectorSourceProvider.addSourceProviderListener(this);
 		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
 		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
+		ncdScalerSourceProvider.addSourceProviderListener(this);
 	}
 
 	@Override
@@ -503,6 +614,35 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					idxWaxs = (idxWaxs == -1) ? 0 : idxWaxs;
 					detListWaxs.select(idxWaxs);
 					ncdWaxsDetectorSourceProvider.setWaxsDetector(detListWaxs.getItem(idxWaxs));
+				}
+			}
+			
+			if (calList != null && !(calList.isDisposed())) {
+				String saveSelection = ncdScalerSourceProvider.getScaler();
+				calList.removeAll();
+				if (sourceValue instanceof HashMap<?, ?>) {
+					for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
+						if (settings instanceof NcdDetectorSettings) {
+
+							NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
+
+							if (detSettings.getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
+								calList.add(detSettings.getName());
+								continue;
+							}
+						}
+					}
+				}
+				if (calList.getItemCount() > 0 && saveSelection != null) {
+					int idxSel = calList.indexOf(saveSelection); 
+					if (idxSel != -1) {
+						calList.select(idxSel);
+					} else {
+						calList.select(0);
+						ncdScalerSourceProvider.setScaler(calList.getItem(0));
+					}
+				} else {
+					ncdScalerSourceProvider.setScaler(null);
 				}
 			}
 		}
@@ -583,7 +723,27 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				}
 			}
 		}
-		//TODO bind rest of the widgets
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.SCALER_STATE)) {
+			if (sourceValue instanceof String) {
+				if ((calList != null) && !(calList.isDisposed())) {
+					int idxSel = calList.indexOf((String) sourceValue);
+					if (idxSel != -1) {
+						calList.select(idxSel);
+					} else {
+						return;
+					}
+				}
+				if ((normChan != null) && !(normChan.isDisposed())) {
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+					if (detSettings != null) {
+						int max = detSettings.getMaxChannel();
+						normChan.setMaximum(max);
+						normChan.setSelection(detSettings.getNormChannel());
+					}
+				}
+			}
+		}	
 	}
 
 	@Override

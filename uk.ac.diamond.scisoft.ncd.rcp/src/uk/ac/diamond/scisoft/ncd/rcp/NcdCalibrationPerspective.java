@@ -25,7 +25,6 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.FrameworkUtil;
 
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
@@ -33,13 +32,11 @@ import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 public class NcdCalibrationPerspective implements IPerspectiveFactory {
 	
 	public static final String PLUGIN_ID = FrameworkUtil.getBundle(NcdCalibrationPerspective.class).getSymbolicName();
-	
-	static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective";
-	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
-	static final String NcdFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdfolder";
-	static final String QAxisFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.qaxisfolder";
-	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
-	static final String ToolPageView1D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D";
+    public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective";
+    
+	private static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
+	private static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
+	private static final String ToolPageView1D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D";
 	
 	// Currently defined in uk.ac.diamond.sda.navigator.views class 
 	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
@@ -51,9 +48,7 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 		layout.getViewLayout(ToolPageView2D_ID).setCloseable(false);
 		layout.addView(ToolPageView1D_ID, IPageLayout.BOTTOM, 0.6f, ToolPageView2D_ID);
 		layout.getViewLayout(ToolPageView1D_ID).setCloseable(false);
-		IFolderLayout ncdFolderLayout = layout.createFolder(NcdFolder_ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1D_ID);
-		ncdFolderLayout.addView(NcdDetectorParameters.ID);
-		ncdFolderLayout.addView(NcdDataReductionParameters.ID);
+		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.7f, ToolPageView1D_ID);
 		
 		layout.addView(SaxsQAxisCalibration.ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
 		

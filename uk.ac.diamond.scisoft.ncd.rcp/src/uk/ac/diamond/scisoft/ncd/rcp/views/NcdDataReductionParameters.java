@@ -18,12 +18,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.io.File;
 import java.text.DecimalFormat;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-
-import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
 
 import org.apache.commons.math3.util.Pair;
 import org.apache.commons.validator.routines.DoubleValidator;
@@ -40,14 +35,11 @@ import org.eclipse.swt.graphics.Rectangle;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
-import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Spinner;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
@@ -60,13 +52,9 @@ import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
-import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
@@ -80,7 +68,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	private IMemento memento;
 
-	private static Spinner normChan;
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
 	private Text bgFile, drFile, bgScale, sampleThickness, absScale;
 
@@ -91,7 +78,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr, runCalibratioin;
 	private Button loglogButton, guinierButton, porodButton, kratkyButton, zimmButton, debyebuecheButton;
 	
-	private NcdProcessingSourceProvider ncdNormalisationSourceProvider, ncdScalerSourceProvider;
+	private NcdProcessingSourceProvider ncdNormalisationSourceProvider;
 	private NcdProcessingSourceProvider ncdBackgroundSourceProvider;
 	private NcdProcessingSourceProvider ncdResponseSourceProvider;
 	private NcdProcessingSourceProvider ncdSectorSourceProvider;
@@ -102,8 +89,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdAbsOffsetSourceProvider, ncdBgScaleSourceProvider;
-	
-	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 	
@@ -116,8 +101,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
-	private static Combo calList;
-	private Label calListLabel, normChanLabel, bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
+	private Label bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
 	private ExpandableComposite ecomp, saxsPlotEcomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
@@ -259,37 +243,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putString(NcdPreferences.NCD_GRIDAVERAGESELECTION, gridAverage.getText());
 			memento.putBoolean(NcdPreferences.NCD_GRIDAVERAGE, gridAverageButton.getSelection());
 			
-			memento.putInteger(NcdPreferences.NCD_NORM_INDEX, calList.getSelectionIndex());
-			
-			HashMap<String, NcdDetectorSettings> detList = ncdDetectorSourceProvider.getNcdDetectors();
-			for (Entry<String, NcdDetectorSettings> tmpDet : detList.entrySet()) {
-				if (tmpDet.getValue().getType().equals(DetectorTypes.WAXS_DETECTOR)) {
-					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
-					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null) {
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
-					}
-					int detDim = tmpDet.getValue().getDimension();
-					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
-				}
-				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
-					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
-					Amount<Length> pixels = tmpDet.getValue().getPxSize();
-					if (pixels != null) {
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
-					}
-					int detDim = tmpDet.getValue().getDimension();
-					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
-				}
-				if (tmpDet.getValue().getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
-					IMemento detMemento = memento.createChild(NcdPreferences.NCD_NORM_DETECTOR, tmpDet.getKey());
-					Integer maxChannel = tmpDet.getValue().getMaxChannel();
-					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL, maxChannel);
-					Integer normChannel = tmpDet.getValue().getNormChannel();
-					detMemento.putInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX, normChannel);
-				}
-			}
-			
 			memento.putString(NcdPreferences.NCD_DIRECTORY, inputDirectory);
 		}
 	}
@@ -297,7 +250,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private void restoreState() {
 		if (memento != null) {
 			Boolean val;
-			Integer idx;
 			Float flt;
 			String tmp;
 			
@@ -375,23 +327,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			val = memento.getBoolean(NcdPreferences.NCD_PLOT_DEBYEBUECHE);
 			if (val!=null) {
 				debyebuechePlotSourceProvider.setEnableDebyeBueche(val);
-			}
-			
-			IMemento[] normMemento = memento.getChildren(NcdPreferences.NCD_NORM_DETECTOR);
-			if (normMemento != null) {
-				calList.removeAll(); 
-				for (IMemento det: normMemento) {
-					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.CALIBRATION_DETECTOR, 1);
-					ncdDetector.setMaxChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL));
-					ncdDetector.setNormChannel(det.getInteger(NcdPreferences.NCD_MAXCHANNEL_INDEX));
-					ncdDetectorSourceProvider.addNcdDetector(ncdDetector);
-				}
-			}
-			ncdDetectorSourceProvider.updateNcdDetectors();
-			idx = memento.getInteger(NcdPreferences.NCD_NORM_INDEX);
-			if (idx != null) {
-				calList.select(idx);
-				calList.notifyListeners(SWT.Selection, null);
 			}
 			
 			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTESCALE);
@@ -703,8 +638,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		secEcomp.setExpanded(false);
 		
 		saxsPlotEcomp = new ExpandableComposite(c, SWT.NONE);
-		saxsPlotEcomp.setText("1D SAXS Analysis Plots");
-		saxsPlotEcomp.setToolTipText("Include 1D SAXS analysis plots in results files");
+		saxsPlotEcomp.setText("1D SAXS Analysis Data");
+		saxsPlotEcomp.setToolTipText("Include in results files data for making 1D SAXS analysis plots");
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		saxsPlotEcomp.setLayout(gl);
@@ -806,65 +741,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			Composite g = new Composite(normEcomp, SWT.NONE);
 			g.setLayout(new GridLayout(7, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-			
-			calListLabel = new Label(g, SWT.NONE);
-			calListLabel.setText("Normalisation Data");
-			calList = new Combo(g, SWT.READ_ONLY|SWT.BORDER);
-			GridData gridData = new GridData(SWT.LEFT, SWT.CENTER, false, false, 2, 1);
-			calList.setLayoutData(gridData);
-			calList.setToolTipText("Select the detector with calibration data");
-			String tmpScaler = ncdScalerSourceProvider.getScaler();
-			if (tmpScaler != null) {
-				calList.add(tmpScaler);
-			}
-			calList.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					int idx = calList.getSelectionIndex();
-					if (idx >= 0) {
-						String detName = calList.getItem(idx);
-						ncdScalerSourceProvider.setScaler(detName);
-						
-						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
-						normChan.setMinimum(0);
-						normChan.setMaximum(calDet.getMaxChannel());
-						if (calDet.getMaxChannel() < 1) {
-							normChanLabel.setEnabled(false);
-							normChan.setEnabled(false);
-						} else {
-							normChanLabel.setEnabled(true);
-							normChan.setEnabled(true);
-						}
-						normChan.setSelection(calDet.getNormChannel());
-						Display dsp = normChan.getDisplay();
-						if (dsp.getActiveShell()!=null) dsp.getActiveShell().redraw();
-					}
-				}
-			});
-			
-			
-			normChanLabel = new Label(g, SWT.NONE);
-			normChanLabel.setText("Channel");
-			normChanLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
-			normChan = new Spinner(g, SWT.BORDER);
-			normChan.setToolTipText("Select the channel number with calibration data");
-			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-			String scaler = ncdScalerSourceProvider.getScaler();
-			NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
-			if (calDet != null) {
-				normChan.setSelection(calDet.getNormChannel());
-			}
-			normChan.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					String scaler = ncdScalerSourceProvider.getScaler();
-					NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
-					if (calDet != null) {
-						calDet.setNormChannel(normChan.getSelection());
-						ncdDetectorSourceProvider.addNcdDetector(calDet);
-					}
-				}
-			});
 			
 			sampleThicknessLabel = new Label(g, SWT.NONE);
 			sampleThicknessLabel.setText("Sample Thickness (mm)");
@@ -1313,11 +1189,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
 		ncdAverageSourceProvider.addSourceProviderListener(this);
 		
-		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		ncdDetectorSourceProvider.addSourceProviderListener(this);
-		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
-		ncdScalerSourceProvider.addSourceProviderListener(this);
-		
 		ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
 		ncdRadialSourceProvider.addSourceProviderListener(this);
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
@@ -1380,14 +1251,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		if (normButton != null && !(normButton.isDisposed()))
 			normButton.setSelection(selection);
-		if (calList != null && !(calList.isDisposed()))
-			calList.setEnabled(selection);
-		if (normChan != null && !(normChan.isDisposed()))
-			normChan.setEnabled(selection);
-		if (calListLabel != null && !(calListLabel.isDisposed()))
-			calListLabel.setEnabled(selection);
-		if (normChanLabel != null && !(normChanLabel.isDisposed()))
-			normChanLabel.setEnabled(selection);
 		if (sampleThickness != null && !(sampleThickness.isDisposed()))
 			sampleThickness.setEnabled(selection);
 		if (absScale != null && !(absScale.isDisposed()))
@@ -1522,58 +1385,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 	@Override
 	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		if (sourceName.equals(NcdCalibrationSourceProvider.NCDDETECTORS_STATE)) {
-			if (calList != null && !(calList.isDisposed())) {
-				String saveSelection = ncdScalerSourceProvider.getScaler();
-				calList.removeAll();
-				if (sourceValue instanceof HashMap<?, ?>) {
-					for (Object settings : ((HashMap<?, ?>) sourceValue).values()) {
-						if (settings instanceof NcdDetectorSettings) {
-
-							NcdDetectorSettings detSettings = (NcdDetectorSettings) settings;
-
-							if (detSettings.getType().equals(DetectorTypes.CALIBRATION_DETECTOR)) {
-								calList.add(detSettings.getName());
-								continue;
-							}
-						}
-					}
-				}
-				if (calList.getItemCount() > 0 && saveSelection != null) {
-					int idxSel = calList.indexOf(saveSelection); 
-					if (idxSel != -1) {
-						calList.select(idxSel);
-					} else {
-						calList.select(0);
-						ncdScalerSourceProvider.setScaler(calList.getItem(0));
-					}
-				} else {
-					ncdScalerSourceProvider.setScaler(null);
-				}
-			}
-		}
-		
-		if (sourceName.equals(NcdProcessingSourceProvider.SCALER_STATE)) {
-			if (sourceValue instanceof String) {
-				if ((calList != null) && !(calList.isDisposed())) {
-					int idxSel = calList.indexOf((String) sourceValue);
-					if (idxSel != -1) {
-						calList.select(idxSel);
-					} else {
-						return;
-					}
-				}
-				if ((normChan != null) && !(normChan.isDisposed())) {
-					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
-					if (detSettings != null) {
-						int max = detSettings.getMaxChannel();
-						normChan.setMaximum(max);
-						normChan.setSelection(detSettings.getNormChannel());
-					}
-				}
-			}
-		}
-		
 		if (sourceName.equals(NcdProcessingSourceProvider.BKGSCALING_STATE)) {
 			if (sourceValue != null) {
 			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
