@@ -570,14 +570,14 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					!(detListSaxs.isDisposed())	&& !(detListWaxs.isDisposed())) {
 				int idxSaxs = detListSaxs.getSelectionIndex();
 				String saveDetSaxs = null;
-				if (idxSaxs != -1)
+				if (idxSaxs != -1) {
 					saveDetSaxs = detListSaxs.getItem(idxSaxs);
-
+				}
 				int idxWaxs = detListWaxs.getSelectionIndex();
 				String saveDetWaxs = null;
-				if (idxWaxs != -1)
+				if (idxWaxs != -1) {
 					saveDetWaxs = detListWaxs.getItem(idxWaxs);
-
+				}
 				detListSaxs.removeAll();
 				detListWaxs.removeAll();
 				if (sourceValue instanceof HashMap<?, ?>) {
@@ -618,6 +618,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			}
 			
 			if (calList != null && !(calList.isDisposed())) {
+				int idxSel = calList.getSelectionIndex();
 				String saveSelection = ncdScalerSourceProvider.getScaler();
 				calList.removeAll();
 				if (sourceValue instanceof HashMap<?, ?>) {
@@ -633,16 +634,12 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 						}
 					}
 				}
-				if (calList.getItemCount() > 0 && saveSelection != null) {
-					int idxSel = calList.indexOf(saveSelection); 
-					if (idxSel != -1) {
-						calList.select(idxSel);
-					} else {
-						calList.select(0);
-						ncdScalerSourceProvider.setScaler(calList.getItem(0));
-					}
-				} else {
-					ncdScalerSourceProvider.setScaler(null);
+				if (calList.getItemCount() > 0) {
+					idxSel = (idxSel != -1) ? ArrayUtils.indexOf(calList.getItems(), saveSelection) : 0;
+					idxSel = (idxSel == -1) ? 0 : idxSel;
+					calList.select(idxSel);
+					ncdScalerSourceProvider.setScaler(calList.getItem(idxSel));
+					calList.notifyListeners(SWT.Selection, null);
 				}
 			}
 		}

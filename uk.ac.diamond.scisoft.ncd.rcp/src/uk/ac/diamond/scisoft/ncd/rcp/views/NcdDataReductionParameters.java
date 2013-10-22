@@ -57,7 +57,6 @@ import uk.ac.diamond.scisoft.ncd.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
 import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
@@ -75,7 +74,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Button browse;
 	private String inputDirectory = "Please specify results directory";
-	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr, runCalibratioin;
+	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
 	private Button loglogButton, guinierButton, porodButton, kratkyButton, zimmButton, debyebuecheButton;
 	
 	private NcdProcessingSourceProvider ncdNormalisationSourceProvider;
@@ -90,8 +89,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdAbsOffsetSourceProvider, ncdBgScaleSourceProvider;
 	
-	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
-	
 	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
 	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
 	private SaxsPlotsSourceProvider porodPlotSourceProvider;
@@ -101,7 +98,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
 	private Button radialButton, azimuthalButton, fastIntButton;
-	private Label bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, absOffsetLabel, absOffset, drLabel;
+	private Label bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, drLabel;
 	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
 
 	private ExpandableComposite ecomp, saxsPlotEcomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
@@ -117,11 +114,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	
 	private Double getAbsScale() {
 		String input = absScale.getText();
-		return doubleValidator.validate(input);
-	}
-	
-	private Double getAbsOffset() {
-		String input = absOffset.getText();
 		return doubleValidator.validate(input);
 	}
 	
@@ -222,10 +214,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			Double absScaleVal = getAbsScale();
 			if (absScaleVal != null) {
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScaleVal.floatValue());
-			}
-			Double absOffsetVal = getAbsOffset();
-			if (absOffsetVal != null) {
-				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffsetVal.floatValue());
 			}
 			Double bgScaleVal = getBgScale();
 			if (bgScaleVal != null) {
@@ -333,12 +321,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			if (flt != null) {
 				absScale.setText(flt.toString());
 				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt), true);
-			}
-			
-			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTEOFFSET);
-			if (flt != null) {
-				absOffset.setText(flt.toString());
-				ncdAbsOffsetSourceProvider.setAbsOffset(new Double(flt));
 			}
 			
 			flt = memento.getFloat(NcdPreferences.NCD_SAMPLETHICKNESS);
@@ -739,30 +721,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		{
 			Composite g = new Composite(normEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(7, false));
+			g.setLayout(new GridLayout(4, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-			
-			sampleThicknessLabel = new Label(g, SWT.NONE);
-			sampleThicknessLabel.setText("Sample Thickness (mm)");
-			sampleThicknessLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
-			sampleThickness = new Text(g, SWT.BORDER);
-			sampleThickness.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			sampleThickness.setToolTipText("Set sample thickness in millimeters");
-			Double tmpSampleThickness = ncdSampleThicknessSourceProvider.getSampleThickness();
-			if (tmpSampleThickness != null) {
-				sampleThickness.setText(tmpSampleThickness.toString());
-			}
-			sampleThickness.addModifyListener(new ModifyListener() {
-				
-				@Override
-				public void modifyText(ModifyEvent e) {
-					ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness(), false);
-				}
-			});
 			
 			absScaleLabel = new Label(g, SWT.NONE);
 			absScaleLabel.setText("Abs. Scale");
-			absScaleLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			absScaleLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 			absScale = new Text(g, SWT.BORDER);
 			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
@@ -778,21 +742,23 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			
-			absOffsetLabel = new Label(g, SWT.NONE);
-			absOffsetLabel.setText("Offset");
-			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			absOffset = new Label(g, SWT.NONE);
-			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			absOffset.setToolTipText("Offset value between reference and calibrated profiles. Should be close to zero.");
-			
-			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
-			
-			runCalibratioin = new Button(g, SWT.PUSH);
-			runCalibratioin.setText("Run Absolute Intensity Calibration");
-			runCalibratioin.setToolTipText("Run absolute intensity calibration procedure." +
-							" Please plot reduced I(q) profile for glassy carbon sample before starting calibration.");
-			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-			runCalibratioin.addSelectionListener(absoluteCalibrationListener);
+			sampleThicknessLabel = new Label(g, SWT.NONE);
+			sampleThicknessLabel.setText("Sample Thickness (mm)");
+			sampleThicknessLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+			sampleThickness = new Text(g, SWT.BORDER);
+			sampleThickness.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			sampleThickness.setToolTipText("Set sample thickness in millimeters");
+			Double tmpSampleThickness = ncdSampleThicknessSourceProvider.getSampleThickness();
+			if (tmpSampleThickness != null) {
+				sampleThickness.setText(tmpSampleThickness.toString());
+			}
+			sampleThickness.addModifyListener(new ModifyListener() {
+				
+				@Override
+				public void modifyText(ModifyEvent e) {
+					ncdSampleThicknessSourceProvider.setSampleThickness(getSampleThickness(), false);
+				}
+			});
 			
 			normEcomp.setClient(g);
 		}
@@ -1257,12 +1223,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absScale.setEnabled(selection);
 		if (absScaleLabel != null && !(absScaleLabel.isDisposed()))
 			absScaleLabel.setEnabled(selection);
-		if (absOffsetLabel != null && !(absOffsetLabel.isDisposed()))
-			absOffsetLabel.setEnabled(selection);
-		if (absOffset != null && !(absOffset.isDisposed()))
-			absOffset.setEnabled(selection);
-		if (runCalibratioin != null && !(runCalibratioin.isDisposed()))
-			runCalibratioin.setEnabled(selection);
 	}
 
 	private void updateSectorIntegrationWidgets(boolean selection) {
@@ -1418,18 +1378,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			} else {
 				absScale.setText("");
-			}
-		}
-		
-		if (sourceName.equals(NcdProcessingSourceProvider.ABSOFFSET_STATE)) {
-			if (sourceValue != null) {
-			    DecimalFormat sForm = new DecimalFormat("0.#####E0");
-				String sourceText = sForm.format(sourceValue);
-				if (sourceText != null) {
-					absOffset.setText(sourceText);
-				}
-			} else {
-				absOffset.setText("");
 			}
 		}
 		
