@@ -673,7 +673,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		btnResetParams = new Button(dataParameters, SWT.NONE);
 		btnResetParams.setText("Reset all parameters to defaults");
-		btnResetParams.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		btnResetParams.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
 		btnResetParams.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -683,7 +683,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		btnRunNcdModelBuilderJob = new Button(dataParameters, SWT.NONE);
 		btnRunNcdModelBuilderJob.setText("Run NCD model building");
-		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
 		btnRunNcdModelBuilderJob.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
