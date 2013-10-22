@@ -760,9 +760,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					regionDragging = true;
 					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 					RectangularROI roi = (RectangularROI) region.getROI();
-					qMin.setText( String.valueOf(roi.getPoint()[0]));
+					setDoubleBox(qMin, roi.getPoint()[0]);
 					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
-					qMax.setText(String.valueOf(roi.getEndPoint()[0]));
+					setDoubleBox(qMax, roi.getEndPoint()[0]);
 					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0]));
 					regionDragging=false;
 				}
@@ -1102,7 +1102,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			if ((currentQDataset != null) && (index > 0 && index <= currentQDataset.getShape()[0])) {
 				double qValue;
 				qValue = currentQDataset.getDouble(index - 1);
-				qTextBox.setText(String.valueOf(qValue));
+				setDoubleBox(qTextBox, qValue);
 				return;
 			}
 		} catch (Exception e) {
@@ -1119,7 +1119,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
 		}
-		qTextBox.setText(String.valueOf(qValue));
+		setDoubleBox(qTextBox, qValue);
 	}
 
 	protected void updatePoint(Text pointBox, String text) {
@@ -1248,7 +1248,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				minDistanceSearch.setText("20");
 				maxDistanceSearch.setText("100");
 				numberOfSearch.setText("10");
-				tolerance.setText("0.1");
+				setDoubleBox(tolerance, 0.1);
 				symmetry.select(0);
 				dammifMode.select(0);
 				try {
@@ -1275,9 +1275,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				pathToQCombo.removeAll();
 				pathToDataCombo.removeAll();
 				numberOfFrames.setText("1");
-				qMin.setText("0.01");
+				setDoubleBox(qMin, 0.01);
 				qMinUnits.select(0);
-				qMax.setText("0.3");
+				setDoubleBox(qMax, 0.3);
 				startPoint.setText("1");
 				endPoint.setText("1000");
 			}
@@ -1338,9 +1338,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
-		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
+		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom());
 		qMinUnits.select(modelBuildingParameters.isMainUnitAngstrom() ? 0 : 1);
-		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
+		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom());
 		startPoint.setText(Integer.toString(modelBuildingParameters.getFirstPoint()));
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
@@ -1348,7 +1348,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
 		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
-		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
+		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
 		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
 		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
@@ -1474,5 +1474,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean getViewIsActive(IWorkbenchPart part) {
 		IViewPart view = part.getSite().getWorkbenchWindow().getActivePage().findView(ID);
 		return part.getSite().getWorkbenchWindow().getActivePage().isPartVisible(view);
+	}
+
+	private void setDoubleBox(Text text, double value) {
+		text.setText(String.format("%.4f", value));
 	}
 }
