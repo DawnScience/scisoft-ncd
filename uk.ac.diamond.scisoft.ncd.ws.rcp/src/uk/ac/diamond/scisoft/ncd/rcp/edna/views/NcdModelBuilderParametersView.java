@@ -994,15 +994,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
-							qMin.setText(String.valueOf(currentQDataset.min()));
-							qMax.setText(String.valueOf(currentQDataset.max()));
-							endPoint.setText(String.valueOf(currentQDataset
-									.getSize()));
+							if (Integer.getInteger(endPoint.getText()) > currentQDataset.getSize()) {
+								endPoint.setText(String.valueOf(currentQDataset
+										.getSize()));
+							}
 							//check that the q and data paths are in the file
 							String qPath = currentPathToQ;
 							String dataPath = currentPathToData;
 							if (holder.contains(qPath) && holder.contains(dataPath) && isNxsFile(modelBuildingParameters.getDataFilename())) {
-								startPoint.setText("1");
 								try {
 									IDataset slicedSet = holder.getLazyDataset(
 											dataPath).getSlice(new Slice());
@@ -1023,7 +1022,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								}
 							}
 							else if (!isNxsFile(modelBuildingParameters.getDataFilename())) {
-								startPoint.setText("1");
 								numberOfFrames.setText("1");
 							}
 						}
