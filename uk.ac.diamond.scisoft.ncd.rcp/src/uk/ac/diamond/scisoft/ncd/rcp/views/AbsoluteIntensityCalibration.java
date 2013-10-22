@@ -52,6 +52,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener;
 
 public class AbsoluteIntensityCalibration extends ViewPart implements ISourceProviderListener {
 
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration";
+	
 	private IPlottingSystem plottingSystem;
 	private Text sampleThickness;
 	private Text absScale;

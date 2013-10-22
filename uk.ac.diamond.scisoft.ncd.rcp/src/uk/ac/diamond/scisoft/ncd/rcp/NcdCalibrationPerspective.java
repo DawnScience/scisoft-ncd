@@ -25,6 +25,7 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.FrameworkUtil;
 
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
+import uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
@@ -35,6 +36,7 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
     public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.ncdcalibrationperspective";
     
 	private static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
+	private static final String CalibrationFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.calibrationfolder";
 	private static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
 	private static final String ToolPageView1D_ID = "org.dawb.workbench.plotting.views.toolPageView.1D";
 	
@@ -50,7 +52,9 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 		layout.getViewLayout(ToolPageView1D_ID).setCloseable(false);
 		layout.addView(NcdDetectorParameters.ID, IPageLayout.BOTTOM, 0.55f, ToolPageView1D_ID);
 		
-		layout.addView(SaxsQAxisCalibration.ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
+		IFolderLayout calibrationFolderLayout = layout.createFolder(CalibrationFolder_ID, IPageLayout.BOTTOM, 0.6f, IPageLayout.ID_EDITOR_AREA);
+		calibrationFolderLayout.addView(SaxsQAxisCalibration.ID);
+		calibrationFolderLayout.addView(AbsoluteIntensityCalibration.ID);
 		
 		IFolderLayout projectFolderLayout = layout.createFolder(ProjectFolder_ID, IPageLayout.LEFT, 0.3f, IPageLayout.ID_EDITOR_AREA);
 		String explorer = ProjectExplorer.VIEW_ID;
