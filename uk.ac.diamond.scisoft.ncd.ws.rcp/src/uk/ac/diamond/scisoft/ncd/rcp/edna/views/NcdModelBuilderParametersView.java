@@ -623,6 +623,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			public void modifyText(ModifyEvent e) {
 				modelBuildingParameters.setMainUnitAngstrom(qMinUnits.getText().equals(qOptionUnits[0]));
 				qMaxUnits.setText(qMinUnits.getText());
+				if (qIntensityPlot.getRegion(Q_REGION_NAME) != null) {
+					RectangularROI currentROI = (RectangularROI) qIntensityPlot.getRegion(Q_REGION_NAME).getROI();
+					setDoubleBox(qMin, currentROI.getPointX() * getAngstromNmFactor());
+					setDoubleBox(qMax, (currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
+				}
+				minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor()));
+				maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor()));
 				String newUnits = modelBuildingParameters.isMainUnitAngstrom() ? gnomUnits[0] : gnomUnits[1];
 				minDistanceUnits.setText(newUnits);
 				maxDistanceUnits.setText(newUnits);
@@ -709,6 +716,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
+		if (memento == null) {
+			updatePlot();
+		}
+
 		if (memento != null) {
 			modelBuildingParameters.loadMementoParameters(memento);
 			PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
@@ -717,6 +728,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					try {
 						restoreState();
 					} catch (Exception e) {
+						logger.error("Problem while trying to restore the state", e);
 						resetGUI();
 					}
 				}
@@ -782,10 +794,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					regionDragging = true;
 					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 					RectangularROI roi = (RectangularROI) region.getROI();
-					setDoubleBox(qMin, roi.getPoint()[0]);
-					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
-					setDoubleBox(qMax, roi.getEndPoint()[0]);
-					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0]));
+					setDoubleBox(qMin, roi.getPoint()[0] * getAngstromNmFactor());
+					updatePoint(startPoint, String.valueOf(roi.getPoint()[0] * getAngstromNmFactor()));
+					setDoubleBox(qMax, roi.getEndPoint()[0] * getAngstromNmFactor());
+					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0] * getAngstromNmFactor()));
 					regionDragging=false;
 				}
 			}
@@ -942,6 +954,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else if (source == endPoint) {
 				updateQ(qMax, sourceText);
 			}
+			captureGUIInformation();
 			updateRoi();
 		}
 		
@@ -959,6 +972,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else if (source == qMax) {
 				updatePoint(endPoint, sourceText);
 			}
+			captureGUIInformation();
 			updateRoi();
 		}
 		
@@ -1136,7 +1150,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			int index = Integer.valueOf(text);
 			if ((currentQDataset != null) && (index > 0 && index <= currentQDataset.getShape()[0])) {
 				double qValue;
-				qValue = currentQDataset.getDouble(index - 1);
+				qValue = currentQDataset.getDouble(index - 1) * getAngstromNmFactor();
 				setDoubleBox(qTextBox, qValue);
 				return;
 			}
@@ -1154,6 +1168,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
 		}
+		qValue *= getAngstromNmFactor();
 		setDoubleBox(qTextBox, qValue);
 	}
 
@@ -1165,7 +1180,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			newQValue = 0;
 		}
 		if (currentQDataset != null) {
-			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue);
+			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue / getAngstromNmFactor());
 			if (index < 1) {
 				index = 1;
 			}
@@ -1174,6 +1189,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 			pointBox.setText(String.valueOf(index));
 		}
+	}
+
+	private int getAngstromNmFactor() {
+		int angstromNmFactor = 1;
+		if (!modelBuildingParameters.isMainUnitAngstrom()) {
+			angstromNmFactor = 10;
+		}
+		return angstromNmFactor;
 	}
 
 	protected void updatePlot() {
@@ -1218,35 +1241,25 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
 			double qMinValue = Double.valueOf(qMin.getText());
-			if (qMinUnits.getSelectionIndex() == 1) {
-				qMinValue /= 10;
-			}
-			modelBuildingParameters.setqMinAngstrom(qMinValue);
+
+			modelBuildingParameters.setqMinAngstrom(qMinValue / getAngstromNmFactor());
 
 			modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
 			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
 
 			double qMaxValue = Double.valueOf(qMax.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				qMaxValue /= 10;
-			}
-			modelBuildingParameters.setqMaxAngstrom(qMaxValue);
+
+			modelBuildingParameters.setqMaxAngstrom(qMaxValue / getAngstromNmFactor());
 
 			modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
 
 			modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
 
 			double minDistance = Double.valueOf(minDistanceSearch.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				minDistance *= 10;
-			}
-			modelBuildingParameters.setStartDistanceAngstrom(minDistance);
+			modelBuildingParameters.setStartDistanceAngstrom(minDistance * getAngstromNmFactor());
 
 			double maxDistance = Double.valueOf(maxDistanceSearch.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				maxDistance *= 10;
-			}
-			modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
+			modelBuildingParameters.setEndDistanceAngstrom(maxDistance * getAngstromNmFactor());
 
 			modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
 
@@ -1374,15 +1387,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
-		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom());
+		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom() * getAngstromNmFactor());
 		qMinUnits.select(modelBuildingParameters.isMainUnitAngstrom() ? 0 : 1);
-		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom());
+		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom() * getAngstromNmFactor());
 		startPoint.setText(Integer.toString(modelBuildingParameters.getFirstPoint()));
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
-		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
-		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
+		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor()));
+		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor()));
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
 		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
@@ -1459,8 +1472,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		btnResetDataRange.setEnabled(enabled);
 	}
 	private RectangularROI updateRoi() {
-		double qmin = Double.parseDouble(qMin.getText());
-		double qmax = Double.parseDouble(qMax.getText());
+		double qmin = 0;
+		double qmax = 1;
+		try {
+			qmin = modelBuildingParameters.getqMinAngstrom();
+			qmax = modelBuildingParameters.getqMaxAngstrom();
+		} catch (NumberFormatException e) {
+			logger.error("Problem when attempting to get qMin and qMax values", e);
+		}
 		RectangularROI roi = new RectangularROI(qmin, 1, qmax - qmin, 1, 0);
 		qIntensityPlot.getRegion(Q_REGION_NAME).setROI(roi);
 		return roi;
@@ -1518,10 +1537,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void resetRoi() {
-		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
-		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
+		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor()));
+		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor()));
 		updateQ(qMin, Integer.toString(1));
 		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
+		captureGUIInformation();
 		updateRoi();
 	}
 }
