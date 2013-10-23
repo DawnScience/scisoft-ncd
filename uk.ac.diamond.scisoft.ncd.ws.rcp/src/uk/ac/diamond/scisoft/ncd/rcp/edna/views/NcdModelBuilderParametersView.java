@@ -998,9 +998,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
-							if (Integer.getInteger(endPoint.getText()) > currentQDataset.getSize()) {
-								endPoint.setText(String.valueOf(currentQDataset
-										.getSize()));
+							if (Integer.parseInt(endPoint.getText()) > currentQDataset.getSize()) {
+								updateQ(qMax, String.valueOf(currentQDataset.getSize()));
+								updateRoi();
+							}
+							if (Double.parseDouble(qMin.getText()) < currentQDataset.getDouble(currentQDataset.minPos()[0])) {
+								updateQ(qMin, "1");
+								updateRoi();
 							}
 							//check that the q and data paths are in the file
 							String qPath = currentPathToQ;
