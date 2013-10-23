@@ -158,6 +158,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
 	private boolean forgetLastSelection = false;
+	private boolean isGuiInResetState;
 
 	private Button browseDataFile;
 
@@ -360,6 +361,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					final File file = new File(fileStr);
 					if (file.isFile()) {
 						setFilenameString(file.toString());
+						isGuiInResetState = false;
 					}
 				}
 			}
@@ -536,11 +538,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				if (currentQDataset != null) {
-					updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
-					updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
-					updateQ(qMin, Double.toString(1));
-					updateQ(qMax, Double.toString(currentQDataset.getSize()));
-					updateRoi();
+					resetRoi();
 				}
 			}
 			
@@ -763,6 +761,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 			};
 			job.schedule();
+			isGuiInResetState = false;
 		}
 		else {
 			resetGUI();
@@ -897,6 +896,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			checkFilenameAndColorDataFileBox(Display.getDefault());
 			refreshQAndPointFields();
 		}
+		isGuiInResetState = false;
 	}
 	private void refreshQAndPointFields() {
 		Event trigger = new Event();
@@ -994,7 +994,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				else {
 					retrieveQFromData(holder);
 				}
-				if (currentQDataset != null) {
+				if (currentQDataset != null && isGuiInResetState == false) {
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
@@ -1028,6 +1028,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 							else if (!isNxsFile(modelBuildingParameters.getDataFilename())) {
 								numberOfFrames.setText("1");
 							}
+						}
+					});
+				}
+				else if (currentQDataset != null) {
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							resetRoi();
 						}
 					});
 				}
@@ -1129,7 +1137,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				return;
 			}
 		} catch (Exception e) {
-			logger.error("Index was not valid.");
+			logger.error("Index was not valid.", e);
 		}
 		logger.error("Using a default value for q.");
 		double qValue;
@@ -1288,6 +1296,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		refreshRunButton();
 		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
+		isGuiInResetState = true;
 	}
 	
 	public void clearQAndPathItems() {
@@ -1502,5 +1511,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private void setDoubleBox(Text text, double value) {
 		text.setText(String.format("%.4f", value));
+	}
+
+	private void resetRoi() {
+		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
+		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
+		updateQ(qMin, Integer.toString(1));
+		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
+		updateRoi();
 	}
 }
