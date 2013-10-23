@@ -171,6 +171,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected ILineTrace lineTrace;
 	protected boolean regionDragging;
 	private Combo plotOptions;
+	private Button btnResetDataRange;
 	protected boolean xAxisIsLog;
 	
 	private ScrolledComposite scrolledComposite;
@@ -498,7 +499,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		Composite plotAndOptionComposite = new Composite(plotComposite, SWT.NONE);
-		plotAndOptionComposite.setLayout(new GridLayout());
+		plotAndOptionComposite.setLayout(new GridLayout(2, false));
 		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
 		plotOptions = new Combo(plotAndOptionComposite, SWT.READ_ONLY);
@@ -523,9 +524,31 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		plotOptions.select(1); //default is logI/q
-		GridData plotOptionsLayout = new GridData(GridData.CENTER, SWT.CENTER, true, false);
-		plotOptionsLayout.horizontalSpan = 2;
+		GridData plotOptionsLayout = new GridData(SWT.RIGHT, SWT.CENTER, true, false);
 		plotOptions.setLayoutData(plotOptionsLayout);
+
+		btnResetDataRange = new Button(plotAndOptionComposite, SWT.NONE);
+		btnResetDataRange.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+		btnResetDataRange.setText("Reset data range");
+		btnResetDataRange.setToolTipText("Reset the data range to include all of the data");
+		btnResetDataRange.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentQDataset != null) {
+					updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
+					updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
+					updateQ(qMin, Double.toString(1));
+					updateQ(qMax, Double.toString(currentQDataset.getSize()));
+					updateRoi();
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				//do nothing
+			}
+		});
 
 		ToolBarManager man = new ToolBarManager(SWT.FLAT|SWT.RIGHT|SWT.WRAP);
 		ToolBar toolBar = man.createControl(plotComposite);
@@ -1420,6 +1443,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		symmetry.setEnabled(enabled);
 		dammifMode.setEnabled(enabled);
 		plotOptions.setEnabled(enabled);
+		btnResetDataRange.setEnabled(enabled);
 	}
 	private RectangularROI updateRoi() {
 		double qmin = Double.parseDouble(qMin.getText());
