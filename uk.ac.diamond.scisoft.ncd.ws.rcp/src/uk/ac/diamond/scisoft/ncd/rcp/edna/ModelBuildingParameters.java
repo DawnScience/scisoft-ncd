@@ -35,10 +35,9 @@ public class ModelBuildingParameters {
 
 	private int numberOfFrames;
 
+	private boolean isMainUnitAngstrom = true;
 	private double qMinAngstrom;
-	private boolean qMinInverseAngstromUnits;
 	private double qMaxAngstrom;
-	private boolean qMaxInverseAngstromUnits;
 	private int firstPoint;
 	private int lastPoint;
 
@@ -47,9 +46,7 @@ public class ModelBuildingParameters {
 	private boolean gnomOnly; // if false, GNOM and DAMMIF are both run
 
 	private double startDistanceAngstrom;
-	private boolean startDistanceAngstromUnits;
 	private double endDistanceAngstrom;
-	private boolean endDistanceAngstromUnits;
 	private int numberOfSearch;
 	private double tolerance;
 
@@ -92,6 +89,14 @@ public class ModelBuildingParameters {
 	public void setNumberOfFrames(int numberOfFrames) {
 		this.numberOfFrames = numberOfFrames;
 	}
+	public boolean isMainUnitAngstrom() {
+		return isMainUnitAngstrom;
+	}
+
+	public void setMainUnitAngstrom(boolean isMainUnitAngstrom) {
+		this.isMainUnitAngstrom = isMainUnitAngstrom;
+	}
+
 	public double getqMinAngstrom() {
 		return qMinAngstrom;
 	}
@@ -104,22 +109,7 @@ public class ModelBuildingParameters {
 	public void setqMaxAngstrom(double qMaxAngstrom) {
 		this.qMaxAngstrom = qMaxAngstrom;
 	}
-	public boolean isqMinInverseAngstromUnits() {
-		return qMinInverseAngstromUnits;
-	}
-
-	public void setqMinInverseAngstromUnits(boolean qMinInverseAngstromUnits) {
-		this.qMinInverseAngstromUnits = qMinInverseAngstromUnits;
-	}
-
-	public boolean isqMaxInverseAngstromUnits() {
-		return qMaxInverseAngstromUnits;
-	}
-
-	public void setqMaxInverseAngstromUnits(boolean qMaxInverseAngstromUnits) {
-		this.qMaxInverseAngstromUnits = qMaxInverseAngstromUnits;
-	}
-
+	
 	public int getFirstPoint() {
 		return firstPoint;
 	}
@@ -159,21 +149,6 @@ public class ModelBuildingParameters {
 	}
 	public void setEndDistanceAngstrom(double endDistanceAngstrom) {
 		this.endDistanceAngstrom = endDistanceAngstrom;
-	}
-	public boolean isStartDistanceAngstromUnits() {
-		return startDistanceAngstromUnits;
-	}
-
-	public void setStartDistanceAngstromUnits(boolean startDistanceAngstromUnits) {
-		this.startDistanceAngstromUnits = startDistanceAngstromUnits;
-	}
-
-	public boolean isEndDistanceAngstromUnits() {
-		return endDistanceAngstromUnits;
-	}
-
-	public void setEndDistanceAngstromUnits(boolean endDistanceAngstromUnits) {
-		this.endDistanceAngstromUnits = endDistanceAngstromUnits;
 	}
 
 	public int getNumberOfSearch() {
@@ -270,18 +245,15 @@ public class ModelBuildingParameters {
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q, pathToQ);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA, pathToData);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES, numberOfFrames);
+			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_MAIN_UNIT_ANGSTROM, isMainUnitAngstrom);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN, (float) qMinAngstrom);
-			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN_INVERSE_ANGSTROM_UNITS, qMinInverseAngstromUnits);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX, (float) qMaxAngstrom);
-			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX_INVERSE_ANGSTROM_UNITS, qMaxInverseAngstromUnits);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_FIRST_POINT, firstPoint);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_LAST_POINT, lastPoint);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_THREADS, numberOfThreads);
 			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_ONLY, gnomOnly);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE, (float) startDistanceAngstrom);
-			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE_ANGSTROM_UNITS, startDistanceAngstromUnits);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE, (float) endDistanceAngstrom);
-			memento.putBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS, endDistanceAngstromUnits);
 			memento.putInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH, numberOfSearch);
 			memento.putFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE, (float) tolerance);
 			memento.putString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY, symmetry);
@@ -300,18 +272,15 @@ public class ModelBuildingParameters {
 				pathToQ  = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_Q);
 				pathToData = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_PATH_TO_DATA);
 				numberOfFrames = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_OF_FRAMES);
+				isMainUnitAngstrom = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_IS_MAIN_UNIT_ANGSTROM);
 				qMinAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN);
-				qMinInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MIN_INVERSE_ANGSTROM_UNITS);
 				qMaxAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX);
-				qMaxInverseAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_Q_MAX_INVERSE_ANGSTROM_UNITS);
 				firstPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_FIRST_POINT);
 				lastPoint = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_LAST_POINT);
 				numberOfThreads = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_NUMBER_THREADS);
 				gnomOnly = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_ONLY);
 				startDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE);
-				startDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MIN_DISTANCE_ANGSTROM_UNITS);
 				endDistanceAngstrom = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE);
-				endDistanceAngstromUnits = memento.getBoolean(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_MAX_DISTANCE_ANGSTROM_UNITS);
 				numberOfSearch = memento.getInteger(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_NUMBER_SEARCH);
 				tolerance = memento.getFloat(NcdModelBuilderParametersMementoStrings.BIOSAXS_GNOM_TOLERANCE);
 				symmetry = memento.getString(NcdModelBuilderParametersMementoStrings.BIOSAXS_DAMMIF_SYMMETRY);

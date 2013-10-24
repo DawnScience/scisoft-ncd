@@ -20,6 +20,7 @@ import java.io.File;
 import java.util.Iterator;
 import java.util.Map;
 
+import org.csstudio.swt.xygraph.undo.ZoomType;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -33,6 +34,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
 import org.eclipse.jface.fieldassist.IContentProposal;
@@ -71,6 +73,7 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Listener;
 import org.eclipse.swt.widgets.Text;
+import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISelectionListener;
 import org.eclipse.ui.IViewPart;
@@ -124,7 +127,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected Text qMin;
 	private Combo qMinUnits;
 	protected Text qMax;
-	private Combo qMaxUnits;
+	private Label qMaxUnits;
 	protected Text startPoint;
 	protected Text endPoint;
 
@@ -133,9 +136,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Combo builderOptions;
 
 	protected Text minDistanceSearch;
-	private Combo minDistanceUnits;
+	private Label minDistanceUnits;
 	protected Text maxDistanceSearch;
-	private Combo maxDistanceUnits;
+	private Label maxDistanceUnits;
 	protected Text numberOfSearch;
 	protected Text tolerance;
 
@@ -155,6 +158,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean fileSelected = false;
 	private boolean pathEmpty = true;
 	private boolean forgetLastSelection = false;
+	private boolean isGuiInResetState;
 
 	private Button browseDataFile;
 
@@ -168,6 +172,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	protected ILineTrace lineTrace;
 	protected boolean regionDragging;
 	private Combo plotOptions;
+	private Button btnResetDataRange;
 	protected boolean xAxisIsLog;
 	
 	private ScrolledComposite scrolledComposite;
@@ -356,6 +361,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					final File file = new File(fileStr);
 					if (file.isFile()) {
 						setFilenameString(file.toString());
+						isGuiInResetState = false;
 					}
 				}
 			}
@@ -437,6 +443,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u00b9", "nm\u207b\u00b9"};
+		final String[] gnomUnits = new String[] { "Angstrom", "nm"};
 
 		Composite qMinComposite = new Composite(pointsComposite, SWT.NONE);
 		new Label(qMinComposite, SWT.NONE).setText("q minimum");
@@ -449,13 +456,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMinUnits = new Combo(qMinComposite, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
-		qMinUnits.addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				modelBuildingParameters.setqMinInverseAngstromUnits(qMinUnits.getText().equals(qOptionUnits[0]));
-			}
-		});
 
 		Group pointsGroup2 = new Group(pointsSash, SWT.NONE);
 		pointsGroup2.setLayout(new GridLayout());
@@ -476,7 +476,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		pointsGroup2.setLayoutData(data);
 		pointsGroup2.setLayout(new GridLayout());
 
-		Composite qMaxComposite = new Composite(pointsGroup2, SWT.NONE);
+		final Composite qMaxComposite = new Composite(pointsGroup2, SWT.NONE);
 		new Label(qMaxComposite, SWT.NONE).setText("q maximum");
 		qMaxComposite.setLayout(new GridLayout(3, false));
 		qMaxComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -485,15 +485,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMax.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		qMaxUnits = new Combo(qMaxComposite, SWT.READ_ONLY);
-		qMaxUnits.setItems(qOptionUnits);
-		qMaxUnits.addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				modelBuildingParameters.setqMaxInverseAngstromUnits(qMaxUnits.getText().equals(qOptionUnits[0]));
-			}
-		});
+		qMaxUnits = new Label(qMaxComposite, SWT.NONE);
 
 		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
 		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
@@ -509,7 +501,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		plotComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		Composite plotAndOptionComposite = new Composite(plotComposite, SWT.NONE);
-		plotAndOptionComposite.setLayout(new GridLayout());
+		plotAndOptionComposite.setLayout(new GridLayout(2, false));
 		plotAndOptionComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		final String[] plotOptionNames = new String[]{"logI/logq", "logI/q"};
 		plotOptions = new Combo(plotAndOptionComposite, SWT.READ_ONLY);
@@ -534,9 +526,31 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 		plotOptions.select(1); //default is logI/q
-		GridData plotOptionsLayout = new GridData(GridData.CENTER, SWT.CENTER, true, false);
-		plotOptionsLayout.horizontalSpan = 2;
+		GridData plotOptionsLayout = new GridData(SWT.RIGHT, SWT.CENTER, true, false);
 		plotOptions.setLayoutData(plotOptionsLayout);
+
+		btnResetDataRange = new Button(plotAndOptionComposite, SWT.NONE);
+		btnResetDataRange.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+		btnResetDataRange.setText("Reset data range");
+		btnResetDataRange.setToolTipText("Reset the data range to include all of the data");
+		btnResetDataRange.addSelectionListener(new SelectionListener() {
+			
+			@Override
+			public void widgetSelected(SelectionEvent e) {
+				if (currentQDataset != null) {
+					resetRoi();
+				}
+			}
+			
+			@Override
+			public void widgetDefaultSelected(SelectionEvent e) {
+				//do nothing
+			}
+		});
+
+		ToolBarManager man = new ToolBarManager(SWT.FLAT|SWT.RIGHT|SWT.WRAP);
+		ToolBar toolBar = man.createControl(plotComposite);
+		toolBar.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 
 		qIntensityPlot.createPlotPart( plotComposite, 
 				getTitle(), 
@@ -544,6 +558,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				PlotType.XY,
 				null);
 		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+
+		qIntensityPlot.getPlotActionSystem().fillZoomActions(man);
+		qIntensityPlot.getPlotActionSystem().fillPrintActions(man);
+
+		removeZoomTypeIcons(man);
 
 		plotScrolledExpandableComposite.setClient(plotComposite);
 		plotScrolledExpandableComposite.addExpansionListener(expansionAdapter);
@@ -578,42 +597,37 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		gnomParametersExpandableComposite.setLayout(new GridLayout());
 		gnomParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		gnomParametersExpandableComposite.setText("GNOM parameters");
-		Composite gnomParameters = new Composite(gnomParametersExpandableComposite, SWT.NONE);
+		final Composite gnomParameters = new Composite(gnomParametersExpandableComposite, SWT.NONE);
 		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
 		gnomLayout.horizontalSpan = 2;
 		gnomParameters.setLayoutData(gnomLayout);
 		gnomParameters.setLayout(new GridLayout(3, false));
-
-		final String[] distanceOptionsUnits = new String[] {"Angstrom", "nm"};
 
 		new Label(gnomParameters, SWT.NONE).setText("Dmax search point start");
 		minDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		minDistanceSearch.setToolTipText("Initial value for the GNOM program, e.g. minimum possible size of protein");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-
-		minDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
-		minDistanceUnits.setItems(distanceOptionsUnits);
-		minDistanceUnits.addModifyListener(new ModifyListener() {
-			
-			@Override
-			public void modifyText(ModifyEvent e) {
-				modelBuildingParameters.setStartDistanceAngstromUnits(minDistanceUnits.getText().equals(distanceOptionsUnits[0]));
-			}
-		});
+		minDistanceUnits = new Label(gnomParameters, SWT.NONE);
 
 		new Label(gnomParameters, SWT.NONE).setText("Dmax search point end");
 		maxDistanceSearch = new Text(gnomParameters, SWT.NONE);
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for the GNOM program, e.g. maximum possible size of protein");
 		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		maxDistanceUnits = new Combo(gnomParameters, SWT.READ_ONLY);
-		maxDistanceUnits.setItems(distanceOptionsUnits);
-		maxDistanceUnits.addModifyListener(new ModifyListener() {
+		maxDistanceUnits = new Label(gnomParameters, SWT.NONE);
+
+		qMinUnits.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
-				modelBuildingParameters.setEndDistanceAngstromUnits(maxDistanceUnits.getText().equals(distanceOptionsUnits[0]));
+				modelBuildingParameters.setMainUnitAngstrom(qMinUnits.getText().equals(qOptionUnits[0]));
+				qMaxUnits.setText(qMinUnits.getText());
+				String newUnits = modelBuildingParameters.isMainUnitAngstrom() ? gnomUnits[0] : gnomUnits[1];
+				minDistanceUnits.setText(newUnits);
+				maxDistanceUnits.setText(newUnits);
+				qMaxComposite.layout();
+				gnomParameters.layout();
 			}
 		});
 
@@ -661,7 +675,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		btnResetParams = new Button(dataParameters, SWT.NONE);
 		btnResetParams.setText("Reset all parameters to defaults");
-		btnResetParams.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		btnResetParams.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
 		btnResetParams.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -671,7 +685,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		btnRunNcdModelBuilderJob = new Button(dataParameters, SWT.NONE);
 		btnRunNcdModelBuilderJob.setText("Run NCD model building");
-		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
 		btnRunNcdModelBuilderJob.addSelectionListener(new SelectionAdapter() {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
@@ -747,6 +761,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 			};
 			job.schedule();
+			isGuiInResetState = false;
 		}
 		else {
 			resetGUI();
@@ -767,9 +782,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					regionDragging = true;
 					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 					RectangularROI roi = (RectangularROI) region.getROI();
-					qMin.setText( String.valueOf(roi.getPoint()[0]));
+					setDoubleBox(qMin, roi.getPoint()[0]);
 					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
-					qMax.setText(String.valueOf(roi.getEndPoint()[0]));
+					setDoubleBox(qMax, roi.getEndPoint()[0]);
 					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0]));
 					regionDragging=false;
 				}
@@ -780,6 +795,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
+	}
+
+	private void removeZoomTypeIcons(ToolBarManager man) {
+		ZoomType[] z = ZoomType.values();
+		for (ZoomType zoomTypeName : z) {
+			man.remove(zoomTypeName.getId());
+		}
+		man.update(true);
 	}
 
 	private ISelectionListener selectionListener = new ISelectionListener() {
@@ -873,6 +896,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			checkFilenameAndColorDataFileBox(Display.getDefault());
 			refreshQAndPointFields();
 		}
+		isGuiInResetState = false;
 	}
 	private void refreshQAndPointFields() {
 		Event trigger = new Event();
@@ -970,19 +994,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				else {
 					retrieveQFromData(holder);
 				}
-				if (currentQDataset != null) {
+				if (currentQDataset != null && isGuiInResetState == false) {
 					Display.getDefault().syncExec(new Runnable() {
 						@Override
 						public void run() {
-							qMin.setText(String.valueOf(currentQDataset.min()));
-							qMax.setText(String.valueOf(currentQDataset.max()));
-							endPoint.setText(String.valueOf(currentQDataset
-									.getSize()));
+							if (Integer.parseInt(endPoint.getText()) > currentQDataset.getSize()) {
+								updateQ(qMax, String.valueOf(currentQDataset.getSize()));
+								updateRoi();
+							}
+							if (Double.parseDouble(qMin.getText()) < currentQDataset.getDouble(currentQDataset.minPos()[0])) {
+								updateQ(qMin, "1");
+								updateRoi();
+							}
 							//check that the q and data paths are in the file
 							String qPath = currentPathToQ;
 							String dataPath = currentPathToData;
 							if (holder.contains(qPath) && holder.contains(dataPath) && isNxsFile(modelBuildingParameters.getDataFilename())) {
-								startPoint.setText("1");
 								try {
 									IDataset slicedSet = holder.getLazyDataset(
 											dataPath).getSlice(new Slice());
@@ -1003,9 +1030,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								}
 							}
 							else if (!isNxsFile(modelBuildingParameters.getDataFilename())) {
-								startPoint.setText("1");
 								numberOfFrames.setText("1");
 							}
+						}
+					});
+				}
+				else if (currentQDataset != null) {
+					Display.getDefault().asyncExec(new Runnable() {
+						@Override
+						public void run() {
+							resetRoi();
 						}
 					});
 				}
@@ -1103,11 +1137,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			if ((currentQDataset != null) && (index > 0 && index <= currentQDataset.getShape()[0])) {
 				double qValue;
 				qValue = currentQDataset.getDouble(index - 1);
-				qTextBox.setText(String.valueOf(qValue));
+				setDoubleBox(qTextBox, qValue);
 				return;
 			}
 		} catch (Exception e) {
-			logger.error("Index was not valid.");
+			logger.error("Index was not valid.", e);
 		}
 		logger.error("Using a default value for q.");
 		double qValue;
@@ -1120,7 +1154,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
 		}
-		qTextBox.setText(String.valueOf(qValue));
+		setDoubleBox(qTextBox, qValue);
 	}
 
 	protected void updatePoint(Text pointBox, String text) {
@@ -1156,10 +1190,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 				qIntensityPlot.getSelectedXAxis().setRange(0, 1);
 				qIntensityPlot.getSelectedXAxis().setLog10(xAxisIsLog);
-				qIntensityPlot.getSelectedXAxis().setTitle("q");
+				String qAxisLabel = "q (Angstrom)";
+				if (xAxisIsLog) {
+					qAxisLabel = "log q (Angstrom)";
+				}
+				qIntensityPlot.getSelectedXAxis().setTitle(qAxisLabel);
 //				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
 				qIntensityPlot.getSelectedYAxis().setLog10(true);
-				qIntensityPlot.getSelectedYAxis().setTitle("Intensity");
+				qIntensityPlot.getSelectedYAxis().setTitle("log Intensity");
 				qIntensityPlot.repaint();
 			}
 		});
@@ -1189,7 +1227,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
 
 			double qMaxValue = Double.valueOf(qMax.getText());
-			if (qMaxUnits.getSelectionIndex() == 1) {
+			if (!modelBuildingParameters.isMainUnitAngstrom()) {
 				qMaxValue /= 10;
 			}
 			modelBuildingParameters.setqMaxAngstrom(qMaxValue);
@@ -1199,13 +1237,13 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
 
 			double minDistance = Double.valueOf(minDistanceSearch.getText());
-			if (minDistanceUnits.getSelectionIndex() == 1) {
+			if (!modelBuildingParameters.isMainUnitAngstrom()) {
 				minDistance *= 10;
 			}
 			modelBuildingParameters.setStartDistanceAngstrom(minDistance);
 
 			double maxDistance = Double.valueOf(maxDistanceSearch.getText());
-			if (maxDistanceUnits.getSelectionIndex() == 1) {
+			if (!modelBuildingParameters.isMainUnitAngstrom()) {
 				maxDistance *= 10;
 			}
 			modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
@@ -1243,11 +1281,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
 				minDistanceSearch.setText("20");
-				minDistanceUnits.select(0);
 				maxDistanceSearch.setText("100");
-				maxDistanceUnits.select(0);
 				numberOfSearch.setText("10");
-				tolerance.setText("0.1");
+				setDoubleBox(tolerance, 0.1);
 				symmetry.select(0);
 				dammifMode.select(0);
 				try {
@@ -1264,6 +1300,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		refreshRunButton();
 		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
+		isGuiInResetState = true;
 	}
 	
 	public void clearQAndPathItems() {
@@ -1274,10 +1311,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				pathToQCombo.removeAll();
 				pathToDataCombo.removeAll();
 				numberOfFrames.setText("1");
-				qMin.setText("0.01");
+				setDoubleBox(qMin, 0.01);
 				qMinUnits.select(0);
-				qMax.setText("0.3");
-				qMaxUnits.select(0);
+				setDoubleBox(qMax, 0.3);
 				startPoint.setText("1");
 				endPoint.setText("1000");
 			}
@@ -1338,20 +1374,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
-		qMin.setText(Double.toString(modelBuildingParameters.getqMinAngstrom()));
-		qMinUnits.select(modelBuildingParameters.isqMinInverseAngstromUnits() ? 0 : 1);
-		qMax.setText(Double.toString(modelBuildingParameters.getqMaxAngstrom()));
-		qMaxUnits.select(modelBuildingParameters.isqMaxInverseAngstromUnits() ? 0 : 1);
+		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom());
+		qMinUnits.select(modelBuildingParameters.isMainUnitAngstrom() ? 0 : 1);
+		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom());
 		startPoint.setText(Integer.toString(modelBuildingParameters.getFirstPoint()));
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
 		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
-		minDistanceUnits.select(modelBuildingParameters.isStartDistanceAngstromUnits() ? 0 : 1);
 		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
-		maxDistanceUnits.select(modelBuildingParameters.isEndDistanceAngstromUnits() ? 0 : 1);
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
-		tolerance.setText(Double.toString(modelBuildingParameters.getTolerance()));
+		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
 		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
 		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
@@ -1375,9 +1408,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				region = qIntensityPlot.createRegion(Q_REGION_NAME, RegionType.XAXIS);
 				qIntensityPlot.addRegion(region);
 			}
+			region.addROIListener(qIntensityRegionListener);
 
 			updateRoi();
-			region.addROIListener(qIntensityRegionListener);
 		} catch (Exception e) {
 			logger.error("Couldn't open q view and create ROI", e);
 		}
@@ -1423,6 +1456,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		symmetry.setEnabled(enabled);
 		dammifMode.setEnabled(enabled);
 		plotOptions.setEnabled(enabled);
+		btnResetDataRange.setEnabled(enabled);
 	}
 	private RectangularROI updateRoi() {
 		double qmin = Double.parseDouble(qMin.getText());
@@ -1477,5 +1511,17 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean getViewIsActive(IWorkbenchPart part) {
 		IViewPart view = part.getSite().getWorkbenchWindow().getActivePage().findView(ID);
 		return part.getSite().getWorkbenchWindow().getActivePage().isPartVisible(view);
+	}
+
+	private void setDoubleBox(Text text, double value) {
+		text.setText(String.format("%.4f", value));
+	}
+
+	private void resetRoi() {
+		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
+		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
+		updateQ(qMin, Integer.toString(1));
+		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
+		updateRoi();
 	}
 }
