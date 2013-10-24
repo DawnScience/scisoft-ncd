@@ -146,41 +146,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Label minDistanceUnits;
 	protected Text maxDistanceSearch;
 	private Label maxDistanceUnits;
-	private FocusListener distanceFocusListener = new FocusListener() {
-		
-		@Override
-		public void focusLost(FocusEvent e) {
-			if (e.getSource() == minDistanceSearch) {
-				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
-				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
-			}
-			else if (e.getSource() == maxDistanceSearch) {
-				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
-				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
-			}
-			refreshRunButton(false);
-		}
-		
-		@Override
-		public void focusGained(FocusEvent e) {
-			//do nothing
-		}
-	};
-	private Listener distanceKeyListener = new Listener() {
-		
-		@Override
-		public void handleEvent(Event event) {
-			if (event.widget == minDistanceSearch) {
-				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
-				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
-			}
-			else if (event.widget == maxDistanceSearch) {
-				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
-				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
-			}
-			refreshRunButton(false);
-		}
-	};
+
 	protected Text numberOfSearch;
 	protected Text tolerance;
 
@@ -908,6 +874,42 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				}
 			}
 
+		}
+	};
+
+	private FocusListener distanceFocusListener = new FocusListener() {
+		
+		@Override
+		public void focusLost(FocusEvent e) {
+			if (e.getSource() == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (e.getSource() == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
+		}
+		
+		@Override
+		public void focusGained(FocusEvent e) {
+			//do nothing
+		}
+	};
+	private Listener distanceKeyListener = new Listener() {
+		
+		@Override
+		public void handleEvent(Event event) {
+			if (event.widget == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (event.widget == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
 		}
 	};
 
