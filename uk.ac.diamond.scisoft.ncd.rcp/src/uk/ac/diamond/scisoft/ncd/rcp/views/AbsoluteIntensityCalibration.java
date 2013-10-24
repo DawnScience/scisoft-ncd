@@ -169,6 +169,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 					ncdSampleThicknessSourceProvider.setSampleThickness(null, true);
 					ncdAbsScaleSourceProvider.setAbsScaling(null, true);
 					ncdAbsOffsetSourceProvider.setAbsOffset(null);
+					plottingSystem.clear();
 				}
 			});
 		}
