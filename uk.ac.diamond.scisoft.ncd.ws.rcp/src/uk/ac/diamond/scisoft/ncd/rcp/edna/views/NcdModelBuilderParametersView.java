@@ -21,6 +21,10 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.csstudio.swt.xygraph.undo.ZoomType;
+import org.dawnsci.common.widgets.decorator.BoundsDecorator;
+import org.dawnsci.common.widgets.decorator.FloatDecorator;
+import org.dawnsci.common.widgets.decorator.IValueChangeListener;
+import org.dawnsci.common.widgets.decorator.ValueChangeEvent;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -54,6 +58,8 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -136,9 +142,45 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Combo builderOptions;
 
 	protected Text minDistanceSearch;
+	private BoundsDecorator minDistanceBounds, maxDistanceBounds;
 	private Label minDistanceUnits;
 	protected Text maxDistanceSearch;
 	private Label maxDistanceUnits;
+	private FocusListener distanceFocusListener = new FocusListener() {
+		
+		@Override
+		public void focusLost(FocusEvent e) {
+			if (e.getSource() == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (e.getSource() == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
+		}
+		
+		@Override
+		public void focusGained(FocusEvent e) {
+			//do nothing
+		}
+	};
+	private Listener distanceKeyListener = new Listener() {
+		
+		@Override
+		public void handleEvent(Event event) {
+			if (event.widget == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (event.widget == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
+		}
+	};
 	protected Text numberOfSearch;
 	protected Text tolerance;
 
@@ -247,7 +289,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				enableNexusPathCombos(dataFileIsNxsFile);
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
-				refreshRunButton();
+				refreshRunButton(true);
 				checkFilenameAndColorDataFileBox(dataFileGroup.getDisplay());
 				updateGuiParameters();
 			}
@@ -608,6 +650,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.setToolTipText("Initial value for the GNOM program, e.g. minimum possible size of protein");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		minDistanceSearch.addListener(SWT.DefaultSelection, distanceKeyListener);
+		minDistanceSearch.addFocusListener(distanceFocusListener);
+		minDistanceBounds = new FloatDecorator(minDistanceSearch);
 		minDistanceUnits = new Label(gnomParameters, SWT.NONE);
 
 		new Label(gnomParameters, SWT.NONE).setText("Dmax search point end");
@@ -615,8 +660,24 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for the GNOM program, e.g. maximum possible size of protein");
 		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		maxDistanceSearch.addListener(SWT.DefaultSelection, distanceKeyListener);
+		maxDistanceSearch.addFocusListener(distanceFocusListener);
+		maxDistanceBounds = new FloatDecorator(maxDistanceSearch);
 		maxDistanceUnits = new Label(gnomParameters, SWT.NONE);
 
+		minDistanceBounds.setMinimum(0);
+		maxDistanceBounds.setMaximum(Integer.MAX_VALUE);
+
+		IValueChangeListener valueChangeListener = new IValueChangeListener() {
+			
+			@Override
+			public void valueValidating(ValueChangeEvent evt) {
+				refreshRunButton(false);
+			}
+		};
+		minDistanceBounds.addValueChangeListener(valueChangeListener);
+		maxDistanceBounds.addValueChangeListener(valueChangeListener);
+		
 		qMinUnits.addModifyListener(new ModifyListener() {
 			
 			@Override
@@ -628,8 +689,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					setDoubleBox(qMin, currentROI.getPointX() * getAngstromNmFactor());
 					setDoubleBox(qMax, (currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
 				}
-				minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor()));
-				maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor()));
+				double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
+				double correctedMaxDistance = modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor();
+				minDistanceSearch.setText(Double.toString(correctedMinDistance));
+				maxDistanceSearch.setText(Double.toString(correctedMaxDistance));
+				minDistanceBounds.setMaximum(correctedMaxDistance);
+				maxDistanceBounds.setMinimum(correctedMinDistance);
 				String newUnits = modelBuildingParameters.isMainUnitAngstrom() ? gnomUnits[0] : gnomUnits[1];
 				minDistanceUnits.setText(newUnits);
 				maxDistanceUnits.setText(newUnits);
@@ -765,7 +830,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 						if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 							checkWhetherPathsAreEmpty();
 						}
-						refreshRunButton();
+						refreshRunButton(true);
 					} catch (Exception e1) {
 						logger.error("Exception while retrieving Q values from data file", e1);
 					}
@@ -898,7 +963,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				checkWhetherPathsAreEmpty();
 			}
 			captureGUIInformation();
-			refreshRunButton();
+			refreshRunButton(true);
 			Job updateJob = updateGuiParameters();
 			try {
 				updateJob.join(); // make sure job is finished so that ROI updates work correctly
@@ -932,7 +997,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			String pathToQ = currentPathToQ;
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
-			refreshRunButton();
+			refreshRunButton(true);
 			checkWhetherPathsAreEmpty();
 			updateGuiParameters();
 		}
@@ -978,15 +1043,16 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		
 	};
 	
-	protected void refreshRunButton() {
-		final boolean fileValidAndPathsPopulated = (fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected;
+	protected void refreshRunButton(boolean clearQAndPathItemsIfInvalid) {
+		final boolean pathsPopulatedParametersValid = ((fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected)
+				&& isValid();
 		compInput.getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
+				btnRunNcdModelBuilderJob.setEnabled(pathsPopulatedParametersValid);
 			}
 		});
-		if (!fileValidAndPathsPopulated && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
+		if (clearQAndPathItemsIfInvalid && !pathsPopulatedParametersValid && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
 			clearQAndPathItems();
 		}
 	}
@@ -1293,8 +1359,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
-				minDistanceSearch.setText("20");
-				maxDistanceSearch.setText("100");
+				int minDistance = 20, maxDistance = 100;
+				minDistanceSearch.setText(Integer.toString(minDistance));
+				minDistanceBounds.setMaximum(maxDistance);
+				maxDistanceBounds.setMinimum(minDistance);
+				maxDistanceSearch.setText(Integer.toString(maxDistance));
 				numberOfSearch.setText("10");
 				setDoubleBox(tolerance, 0.1);
 				symmetry.select(0);
@@ -1310,7 +1379,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qIntensityPlot.clear();
 		fileSelected = false;
 		enable(fileSelected);
-		refreshRunButton();
+		refreshRunButton(true);
 		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
 		isGuiInResetState = true;
@@ -1394,8 +1463,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
-		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor()));
-		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor()));
+		double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
+		double correctedMaxDistance = modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor();
+		minDistanceSearch.setText(Double.toString(correctedMinDistance));
+		maxDistanceSearch.setText(Double.toString(correctedMaxDistance));
+		minDistanceBounds.setMaximum(correctedMaxDistance);
+		maxDistanceBounds.setMinimum(correctedMinDistance);
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
 		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
@@ -1543,5 +1616,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
 		captureGUIInformation();
 		updateRoi();
+	}
+	
+	private boolean isValid() {
+		return (!minDistanceBounds.isError() && !maxDistanceBounds.isError());
 	}
 }
