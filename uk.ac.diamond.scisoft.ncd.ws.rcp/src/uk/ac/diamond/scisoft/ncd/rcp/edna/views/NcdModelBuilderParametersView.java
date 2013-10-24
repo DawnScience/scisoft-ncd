@@ -1408,9 +1408,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				region = qIntensityPlot.createRegion(Q_REGION_NAME, RegionType.XAXIS);
 				qIntensityPlot.addRegion(region);
 			}
+			region.addROIListener(qIntensityRegionListener);
 
 			updateRoi();
-			region.addROIListener(qIntensityRegionListener);
 		} catch (Exception e) {
 			logger.error("Couldn't open q view and create ROI", e);
 		}
