@@ -120,7 +120,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		
 		if (memento != null) {
 			
-			memento.putString(CalibrationPreferences.QAXIS_CURRENTMODE, currentDetector);
+//			memento.putString(CalibrationPreferences.QAXIS_CURRENTMODE, currentDetector);
 			memento.putString(CalibrationPreferences.QAXIS_ACIVEPLOT, GUI_PLOT_NAME);
 			
 			memento.putString(CalibrationPreferences.QAXIS_GRADIENT, gradient.getText());
@@ -220,10 +220,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			Integer val;
 			Float flt;
 			
-			tmp = this.memento.getString(CalibrationPreferences.QAXIS_CURRENTMODE);
-			if (tmp != null) {
-				currentDetector = tmp;
-			}
+//			tmp = this.memento.getString(CalibrationPreferences.QAXIS_CURRENTMODE);
+//			if (tmp != null) {
+//				currentDetector = tmp;
+//			}
 			
 			tmp = this.memento.getString(CalibrationPreferences.QAXIS_ACIVEPLOT);
 			if (tmp != null) {
@@ -379,6 +379,11 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	protected String getDetectorName() {
 		return null;
+	}
+	
+	@Override
+	protected void updateCalibrationResults() {
+		updateCalibrationResults(getDetectorName());
 	}
 	
 	protected Amount<Length> getPixel() {

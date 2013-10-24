@@ -1,17 +1,10 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
- * 
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- * 
- *   http://www.apache.org/licenses/LICENSE-2.0
- * 
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * Copyright 2011 Diamond Light Source Ltd. Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of the License at
+ * http://www.apache.org/licenses/LICENSE-2.0 Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing permissions and limitations under the
+ * License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
@@ -89,14 +82,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
 	protected NcdCalibrationSourceProvider ncdCalibrationSourceProvider, ncdDetectorSourceProvider;
-	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider,  ncdWaxsDetectorSourceProvider, ncdEnergySourceProvider;
+	protected NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider, ncdWaxsDetectorSourceProvider,
+			ncdEnergySourceProvider;
 	private ILoaderService loaderService;
 	protected String GUI_PLOT_NAME = "Dataset Plot";
 
 	private static CalibrationTable calTable;
 	protected ArrayList<CalibrationPeak> calibrationPeakList = new ArrayList<CalibrationPeak>();
 
-	
 	protected static Text energy;
 	protected static Combo standard;
 	protected Button beamRefineButton;
@@ -105,7 +98,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	protected ArrayList<IPeak> peaks = new ArrayList<IPeak>();
 
 	private Button calibrateButton;
-	protected static Text gradient,intercept;
+	protected static Text gradient, intercept;
 	protected static Button inputQAxis;
 	protected static Label cameralength;
 
@@ -113,8 +106,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected static HashMap<Unit<Length>, Button> unitSel;
 
-	protected String currentDetector;
-	
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 
 	private static class Compare implements Comparator<IPeak> {
@@ -145,13 +136,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		String input = gradient.getText();
 		try {
 			Real realVal = Real.valueOf(input);
-			Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE).asType(ScatteringVectorOverDistance.class);
+			Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE)
+					.asType(ScatteringVectorOverDistance.class);
 			return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
 		} catch (Exception e) {
 			return null;
 		}
 	}
-	
+
 	protected Amount<ScatteringVector> getIntercept() {
 		// Ignoring units for now because of bugs in JScience unit parser
 		String input = intercept.getText();
@@ -163,14 +155,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			return null;
 		}
 	}
-	
+
 	protected Unit<Length> getUnit() {
 		for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
 				return unitBtn.getKey();
 		return null;
 	}
-	
+
 	public QAxisCalibrationBase() {
 	}
 
@@ -179,14 +171,18 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
-		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
-		loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
-		
-		
+		ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service
+				.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service
+				.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service
+				.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
+		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service
+				.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
+		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service
+				.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
+		loaderService = (ILoaderService) PlatformUI.getWorkbench().getService(ILoaderService.class);
+
 		ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
@@ -230,7 +226,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		beamRefineButton.setText("Refine Beam Position");
 		beamRefineButton.setToolTipText("Run peak profile optimisation algorithm to refine beam center position");
 		beamRefineButton.setLayoutData(new GridData(SWT.CENTER, SWT.CENTER, true, false));
-		
+
 		calibrateButton = new Button(calibrationControls, SWT.NONE);
 		calibrateButton.setText("Calibrate");
 		calibrateButton.setEnabled(true);
@@ -242,10 +238,10 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 				runCalibration();
 			}
 		});
-		
+
 		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
 		ncdCalibrationSourceProvider.addSourceProviderListener(this);
-		
+
 		setupGUI();
 	}
 
@@ -263,7 +259,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		intercept = new Text(group, SWT.CENTER);
 		intercept.setText("--");
 		intercept.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		
+
 		Label cmlab = new Label(group, SWT.NONE);
 		cmlab.setText("Camera Length");
 		cmlab.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, true, false));
@@ -275,10 +271,10 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 		new Label(group, SWT.NONE).setText("Energy (keV)");
 		energy = new Text(group, SWT.BORDER);
-		energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3 ,1));
+		energy.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3, 1));
 		energy.setToolTipText("Set the energy used in data collection");
 		energy.addFocusListener(new FocusListener() {
-			
+
 			@Override
 			public void focusLost(FocusEvent e) {
 				Amount<Energy> tmpEnergy = getEnergy();
@@ -294,7 +290,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 					}
 				}
 			}
-			
+
 			@Override
 			public void focusGained(FocusEvent e) {
 				Amount<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
@@ -303,25 +299,25 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 				}
 			}
 		});
-		
+
 		Group unitGrp = new Group(group, SWT.NONE);
 		unitGrp.setLayout(new GridLayout(2, false));
 		unitGrp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		unitGrp.setToolTipText("Select q-axis calibration units");
-		
+
 		unitSel = new HashMap<Unit<Length>, Button>(2);
 		Button unitButton = new Button(unitGrp, SWT.RADIO);
 		unitButton.setText(NonSI.ANGSTROM.toString());
 		unitButton.setToolTipText("calibrate q-axis in \u212bngstroms");
 		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 		unitSel.put(NonSI.ANGSTROM, unitButton);
-		
+
 		unitButton = new Button(unitGrp, SWT.RADIO);
 		unitButton.setText(SI.NANO(SI.METRE).toString());
 		unitButton.setToolTipText("calibrate q-axis in nanometers");
 		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 		unitSel.put(SI.NANO(SI.METRE), unitButton);
-		
+
 		inputQAxis = new Button(group, SWT.NONE);
 		inputQAxis.setText("Override");
 		inputQAxis.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -340,33 +336,34 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
 		return null;
 	}
-	
+
 	private boolean checkCalibrationObjectInput() {
 		try {
 			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
-			
+
 			Collection<ITrace> traces = plotSystem.getTraces();
 			if (traces == null || traces.isEmpty()) {
-				String msg = "Please load calibration image into "+GUI_PLOT_NAME+" view.";
-				IllegalArgumentException e =  new IllegalArgumentException(msg); 
+				String msg = "Please load calibration image into " + GUI_PLOT_NAME + " view.";
+				IllegalArgumentException e = new IllegalArgumentException(msg);
 				logger.error(msg, e);
 				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure", e);
 				return false;
 			}
-			
+
 			Collection<IRegion> regions = plotSystem.getRegions(RegionType.SECTOR);
 			if (regions == null || regions.size() != 1) {
-				String msg = "Please specify single sector region in the "+GUI_PLOT_NAME+" view.";
-				IllegalArgumentException e =  new IllegalArgumentException(msg); 
+				String msg = "Please specify single sector region in the " + GUI_PLOT_NAME + " view.";
+				IllegalArgumentException e = new IllegalArgumentException(msg);
 				logger.error(msg, e);
-				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure",e);
+				ErrorDialog("SCISOFT NCD: Error running q-axis calibration procedure", e);
 				return false;
 			}
-			
+
 			return true;
-			
+
 		} catch (Exception e) {
-			String msg = "Error reading object parameters from "+GUI_PLOT_NAME+" view. Try clearing existing regions an reload calibration image.";
+			String msg = "Error reading object parameters from " + GUI_PLOT_NAME
+					+ " view. Try clearing existing regions an reload calibration image.";
 			logger.error(msg, e);
 			ErrorDialog(msg, e);
 			return false;
@@ -376,13 +373,13 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	private void storePeaks() {
 		IToolPage radialTool = PlottingFactory.getToolSystem(GUI_PLOT_NAME).getToolPage(
 				"org.dawb.workbench.plotting.tools.radialProfileTool");
-		IToolPage fittingTool = ((IToolPageSystem)radialTool.getToolPlottingSystem()).getToolPage(
-				"org.dawb.workbench.plotting.tools.fittingTool");
+		IToolPage fittingTool = ((IToolPageSystem) radialTool.getToolPlottingSystem())
+				.getToolPage("org.dawb.workbench.plotting.tools.fittingTool");
 		if (fittingTool != null) {
 			// Use adapters to avoid direct link which is weak.
-			List<IPeak> fittedPeaks = (List<IPeak>)fittingTool.getAdapter(IPeak.class);
-			
-			if (fittedPeaks!=null) {
+			List<IPeak> fittedPeaks = (List<IPeak>) fittingTool.getAdapter(IPeak.class);
+
+			if (fittedPeaks != null) {
 				Collections.sort(fittedPeaks, new Compare());
 				peaks = new ArrayList<IPeak>(fittedPeaks);
 			}
@@ -391,7 +388,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected void runJavaCommand() {
 	}
-	
+
 	private void setupGUI() {
 		final CalibrationStandards cs = CalibrationFactory.getCalibrationStandards();
 		for (String calibrant : cs.getCalibrantList()) {
@@ -408,94 +405,107 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 	}
 
 	protected void updateCalibrationResults() {
-		
+		updateCalibrationResults(ncdSaxsDetectorSourceProvider.getSaxsDetector());
+	}
+
+	protected void updateCalibrationResults(final String currentDetector) {
+
 		// Check if the view was disposed
 		if (gradient == null || gradient.isDisposed())
 			return;
-		
-		currentDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-		
+
 		calibrationPeakList.clear();
-		
+
 		calTable.setInput(calibrationPeakList);
 		gradient.setText("--");
 		intercept.setText("--");
 		cameralength.setText("--");
 		if (ncdCalibrationSourceProvider.getNcdDetectors().containsKey(currentDetector)) {
-			ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentDetector);
-			if (peakList != null) {
-				calibrationPeakList.addAll(peakList);
-			}
-			final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
-			final Amount<ScatteringVectorOverDistance> amountGrad = ncdCalibrationSourceProvider.getGradient(currentDetector);
-			final Amount<ScatteringVector> amountIntercept = ncdCalibrationSourceProvider.getIntercept(currentDetector);
-			if (amountGrad != null && amountIntercept != null) {
+		}
+		ArrayList<CalibrationPeak> peakList = ncdCalibrationSourceProvider.getPeakList(currentDetector);
+		if (peakList != null) {
+			calibrationPeakList.addAll(peakList);
+		}
 
-				PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+		final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
+		final Amount<ScatteringVectorOverDistance> amountGrad = ncdCalibrationSourceProvider
+				.getGradient(currentDetector);
+		final Amount<ScatteringVector> amountIntercept = ncdCalibrationSourceProvider.getIntercept(currentDetector);
+		if (amountGrad != null && amountIntercept != null) {
 
-					@Override
-					public void run() {
-						gradient.setText(amountGrad.toString());
-						intercept.setText(amountIntercept.toString());
-						Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
-						if (mcl != null) {
-							cameralength.setText(mcl.to(SI.METRE).toString());
-						}
-						for (Button unitBtn : unitSel.values()) {
-							unitBtn.setSelection(false);
-						}
-						if (units == null) { 
-							unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
+			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
+				@Override
+				public void run() {
+					gradient.setText(amountGrad.toString());
+					intercept.setText(amountIntercept.toString());
+					Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
+					if (mcl != null) {
+						cameralength.setText(mcl.to(SI.METRE).toString());
+					}
+					for (Button unitBtn : unitSel.values()) {
+						unitBtn.setSelection(false);
+					}
+					if (units == null) {
+						unitSel.get(NcdConstants.DEFAULT_UNIT).setSelection(true);
+					} else {
+						unitSel.get(units).setSelection(true);
+					}
+					calTable.setInput(calibrationPeakList);
+					calTable.refresh();
+
+					// update locked diffraction metadata in Diffraction tool
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
+					if (lockedMeta == null) {
+						Collection<ITrace> traces = plotSystem.getTraces();
+						if (traces != null && !traces.isEmpty()) {
+							int[] datashape = traces.iterator().next().getData().getShape();
+							loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata
+									.getDiffractionMetadata(datashape));
 						} else {
-							unitSel.get(units).setSelection(true);
+							logger.info("SCISOFT NCD: Couldn't find calibration image for configuring diffraction metadata");
+							return;
 						}
-						calTable.setInput(calibrationPeakList);
-						calTable.refresh();
-						
-						// update locked diffraction metadata in Diffraction tool
-						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
-						IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
-						if (lockedMeta == null) {
-							Collection<ITrace> traces = plotSystem.getTraces();
-							if (traces != null && !traces.isEmpty()) {
-								int[] datashape = traces.iterator().next().getData().getShape();
-								loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
-							} else {
-								logger.info("SCISOFT NCD: Couldn't find calibration image for configuring diffraction metadata");
-								return;
-							}
-						}
-						DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
-						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
-						
-						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector).getPxSize();
-						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETRE));
-						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETRE));
-						
-						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
-						if (energy != null) {
-							crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
-						}
-						if (mcl != null) {
-							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETRE));
-						}
-						
+					}
+					try {
+						DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData()
+								.getDetector2DProperties();
+						DiffractionCrystalEnvironment crystalProperties = loaderService.getLockedDiffractionMetaData()
+								.getDiffractionCrystalEnvironment();
+
 						Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 						if (sectorRegions != null && sectorRegions.size() == 1) {
 							final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
 							double[] cp = sroi.getPoint();
 							detectorProperties.setBeamCentreCoords(cp);
 						}
+
+						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector)
+								.getPxSize();
+						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETRE));
+						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETRE));
+
+						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
+						if (energy != null) {
+							crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI
+									.KILO(NonSI.ELECTRON_VOLT)));
+						}
+						if (mcl != null) {
+							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETRE));
+						}
+					} catch (Exception e) {
+						logger.info("caught exception updating IDiffractionMetadata on " + GUI_PLOT_NAME
+								+ ". Life goes on. (In GDA the IDiffractionMetadata is likely to be correct already.)");
 					}
-				});
-			}
+				}
+			});
 		}
 	}
 
 	protected void setCalTable(ArrayList<CalibrationPeak> cpl) {
 		calTable.setInput(cpl);
 	}
-	
+
 	protected Unit<Length> getUnitScale() {
 		for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 			if (unitBtn.getValue().getSelection())
@@ -520,14 +530,14 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 				updateCalibrationResults();
 			}
 		}
-		
+
 		if (sourceName.equals(NcdProcessingSourceProvider.ENERGY_STATE)) {
 			if (sourceValue instanceof Amount<?>) {
-				Double val = ((Amount<Energy>)sourceValue).doubleValue(SI.KILO(NonSI.ELECTRON_VOLT));
+				Double val = ((Amount<Energy>) sourceValue).doubleValue(SI.KILO(NonSI.ELECTRON_VOLT));
 				energy.setText(val.toString());
 			}
 		}
-		
+
 		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
 			if (sourceValue instanceof String) {
 				updateCalibrationResults();
