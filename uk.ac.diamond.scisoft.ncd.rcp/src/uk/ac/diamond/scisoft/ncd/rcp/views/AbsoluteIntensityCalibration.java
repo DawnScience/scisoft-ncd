@@ -27,6 +27,8 @@ import org.dawnsci.plotting.api.trace.ColorOption;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
+import org.eclipse.swt.events.SelectionAdapter;
+import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -54,12 +56,14 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration";
 	
+	private static final String REEFRENCE_PLOT_NAME = "Dataset Plot";
+	private static final String RESULTS_PLOT_NAME = "Absolute Calibration Plot";
+	
 	private IPlottingSystem plottingSystem;
 	private Text sampleThickness;
-	private Text absScale;
-	private Label absOffset;
+	private Label absScale, absOffset;
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
-	private Button runCalibratioin;
+	private Button runCalibratioin, clearCalibratioin;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsOffsetSourceProvider;
@@ -130,20 +134,13 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			Label absScaleLabel = new Label(g, SWT.NONE);
 			absScaleLabel.setText("Abs. Scale");
 			absScaleLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
-			absScale = new Text(g, SWT.BORDER);
+			absScale = new Label(g, SWT.NONE);
 			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
 			Double tmpAbsScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 			if (tmpAbsScaling != null) {
 				absScale.setText(tmpAbsScaling.toString());
 			}
-			absScale.addModifyListener(new ModifyListener() {
-				
-				@Override
-				public void modifyText(ModifyEvent e) {
-					ncdAbsScaleSourceProvider.setAbsScaling(getAbsScale(), false);
-				}
-			});
 			
 			Label absOffsetLabel = new Label(g, SWT.NONE);
 			absOffsetLabel.setText("Offset");
@@ -152,15 +149,28 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absOffset.setToolTipText("Offset value between reference and calibrated profiles. Should be close to zero.");
 			
-			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener();
+			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener(REEFRENCE_PLOT_NAME, RESULTS_PLOT_NAME);
 			
 			runCalibratioin = new Button(g, SWT.PUSH);
 			runCalibratioin.setText("Run Absolute Intensity Calibration");
 			runCalibratioin.setToolTipText("Run absolute intensity calibration procedure." +
-							" Please plot reduced I(q) profile for glassy carbon sample before starting calibration.");
-			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+							" Please plot normalised glassy carbon sample image before starting calibration.");
+			runCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			runCalibratioin.addSelectionListener(absoluteCalibrationListener);
 			
+			clearCalibratioin = new Button(g, SWT.PUSH);
+			clearCalibratioin.setText("Clear Calibration Data");
+			clearCalibratioin.setToolTipText("Clear absolute intensity calibration data to enable manual scaling for data reduction.");
+			clearCalibratioin.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			clearCalibratioin.addSelectionListener(new SelectionAdapter() {
+				
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdSampleThicknessSourceProvider.setSampleThickness(null, true);
+					ncdAbsScaleSourceProvider.setAbsScaling(null, true);
+					ncdAbsOffsetSourceProvider.setAbsOffset(null);
+				}
+			});
 		}
 		
 		try {
@@ -175,7 +185,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		plot.setLayout(new FillLayout());
 		try {
 	        IActionBars wrapper = this.getViewSite().getActionBars();
-			plottingSystem.createPlotPart(plot, "Calibration Plot", wrapper, PlotType.XY, this);
+			plottingSystem.createPlotPart(plot, RESULTS_PLOT_NAME, wrapper, PlotType.XY, this);
 
 		} catch (Exception e) {
 			logger.error("Error creating plot part.", e);
@@ -256,7 +266,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.ABSSCALING_STATE)) {
 			if (sourceValue != null) {
-			    DecimalFormat sForm = new DecimalFormat("0.###E0");
+			    DecimalFormat sForm = new DecimalFormat("0.####E0");
 				String sourceText = sForm.format(sourceValue);
 				if (sourceText != null) {
 					absScale.setText(sourceText);
@@ -268,7 +278,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.ABSOFFSET_STATE)) {
 			if (sourceValue != null) {
-			    DecimalFormat sForm = new DecimalFormat("0.###E0");
+			    DecimalFormat sForm = new DecimalFormat("0.####E0");
 				String sourceText = sForm.format(sourceValue);
 				if (sourceText != null) {
 					absOffset.setText(sourceText);

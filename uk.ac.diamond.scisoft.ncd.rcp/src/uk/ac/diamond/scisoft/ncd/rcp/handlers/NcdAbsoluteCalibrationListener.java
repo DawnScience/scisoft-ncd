@@ -27,9 +27,12 @@ import java.util.List;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.Unit;
 
+import org.dawb.common.services.ILoaderService;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
-import org.dawnsci.plotting.api.axis.IAxis;
+import org.dawnsci.plotting.api.region.IRegion;
+import org.dawnsci.plotting.api.region.IRegion.RegionType;
+import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.dawnsci.plotting.api.trace.ILineTrace;
 import org.dawnsci.plotting.api.trace.ITrace;
 import org.eclipse.core.runtime.FileLocator;
@@ -49,11 +52,17 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
-import uk.ac.diamond.scisoft.analysis.dataset.Slice;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
+import uk.ac.diamond.scisoft.analysis.diffraction.QSpace;
 import uk.ac.diamond.scisoft.analysis.io.DatLoader;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
+import uk.ac.diamond.scisoft.analysis.roi.IROI;
+import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
+import uk.ac.diamond.scisoft.analysis.roi.ROIProfile.XAxis;
+import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.NCDAbsoluteCalibration;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
@@ -63,8 +72,15 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener";
 
-	protected static final String PLOT_NAME = "Dataset Plot";
+	private String referencePlotName;
+	private String resultsPlotName;
 	
+	public NcdAbsoluteCalibrationListener(String referencePlotName, String resultsPlotName) {
+		super();
+		this.referencePlotName = referencePlotName;
+		this.resultsPlotName = resultsPlotName;
+	}
+
 	@Override
 	public void widgetSelected(SelectionEvent e) {
 		
@@ -103,10 +119,14 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			return;
 		}
 
-		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(PLOT_NAME);
-		IAxis selAxis = plottingSystemRef.getSelectedXAxis();
-		double lowerAxis = selAxis.getLower();
-		double upperAxis = selAxis.getUpper();
+		final Double thickness = ncdSampleThicknessSourceProvider.getSampleThickness();
+		if (thickness == null || thickness.isInfinite() || thickness.isNaN() || !(thickness > 0.0)) {
+			Status status = new Status(IStatus.ERROR, ID, "Invalid sample thickness. Please specify sample thickness in millimeters.");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return;
+		}
+		
+		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(referencePlotName);
 		
 		Collection<ITrace> traces = plottingSystemRef.getTraces();
 		ITrace tmpTrace = null;
@@ -114,8 +134,8 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			tmpTrace = traces.iterator().next();			
 		}
 		
-		if (tmpTrace == null || !(tmpTrace instanceof ILineTrace)) {
-			Status status = new Status(IStatus.ERROR, ID, "Invalid input data. Please plot integrated I(q) profile from a glassy carbon sample.");
+		if (tmpTrace == null || !(tmpTrace instanceof IImageTrace)) {
+			Status status = new Status(IStatus.ERROR, ID, "Invalid input data. Please plot normalised glassy carbon sample image.");
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
 		}
@@ -134,21 +154,45 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		}
 		Unit<ScatteringVector> unit = crb.getUnit(detectorSaxs).inverse().asType(ScatteringVector.class);
 		
-		ILineTrace dataTrace = (ILineTrace) tmpTrace;
+		IImageTrace dataTrace = (IImageTrace) tmpTrace;
 		dataQ = new ArrayList<Amount<ScatteringVector>>();
-		AbstractDataset dataQDataset = (AbstractDataset)dataTrace.getXData();
-		int idxLower = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, lowerAxis));
-		int idxUpper = Math.min(dataQDataset.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQDataset, upperAxis));
-		if (idxLower == idxUpper) {
-			Status status = new Status(IStatus.ERROR, ID, "Invalid data range. Please check plot settings");
+		AbstractDataset imageDataset = (AbstractDataset)dataTrace.getData();
+		AbstractDataset mask = (AbstractDataset)dataTrace.getMask();
+		
+		SectorROI sroi = null;
+		Collection<IRegion> rois = plottingSystemRef.getRegions(RegionType.SECTOR);
+		if (rois != null && !(rois.isEmpty())) {
+			IROI tmpRoi = rois.iterator().next().getROI();			
+			if (tmpRoi != null && (tmpRoi instanceof SectorROI)) {
+				sroi = (SectorROI) tmpRoi;
+			} else {
+				Status status = new Status(IStatus.ERROR, ID, "Invalid input data. Please specify sector integration region.");
+				StatusManager.getManager().handle(status, StatusManager.SHOW);
+				return;
+			}
+		}
+		
+		ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+		IDiffractionMetadata dm = loaderService.getLockedDiffractionMetaData();
+		QSpace qSpace = null;
+		
+		if (dm != null) {
+			DetectorProperties detprops = dm.getDetector2DProperties().clone();
+	    	DiffractionCrystalEnvironment diffexp = dm.getDiffractionCrystalEnvironment().clone();
+			qSpace = new QSpace(detprops, diffexp);
+		} else {
+			Status status = new Status(IStatus.ERROR, ID, "Invalid input data. Diffraction metadata was not found.");
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
 		}
-		for (int idx = idxLower; idx <= idxUpper; idx++) {
+		
+		AbstractDataset[] profile = ROIProfile.sector(imageDataset, mask, sroi, true, false, false, qSpace, XAxis.Q, false);
+		dataI = profile[0];
+		AbstractDataset dataQDataset = profile[4];
+		for (int idx = 0; idx < dataQDataset.getSize(); idx++) {
 			double val = dataQDataset.getDouble(idx);
 			dataQ.add(Amount.valueOf(val, unit));
 		}
-		dataI = ((AbstractDataset)dataTrace.getYData()).getSlice(new Slice(idxLower, idxUpper + 1));
 		
 		final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 		try {
@@ -168,7 +212,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 					
 					@Override
 					public void run() {
-						IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(PLOT_NAME);
+						IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(resultsPlotName);
 						plottingSystemRef.clear();
 						
 						ILineTrace refTrace = plottingSystemRef.createLineTrace("Reference Glassy Carbon Profile");
@@ -176,22 +220,20 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						refTrace.setTraceColor(ColorConstants.red);
 						plottingSystemRef.addTrace(refTrace);
 						
-						ILineTrace edeTrace = plottingSystemRef.createLineTrace("Calibrated Input Data");
-						edeTrace.setData(ncdAbsoluteCalibration.getDataQ(), ncdAbsoluteCalibration.getCalibratedI());
-						edeTrace.setTraceColor(ColorConstants.blue);
-						plottingSystemRef.addTrace(edeTrace);
+						ILineTrace calTrace = plottingSystemRef.createLineTrace("Calibrated Input Data");
+						calTrace.setData(ncdAbsoluteCalibration.getDataQ(), ncdAbsoluteCalibration.getCalibratedI());
+						calTrace.setTraceColor(ColorConstants.blue);
+						plottingSystemRef.addTrace(calTrace);
 						
+						plottingSystemRef.getSelectedXAxis().setTitle("q / \u212b\u207b\u00b9");
+						plottingSystemRef.getSelectedXAxis().setLog10(true);
+						plottingSystemRef.getSelectedYAxis().setTitle("I(q) / cm\u207b\u00b9");
+						plottingSystemRef.getSelectedYAxis().setLog10(true);
 						plottingSystemRef.repaint();
 						
 						double[] polynom = ncdAbsoluteCalibration.getCalibrationPolynomial().getCoefficients();
-						Double thickness = ncdSampleThicknessSourceProvider.getSampleThickness();
-						if (thickness == null || thickness.isInfinite() || thickness.isNaN() || !(thickness > 0.0)) {
-							Status status = new Status(IStatus.ERROR, ID, "Invalid sample thickness. Please specify sample thickness in millimeters.");
-							StatusManager.getManager().handle(status, StatusManager.SHOW);
-							return;
-						}
 						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness, true);
-						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0]);
+						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0] * thickness);
 					}
 				});
 					
