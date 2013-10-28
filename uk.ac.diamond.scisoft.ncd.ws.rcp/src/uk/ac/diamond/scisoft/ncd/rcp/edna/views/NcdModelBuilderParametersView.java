@@ -682,12 +682,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
 					qMaxBounds.setMinimum(currentROI.getPointX() * getAngstromNmFactor());
 				}
-				double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
-				double correctedMaxDistance = modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor();
-				minDistanceSearch.setText(Double.toString(correctedMinDistance));
-				maxDistanceSearch.setText(Double.toString(correctedMaxDistance));
-				minDistanceBounds.setMaximum(correctedMaxDistance);
-				maxDistanceBounds.setMinimum(correctedMinDistance);
+				resetDmaxParameters();
 				String newUnits = modelBuildingParameters.isMainUnitAngstrom() ? gnomUnits[0] : gnomUnits[1];
 				minDistanceUnits.setText(newUnits);
 				maxDistanceUnits.setText(newUnits);
@@ -865,10 +860,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					updatePoint(startPoint, String.valueOf(roi.getPoint()[0] * getAngstromNmFactor()));
 					setDoubleBox(qMax, roi.getEndPoint()[0] * getAngstromNmFactor());
 					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0] * getAngstromNmFactor()));
-					qMinBounds.setMaximum(roi.getEndPoint()[0] * getAngstromNmFactor());
-					qMaxBounds.setMinimum(roi.getPoint()[0] * getAngstromNmFactor());
-					startPointBounds.setMaximum(Integer.parseInt(endPoint.getText()));
-					endPointBounds.setMinimum(Integer.parseInt(startPoint.getText()));
+					updateInternalBounds(roi.getPoint()[0], roi.getEndPoint()[0], Integer.parseInt(startPoint.getText()), Integer.parseInt(endPoint.getText()));
 					regionDragging=false;
 				}
 			}
@@ -1569,17 +1561,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
+		resetDmaxParameters();
+		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
+		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
+		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
+		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
+		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
+	}
+
+	public void resetDmaxParameters() {
 		double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
 		double correctedMaxDistance = modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor();
 		minDistanceSearch.setText(Double.toString(correctedMinDistance));
 		maxDistanceSearch.setText(Double.toString(correctedMaxDistance));
 		minDistanceBounds.setMaximum(correctedMaxDistance);
 		maxDistanceBounds.setMinimum(correctedMinDistance);
-		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
-		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
-		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
-		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
-		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
 	}
 
 	private void refreshSymmetryCombo(String symmetry2) {
@@ -1656,10 +1652,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		try {
 			qmin = modelBuildingParameters.getqMinAngstrom();
 			qmax = modelBuildingParameters.getqMaxAngstrom();
-			qMinBounds.setMaximum(qmax / getAngstromNmFactor());
-			qMaxBounds.setMinimum(qmin / getAngstromNmFactor());
-			startPointBounds.setMaximum(Integer.parseInt(endPoint.getText()));
-			endPointBounds.setMinimum(Integer.parseInt(startPoint.getText()));
+			updateInternalBounds(qmin, qmax, Integer.parseInt(startPoint.getText()), Integer.parseInt(endPoint.getText()));
 		} catch (NumberFormatException e) {
 			logger.error("Problem when attempting to get qMin and qMax values", e);
 		}
@@ -1738,7 +1731,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private double getDatasetMinimumInCurrentUnits() {
 		return currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor();
 	}
+
 	
+	/**
+	 * Update the bounds inside the absolute minimum/maximum values. Used to prevent start/end from overlapping.
+	 * @param qMinAngstrom
+	 * @param qMaxAngstrom
+	 * @param startPointInt
+	 * @param endPointInt
+	 */
+	private void updateInternalBounds(double qMinAngstrom, double qMaxAngstrom, int startPointInt, int endPointInt) {
+		qMinBounds.setMaximum(qMaxAngstrom * getAngstromNmFactor());
+		qMaxBounds.setMinimum(qMinAngstrom * getAngstromNmFactor());
+		startPointBounds.setMaximum(endPointInt);
+		endPointBounds.setMinimum(startPointInt);
+	}
+
 	private boolean isValid() {
 		return (!minDistanceBounds.isError() && !maxDistanceBounds.isError() && !qMinBounds.isError() && !qMaxBounds.isError() &&
 				!startPointBounds.isError() && !endPointBounds.isError());
