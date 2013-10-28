@@ -454,7 +454,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startPoint = new Text(firstPointComposite, SWT.NONE);
 		startPoint.setToolTipText("First point of data to be used for calculations.");
 		startPoint.addListener(SWT.Verify, verifyInt);
-		startPoint.addListener(SWT.KeyUp, startEndPointListener);
 		startPoint.addListener(SWT.DefaultSelection, pointsQKeyListener);
 		startPoint.addFocusListener(pointsQFocusListener);
 		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -468,7 +467,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMinComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMin = new Text(qMinComposite, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
-		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMin.addListener(SWT.DefaultSelection, pointsQKeyListener);
@@ -486,7 +484,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint = new Text(lastPointComposite, SWT.NONE);
 		endPoint.setToolTipText("Last point of data to be used for calculations");
 		endPoint.addListener(SWT.Verify, verifyInt);
-		endPoint.addListener(SWT.KeyUp, startEndPointListener);
 		endPoint.addListener(SWT.DefaultSelection, pointsQKeyListener);
 		endPoint.addFocusListener(pointsQFocusListener);
 		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
@@ -503,7 +500,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMaxComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMax = new Text(qMaxComposite, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
-		qMax.addListener(SWT.KeyUp, qMinMaxListener);
 		qMax.addListener(SWT.DefaultSelection, pointsQKeyListener);
 		qMax.addFocusListener(pointsQFocusListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
@@ -975,15 +971,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		
 		@Override
 		public void handleEvent(Event event) {
-			if (event.widget == minDistanceSearch) {
-				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
-				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
-			}
-			else if (event.widget == maxDistanceSearch) {
-				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
-				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
-			}
-			refreshRunButton(false);
+			updateAfterGuiEvent(event.widget);
 		}
 	};
 
@@ -991,15 +979,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		@Override
 		public void focusLost(FocusEvent e) {
-			if (e.getSource() == minDistanceSearch) {
-				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
-				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
-			}
-			else if (e.getSource() == maxDistanceSearch) {
-				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
-				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
-			}
-			refreshRunButton(false);
+			updateAfterGuiEvent(e.getSource());
 		}
 
 		@Override
@@ -1116,24 +1096,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 			else if (source == endPoint) {
 				updateQ(qMax, sourceText);
-			}
-			captureGUIInformation();
-			updateRoi();
-		}
-		
-	};
-	
-	private Listener qMinMaxListener = new Listener() {
-
-		@Override
-		public void handleEvent(Event event) {
-			Text source = (Text) event.widget;
-			String sourceText = source.getText();
-			if (source == qMin) {
-				updatePoint(startPoint, sourceText);
-			}
-			else if (source == qMax) {
-				updatePoint(endPoint, sourceText);
 			}
 			captureGUIInformation();
 			updateRoi();
@@ -1755,5 +1717,32 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private boolean isValid() {
 		return (!minDistanceBounds.isError() && !maxDistanceBounds.isError() && !qMinBounds.isError() && !qMaxBounds.isError() &&
 				!startPointBounds.isError() && !endPointBounds.isError());
+	}
+
+	private void updateAfterGuiEvent(Object source) {
+		if (source == minDistanceSearch) {
+			maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+			minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+		}
+		else if (source == maxDistanceSearch) {
+			minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+			maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+		}
+		else if (source == qMin) {
+			updatePoint(startPoint, ((Text)source).getText());
+		}
+		else if (source == qMax) {
+			updatePoint(endPoint, ((Text)source).getText());
+		}
+		else if (source == startPoint) {
+			updateQ(qMin, ((Text)source).getText());
+		}
+		else if (source == endPoint) {
+			updateQ(qMax, ((Text)source).getText());
+		}
+		captureGUIInformation();
+		updateRoi();
+
+		refreshRunButton(false);
 	}
 }
