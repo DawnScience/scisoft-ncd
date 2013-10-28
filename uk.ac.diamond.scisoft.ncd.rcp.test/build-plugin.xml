@@ -32,7 +32,12 @@
                 <pathelement location="${workspace.git.loc}/dawn-common.git/org.dawb.hdf5/bin" />
                 <pathelement path="${workspace.loc}/tp/plugins/com.springsource.slf4j.api_1.5.6.jar" />  <!--ensure that required org.slf4j.LoggerFactory appears first in classpath -->
                 <pathelement path="${workspace.loc}/tp/plugins/com.springsource.slf4j.org.apache.commons.logging_1.5.6.jar" />  <!--ensure that matching imp appears first in classpath -->
-                <pathelement location="${workspace.loc}/tp/plugins/*" />
+                <fileset dir="${workspace.loc}/tp/plugins">
+                    <include name="*.jar" />
+                    <exclude name="*.source_*" />
+                    <exclude name="org.eclipse.swt.*" />  <!-- Not needed. -->
+                    <exclude name="org.apache.batik*" />  <!-- org.apache.batik.pdf has it's own copy of org.apache.commons.io so exclude it -->
+                </fileset>
             </classpath>
             <batchtest todir="@{report.dir}">
                 <fileset dir="${GDA-plugin.basedir}/src">
