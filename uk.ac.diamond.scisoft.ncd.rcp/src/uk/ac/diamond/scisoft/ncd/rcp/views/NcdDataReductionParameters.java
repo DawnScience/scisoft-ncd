@@ -1375,9 +1375,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				String sourceText = sForm.format(sourceValue);
 				if (sourceText != null) {
 					absScale.setText(sourceText);
+					absScale.setEnabled(false);
+				} else {
+					absScale.setText("");
+					absScale.setEnabled(true);
 				}
 			} else {
 				absScale.setText("");
+				absScale.setEnabled(true);
 			}
 		}
 		

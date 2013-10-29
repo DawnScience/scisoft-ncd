@@ -24,6 +24,9 @@ import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.trace.ColorOption;
+import org.eclipse.core.resources.IFile;
+import org.eclipse.jface.viewers.ISelection;
+import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -38,11 +41,15 @@ import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IActionBars;
 import org.eclipse.ui.IMemento;
+import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.ISourceProviderListener;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
@@ -61,7 +68,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	
 	private IPlottingSystem plottingSystem;
 	private Text sampleThickness;
-	private Label absScale, absOffset;
+	private Label absScale, absOffset, selectedFile;
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 	private Button runCalibratioin, clearCalibratioin;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
@@ -72,6 +79,27 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 	private IMemento memento;
 	
+	private final class FileSelectionListener implements ISelectionListener {
+		@Override
+		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
+			if (selectedFile != null && !(selectedFile.isDisposed())) {
+				if (selection instanceof IStructuredSelection
+						&& ((IStructuredSelection) selection).toList().size() == 1
+						&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
+
+					final Object sel = ((IStructuredSelection) selection).getFirstElement();
+					if (sel instanceof IFile) {
+						selectedFile.setText(((IFile) sel).getName());
+					}
+				} else {
+					selectedFile.setText("");
+				}
+			}
+		}
+	}
+
+	private FileSelectionListener fileSelectionListener;
+
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
 		return doubleValidator.validate(input);
@@ -104,6 +132,10 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
 		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
 		
+		fileSelectionListener = new FileSelectionListener();
+		ISelectionService selectionService = getViewSite().getWorkbenchWindow().getSelectionService();
+		selectionService.addPostSelectionListener(fileSelectionListener);
+
 		Composite c = new Composite(parent, SWT.NONE);
 		c.setLayout(new GridLayout(2, false));
 		c.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
@@ -112,6 +144,25 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			Composite g = new Composite(c, SWT.NONE);
 			g.setLayout(new GridLayout(2, false));
 			g.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
+			
+			Label fileLabel = new Label(g, SWT.NONE);
+			fileLabel.setText("Selected Calibrant File");
+			fileLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			selectedFile = new Label(g, SWT.NONE);
+			selectedFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			selectedFile.setToolTipText("Select calibrant file name");
+			ISelection selection = selectionService.getSelection(ProjectExplorer.VIEW_ID);
+			if (selection instanceof IStructuredSelection
+					&& ((IStructuredSelection) selection).toList().size() == 1
+					&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
+
+				final Object sel = ((IStructuredSelection) selection).getFirstElement();
+				if (sel instanceof IFile) {
+					selectedFile.setText(((IFile) sel).getName());
+				}
+			} else {
+				selectedFile.setText("");
+			}
 			
 			Label sampleThicknessLabel = new Label(g, SWT.NONE);
 			sampleThicknessLabel.setText("Sample Thickness (mm)");
@@ -132,7 +183,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			});
 			
 			Label absScaleLabel = new Label(g, SWT.NONE);
-			absScaleLabel.setText("Abs. Scale");
+			absScaleLabel.setText("Absolute Instensity Scale");
 			absScaleLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
 			absScale = new Label(g, SWT.NONE);
 			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -143,7 +194,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			}
 			
 			Label absOffsetLabel = new Label(g, SWT.NONE);
-			absOffsetLabel.setText("Offset");
+			absOffsetLabel.setText("Zero Offset");
 			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absOffset = new Label(g, SWT.NONE);
 			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -172,6 +223,22 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 					plottingSystem.clear();
 				}
 			});
+			
+			Label instructions = new Label(g, SWT.NONE);
+			instructions.setText("\nInstructions:\n" +
+								"1. Complete q-axis calibration stage, i.e. check that correct values for\n" +
+								"   beam center, distance, wavelength are set in the \"Diffraction\" tool page.\n" +
+								"2. Make sure that sector region is locked to beam center by pressing the\n" +
+								"   \"Lock to Metadata\" button on the toolbar of the \"Raidal Profile\" tool page.\n" +
+								"3. Apply detector mask.\n" +
+								"4. Select file with a calibrant image in the \"Project Explorer\" view.\n" + 
+								"5. Check that correct \"Normalisation Dataset\" is selected in \"NCD Detector Parameters\" view.\n"+
+								"   Reload detector information if you need to refresh the list of available normalisation datasets.\n"+
+								"6. Specify the selected calibrant sample thinckness in millimeters.\n" +
+								"7. Press \"Run Absolute Instensity Calibration\" button to calculate absolute intensity scaling factor.\n"+
+								"8. To override abolute scale factor used in the \"Normalisation\" stage of the NCD Data Reduction\n" +
+								"   pipeline, press \"Clear Calibration Data\" button.");
+			instructions.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
 		}
 		
 		try {
@@ -288,5 +355,14 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 				absOffset.setText("");
 			}
 		}
+	}
+	
+	@Override
+	public void dispose() {
+		if (fileSelectionListener != null) {
+			ISelectionService selectionService = getViewSite().getWorkbenchWindow().getSelectionService();
+			selectionService.removePostSelectionListener(fileSelectionListener);
+		}
+		super.dispose();
 	}
 }
