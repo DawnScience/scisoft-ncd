@@ -309,6 +309,13 @@
             restorable="true">
       </view>
       <view
+            category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
+            class="uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration"
+            id="uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration"
+            name="Absolute Intensity Calibration"
+            restorable="true">
+      </view>
+      <view
             allowMultiple="true"
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
             class="uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.SaxsAnalysisView"
