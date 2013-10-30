@@ -895,10 +895,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			if (selection instanceof IStructuredSelection) {
 				if (getViewIsActive(part)) {
 					Object file = ((IStructuredSelection) selection).getFirstElement();
-					if (file instanceof IFile && !forgetLastSelection) {
-						String fileExtension = ((IFile) file).getFileExtension();
-						if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
-							String filename = ((IFile) file).getRawLocation().toOSString();
+					if (!forgetLastSelection) {
+						if (file instanceof IFile || file instanceof File) {
+							String filename = null;
+							String fileExtension = null;
+							if (file instanceof IFile) {
+								fileExtension = ((IFile) file).getFileExtension();
+								filename = ((IFile) file).getRawLocation().toOSString();
+							}
+							else if (file instanceof File) {
+								filename = ((File) file).getAbsolutePath();
+								fileExtension = filename.substring(filename.length()-3);
+							}
+							if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
 	//						if (ARPESFileDescriptor.isArpesFile(filename)) {
 								try {
 									setFilenameString(filename);
@@ -908,6 +917,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									logger.error("Something went wrong when creating a overview plot",e);
 								}
 	//						}
+							}
 						}
 					}
 					forgetLastSelection = false;
