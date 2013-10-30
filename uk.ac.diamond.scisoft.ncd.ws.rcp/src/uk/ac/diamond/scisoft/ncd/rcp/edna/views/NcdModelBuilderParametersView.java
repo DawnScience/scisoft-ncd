@@ -1371,16 +1371,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 			modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
-			double qMinValue = Double.valueOf(qMin.getText());
-
-			modelBuildingParameters.setqMinAngstrom(qMinValue / getAngstromNmFactor());
-
 			modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
 			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
-
-			double qMaxValue = Double.valueOf(qMax.getText());
-
-			modelBuildingParameters.setqMaxAngstrom(qMaxValue / getAngstromNmFactor());
 
 			modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
 
@@ -1677,6 +1669,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	private void setDoubleBox(Text text, double value) {
 		text.setText(String.format("%."+ ROUND_DOUBLES_DIGITS + "f", value));
+		if (text == qMin) {
+			modelBuildingParameters.setqMinAngstrom(value / getAngstromNmFactor());
+		}
+		else if (text == qMax) {
+			modelBuildingParameters.setqMaxAngstrom(value / getAngstromNmFactor());
+		}
 	}
 
 	private void resetRoi() {
@@ -1730,9 +1728,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		else if (source == qMin) {
 			updatePoint(startPoint, ((Text)source).getText());
+			setDoubleBox((Text)source, Double.parseDouble(((Text)source).getText()));
 		}
 		else if (source == qMax) {
 			updatePoint(endPoint, ((Text)source).getText());
+			setDoubleBox((Text)source, Double.parseDouble(((Text)source).getText()));
 		}
 		else if (source == startPoint) {
 			updateQ(qMin, ((Text)source).getText());
