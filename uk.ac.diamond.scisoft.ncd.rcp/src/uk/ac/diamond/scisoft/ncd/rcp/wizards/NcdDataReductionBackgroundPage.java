@@ -42,7 +42,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage {
 
-	public static int PAGENUMBER = 5;
+	protected static final int PAGENUMBER = 5;
 	private Text bgFile;
 	private Button browseBg;
 	private Text bgScale;

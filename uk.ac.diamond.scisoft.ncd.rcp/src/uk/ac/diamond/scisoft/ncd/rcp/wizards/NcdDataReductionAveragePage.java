@@ -36,7 +36,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionAveragePage extends AbstractNcdDataReductionPage {
 
-	public static int PAGENUMBER = 6;
+	protected static final int PAGENUMBER = 6;
 	private Button gridAverageButton;
 	private Text gridAverage;
 	private NcdProcessingSourceProvider ncdGridAverageSourceProvider;

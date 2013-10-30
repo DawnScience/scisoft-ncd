@@ -68,7 +68,7 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 	private String inputDirectory = "Please specify results directory";
 	private Text location;
 	private Button browse;
-	public static int PAGENUMBER = 1;
+	protected static final int PAGENUMBER = 1;
 
 	protected NcdDataReductionSetupPage() {
 		super("Data Reduction parameters setup");

@@ -43,7 +43,7 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 	private Text drFile;
 	private Button browseDr;
 
-	public static int PAGENUMBER = 2;
+	protected static final int PAGENUMBER = 2;
 
 	public NcdDataReductionResponsePage() {
 		super("Detector response");
