@@ -16,7 +16,7 @@
      <view
            category="org.dawb.workbench.ui.beta.views.category"
            icon="icons/ncd_envelope_small.png"
-           class="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
+           class="org.dawnsci.algorithm.ui.views.runner.AlgorithmView"
            id="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
            name="BioSAXS Model Builder"
            restorable="true">
@@ -52,6 +52,29 @@
             id="uk.ac.diamond.scisoft.ncd.ncdModelBuildingPreferences"
             name="NCD Model Building Preferences">
       </page>
+   </extension>
+   <extension
+         point="org.dawnsci.algorithm.ui.processPage">
+      <processPage
+            class="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView"
+            viewId="uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView">
+         <connection
+               title="NCD model building"
+               algorithmFile=""
+               runIcon="icons/run_workflow.gif"
+               stopIcon="icons/stop_workflow.gif">
+         </connection>
+      </processPage>
+   </extension>
+   <extension
+         point="org.eclipse.ui.services">
+      <sourceProvider
+            provider="uk.ac.diamond.scisoft.ncd.rcp.edna.actions.NcdModelBuilderSourceProvider">
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.ws.rcp.service"
+               priorityLevel="workbench">
+         </variable>
+      </sourceProvider>
    </extension>
 
 </plugin>

@@ -22,6 +22,8 @@ import java.util.Iterator;
 import java.util.Map;
 
 import org.csstudio.swt.xygraph.undo.ZoomType;
+import org.dawnsci.algorithm.ui.views.runner.AbstractAlgorithmProcessPage;
+import org.dawnsci.algorithm.ui.views.runner.IAlgorithmProcessContext;
 import org.dawnsci.common.widgets.decorator.BoundsDecorator;
 import org.dawnsci.common.widgets.decorator.FloatDecorator;
 import org.dawnsci.common.widgets.decorator.IValueChangeListener;
@@ -40,6 +42,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.jface.action.ActionContributionItem;
 import org.eclipse.jface.action.ToolBarManager;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.fieldassist.ContentProposalAdapter;
@@ -84,15 +87,17 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.swt.widgets.ToolBar;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISelectionListener;
+import org.eclipse.ui.ISourceProvider;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
 import org.eclipse.ui.IWorkbenchPart;
+import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.events.ExpansionAdapter;
 import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
-import org.eclipse.ui.part.ViewPart;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +121,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 import uk.ac.diamond.scisoft.ncd.ws.rcp.Activator;
 import uk.ac.gda.ui.content.FileContentProposalProvider;
 
-public class NcdModelBuilderParametersView extends ViewPart {
+public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage {
 	private static final String Q_REGION_NAME = "q Region";
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView";
 	protected static final Logger logger = LoggerFactory.getLogger(NcdModelBuilderParametersView.class);
@@ -211,7 +216,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	@Override
-	public void createPartControl(Composite parent) {
+	public Composite createPartControl(Composite parent) {
 		compInput = new Composite(parent, SWT.FILL);
 		compInput.setLayout(new FillLayout());
 
@@ -739,15 +744,12 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 		});
 
-		btnRunNcdModelBuilderJob = new Button(dataParameters, SWT.NONE);
+		ActionContributionItem runModelBuilderAction = (ActionContributionItem)algorithmViewPart.getViewSite().getActionBars().getToolBarManager().find(IAlgorithmProcessContext.RUN_ID_STUB+"NCD model building");
+		runModelBuilderAction = new ActionContributionItem(runModelBuilderAction.getAction());
+		runModelBuilderAction.fill(dataParameters);
+		btnRunNcdModelBuilderJob = (Button) runModelBuilderAction.getWidget();
 		btnRunNcdModelBuilderJob.setText("Run NCD model building");
 		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
-		btnRunNcdModelBuilderJob.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				runNcdModelBuilder();
-			}
-		});
 		btnRunNcdModelBuilderJob.setEnabled(false);
 
 		scrolledComposite.setContent(dataParameters);
@@ -837,7 +839,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			resetGUI();
 		}
 
-		checkFilenameAndColorDataFileBox(this.getSite().getShell().getDisplay());
+		checkFilenameAndColorDataFileBox(algorithmViewPart.getSite().getShell().getDisplay());
 		
 		qIntensityRegionListener = new IROIListener.Stub() {
 
@@ -863,8 +865,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 		updatePlot();
 
-		getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
+		algorithmViewPart.getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
+		return parent;
 	}
 
 	private void removeZoomTypeIcons(ToolBarManager man) {
@@ -1058,8 +1061,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startEndPointListener.handleEvent(trigger);
 	}
 
-	protected void runNcdModelBuilder() {
-		runNcdModelBuilderPipeline = new RunNcdModelBuilderPipeline();
+	protected void runNcdModelBuilder(ModelBuildingParameters parameters) {
+		runNcdModelBuilderPipeline = new RunNcdModelBuilderPipeline(parameters);
 		runNcdModelBuilderPipeline.runEdnaJob();
 	}
 
@@ -1325,7 +1328,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	protected void updatePlot() {
-		getSite().getShell().getDisplay().syncExec(new Runnable() {
+		algorithmViewPart.getSite().getShell().getDisplay().syncExec(new Runnable() {
 
 			@Override
 			public void run() {
@@ -1398,11 +1401,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			logger.error("Problems while capturing GUI information", e);
 		}
 		return modelBuildingParameters;
-	}
-	
-	@Override
-	public void setFocus() {
-		// do nothing here
 	}
 
 	public void resetGUI() {
@@ -1492,7 +1490,6 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
-		init(site);
 		this.memento = memento;
 	}
 
@@ -1564,7 +1561,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	@Override
 	public void dispose() {
-		getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionListener);
+		algorithmViewPart.getSite().getWorkbenchWindow().getSelectionService().removeSelectionListener(selectionListener);
 	}
 	
 	private void checkFilenameAndColorDataFileBox(Display display) {
@@ -1743,5 +1740,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		updateRoi();
 
 		refreshRunButton(false);
+	}
+
+	@Override
+	public String getTitle() {
+		return "BioSAXS Model Builder";
+	}
+
+	@Override
+	public void run(IAlgorithmProcessContext context) throws Exception {
+		runNcdModelBuilder(modelBuildingParameters);
+	}
+
+	@Override
+	public ISourceProvider[] getSourceProviders() {
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		return service.getSourceProviders();
 	}
 }

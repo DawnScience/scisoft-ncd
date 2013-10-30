@@ -20,11 +20,12 @@ import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.widgets.Shell;
 import org.eclipse.ui.PlatformUI;
 
-import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
+import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ws.rcp.RunPipeline;
 
 public class RunNcdModelBuilderPipeline extends RunPipeline {
 	protected static RunNcdModelBuilderPipeline runNcdModelBuilderPipeline = null;
+	ModelBuildingParameters parameters;
 
 	public static RunNcdModelBuilderPipeline getInstance() {
 		if (runNcdModelBuilderPipeline == null) {
@@ -36,15 +37,19 @@ public class RunNcdModelBuilderPipeline extends RunPipeline {
 	public RunNcdModelBuilderPipeline() {
 		super("BioSAXS Model Builder", "BioSAXS Model Builder Pipeline");
 	}
+	
+	public RunNcdModelBuilderPipeline(ModelBuildingParameters params) {
+		this();
+		parameters = params;
+	}
+
 	@Override
 	public String getParameters() {
-		final NcdModelBuilderParametersView ncdParametersView = (NcdModelBuilderParametersView) PlatformUI.getWorkbench().getActiveWorkbenchWindow()
-				.getActivePage().findView(NcdModelBuilderParametersView.ID);
-		String inputParameters = ncdParametersView.getParameters().toString();
-		if (!ncdParametersView.getParameters().isValid()) {
+		String inputParameters = parameters.toString();
+		if (!parameters.isValid()) {
 			final Shell shell = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell();
-			MessageDialog.openError(shell, "Bad parameters", ncdParametersView.getParameters().invalidMessage());
-			throw new IllegalArgumentException(ncdParametersView.getParameters().invalidMessage());
+			MessageDialog.openError(shell, "Bad parameters", parameters.invalidMessage());
+			throw new IllegalArgumentException(parameters.invalidMessage());
 		}
 		return inputParameters;
 	}
