@@ -850,8 +850,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			public void roiChanged(ROIEvent evt) {
 				if (evt.getROI() instanceof RectangularROI) {
 					regionDragging = true;
-					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
-					RectangularROI roi = (RectangularROI) region.getROI();
+					RectangularROI roi = (RectangularROI) evt.getROI();
 					setDoubleBox(qMin, roi.getPoint()[0] * getAngstromNmFactor());
 					updatePoint(startPoint, String.valueOf(roi.getPoint()[0] * getAngstromNmFactor()));
 					setDoubleBox(qMax, roi.getEndPoint()[0] * getAngstromNmFactor());
