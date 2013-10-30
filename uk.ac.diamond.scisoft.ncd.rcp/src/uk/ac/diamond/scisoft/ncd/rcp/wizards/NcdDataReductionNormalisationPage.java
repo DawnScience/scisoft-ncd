@@ -209,8 +209,4 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 		return doubleValidator.validate(input);
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

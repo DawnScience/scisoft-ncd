@@ -118,8 +118,4 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		setControl(container);
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

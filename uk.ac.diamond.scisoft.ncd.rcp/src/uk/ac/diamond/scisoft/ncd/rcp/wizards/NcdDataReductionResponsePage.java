@@ -107,8 +107,4 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 		setControl(container);
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

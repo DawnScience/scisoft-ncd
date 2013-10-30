@@ -26,7 +26,7 @@ import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 
-public abstract class AbstractNcdDataReductionPage extends WizardPage implements INcdDataReductionWizardPage {
+public abstract class AbstractNcdDataReductionPage extends WizardPage {
 
 	protected int currentPageNumber;
 	protected static Map<Integer, Boolean> activePages = new HashMap<Integer, Boolean>(7);
@@ -51,16 +51,6 @@ public abstract class AbstractNcdDataReductionPage extends WizardPage implements
 	}
 
 	@Override
-	public boolean isActive() {
-		return activePages.get(currentPageNumber);	
-	}
-
-	@Override
-	public void setActive(boolean isActive){
-		
-	}
-
-	@Override
 	public void setVisible(boolean vis) {
 		super.setVisible(vis);
 		if (!vis) {
@@ -77,14 +67,11 @@ public abstract class AbstractNcdDataReductionPage extends WizardPage implements
 		}
 		for (int i = currentPageNumber; i < pages.length; i++) {
 	
-			if(i < (pages.length - 1) &&((INcdDataReductionWizardPage)pages[i+1]).isActive()) {
+			if(i < (pages.length - 1) && activePages.get(i+1)) {
 				return pages[i+1];
 			}
 		}
 		return null;
 	}
 
-	public boolean isCurrentNcdWizardPage(){
-		return isCurrentPage();
-	}
 }

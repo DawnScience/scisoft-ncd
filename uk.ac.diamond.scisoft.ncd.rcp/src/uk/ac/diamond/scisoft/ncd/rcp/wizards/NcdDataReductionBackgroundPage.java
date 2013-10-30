@@ -246,9 +246,4 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		return null;
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
-
 }

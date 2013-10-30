@@ -366,8 +366,4 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		}
 	};
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

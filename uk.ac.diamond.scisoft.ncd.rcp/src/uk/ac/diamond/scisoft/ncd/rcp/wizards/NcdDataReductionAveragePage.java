@@ -104,9 +104,4 @@ public class NcdDataReductionAveragePage extends AbstractNcdDataReductionPage {
 		return null;
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
-
 }

@@ -362,15 +362,11 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		IWizard wizard = getWizard();
 		IWizardPage[] pages = wizard.getPages();
 		for (int i = currentPageNumber; i < pages.length; i++) {
-	
-			if(((INcdDataReductionWizardPage)pages[i]).isActive())
+			if(activePages.get(i)) {
 				return pages[i];
+			}
 		}
 		return null;
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }
