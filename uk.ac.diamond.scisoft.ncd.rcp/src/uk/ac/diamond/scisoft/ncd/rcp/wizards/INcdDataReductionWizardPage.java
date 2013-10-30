@@ -18,22 +18,8 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import org.eclipse.jface.wizard.IWizardPage;
 
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-
 public interface INcdDataReductionWizardPage extends IWizardPage{
-	/**
-	 * 
-	 * @return the provider, including any modifications (which includes path changes and 
-	 * the setting of user objects)
-	 */
-	public abstract NcdProcessingSourceProvider getProvider();
 	
-	/**
-	 * 
-	 * @param provider
-	 */
-	public abstract void setProvider(NcdProcessingSourceProvider provider);
-
 	/**
 	 * Returns whether a page is active or not
 	 * @return boolean

@@ -16,8 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
-import java.util.Map;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -107,32 +105,8 @@ public class NcdDataReductionAveragePage extends AbstractNcdDataReductionPage {
 	}
 
 	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public boolean isCurrentNcdWizardpage() {
 		return isCurrentPage();
 	}
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
 }

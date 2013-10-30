@@ -27,6 +27,7 @@ import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -38,20 +39,19 @@ public class NcdDataReductionWizard extends Wizard {
 	private List<INcdDataReductionWizardPage> ncdDataReductionPages;
 
 	private NcdDataReductionSetupPage setupPage;
-	private NcdDataReductionDetectorParameterPage detectorPage;
 	private final Logger logger = LoggerFactory.getLogger(NcdDataReductionWizard.class);
 
 	public NcdDataReductionWizard() {
 		super();
 		setNeedsProgressMonitor(true);
 		this.ncdDataReductionPages = new ArrayList<INcdDataReductionWizardPage>(7);
-		detectorPage = new NcdDataReductionDetectorParameterPage();
+		NcdDataReductionDetectorParameterPage detectorPage = new NcdDataReductionDetectorParameterPage();
 		setupPage = new NcdDataReductionSetupPage();
 		addPage(detectorPage);
 		addPage(setupPage);
 		// Create map of possible pages, only one of which will be selected at one time.
 		final IConfigurationElement[] ce = Platform.getExtensionRegistry().getConfigurationElementsFor("uk.ac.diamond.scisoft.ncd.rcp.ncdDataReductionPage");
-		if (ce!=null) 
+		if (ce != null) {
 			for (IConfigurationElement e : ce) {
 			
 				try {
@@ -62,40 +62,47 @@ public class NcdDataReductionWizard extends Wizard {
 					logger .error("Cannot get page "+e.getAttribute("datareduction_page"), e1);
 				}
 			}
+		}
 		this.selectedNcdDataReductionPage = ncdDataReductionPages.get(0);
 	}
 
 	@Override
 	public boolean canFinish() {
-		NcdProcessingSourceProvider provider = setupPage.getProvider();
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdProcessingSourceProvider ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		NcdProcessingSourceProvider ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		NcdProcessingSourceProvider ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		NcdProcessingSourceProvider ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		NcdProcessingSourceProvider ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
+		
 		// We make visible the current page if it is an active one.
-		if (setupPage.isPageComplete() && provider != null) {
+		if (setupPage.isPageComplete()) {
 
 			for (int i = 0; i < ncdDataReductionPages.size(); i++) {
 				if(ncdDataReductionPages.get(i).isCurrentNcdWizardpage()){
 					if(ncdDataReductionPages.get(i) instanceof NcdDataReductionResponsePage){
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableDetectorResponse());
+						ncdDataReductionPages.get(i).setVisible(ncdResponseSourceProvider.isEnableDetectorResponse());
 					}
 					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionSectorIntegrationPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableSector());
+						ncdDataReductionPages.get(i).setVisible(ncdSectorSourceProvider.isEnableSector());
 					}
 					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionNormalisationPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableNormalisation());
+						ncdDataReductionPages.get(i).setVisible(ncdNormalisationSourceProvider.isEnableNormalisation());
 					}
 					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionBackgroundPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableBackground());
+						ncdDataReductionPages.get(i).setVisible(ncdBackgroundSourceProvider.isEnableBackground());
 					}
 					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionAveragePage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableAverage());
+						ncdDataReductionPages.get(i).setVisible(ncdAverageSourceProvider.isEnableAverage());
 					}
 					return ncdDataReductionPages.get(i).isPageComplete();
 				}
 					
 			}
 		}
-		if (setupPage.isPageComplete() && provider != null && selectedNcdDataReductionPage != null
+		if (setupPage.isPageComplete() && selectedNcdDataReductionPage != null
 				&& !selectedNcdDataReductionPage.isPageComplete()) {
-			selectedNcdDataReductionPage.setProvider(provider);
 			return false;
 		}
 		return setupPage.isPageComplete()

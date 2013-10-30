@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.eclipse.swt.SWT;
@@ -69,15 +68,9 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 
 		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
-		ncdScalerSourceProvider.addSourceProviderListener(this);
-
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		ncdDetectorSourceProvider.addSourceProviderListener(this);
-
 		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
-
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
-		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
 
 		Composite container = new Composite(parent, SWT.NULL);
 		container.setLayout(new GridLayout(1, false));
@@ -214,31 +207,6 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 	private Double getAbsScale() {
 		String input = absScale.getText();
 		return doubleValidator.validate(input);
-	}
-
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

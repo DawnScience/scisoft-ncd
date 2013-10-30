@@ -16,8 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
-import java.util.Map;
-
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -61,10 +59,6 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
-//		ncdRadialSourceProvider.addSourceProviderListener(this);
-//		ncdAzimuthSourceProvider.addSourceProviderListener(this);
-//		ncdFastIntSourceProvider.addSourceProviderListener(this);
-//		ncdMaskSourceProvider.addSourceProviderListener(this);
 
 		Composite container = new Composite(parent, SWT.NONE);
 		container.setLayout(new GridLayout(1, false));
@@ -122,31 +116,6 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		});
 		
 		setControl(container);
-	}
-
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
 	}
 
 	@Override

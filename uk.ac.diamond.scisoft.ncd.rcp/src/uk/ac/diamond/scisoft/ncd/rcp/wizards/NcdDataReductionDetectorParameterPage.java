@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.util.HashMap;
-import java.util.Map;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
@@ -89,10 +88,6 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		
 		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-
-		ncdDetectorSourceProvider.addSourceProviderListener(this);
-		ncdSaxsDetectorSourceProvider.addSourceProviderListener(this);
-		ncdWaxsDetectorSourceProvider.addSourceProviderListener(this);
 
 		Composite container = new Composite(parent, SWT.NONE);
 		GridLayout grid = new GridLayout(5, false);
@@ -370,43 +365,6 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 			
 		}
 	};
-
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-	}
-
-	@Override
-	public IWizardPage getNextPage() {
-//		IWizard wizard = getWizard();
-//		IWizardPage[] pages = wizard.getPages();
-////		if(currentPageNumber == 0)
-////			return super.getNextPage();
-//		for (int i = currentPageNumber; i < pages.length; i++) {
-//	
-//			if(((INcdDataReductionWizardPage)pages[i]).isActive())
-//				return pages[i];
-//		}
-		return super.getNextPage();
-	}
 
 	@Override
 	public boolean isCurrentNcdWizardpage() {

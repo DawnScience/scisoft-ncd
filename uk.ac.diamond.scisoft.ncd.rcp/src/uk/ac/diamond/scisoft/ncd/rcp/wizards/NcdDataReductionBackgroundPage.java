@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.io.File;
-import java.util.Map;
 
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
@@ -70,10 +69,7 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 
 		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
-		ncdBgFileSourceProvider.addSourceProviderListener(this);
-
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
-
 		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
 
 		Composite container = new Composite(parent, SWT.NONE);
@@ -251,32 +247,8 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 	}
 
 	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
 	public boolean isCurrentNcdWizardpage() {
 		return isCurrentPage();
 	}
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
 }
