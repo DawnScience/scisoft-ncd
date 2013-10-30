@@ -677,9 +677,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					RectangularROI currentROI = (RectangularROI) qIntensityPlot.getRegion(Q_REGION_NAME).getROI();
 					setDoubleBox(qMin, currentROI.getPointX() * getAngstromNmFactor());
 					setDoubleBox(qMax, (currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
-					qMinBounds.setMinimum(currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+					qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
 					qMinBounds.setMaximum((currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
-					qMaxBounds.setMaximum(currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+					qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
 					qMaxBounds.setMinimum(currentROI.getPointX() * getAngstromNmFactor());
 				}
 				double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
@@ -818,8 +818,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								} catch (Exception e) {
 									logger.error("exception while updating plot");
 								}
-								qMinBounds.setMinimum(currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
-								qMaxBounds.setMaximum(currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+								qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+								qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
 								endPointBounds.setMaximum(currentQDataset.getSize());
 								IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 								if (region !=  null) {
@@ -1720,15 +1720,23 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void resetRoi() {
-		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor()));
-		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor()));
+		updatePoint(startPoint, Double.toString(getDatasetMinimumInCurrentUnits()));
+		updatePoint(endPoint, Double.toString(getDatasetMaximumInCurrentUnits()));
 		updateQ(qMin, Integer.toString(1));
 		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
 		endPointBounds.setMaximum(currentQDataset.getSize());
-		qMinBounds.setMinimum(currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
-		qMaxBounds.setMaximum(currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+		qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+		qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
 		captureGUIInformation();
 		updateRoi();
+	}
+
+	private double getDatasetMaximumInCurrentUnits() {
+		return currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor();
+	}
+
+	private double getDatasetMinimumInCurrentUnits() {
+		return currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor();
 	}
 	
 	private boolean isValid() {
