@@ -752,6 +752,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		btnRunNcdModelBuilderJob.setLayoutData(new GridData(GridData.CENTER, SWT.CENTER, false, false));
 		btnRunNcdModelBuilderJob.setEnabled(false);
 
+		ActionContributionItem stopModelBuilderAction = (ActionContributionItem)algorithmViewPart.getViewSite().getActionBars().getToolBarManager().find(IAlgorithmProcessContext.STOP_ID_STUB+"NCD model building");
+		stopModelBuilderAction.setVisible(false);
+
 		scrolledComposite.setContent(dataParameters);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
