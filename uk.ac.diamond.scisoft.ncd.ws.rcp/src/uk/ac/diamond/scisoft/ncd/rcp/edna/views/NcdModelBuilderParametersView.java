@@ -1117,6 +1117,8 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		if (clearQAndPathItemsIfInvalid && !pathsPopulatedParametersValid && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
 			clearQAndPathItems();
 		}
+		ActionContributionItem runModelBuilderAction = (ActionContributionItem)algorithmViewPart.getViewSite().getActionBars().getToolBarManager().find(IAlgorithmProcessContext.RUN_ID_STUB+"NCD model building");
+		runModelBuilderAction.getAction().setEnabled(pathsPopulatedParametersValid);
 	}
 
 	private Job updateGuiParameters() {
