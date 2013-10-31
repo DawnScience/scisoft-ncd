@@ -1749,7 +1749,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 
 	@Override
 	public void run(IAlgorithmProcessContext context) throws Exception {
-		runNcdModelBuilder(modelBuildingParameters);
+		runNcdModelBuilder(captureGUIInformation());
 	}
 
 	@Override
