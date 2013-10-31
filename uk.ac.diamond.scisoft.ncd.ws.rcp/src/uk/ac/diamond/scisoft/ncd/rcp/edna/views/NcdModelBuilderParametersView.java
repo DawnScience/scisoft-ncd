@@ -514,8 +514,8 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		startPointBounds = new IntegerDecorator(startPoint);
 		startPointBounds.setMinimum(1);
 		endPointBounds = new IntegerDecorator(endPoint);
-		startPointBounds.addValueChangeListener(pointsQValueChangeListener);
-		endPointBounds.addValueChangeListener(pointsQValueChangeListener);
+		startPointBounds.addValueChangeListener(valueChangeListener);
+		endPointBounds.addValueChangeListener(valueChangeListener);
 
 		qMinBounds = new FloatDecorator(qMin);
 		doubleNumberFormat.setMinimumFractionDigits(4);
@@ -523,8 +523,8 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		qMinBounds.setMinimum(0);
 		qMaxBounds = new FloatDecorator(qMax);
 		qMaxBounds.setNumberFormat(doubleNumberFormat);
-		qMinBounds.addValueChangeListener(pointsQValueChangeListener);
-		qMaxBounds.addValueChangeListener(pointsQValueChangeListener);
+		qMinBounds.addValueChangeListener(valueChangeListener);
+		qMaxBounds.addValueChangeListener(valueChangeListener);
 
 		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
 		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
@@ -957,14 +957,6 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	};
 
 	IValueChangeListener valueChangeListener = new IValueChangeListener() {
-		
-		@Override
-		public void valueValidating(ValueChangeEvent evt) {
-			refreshRunButton(false);
-		}
-	};
-
-	IValueChangeListener pointsQValueChangeListener = new IValueChangeListener() {
 		
 		@Override
 		public void valueValidating(ValueChangeEvent evt) {
