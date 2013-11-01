@@ -1,25 +1,22 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.io.File;
-import java.util.Map;
 
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.jface.wizard.IWizard;
@@ -60,7 +57,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdWorkingDirSourceProvider;
-	private NcdProcessingSourceProvider provider;
 
 	private Text detAdvanced;
 	private Button detAdvancedButton;
@@ -72,13 +68,12 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 	private String inputDirectory = "Please specify results directory";
 	private Text location;
 	private Button browse;
-	public static int PAGENUMBER = 1;
+	protected static final int PAGENUMBER = 1;
 
 	protected NcdDataReductionSetupPage() {
 		super("Data Reduction parameters setup");
 		setTitle("Data Reduction parameters setup");
 		setDescription("Choose the steps to set up, the result directory and the data frame selection.");
-		provider = new NcdProcessingSourceProvider();
 		currentPageNumber = PAGENUMBER;
 		activePages.put(PAGENUMBER, false);
 	}
@@ -88,28 +83,13 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
-		ncdResponseSourceProvider.addSourceProviderListener(this);
-
 		ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
-		ncdSectorSourceProvider.addSourceProviderListener(this);
-
 		ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
-		ncdNormalisationSourceProvider.addSourceProviderListener(this);
-
 		ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
-		ncdBackgroundSourceProvider.addSourceProviderListener(this);
-
 		ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
-		ncdInvariantSourceProvider.addSourceProviderListener(this);
-
 		ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
-		ncdAverageSourceProvider.addSourceProviderListener(this);
-
 		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
-		ncdDataSliceSourceProvider.addSourceProviderListener(this);
-
 		ncdWorkingDirSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WORKINGDIR_STATE);
-		ncdWorkingDirSourceProvider.addSourceProviderListener(this);
 
 		Composite container = new Composite(parent, SWT.NULL);
 		container.setLayout(new GridLayout(1, false));
@@ -132,7 +112,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdResponseSourceProvider.setEnableDetectorResponse(drButton.getSelection());
-				provider.setEnableDetectorResponse(drButton.getSelection());
 				activePages.put(NcdDataReductionResponsePage.PAGENUMBER, drButton.getSelection());
 				updateNextButton();
 			}
@@ -146,7 +125,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdSectorSourceProvider.setEnableSector(secButton.getSelection());
-				provider.setEnableSector(secButton.getSelection());
 				activePages.put(NcdDataReductionSectorIntegrationPage.PAGENUMBER, secButton.getSelection());
 				updateNextButton();
 			}
@@ -160,7 +138,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdNormalisationSourceProvider.setEnableNormalisation(normButton.getSelection());
-				provider.setEnableNormalisation(normButton.getSelection());
 				activePages.put(NcdDataReductionNormalisationPage.PAGENUMBER, normButton.getSelection());
 				updateNextButton();
 			}
@@ -175,7 +152,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdBackgroundSourceProvider.setEnableBackground(bgButton.getSelection());
-				provider.setEnableBackground(bgButton.getSelection());
 				activePages.put(NcdDataReductionBackgroundPage.PAGENUMBER, bgButton.getSelection());
 				updateNextButton();
 			}
@@ -189,9 +165,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdInvariantSourceProvider.setEnableInvariant(invButton.getSelection());
-//				provider.setEnableInvariant(invButton.getSelection());
-//				activePages.put(NcdDataReductionDetectorParameterPage.PAGENUMBER, invButton.getSelection());
-//				updateNextButton();
 			}
 		});
 
@@ -203,7 +176,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdAverageSourceProvider.setEnableAverage(aveButton.getSelection());
-				provider.setEnableAverage(aveButton.getSelection());
 				activePages.put(NcdDataReductionAveragePage.PAGENUMBER, aveButton.getSelection());
 				updateNextButton();
 			}
@@ -339,39 +311,41 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		});
 		
 		setActivePages();
-		setProvider();
 		setControl(container);
 	}
 
 	private void updateNextButton(){
-		if(provider.isEnableDetectorResponse()
-				|| provider.isEnableSector()
-				|| provider.isEnableNormalisation()
-				|| provider.isEnableBackground()
-//				|| provider.isEnableInvariant()
-				|| provider.isEnableAverage())
+		if(ncdResponseSourceProvider.isEnableDetectorResponse()
+				|| ncdSectorSourceProvider.isEnableSector()
+				|| ncdNormalisationSourceProvider.isEnableNormalisation()
+				|| ncdBackgroundSourceProvider.isEnableBackground()
+				|| ncdAverageSourceProvider.isEnableAverage()) {
 			setPageComplete(true);
-		else
+		} else {
 			setPageComplete(false);
+		}
 	}
 
 	private Integer getDetFirstFrame() {
 		String input = detFramesStart.getText();
-		if (detFramesStart.isEnabled())
+		if (detFramesStart.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private Integer getDetLastFrame() {
 		String input = detFramesStop.getText();
-		if (detFramesStop.isEnabled())
+		if (detFramesStop.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 	
 	private String getDetAdvancedSelection() {
-		if (detAdvanced.isEnabled())
+		if (detAdvanced.isEnabled()) {
 			return detAdvanced.getText();
+		}
 		return null;
 	}
 
@@ -380,53 +354,19 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		activePages.put(NcdDataReductionSectorIntegrationPage.PAGENUMBER, secButton.getSelection());
 		activePages.put(NcdDataReductionNormalisationPage.PAGENUMBER, normButton.getSelection());
 		activePages.put(NcdDataReductionBackgroundPage.PAGENUMBER, bgButton.getSelection());
-//		activePages.put(NcdDataReductionDetectorParameterPage.PAGENUMBER, invButton.getSelection());
 		activePages.put(NcdDataReductionAveragePage.PAGENUMBER, aveButton.getSelection());
-	}
-
-	private void setProvider(){
-		provider.setEnableDetectorResponse(drButton.getSelection());
-		provider.setEnableSector(secButton.getSelection());
-		provider.setEnableNormalisation(normButton.getSelection());
-		provider.setEnableBackground(bgButton.getSelection());
-//		provider.setEnableInvariant(invButton.getSelection());
-		provider.setEnableAverage(aveButton.getSelection());
-	}
-
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-
-	}
-
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		return provider;
 	}
 
 	@Override
 	public IWizardPage getNextPage() {
 		IWizard wizard = getWizard();
 		IWizardPage[] pages = wizard.getPages();
-//		if(currentPageNumber == 0)
-//			return super.getNextPage();
 		for (int i = currentPageNumber; i < pages.length; i++) {
-	
-			if(((INcdDataReductionWizardPage)pages[i]).isActive())
+			if(activePages.get(i)) {
 				return pages[i];
+			}
 		}
 		return null;
 	}
 
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

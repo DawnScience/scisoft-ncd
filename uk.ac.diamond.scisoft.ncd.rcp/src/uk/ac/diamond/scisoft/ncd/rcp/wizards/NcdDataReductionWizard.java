@@ -1,20 +1,19 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
+
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.util.ArrayList;
@@ -24,10 +23,13 @@ import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IConfigurationElement;
 import org.eclipse.core.runtime.Platform;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.wizard.IWizardContainer;
+import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.jface.wizard.Wizard;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,68 +37,73 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionWizard extends Wizard {
 
-	private INcdDataReductionWizardPage selectedNcdDataReductionPage;
-	private List<INcdDataReductionWizardPage> ncdDataReductionPages;
+	private IWizardPage selectedNcdDataReductionPage;
+	private List<IWizardPage> ncdDataReductionPages;
 
 	private NcdDataReductionSetupPage setupPage;
-	private NcdDataReductionDetectorParameterPage detectorPage;
 	private final Logger logger = LoggerFactory.getLogger(NcdDataReductionWizard.class);
 
 	public NcdDataReductionWizard() {
 		super();
 		setNeedsProgressMonitor(true);
-		this.ncdDataReductionPages = new ArrayList<INcdDataReductionWizardPage>(7);
-		detectorPage = new NcdDataReductionDetectorParameterPage();
+		this.ncdDataReductionPages = new ArrayList<IWizardPage>(7);
+		NcdDataReductionDetectorParameterPage detectorPage = new NcdDataReductionDetectorParameterPage();
 		setupPage = new NcdDataReductionSetupPage();
 		addPage(detectorPage);
 		addPage(setupPage);
 		// Create map of possible pages, only one of which will be selected at one time.
 		final IConfigurationElement[] ce = Platform.getExtensionRegistry().getConfigurationElementsFor("uk.ac.diamond.scisoft.ncd.rcp.ncdDataReductionPage");
-		if (ce!=null) 
+		if (ce != null) {
 			for (IConfigurationElement e : ce) {
 			
 				try {
-					final INcdDataReductionWizardPage p = (INcdDataReductionWizardPage)e.createExecutableExtension("datareduction_page");
+					final IWizardPage p = (IWizardPage)e.createExecutableExtension("datareduction_page");
 					ncdDataReductionPages.add(p);
 					addPage(p);
 				} catch (CoreException e1) {
 					logger .error("Cannot get page "+e.getAttribute("datareduction_page"), e1);
 				}
 			}
+		}
 		this.selectedNcdDataReductionPage = ncdDataReductionPages.get(0);
 	}
 
 	@Override
 	public boolean canFinish() {
-		NcdProcessingSourceProvider provider = setupPage.getProvider();
+		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdProcessingSourceProvider ncdResponseSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RESPONSE_STATE);
+		NcdProcessingSourceProvider ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
+		NcdProcessingSourceProvider ncdNormalisationSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.NORMALISATION_STATE);
+		NcdProcessingSourceProvider ncdBackgroundSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BACKGROUD_STATE);
+		NcdProcessingSourceProvider ncdAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AVERAGE_STATE);
+		
 		// We make visible the current page if it is an active one.
-		if (setupPage.isPageComplete() && provider != null) {
+		IWizardContainer container = getContainer();
+		if (container != null && setupPage.isPageComplete()) {
 
-			for (int i = 0; i < ncdDataReductionPages.size(); i++) {
-				if(ncdDataReductionPages.get(i).isCurrentNcdWizardpage()){
-					if(ncdDataReductionPages.get(i) instanceof NcdDataReductionResponsePage){
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableDetectorResponse());
-					}
-					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionSectorIntegrationPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableSector());
-					}
-					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionNormalisationPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableNormalisation());
-					}
-					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionBackgroundPage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableBackground());
-					}
-					if (ncdDataReductionPages.get(i) instanceof NcdDataReductionAveragePage) {
-						ncdDataReductionPages.get(i).setVisible(provider.isEnableAverage());
-					}
-					return ncdDataReductionPages.get(i).isPageComplete();
-				}
-					
+			IWizardPage currentPage = container.getCurrentPage();
+			
+			if(currentPage instanceof NcdDataReductionResponsePage){
+				currentPage.setVisible(ncdResponseSourceProvider.isEnableDetectorResponse());
 			}
+			if (currentPage instanceof NcdDataReductionSectorIntegrationPage) {
+				currentPage.setVisible(ncdSectorSourceProvider.isEnableSector());
+			}
+			if (currentPage instanceof NcdDataReductionNormalisationPage) {
+				currentPage.setVisible(ncdNormalisationSourceProvider.isEnableNormalisation());
+			}
+			if (currentPage instanceof NcdDataReductionBackgroundPage) {
+				currentPage.setVisible(ncdBackgroundSourceProvider.isEnableBackground());
+			}
+			if (currentPage instanceof NcdDataReductionAveragePage) {
+				currentPage.setVisible(ncdAverageSourceProvider.isEnableAverage());
+			}
+			
+			return currentPage.isPageComplete();
 		}
-		if (setupPage.isPageComplete() && provider != null && selectedNcdDataReductionPage != null
+		if (setupPage.isPageComplete() && selectedNcdDataReductionPage != null
 				&& !selectedNcdDataReductionPage.isPageComplete()) {
-			selectedNcdDataReductionPage.setProvider(provider);
 			return false;
 		}
 		return setupPage.isPageComplete()

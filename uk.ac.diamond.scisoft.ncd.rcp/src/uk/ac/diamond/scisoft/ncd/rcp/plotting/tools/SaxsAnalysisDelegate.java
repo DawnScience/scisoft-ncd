@@ -149,7 +149,7 @@ class SaxsAnalysisDelegate {
 				}
 				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
 				tr.setData(xTraceData, yTraceData);
-				tr.setTraceColor(getColor(plotType));
+				tr.setTraceColor(lineTrace.getTraceColor());
 				saxsPlottingSystem.addTrace(tr);
 				saxsPlottingSystem.repaint();
 			}

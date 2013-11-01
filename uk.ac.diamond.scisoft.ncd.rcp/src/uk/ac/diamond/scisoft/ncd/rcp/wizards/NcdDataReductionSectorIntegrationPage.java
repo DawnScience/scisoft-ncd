@@ -1,25 +1,22 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
-import java.util.Map;
-
+import org.apache.commons.math3.util.Pair;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -33,6 +30,8 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
+import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReductionPage {
 
@@ -40,12 +39,21 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 	private Button azimuthalButton;
 	private Button fastIntButton;
 	private Button useMask;
+	private Button loglogButton, guinierButton, porodButton, kratkyButton, zimmButton, debyebuecheButton;
+	
 	private NcdProcessingSourceProvider ncdRadialSourceProvider;
 	private NcdProcessingSourceProvider ncdAzimuthSourceProvider;
 	private NcdProcessingSourceProvider ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
 	
-	public static int PAGENUMBER = 3;
+	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
+	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
+	private SaxsPlotsSourceProvider porodPlotSourceProvider;
+	private SaxsPlotsSourceProvider kratkyPlotSourceProvider;
+	private SaxsPlotsSourceProvider zimmPlotSourceProvider;
+	private SaxsPlotsSourceProvider debyebuechePlotSourceProvider;
+	
+	protected static final int PAGENUMBER = 3;
 
 	public NcdDataReductionSectorIntegrationPage() {
 		super("Sector integration");
@@ -63,10 +71,12 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
-//		ncdRadialSourceProvider.addSourceProviderListener(this);
-//		ncdAzimuthSourceProvider.addSourceProviderListener(this);
-//		ncdFastIntSourceProvider.addSourceProviderListener(this);
-//		ncdMaskSourceProvider.addSourceProviderListener(this);
+		loglogPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
+		guinierPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.GUINIER_STATE);
+		porodPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.POROD_STATE);
+		kratkyPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.KRATKY_STATE);
+		zimmPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.ZIMM_STATE);
+		debyebuechePlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE);
 
 		Composite container = new Composite(parent, SWT.NONE);
 		container.setLayout(new GridLayout(1, false));
@@ -123,36 +133,99 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 			}
 		});
 		
+		Group saxsPlotComp = new Group(container, SWT.NONE);
+		saxsPlotComp.setText("1D SAXS Analysis Data");
+		saxsPlotComp.setToolTipText("Include in results files data for making 1D SAXS analysis plots");
+		GridLayout gl = new GridLayout(2, false);
+		gl.horizontalSpacing = 15;
+		saxsPlotComp.setLayout(gl);
+		saxsPlotComp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		{
+			Composite g = new Composite(saxsPlotComp, SWT.NONE);
+			g.setLayout(gl);
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			
+			// TODO Replace all these Buttons with a loop over SaxsAnalysisPlotType.values()
+			loglogButton = new Button(g, SWT.CHECK);
+			loglogButton.setText(SaxsAnalysisPlotType.LOGLOG_PLOT.getName());
+			Pair<String, String> axesNames = SaxsAnalysisPlotType.LOGLOG_PLOT.getAxisNames();
+			String toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			loglogButton.setToolTipText(toolTipText);
+			loglogButton.setSelection(loglogPlotSourceProvider.isEnableLogLog());
+			loglogButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					loglogPlotSourceProvider.setEnableLogLog(loglogButton.getSelection());
+				}
+			});
+			
+			guinierButton = new Button(g, SWT.CHECK);
+			guinierButton.setText(SaxsAnalysisPlotType.GUINIER_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.GUINIER_PLOT.getAxisNames();
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			guinierButton.setToolTipText(toolTipText);
+			guinierButton.setSelection(guinierPlotSourceProvider.isEnableGuinier());
+			guinierButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					guinierPlotSourceProvider.setEnableGuinier(guinierButton.getSelection());
+				}
+			});
+			
+			porodButton = new Button(g, SWT.CHECK);
+			porodButton.setText(SaxsAnalysisPlotType.POROD_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.POROD_PLOT.getAxisNames();
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			porodButton.setToolTipText(toolTipText);
+			porodButton.setSelection(porodPlotSourceProvider.isEnablePorod());
+			porodButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					porodPlotSourceProvider.setEnablePorod(porodButton.getSelection());
+				}
+			});
+			
+			kratkyButton = new Button(g, SWT.CHECK);
+			kratkyButton.setText(SaxsAnalysisPlotType.KRATKY_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.KRATKY_PLOT.getAxisNames();
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			kratkyButton.setToolTipText(toolTipText);
+			kratkyButton.setSelection(kratkyPlotSourceProvider.isEnableKratky());
+			kratkyButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					kratkyPlotSourceProvider.setEnableKratky(kratkyButton.getSelection());
+				}
+			});
+			
+			zimmButton = new Button(g, SWT.CHECK);
+			zimmButton.setText(SaxsAnalysisPlotType.ZIMM_PLOT.getName());
+			axesNames =  SaxsAnalysisPlotType.ZIMM_PLOT.getAxisNames();
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			zimmButton.setToolTipText(toolTipText);
+			zimmButton.setSelection(zimmPlotSourceProvider.isEnableZimm());
+			zimmButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					zimmPlotSourceProvider.setEnableZimm(zimmButton.getSelection());
+				}
+			});
+			
+			debyebuecheButton = new Button(g, SWT.CHECK);
+			debyebuecheButton.setText(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getName());
+			axesNames = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getAxisNames();
+			toolTipText = axesNames.getSecond() + " vs. " + axesNames.getFirst();
+			debyebuecheButton.setToolTipText(toolTipText);
+			debyebuecheButton.setSelection(debyebuechePlotSourceProvider.isEnableDebyeBueche());
+			debyebuecheButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					debyebuechePlotSourceProvider.setEnableDebyeBueche(debyebuecheButton.getSelection());
+				}
+			});
+		}
+		
 		setControl(container);
 	}
 
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
 }

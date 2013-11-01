@@ -17,10 +17,16 @@
 package uk.ac.diamond.scisoft.ncd.rcp.edna.views;
 
 import java.io.File;
+import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Map;
 
 import org.csstudio.swt.xygraph.undo.ZoomType;
+import org.dawnsci.common.widgets.decorator.BoundsDecorator;
+import org.dawnsci.common.widgets.decorator.FloatDecorator;
+import org.dawnsci.common.widgets.decorator.IValueChangeListener;
+import org.dawnsci.common.widgets.decorator.IntegerDecorator;
+import org.dawnsci.common.widgets.decorator.ValueChangeEvent;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -54,6 +60,8 @@ import org.eclipse.swt.dnd.TextTransfer;
 import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
+import org.eclipse.swt.events.FocusEvent;
+import org.eclipse.swt.events.FocusListener;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -115,6 +123,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 	public static String[] DATA_TYPES = new String[] { "dat", "nxs" };
 
+	public static int ROUND_DOUBLES_DIGITS = 4;
+
 	private IMemento memento = null;
 
 	protected Text dataFile;
@@ -128,17 +138,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	private Combo qMinUnits;
 	protected Text qMax;
 	private Label qMaxUnits;
+	private BoundsDecorator qMinBounds, qMaxBounds;
+	private NumberFormat doubleNumberFormat = NumberFormat.getNumberInstance();
 	protected Text startPoint;
 	protected Text endPoint;
+	private BoundsDecorator startPointBounds, endPointBounds;
 
 	protected Text numberOfThreads;
 
 	private Combo builderOptions;
 
 	protected Text minDistanceSearch;
+	private BoundsDecorator minDistanceBounds, maxDistanceBounds;
 	private Label minDistanceUnits;
 	protected Text maxDistanceSearch;
 	private Label maxDistanceUnits;
+
 	protected Text numberOfSearch;
 	protected Text tolerance;
 
@@ -247,7 +262,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				enableNexusPathCombos(dataFileIsNxsFile);
 				captureGUIInformation();
 				checkWhetherPathsAreEmpty();
-				refreshRunButton();
+				refreshRunButton(true);
 				checkFilenameAndColorDataFileBox(dataFileGroup.getDisplay());
 				updateGuiParameters();
 			}
@@ -439,7 +454,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		startPoint = new Text(firstPointComposite, SWT.NONE);
 		startPoint.setToolTipText("First point of data to be used for calculations.");
 		startPoint.addListener(SWT.Verify, verifyInt);
-		startPoint.addListener(SWT.KeyUp, startEndPointListener);
+		startPoint.addListener(SWT.DefaultSelection, pointsQKeyListener);
+		startPoint.addFocusListener(pointsQFocusListener);
 		startPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		final String[] qOptionUnits = new String[] { "Angstrom\u207b\u00b9", "nm\u207b\u00b9"};
@@ -451,9 +467,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMinComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMin = new Text(qMinComposite, SWT.NONE);
 		qMin.addListener(SWT.Verify, verifyDouble);
-		qMin.addListener(SWT.KeyUp, qMinMaxListener);
 		qMin.setToolTipText("Minimum q value to be used for GNOM/DAMMIF");
 		qMin.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		qMin.addListener(SWT.DefaultSelection, pointsQKeyListener);
+		qMin.addFocusListener(pointsQFocusListener);
 		qMinUnits = new Combo(qMinComposite, SWT.READ_ONLY);
 		qMinUnits.setItems(qOptionUnits);
 
@@ -467,7 +484,8 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		endPoint = new Text(lastPointComposite, SWT.NONE);
 		endPoint.setToolTipText("Last point of data to be used for calculations");
 		endPoint.addListener(SWT.Verify, verifyInt);
-		endPoint.addListener(SWT.KeyUp, startEndPointListener);
+		endPoint.addListener(SWT.DefaultSelection, pointsQKeyListener);
+		endPoint.addFocusListener(pointsQFocusListener);
 		endPoint.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 
 		GridData data = new GridData(GridData.FILL, SWT.CENTER, true, false);
@@ -482,10 +500,26 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qMaxComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMax = new Text(qMaxComposite, SWT.NONE);
 		qMax.addListener(SWT.Verify, verifyDouble);
-		qMax.addListener(SWT.KeyUp, qMinMaxListener);
+		qMax.addListener(SWT.DefaultSelection, pointsQKeyListener);
+		qMax.addFocusListener(pointsQFocusListener);
 		qMax.setToolTipText("Maximum q value to be used for GNOM/DAMMIF");
 		qMax.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 		qMaxUnits = new Label(qMaxComposite, SWT.NONE);
+
+		startPointBounds = new IntegerDecorator(startPoint);
+		startPointBounds.setMinimum(1);
+		endPointBounds = new IntegerDecorator(endPoint);
+		startPointBounds.addValueChangeListener(pointsQValueChangeListener);
+		endPointBounds.addValueChangeListener(pointsQValueChangeListener);
+
+		qMinBounds = new FloatDecorator(qMin);
+		doubleNumberFormat.setMinimumFractionDigits(4);
+		qMinBounds.setNumberFormat(doubleNumberFormat);
+		qMinBounds.setMinimum(0);
+		qMaxBounds = new FloatDecorator(qMax);
+		qMaxBounds.setNumberFormat(doubleNumberFormat);
+		qMinBounds.addValueChangeListener(pointsQValueChangeListener);
+		qMaxBounds.addValueChangeListener(pointsQValueChangeListener);
 
 		dataChoiceExpanderComposite.setClient(dataChoiceParameters);
 		dataChoiceExpanderComposite.addExpansionListener(expansionAdapter);
@@ -608,6 +642,9 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		minDistanceSearch.setToolTipText("Initial value for the GNOM program, e.g. minimum possible size of protein");
 		minDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		minDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		minDistanceSearch.addListener(SWT.DefaultSelection, distanceKeyListener);
+		minDistanceSearch.addFocusListener(distanceFocusListener);
+		minDistanceBounds = new FloatDecorator(minDistanceSearch);
 		minDistanceUnits = new Label(gnomParameters, SWT.NONE);
 
 		new Label(gnomParameters, SWT.NONE).setText("Dmax search point end");
@@ -615,14 +652,33 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		maxDistanceSearch.addListener(SWT.Verify, verifyDouble);
 		maxDistanceSearch.setToolTipText("Final value for the GNOM program, e.g. maximum possible size of protein");
 		maxDistanceSearch.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		maxDistanceSearch.addListener(SWT.DefaultSelection, distanceKeyListener);
+		maxDistanceSearch.addFocusListener(distanceFocusListener);
+		maxDistanceBounds = new FloatDecorator(maxDistanceSearch);
 		maxDistanceUnits = new Label(gnomParameters, SWT.NONE);
 
+		minDistanceBounds.setMinimum(0);
+		maxDistanceBounds.setMaximum(Integer.MAX_VALUE);
+
+		minDistanceBounds.addValueChangeListener(valueChangeListener);
+		maxDistanceBounds.addValueChangeListener(valueChangeListener);
+		
 		qMinUnits.addModifyListener(new ModifyListener() {
 			
 			@Override
 			public void modifyText(ModifyEvent e) {
 				modelBuildingParameters.setMainUnitAngstrom(qMinUnits.getText().equals(qOptionUnits[0]));
 				qMaxUnits.setText(qMinUnits.getText());
+				if (qIntensityPlot.getRegion(Q_REGION_NAME) != null) {
+					RectangularROI currentROI = (RectangularROI) qIntensityPlot.getRegion(Q_REGION_NAME).getROI();
+					setDoubleBox(qMin, currentROI.getPointX() * getAngstromNmFactor());
+					setDoubleBox(qMax, (currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
+					qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+					qMinBounds.setMaximum((currentROI.getPointX() + currentROI.getLength(0)) * getAngstromNmFactor());
+					qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+					qMaxBounds.setMinimum(currentROI.getPointX() * getAngstromNmFactor());
+				}
+				resetDmaxParameters();
 				String newUnits = modelBuildingParameters.isMainUnitAngstrom() ? gnomUnits[0] : gnomUnits[1];
 				minDistanceUnits.setText(newUnits);
 				maxDistanceUnits.setText(newUnits);
@@ -709,6 +765,10 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		if (modelBuildingParameters == null)
 			modelBuildingParameters = new ModelBuildingParameters();
 
+		if (memento == null) {
+			updatePlot();
+		}
+
 		if (memento != null) {
 			modelBuildingParameters.loadMementoParameters(memento);
 			PlatformUI.getWorkbench().getDisplay().syncExec(new Runnable() {
@@ -717,6 +777,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					try {
 						restoreState();
 					} catch (Exception e) {
+						logger.error("Problem while trying to restore the state", e);
 						resetGUI();
 					}
 				}
@@ -748,12 +809,21 @@ public class NcdModelBuilderParametersView extends ViewPart {
 								} catch (Exception e) {
 									logger.error("exception while updating plot");
 								}
+								qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+								qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+								endPointBounds.setMaximum(currentQDataset.getSize());
+								IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
+								if (region !=  null) {
+									RectangularROI roi = (RectangularROI) region.getROI();
+									qMinBounds.setMaximum(roi.getEndPoint()[0] * getAngstromNmFactor());
+									qMaxBounds.setMinimum(roi.getPoint()[0] * getAngstromNmFactor());
+								}
 							}
 						});
 						if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 							checkWhetherPathsAreEmpty();
 						}
-						refreshRunButton();
+						refreshRunButton(true);
 					} catch (Exception e1) {
 						logger.error("Exception while retrieving Q values from data file", e1);
 					}
@@ -782,10 +852,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 					regionDragging = true;
 					IRegion region = qIntensityPlot.getRegion(Q_REGION_NAME);
 					RectangularROI roi = (RectangularROI) region.getROI();
-					setDoubleBox(qMin, roi.getPoint()[0]);
-					updatePoint(startPoint, String.valueOf(roi.getPoint()[0]));
-					setDoubleBox(qMax, roi.getEndPoint()[0]);
-					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0]));
+					setDoubleBox(qMin, roi.getPoint()[0] * getAngstromNmFactor());
+					updatePoint(startPoint, String.valueOf(roi.getPoint()[0] * getAngstromNmFactor()));
+					setDoubleBox(qMax, roi.getEndPoint()[0] * getAngstromNmFactor());
+					updatePoint(endPoint, String.valueOf(roi.getEndPoint()[0] * getAngstromNmFactor()));
+					updateInternalBounds(roi.getPoint()[0], roi.getEndPoint()[0], Integer.parseInt(startPoint.getText()), Integer.parseInt(endPoint.getText()));
 					regionDragging=false;
 				}
 			}
@@ -812,10 +883,19 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			if (selection instanceof IStructuredSelection) {
 				if (getViewIsActive(part)) {
 					Object file = ((IStructuredSelection) selection).getFirstElement();
-					if (file instanceof IFile && !forgetLastSelection) {
-						String fileExtension = ((IFile) file).getFileExtension();
-						if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
-							String filename = ((IFile) file).getRawLocation().toOSString();
+					if (!forgetLastSelection) {
+						if (file instanceof IFile || file instanceof File) {
+							String filename = null;
+							String fileExtension = null;
+							if (file instanceof IFile) {
+								fileExtension = ((IFile) file).getFileExtension();
+								filename = ((IFile) file).getRawLocation().toOSString();
+							}
+							else if (file instanceof File) {
+								filename = ((File) file).getAbsolutePath();
+								fileExtension = filename.substring(filename.length()-3);
+							}
+							if(fileExtension != null && (fileExtension.equals(DATA_TYPES[0]) || fileExtension.equals(DATA_TYPES[1]))){
 	//						if (ARPESFileDescriptor.isArpesFile(filename)) {
 								try {
 									setFilenameString(filename);
@@ -825,6 +905,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 									logger.error("Something went wrong when creating a overview plot",e);
 								}
 	//						}
+							}
 						}
 					}
 					forgetLastSelection = false;
@@ -834,6 +915,79 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 	};
 
+	private FocusListener distanceFocusListener = new FocusListener() {
+		
+		@Override
+		public void focusLost(FocusEvent e) {
+			if (e.getSource() == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (e.getSource() == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
+		}
+		
+		@Override
+		public void focusGained(FocusEvent e) {
+			//do nothing
+		}
+	};
+	private Listener distanceKeyListener = new Listener() {
+		
+		@Override
+		public void handleEvent(Event event) {
+			if (event.widget == minDistanceSearch) {
+				maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+				minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+			}
+			else if (event.widget == maxDistanceSearch) {
+				minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+				maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+			}
+			refreshRunButton(false);
+		}
+	};
+
+	IValueChangeListener valueChangeListener = new IValueChangeListener() {
+		
+		@Override
+		public void valueValidating(ValueChangeEvent evt) {
+			refreshRunButton(false);
+		}
+	};
+
+	IValueChangeListener pointsQValueChangeListener = new IValueChangeListener() {
+		
+		@Override
+		public void valueValidating(ValueChangeEvent evt) {
+			refreshRunButton(false);
+		}
+	};
+
+	private Listener pointsQKeyListener = new Listener() {
+		
+		@Override
+		public void handleEvent(Event event) {
+			updateAfterGuiEvent(event.widget);
+		}
+	};
+
+	private FocusListener pointsQFocusListener = new FocusListener() {
+
+		@Override
+		public void focusLost(FocusEvent e) {
+			updateAfterGuiEvent(e.getSource());
+		}
+
+		@Override
+		public void focusGained(FocusEvent e) {
+			//do nothing
+		}
+	};
+	
 	private boolean fileNameIsNotEmptyAndFileExists(String filename) {
 		if (!filename.isEmpty() && new File(filename).exists()) {
 			return true;
@@ -886,7 +1040,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				checkWhetherPathsAreEmpty();
 			}
 			captureGUIInformation();
-			refreshRunButton();
+			refreshRunButton(true);
 			Job updateJob = updateGuiParameters();
 			try {
 				updateJob.join(); // make sure job is finished so that ROI updates work correctly
@@ -896,6 +1050,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			checkFilenameAndColorDataFileBox(Display.getDefault());
 			refreshQAndPointFields();
 		}
+		updateRoi();
 		isGuiInResetState = false;
 	}
 	private void refreshQAndPointFields() {
@@ -920,7 +1075,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			String pathToQ = currentPathToQ;
 			modelBuildingParameters.setPathToData(pathToData);
 			modelBuildingParameters.setPathToQ(pathToQ);
-			refreshRunButton();
+			refreshRunButton(true);
 			checkWhetherPathsAreEmpty();
 			updateGuiParameters();
 		}
@@ -942,37 +1097,22 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			else if (source == endPoint) {
 				updateQ(qMax, sourceText);
 			}
+			captureGUIInformation();
 			updateRoi();
 		}
 		
 	};
 	
-	private Listener qMinMaxListener = new Listener() {
-
-		@Override
-		public void handleEvent(Event event) {
-			Text source = (Text) event.widget;
-			String sourceText = source.getText();
-			if (source == qMin) {
-				updatePoint(startPoint, sourceText);
-			}
-			else if (source == qMax) {
-				updatePoint(endPoint, sourceText);
-			}
-			updateRoi();
-		}
-		
-	};
-	
-	protected void refreshRunButton() {
-		final boolean fileValidAndPathsPopulated = (fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected;
+	protected void refreshRunButton(boolean clearQAndPathItemsIfInvalid) {
+		final boolean pathsPopulatedParametersValid = ((fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected)
+				&& isValid();
 		compInput.getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				btnRunNcdModelBuilderJob.setEnabled(fileValidAndPathsPopulated);
+				btnRunNcdModelBuilderJob.setEnabled(pathsPopulatedParametersValid);
 			}
 		});
-		if (!fileValidAndPathsPopulated && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
+		if (clearQAndPathItemsIfInvalid && !pathsPopulatedParametersValid && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
 			clearQAndPathItems();
 		}
 	}
@@ -1136,7 +1276,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			int index = Integer.valueOf(text);
 			if ((currentQDataset != null) && (index > 0 && index <= currentQDataset.getShape()[0])) {
 				double qValue;
-				qValue = currentQDataset.getDouble(index - 1);
+				qValue = currentQDataset.getDouble(index - 1) * getAngstromNmFactor();
 				setDoubleBox(qTextBox, qValue);
 				return;
 			}
@@ -1154,6 +1294,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		else {
 			qValue = currentQDataset.getDouble(currentQDataset.minPos()[0]);
 		}
+		qValue *= getAngstromNmFactor();
 		setDoubleBox(qTextBox, qValue);
 	}
 
@@ -1165,7 +1306,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			newQValue = 0;
 		}
 		if (currentQDataset != null) {
-			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue);
+			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue / getAngstromNmFactor());
 			if (index < 1) {
 				index = 1;
 			}
@@ -1174,6 +1315,14 @@ public class NcdModelBuilderParametersView extends ViewPart {
 			}
 			pointBox.setText(String.valueOf(index));
 		}
+	}
+
+	private int getAngstromNmFactor() {
+		int angstromNmFactor = 1;
+		if (!modelBuildingParameters.isMainUnitAngstrom()) {
+			angstromNmFactor = 10;
+		}
+		return angstromNmFactor;
 	}
 
 	protected void updatePlot() {
@@ -1191,13 +1340,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				qIntensityPlot.getSelectedXAxis().setRange(0, 1);
 				qIntensityPlot.getSelectedXAxis().setLog10(xAxisIsLog);
 				String qAxisLabel = "q (Angstrom)";
+				qIntensityPlot.getSelectedXAxis().setAutoFormat(false);
+				qIntensityPlot.getSelectedXAxis().setFormatPattern("#.######");
 				if (xAxisIsLog) {
 					qAxisLabel = "log q (Angstrom)";
+					qIntensityPlot.getSelectedXAxis().setFormatPattern("0.####E0");
 				}
 				qIntensityPlot.getSelectedXAxis().setTitle(qAxisLabel);
 //				qIntensityPlot.getSelectedYAxis().setRange(0, finalScale*256);
 				qIntensityPlot.getSelectedYAxis().setLog10(true);
 				qIntensityPlot.getSelectedYAxis().setTitle("log Intensity");
+				qIntensityPlot.getSelectedYAxis().setAutoFormat(false);
+				qIntensityPlot.getSelectedYAxis().setFormatPattern("0.####E0");
 				qIntensityPlot.repaint();
 			}
 		});
@@ -1217,36 +1371,18 @@ public class NcdModelBuilderParametersView extends ViewPart {
 
 			modelBuildingParameters.setNumberOfFrames(Integer.valueOf(numberOfFrames.getText()));
 
-			double qMinValue = Double.valueOf(qMin.getText());
-			if (qMinUnits.getSelectionIndex() == 1) {
-				qMinValue /= 10;
-			}
-			modelBuildingParameters.setqMinAngstrom(qMinValue);
-
 			modelBuildingParameters.setFirstPoint(Integer.valueOf(startPoint.getText()));
 			modelBuildingParameters.setLastPoint(Integer.valueOf(endPoint.getText()));
-
-			double qMaxValue = Double.valueOf(qMax.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				qMaxValue /= 10;
-			}
-			modelBuildingParameters.setqMaxAngstrom(qMaxValue);
 
 			modelBuildingParameters.setNumberOfThreads(Integer.valueOf(numberOfThreads.getText()));
 
 			modelBuildingParameters.setGnomOnly(builderOptions.getSelectionIndex() == 0);
 
 			double minDistance = Double.valueOf(minDistanceSearch.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				minDistance *= 10;
-			}
-			modelBuildingParameters.setStartDistanceAngstrom(minDistance);
+			modelBuildingParameters.setStartDistanceAngstrom(minDistance * getAngstromNmFactor());
 
 			double maxDistance = Double.valueOf(maxDistanceSearch.getText());
-			if (!modelBuildingParameters.isMainUnitAngstrom()) {
-				maxDistance *= 10;
-			}
-			modelBuildingParameters.setEndDistanceAngstrom(maxDistance);
+			modelBuildingParameters.setEndDistanceAngstrom(maxDistance * getAngstromNmFactor());
 
 			modelBuildingParameters.setNumberOfSearch(Integer.valueOf(numberOfSearch.getText()));
 
@@ -1280,8 +1416,11 @@ public class NcdModelBuilderParametersView extends ViewPart {
 				workingDirectory.setText("/dls/tmp/" + fedId);
 				numberOfThreads.setText("10");
 				builderOptions.select(1);
-				minDistanceSearch.setText("20");
-				maxDistanceSearch.setText("100");
+				int minDistance = 20, maxDistance = 100;
+				minDistanceSearch.setText(Integer.toString(minDistance));
+				minDistanceBounds.setMaximum(maxDistance);
+				maxDistanceBounds.setMinimum(minDistance);
+				maxDistanceSearch.setText(Integer.toString(maxDistance));
 				numberOfSearch.setText("10");
 				setDoubleBox(tolerance, 0.1);
 				symmetry.select(0);
@@ -1297,7 +1436,7 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		qIntensityPlot.clear();
 		fileSelected = false;
 		enable(fileSelected);
-		refreshRunButton();
+		refreshRunButton(true);
 		forgetLastSelection = true;
 		checkFilenameAndColorDataFileBox(compInput.getDisplay());
 		isGuiInResetState = true;
@@ -1374,20 +1513,28 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		}
 		workingDirectory.setText(modelBuildingParameters.getWorkingDirectory());
 		numberOfFrames.setText(Integer.toString(modelBuildingParameters.getNumberOfFrames()));
-		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom());
+		setDoubleBox(qMin, modelBuildingParameters.getqMinAngstrom() * getAngstromNmFactor());
 		qMinUnits.select(modelBuildingParameters.isMainUnitAngstrom() ? 0 : 1);
-		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom());
+		setDoubleBox(qMax, modelBuildingParameters.getqMaxAngstrom() * getAngstromNmFactor());
 		startPoint.setText(Integer.toString(modelBuildingParameters.getFirstPoint()));
 		endPoint.setText(Integer.toString(modelBuildingParameters.getLastPoint()));
 		numberOfThreads.setText(Integer.toString(modelBuildingParameters.getNumberOfThreads()));
 		builderOptions.select(modelBuildingParameters.isGnomOnly() ? 0 : 1);
-		minDistanceSearch.setText(Double.toString(modelBuildingParameters.getStartDistanceAngstrom()));
-		maxDistanceSearch.setText(Double.toString(modelBuildingParameters.getEndDistanceAngstrom()));
+		resetDmaxParameters();
 		numberOfSearch.setText(Integer.toString(modelBuildingParameters.getNumberOfSearch()));
 		setDoubleBox(tolerance, modelBuildingParameters.getTolerance());
 		refreshSymmetryCombo(modelBuildingParameters.getSymmetry());
 		dammifMode.select(modelBuildingParameters.isDammifFastMode() ? 0 : 1);
 		plotOptions.select(modelBuildingParameters.isxAxisIsLog() ? 0 : 1);
+	}
+
+	public void resetDmaxParameters() {
+		double correctedMinDistance = modelBuildingParameters.getStartDistanceAngstrom() / getAngstromNmFactor();
+		double correctedMaxDistance = modelBuildingParameters.getEndDistanceAngstrom() / getAngstromNmFactor();
+		minDistanceSearch.setText(Double.toString(correctedMinDistance));
+		maxDistanceSearch.setText(Double.toString(correctedMaxDistance));
+		minDistanceBounds.setMaximum(correctedMaxDistance);
+		maxDistanceBounds.setMinimum(correctedMinDistance);
 	}
 
 	private void refreshSymmetryCombo(String symmetry2) {
@@ -1459,8 +1606,15 @@ public class NcdModelBuilderParametersView extends ViewPart {
 		btnResetDataRange.setEnabled(enabled);
 	}
 	private RectangularROI updateRoi() {
-		double qmin = Double.parseDouble(qMin.getText());
-		double qmax = Double.parseDouble(qMax.getText());
+		double qmin = 0;
+		double qmax = 1;
+		try {
+			qmin = modelBuildingParameters.getqMinAngstrom();
+			qmax = modelBuildingParameters.getqMaxAngstrom();
+			updateInternalBounds(qmin, qmax, Integer.parseInt(startPoint.getText()), Integer.parseInt(endPoint.getText()));
+		} catch (NumberFormatException e) {
+			logger.error("Problem when attempting to get qMin and qMax values", e);
+		}
 		RectangularROI roi = new RectangularROI(qmin, 1, qmax - qmin, 1, 0);
 		qIntensityPlot.getRegion(Q_REGION_NAME).setROI(roi);
 		return roi;
@@ -1514,14 +1668,81 @@ public class NcdModelBuilderParametersView extends ViewPart {
 	}
 
 	private void setDoubleBox(Text text, double value) {
-		text.setText(String.format("%.4f", value));
+		text.setText(String.format("%."+ ROUND_DOUBLES_DIGITS + "f", value));
+		if (text == qMin) {
+			modelBuildingParameters.setqMinAngstrom(value / getAngstromNmFactor());
+		}
+		else if (text == qMax) {
+			modelBuildingParameters.setqMaxAngstrom(value / getAngstromNmFactor());
+		}
 	}
 
 	private void resetRoi() {
-		updatePoint(startPoint, Double.toString(currentQDataset.getDouble(currentQDataset.minPos()[0])));
-		updatePoint(endPoint, Double.toString(currentQDataset.getDouble(currentQDataset.maxPos()[0])));
+		updatePoint(startPoint, Double.toString(getDatasetMinimumInCurrentUnits()));
+		updatePoint(endPoint, Double.toString(getDatasetMaximumInCurrentUnits()));
 		updateQ(qMin, Integer.toString(1));
 		updateQ(qMax, Integer.toString(currentQDataset.getSize()));
+		endPointBounds.setMaximum(currentQDataset.getSize());
+		qMinBounds.setMinimum(getDatasetMinimumInCurrentUnits() - Math.pow(10, -ROUND_DOUBLES_DIGITS));
+		qMaxBounds.setMaximum(getDatasetMaximumInCurrentUnits() + Math.pow(10, -ROUND_DOUBLES_DIGITS));
+		captureGUIInformation();
 		updateRoi();
+	}
+
+	private double getDatasetMaximumInCurrentUnits() {
+		return currentQDataset.getDouble(currentQDataset.maxPos()[0]) * getAngstromNmFactor();
+	}
+
+	private double getDatasetMinimumInCurrentUnits() {
+		return currentQDataset.getDouble(currentQDataset.minPos()[0]) * getAngstromNmFactor();
+	}
+
+	
+	/**
+	 * Update the bounds inside the absolute minimum/maximum values. Used to prevent start/end from overlapping.
+	 * @param qMinAngstrom
+	 * @param qMaxAngstrom
+	 * @param startPointInt
+	 * @param endPointInt
+	 */
+	private void updateInternalBounds(double qMinAngstrom, double qMaxAngstrom, int startPointInt, int endPointInt) {
+		qMinBounds.setMaximum(qMaxAngstrom * getAngstromNmFactor());
+		qMaxBounds.setMinimum(qMinAngstrom * getAngstromNmFactor());
+		startPointBounds.setMaximum(endPointInt);
+		endPointBounds.setMinimum(startPointInt);
+	}
+
+	private boolean isValid() {
+		return (!minDistanceBounds.isError() && !maxDistanceBounds.isError() && !qMinBounds.isError() && !qMaxBounds.isError() &&
+				!startPointBounds.isError() && !endPointBounds.isError());
+	}
+
+	private void updateAfterGuiEvent(Object source) {
+		if (source == minDistanceSearch) {
+			maxDistanceBounds.setMinimum(Double.parseDouble(minDistanceSearch.getText()));
+			minDistanceBounds.setMaximum(maxDistanceBounds.getValue());
+		}
+		else if (source == maxDistanceSearch) {
+			minDistanceBounds.setMaximum(Double.parseDouble(maxDistanceSearch.getText()));
+			maxDistanceBounds.setMinimum(minDistanceBounds.getValue());
+		}
+		else if (source == qMin) {
+			updatePoint(startPoint, ((Text)source).getText());
+			setDoubleBox((Text)source, Double.parseDouble(((Text)source).getText()));
+		}
+		else if (source == qMax) {
+			updatePoint(endPoint, ((Text)source).getText());
+			setDoubleBox((Text)source, Double.parseDouble(((Text)source).getText()));
+		}
+		else if (source == startPoint) {
+			updateQ(qMin, ((Text)source).getText());
+		}
+		else if (source == endPoint) {
+			updateQ(qMax, ((Text)source).getText());
+		}
+		captureGUIInformation();
+		updateRoi();
+
+		refreshRunButton(false);
 	}
 }

@@ -1,25 +1,22 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.io.File;
-import java.util.Map;
 
 import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
@@ -45,7 +42,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage {
 
-	public static int PAGENUMBER = 5;
+	protected static final int PAGENUMBER = 5;
 	private Text bgFile;
 	private Button browseBg;
 	private Text bgScale;
@@ -72,10 +69,7 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 
 		ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
-		ncdBgFileSourceProvider.addSourceProviderListener(this);
-
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
-
 		ncdBkgSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSLICE_STATE);
 
 		Composite container = new Composite(parent, SWT.NONE);
@@ -252,33 +246,4 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		return null;
 	}
 
-	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isCurrentNcdWizardpage() {
-		return isCurrentPage();
-	}
-
-	@SuppressWarnings("rawtypes")
-	@Override
-	public void sourceChanged(int sourcePriority, Map sourceValuesByName) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public void sourceChanged(int sourcePriority, String sourceName, Object sourceValue) {
-		// TODO Auto-generated method stub
-		
-	}
 }

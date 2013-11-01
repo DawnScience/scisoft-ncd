@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
+import java.util.Map;
+
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
@@ -27,7 +29,10 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.services.ISourceProviderService;
 
+import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionWizard;
 
 public class NcdDataReductionWizardHandler extends AbstractHandler {
@@ -38,21 +43,27 @@ public class NcdDataReductionWizardHandler extends AbstractHandler {
 		IWorkbenchPage page = window.getActivePage();
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection();
 
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		if (sel != null) {
-			//run the detector information command
-			IHandlerService handlerService = (IHandlerService) window.getService(IHandlerService.class);
-			try {
-				handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo", null);
-			} catch (Exception ex) {
-				MessageDialog dialog = new MessageDialog(window.getShell(), "Error", null, 
-						"Error:"+ex.toString(), MessageDialog.ERROR,
-						new String[] { "OK" }, 0);
-				dialog.open();
+			Map<String, NcdDetectorSettings> ncdDetectors = ncdDetectorSourceProvider.getNcdDetectors(); 
+				if (ncdDetectors == null || ncdDetectors.isEmpty()) {
+					//run the detector information command
+					IHandlerService handlerService = (IHandlerService) window.getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo", null);
+					} catch (Exception ex) {
+						MessageDialog dialog = new MessageDialog(window.getShell(), "Error", null, 
+								"Error:"+ex.toString(), MessageDialog.ERROR,
+								new String[] { "OK" }, 0);
+						dialog.open();
+					}
 			}
+			
+			WizardDialog wizardDialog = new WizardDialog(Display.getDefault().getActiveShell(), new NcdDataReductionWizard());
+			wizardDialog.open();
 		}
 
-		WizardDialog wizardDialog = new WizardDialog(Display.getDefault().getActiveShell(), new NcdDataReductionWizard());
-		wizardDialog.open();
 
 		return null;
 	}

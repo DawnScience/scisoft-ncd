@@ -65,6 +65,9 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 public class SectorIntegrationFileHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(SectorIntegrationFileHandler.class);
+	
+	private static final String PLOT_NAME = "Dataset Plot";
+	private static final String ENERGY_NODE = "/entry1/instrument/monochromator/energy";
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -92,7 +95,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 				}
 				try {
 					HDF5File dataTree = new HDF5Loader(dataFileName).loadTree();
-					HDF5NodeLink nodeLink = dataTree.findNodeLink("/entry1/instrument/monochromator/energy");
+					HDF5NodeLink nodeLink = dataTree.findNodeLink(ENERGY_NODE);
 					Double energy = null;   // energy value in keV
 					if (nodeLink != null) {
 	    				energy = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
@@ -125,12 +128,12 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					AbstractDataset data = (AbstractDataset) node.getDataset()
 							.getSlice(start, stop, null).clone().squeeze();
 
-					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
 					if (activePlotSystem != null) {
 						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 					}
 
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
 					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
 					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 					if (lockedMeta == null) {

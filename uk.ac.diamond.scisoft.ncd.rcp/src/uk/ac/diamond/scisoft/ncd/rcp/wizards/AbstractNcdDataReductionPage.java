@@ -1,19 +1,17 @@
-/*-
- * Copyright © 2013 Diamond Light Source Ltd.
- *
- * This file is part of GDA.
- *
- * GDA is free software: you can redistribute it and/or modify it under the
- * terms of the GNU General Public License version 3 as published by the Free
- * Software Foundation.
- *
- * GDA is distributed in the hope that it will be useful, but WITHOUT ANY
- * WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
- * FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
- * details.
- *
- * You should have received a copy of the GNU General Public License along
- * with GDA. If not, see <http://www.gnu.org/licenses/>.
+/*
+ * Copyright 2013 Diamond Light Source Ltd.
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * 
+ *   http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
@@ -27,11 +25,8 @@ import org.eclipse.jface.wizard.WizardPage;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.ui.ISourceProviderListener;
 
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-
-public abstract class AbstractNcdDataReductionPage extends WizardPage implements INcdDataReductionWizardPage, ISourceProviderListener {
+public abstract class AbstractNcdDataReductionPage extends WizardPage {
 
 	protected int currentPageNumber;
 	protected static Map<Integer, Boolean> activePages = new HashMap<Integer, Boolean>(7);
@@ -56,29 +51,6 @@ public abstract class AbstractNcdDataReductionPage extends WizardPage implements
 	}
 
 	@Override
-	public NcdProcessingSourceProvider getProvider() {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
-	public void setProvider(NcdProcessingSourceProvider provider) {
-		// TODO Auto-generated method stub
-		
-	}
-
-	@Override
-	public boolean isActive() {
-//		return isActive;
-		return activePages.get(currentPageNumber);	
-	}
-
-	@Override
-	public void setActive(boolean isActive){
-		
-	}
-
-	@Override
 	public void setVisible(boolean vis) {
 		super.setVisible(vis);
 		if (!vis) {
@@ -90,17 +62,16 @@ public abstract class AbstractNcdDataReductionPage extends WizardPage implements
 	public IWizardPage getNextPage() {
 		IWizard wizard = getWizard();
 		IWizardPage[] pages = wizard.getPages();
-		if(currentPageNumber == 0)
+		if(currentPageNumber == 0) {
 			return super.getNextPage();
+		}
 		for (int i = currentPageNumber; i < pages.length; i++) {
 	
-			if(i<pages.length-1 &&((INcdDataReductionWizardPage)pages[i+1]).isActive())
+			if(i < (pages.length - 1) && activePages.get(i+1)) {
 				return pages[i+1];
+			}
 		}
 		return null;
 	}
 
-	public boolean isCurrentNcdWizardPage(){
-		return isCurrentPage();
-	}
 }
