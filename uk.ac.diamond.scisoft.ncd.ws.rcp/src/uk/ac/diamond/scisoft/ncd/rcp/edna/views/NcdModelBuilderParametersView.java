@@ -169,8 +169,6 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 
 	private Button btnRunNcdModelBuilderJob;
 
-	private Composite compInput;
-
 	private ModelBuildingParameters modelBuildingParameters;
 
 	private RunNcdModelBuilderPipeline runNcdModelBuilderPipeline;
@@ -197,28 +195,32 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	
 	private ScrolledComposite scrolledComposite;
 	private ExpansionAdapter expansionAdapter;
-	private ExpandableComposite dataChoiceExpanderComposite;
-	private ExpandableComposite dataPathAndColumnParametersExpandableComposite;
-	private ExpandableComposite gnomParametersExpandableComposite;
-	private ExpandableComposite dammifParametersExpandableComposite;
-	private ExpandableComposite pipelineOptionsExpandableComposite;
+	private Composite parent;
+	private Composite dataParameters;
+	private ScrolledComposite plotScrollComposite;
+	private Composite plotComposite;
+	private final int scrollWidth = 600;
+	private int scrollHeight = 1000;
 
 	public NcdModelBuilderParametersView() {
 		// Specify the expansion Adapter
 		expansionAdapter = new ExpansionAdapter() {
 			@Override
 			public void expansionStateChanged(ExpansionEvent e) {
-				compInput.layout();
-				scrolledComposite.notifyListeners(SWT.Resize, null);
+				scrolledComposite.setMinSize(dataParameters.computeSize(scrollWidth, SWT.DEFAULT));
+				plotScrollComposite.setMinWidth(plotComposite.getBounds().width);
+				dataParameters.layout();
+				parent.redraw();
 			}
 		};
 
 	}
 
 	@Override
-	public Composite createPartControl(Composite parent) {
-		compInput = new Composite(parent, SWT.FILL);
-		compInput.setLayout(new FillLayout());
+	public Composite createPartControl(final Composite parent) {
+		this.parent = parent;
+		parent.setLayout(new GridLayout(1, false));
+		parent.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		try {
 			qIntensityPlot = PlottingFactory.createPlottingSystem();
@@ -229,14 +231,18 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		}
 
 		// Data parameters
+		Group dataParametersGroup = new Group(parent, SWT.NONE);
+		dataParametersGroup.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		dataParametersGroup.setLayout(new GridLayout());
+		dataParametersGroup.setText("Data parameters");
 
-		scrolledComposite = new ScrolledComposite(compInput, SWT.H_SCROLL | SWT.V_SCROLL);
-		scrolledComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+		scrolledComposite = new ScrolledComposite(dataParametersGroup, SWT.H_SCROLL | SWT.V_SCROLL);
+		scrolledComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 		scrolledComposite.setLayout(new GridLayout());
-		final Group dataParameters = new Group(scrolledComposite, SWT.NONE);
-		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+
+		dataParameters = new Composite(scrolledComposite, SWT.NONE);
 		dataParameters.setLayout(new GridLayout());
-		dataParameters.setText("Data parameters");
+		dataParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
 		final Group dataFileGroup = new Group(dataParameters, SWT.NONE);
 		dataFileGroup.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
@@ -396,9 +402,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		workingDirectory.setToolTipText("Directory where programs leave their files. Must be network accessible (not /scratch or /tmp)");
 		workingDirectory.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		dataPathAndColumnParametersExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
+		ExpandableComposite dataPathAndColumnParametersExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		dataPathAndColumnParametersExpandableComposite.setLayout(new GridLayout());
-		dataPathAndColumnParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		dataPathAndColumnParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dataPathAndColumnParametersExpandableComposite.setText("Data path and column parameters");
 
 		Composite dataPathAndColumnParametersComposite = new Composite(dataPathAndColumnParametersExpandableComposite, SWT.NONE);
@@ -437,9 +443,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		dataPathAndColumnParametersExpandableComposite.setClient(dataPathAndColumnParametersComposite);
 		dataPathAndColumnParametersExpandableComposite.addExpansionListener(expansionAdapter);
 
-		dataChoiceExpanderComposite = new ExpandableComposite(dataParameters, SWT.NONE);
+		ExpandableComposite dataChoiceExpanderComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		dataChoiceExpanderComposite.setLayout(new GridLayout());
-		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
+		dataChoiceExpanderComposite.setLayoutData(new GridData(GridData.FILL, SWT.TOP, true, false));
 		dataChoiceExpanderComposite.setText("Data range");
 		Composite dataChoiceParameters = new Composite(dataChoiceExpanderComposite, SWT.NONE);
 		dataChoiceParameters.setLayout(new GridLayout());
@@ -532,10 +538,10 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 
 		ExpandableComposite plotScrolledExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		plotScrolledExpandableComposite.setLayout(new GridLayout());
-		plotScrolledExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
+		plotScrolledExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		plotScrolledExpandableComposite.setText("Data plot");
 
-		Composite plotComposite = new Composite(plotScrolledExpandableComposite, SWT.NONE);
+		plotComposite = new Composite(plotScrolledExpandableComposite, SWT.NONE);
 		plotComposite.setLayout(new GridLayout());
 		plotComposite.setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
@@ -587,29 +593,37 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 			}
 		});
 
-		ToolBarManager man = new ToolBarManager(SWT.FLAT|SWT.RIGHT|SWT.WRAP);
+		ToolBarManager man = new ToolBarManager(SWT.FLAT|SWT.LEFT|SWT.WRAP);
 		ToolBar toolBar = man.createControl(plotComposite);
-		toolBar.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
+		toolBar.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
 
-		qIntensityPlot.createPlotPart( plotComposite, 
+		plotScrollComposite = new ScrolledComposite(plotComposite, SWT.H_SCROLL | SWT.V_SCROLL);
+		plotScrollComposite.setLayout(new FillLayout(SWT.FILL));
+		Composite child = new Composite(plotScrollComposite, SWT.NONE);
+		child.setLayout(new FillLayout(SWT.FILL));
+		
+		qIntensityPlot.createPlotPart( child, 
 				getTitle(), 
 				null, 
 				PlotType.XY,
 				null);
-		qIntensityPlot.getPlotComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true));
 
 		qIntensityPlot.getPlotActionSystem().fillZoomActions(man);
 		qIntensityPlot.getPlotActionSystem().fillPrintActions(man);
-
 		removeZoomTypeIcons(man);
+		
+		plotScrollComposite.setMinHeight(400);
+		plotScrollComposite.setExpandHorizontal(true);
+		plotScrollComposite.setExpandVertical(true);
+		plotScrollComposite.setContent(child);
 
 		plotScrolledExpandableComposite.setClient(plotComposite);
 		plotScrolledExpandableComposite.addExpansionListener(expansionAdapter);
 		plotScrolledExpandableComposite.setExpanded(true);
 
-		pipelineOptionsExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
+		ExpandableComposite pipelineOptionsExpandableComposite = new ExpandableComposite(dataParameters, SWT.NONE);
 		pipelineOptionsExpandableComposite.setLayout(new GridLayout());
-		pipelineOptionsExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		pipelineOptionsExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		pipelineOptionsExpandableComposite.setText("Pipeline parameters");
 
 		Composite otherOptionsComposite = new Composite(pipelineOptionsExpandableComposite, SWT.NONE);
@@ -632,9 +646,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		pipelineOptionsExpandableComposite.setClient(otherOptionsComposite);
 		pipelineOptionsExpandableComposite.addExpansionListener(expansionAdapter);
 
-		gnomParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
+		ExpandableComposite gnomParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
 		gnomParametersExpandableComposite.setLayout(new GridLayout());
-		gnomParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		gnomParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		gnomParametersExpandableComposite.setText("GNOM parameters");
 		final Composite gnomParameters = new Composite(gnomParametersExpandableComposite, SWT.NONE);
 		GridData gnomLayout = new GridData(SWT.FILL, SWT.TOP, true, false);
@@ -711,9 +725,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		gnomParametersExpandableComposite.addExpansionListener(expansionAdapter);
 		gnomParametersExpandableComposite.setExpanded(true);
 
-		dammifParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
+		ExpandableComposite dammifParametersExpandableComposite = new ExpandableComposite(dataParameters,  SWT.NONE);
 		dammifParametersExpandableComposite.setLayout(new GridLayout());
-		dammifParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+		dammifParametersExpandableComposite.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		dammifParametersExpandableComposite.setText("DAMMIF parameters");
 		Composite dammifParameters = new Composite(dammifParametersExpandableComposite, SWT.NONE);
 		dammifParameters.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false, 2, 1));
@@ -758,12 +772,13 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		scrolledComposite.setContent(dataParameters);
 		scrolledComposite.setExpandHorizontal(true);
 		scrolledComposite.setExpandVertical(true);
-		scrolledComposite.setSize(dataParameters.computeSize(SWT.DEFAULT, SWT.DEFAULT));
+		scrolledComposite.setMinSize(scrollWidth, scrollHeight);
 		scrolledComposite.addControlListener(new ControlAdapter() {
 			@Override
 			public void controlResized(ControlEvent e) {
+				scrolledComposite.setMinSize(dataParameters.computeSize(scrollWidth, SWT.DEFAULT));
+				plotScrollComposite.setMinWidth(plotComposite.getBounds().width);
 				dataParameters.layout();
-				scrolledComposite.setMinSize(dataParameters.computeSize(SWT.DEFAULT, SWT.DEFAULT));
 			}
 		});
 
@@ -870,6 +885,8 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 
 		algorithmViewPart.getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
 
+		dataParameters.layout();
+		parent.redraw();
 		return parent;
 	}
 
@@ -1103,10 +1120,11 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	protected void refreshRunButton(boolean clearQAndPathItemsIfInvalid) {
 		final boolean pathsPopulatedParametersValid = ((fileSelected && !pathEmpty && isNxsFile(modelBuildingParameters.getDataFilename())) || fileSelected)
 				&& isValid();
-		compInput.getDisplay().asyncExec(new Runnable() {
+		parent.getDisplay().asyncExec(new Runnable() {
 			@Override
 			public void run() {
-				btnRunNcdModelBuilderJob.setEnabled(pathsPopulatedParametersValid);
+				if (btnRunNcdModelBuilderJob != null && !btnRunNcdModelBuilderJob.isDisposed())
+					btnRunNcdModelBuilderJob.setEnabled(pathsPopulatedParametersValid);
 			}
 		});
 		if (clearQAndPathItemsIfInvalid && !pathsPopulatedParametersValid && !(modelBuildingParameters.getDataFilename() == null) && isNxsFile(modelBuildingParameters.getDataFilename())) {
@@ -1401,7 +1419,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	}
 
 	public void resetGUI() {
-		compInput.getDisplay().syncExec(new Runnable() {
+		parent.getDisplay().syncExec(new Runnable() {
 
 			@Override
 			public void run() {
@@ -1432,12 +1450,12 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		enable(fileSelected);
 		refreshRunButton(true);
 		forgetLastSelection = true;
-		checkFilenameAndColorDataFileBox(compInput.getDisplay());
+		checkFilenameAndColorDataFileBox(parent.getDisplay());
 		isGuiInResetState = true;
 	}
 	
 	public void clearQAndPathItems() {
-		compInput.getDisplay().asyncExec(new Runnable() {
+		parent.getDisplay().asyncExec(new Runnable() {
 
 			@Override
 			public void run() {
