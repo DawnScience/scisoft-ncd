@@ -884,9 +884,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		updatePlot();
 
 		algorithmViewPart.getSite().getWorkbenchWindow().getSelectionService().addSelectionListener(selectionListener);
+		// Compute the minimum width size for the first time
+		plotScrollComposite.setMinWidth(scrolledComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT).x);
 
-		dataParameters.layout();
-		parent.redraw();
 		return parent;
 	}
 
