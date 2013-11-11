@@ -951,41 +951,41 @@ public class LazyNcdProcessing {
 	    
 	    if (flags.isEnableLogLogPlot()) {
 	    	SaxsPlotData plotData = new LogLogPlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    if (flags.isEnableGuinierPlot()) {
 	    	SaxsPlotData plotData = new GuinierPlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    if (flags.isEnablePorodPlot()) {
 	    	SaxsPlotData plotData = new PorodPlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    if (flags.isEnableKratkyPlot()) {
 	    	SaxsPlotData plotData = new KratkyPlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    if (flags.isEnableZimmPlot()) {
 	    	SaxsPlotData plotData = new ZimmPlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    if (flags.isEnableDebyeBuechePlot()) {
 	    	SaxsPlotData plotData = new DebyeBuechePlotData();
-	    	addPlotData(plotData, detector, qaxis, frames_int);
+	    	addPlotData(plotData, detector, qaxis);
 	    }
 	    
 	    closeHDF5Identifiers();
 	}
 	
-	private void addPlotData(SaxsPlotData plotData, String detector, AbstractDataset qaxis, int[] frames_int) throws HDF5Exception {
+	private void addPlotData(SaxsPlotData plotData, String detector, AbstractDataset qaxis) throws HDF5Exception {
     	plotData.setDetector(detector);
     	plotData.setQaxis(qaxis, qaxisUnit);
-    	plotData.execute(frames_int, entry_group_id, input_ids);
+    	plotData.execute(entry_group_id, input_ids);
 	}
 	
 	private void closeHDF5Identifiers() throws HDF5LibraryException {

@@ -22,6 +22,7 @@ import java.util.Arrays;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -244,6 +245,14 @@ public class NcdNexusUtils {
 			errors_ids.setIDs(detector_group_id, input_errors_id);
 		}
 		return new DataSliceIdentifiers[] {ids, errors_ids};
+	}
+	
+	public static long[] getIdsDatasetShape(DataSliceIdentifiers ids) throws HDF5LibraryException {
+		final int ndims = H5.H5Sget_simple_extent_ndims(ids.dataspace_id);
+		long[] dims = new long[ndims];
+		long[] maxdims = new long[ndims];
+		H5.H5Sget_simple_extent_dims(ids.dataspace_id, dims, maxdims);
+		return dims;
 	}
 	
 	public static AbstractDataset sliceInputData(SliceSettings sliceData, DataSliceIdentifiers ids) throws HDF5Exception {
