@@ -74,5 +74,7 @@ public class NcdPreferences {
 	public static final String CMAESmaxiteration = "CMAESmaxiteration";
 	public static final String CMAESchecker = "CMAESchecker";
 	
+	public static final String NCD_REDUCTION_MODAL = "ncd.reduction.modal";
+	
 	public static final String NCD_ALLOWSELECTIONOFPATHS = "ncd.allow.selection.of.paths";
 }

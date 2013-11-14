@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.preferences;
 
+import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
 import org.eclipse.swt.SWT;
@@ -27,9 +28,9 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
+import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
-
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
@@ -52,13 +53,31 @@ public class NcdPreferencePage  extends FieldEditorPreferencePage implements IWo
 		sc.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 		final Composite c = new Composite(sc, SWT.NONE);
 		c.setLayout( new GridLayout(1, false));
-		Group g = new Group(c, SWT.BORDER);
-		g.setLayout(new GridLayout(1, false));
-		g.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
-		g.setText("Beam position optimiser settings");
 		{
+			Group g = new Group(c, SWT.BORDER);
+			g.setLayout(new GridLayout(1, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			g.setText("NCD data reduction lock");
+			
 			final Composite gc = new Composite(g,  SWT.NONE);
 			gc.setLayout(new GridLayout(1, false));
+			gc.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			addField(new BooleanFieldEditor(NcdPreferences.NCD_REDUCTION_MODAL, "Lock GUI during NCD data reduction", gc));
+			
+			Label warning = new Label(g, SWT.NONE);
+			warning.setText("WARNING! If GUI is unlocked during data reduction, please be careful not to close files\n" +
+					"that might be open by the pipeline. If file gets closed in GUI while it is still in use,\n" +
+					"data reduction process will fail.");
+			
+		}
+		{
+			Group g = new Group(c, SWT.BORDER);
+			g.setLayout(new GridLayout(1, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			g.setText("Beam position optimiser settings");
+			
+			final Composite gc = new Composite(g,  SWT.NONE);
+			gc.setLayout(new GridLayout(4, false));
 			gc.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			addField(new IntegerFieldEditor(NcdPreferences.CMAESlambda, "Population size", gc));
 			addField(new IntegerFieldEditor(NcdPreferences.CMAESsigma, "Initial search volume", gc));

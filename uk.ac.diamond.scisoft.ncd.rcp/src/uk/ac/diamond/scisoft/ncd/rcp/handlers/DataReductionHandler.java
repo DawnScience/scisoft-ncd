@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
 import java.io.File;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 import javax.measure.quantity.Energy;
@@ -36,16 +37,19 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.MultiStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
-import org.eclipse.jface.dialogs.ErrorDialog;
 import org.eclipse.jface.dialogs.MessageDialog;
+import org.eclipse.jface.dialogs.ProgressMonitorDialog;
+import org.eclipse.jface.operation.IRunnableWithProgress;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +61,7 @@ import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
@@ -69,6 +74,48 @@ public class DataReductionHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionHandler.class);
 		
+	private IDataReductionService service;
+	private Object[] selObjects;
+	private IDataReductionContext context;
+	
+	private class NcdDataReductionJob implements IRunnableWithProgress {
+
+		@Override
+		public void run(IProgressMonitor monitor) {
+
+			monitor.beginTask("Running NCD data reduction", context.getWorkAmount() * selObjects.length);
+
+			// Process each file 
+			for (int i = 0; i < selObjects.length; i++) {
+				final String inputfilePath;
+				if (selObjects[i] instanceof IFile) {
+					inputfilePath = ((IFile) selObjects[i]).getLocation().toString();
+				} else {
+					inputfilePath = ((File) selObjects[i]).getAbsolutePath();
+				}
+				if (inputfilePath == null) {
+					continue;
+				}
+
+				try {
+					IStatus status = service.process(inputfilePath, context, monitor);
+					if (status.getSeverity() == IStatus.CANCEL) {
+						monitor.done();
+					}
+				} catch (Exception e) {
+					String msg = "SCISOFT NCD: Error running NCD data reduction process";
+					MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
+					for (StackTraceElement ste : e.getStackTrace()) {
+						mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
+					}
+					StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
+					logger.error(msg, e);
+				}
+			}
+			monitor.done();
+		}
+	}
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
@@ -79,10 +126,10 @@ public class DataReductionHandler extends AbstractHandler {
 		if (sel != null) {
 			
 			// We get the data reduction service using OSGI
-			final IDataReductionService service = (IDataReductionService)Activator.getService(IDataReductionService.class);
+			service = (IDataReductionService)Activator.getService(IDataReductionService.class);
 			
 			// Get data from NcdProcessingSourceProvider's and store in IDataReductionContext
-			final IDataReductionContext context = service.createContext();
+			context = service.createContext();
 			createData(context, window);
 		
 			// Now we configure the context, which throws exceptions if 
@@ -102,52 +149,54 @@ public class DataReductionHandler extends AbstractHandler {
 					return Boolean.FALSE;
 				}
 			} catch (Exception e) {
-				logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-				Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
-				ErrorDialog.openError(window.getShell(), "Data reduction error", "Error reading data reduction parameters", status);
+				String msg = "SCISOFT NCD: Error reading data reduction parameters";
+				logger.error(msg, e);
+				MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
+				for (StackTraceElement ste : e.getStackTrace()) {
+					mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
+				}
+				StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
 				return Boolean.FALSE;
 			}
 			
-			final Object[] selObjects = sel.toArray();
+			selObjects = sel.toArray();
 			
-			// Process each file 
+			boolean runModal = uk.ac.diamond.scisoft.ncd.rcp.Activator.getDefault().getPreferenceStore().getBoolean(NcdPreferences.NCD_REDUCTION_MODAL);
+			final NcdDataReductionJob ncdProcess = new NcdDataReductionJob();
+			if (runModal) {
+				try {
+					ProgressMonitorDialog dlg = new ProgressMonitorDialog(window.getShell()); 
+					dlg.run(true, true, ncdProcess);
+				} catch (InvocationTargetException ex) {
+					Throwable cause = ex.getCause();
+					String msg = "NCD Data Reduction has failed";
+					logger.error(msg, cause);
+					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, cause);
+					StatusManager.getManager().handle(status, StatusManager.BLOCK|StatusManager.SHOW);
+					return Boolean.FALSE;
+				} catch (InterruptedException ex) {
+					Throwable cause = ex.getCause();
+					String msg = "NCD Data Reduction was interrupted";
+					logger.error(msg, cause);
+					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, cause);
+					StatusManager.getManager().handle(status, StatusManager.BLOCK|StatusManager.SHOW);
+					return Boolean.FALSE;
+				}
+			} else {
 			final Job ncdJob = new Job("Running NCD data reduction") {
 
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
-
 					monitor.beginTask("Running NCD data reduction",context.getWorkAmount()*selObjects.length);
-							
-					for (int i = 0; i < selObjects.length; i++) {
-						final String inputfilePath;
-						if (selObjects[i] instanceof IFile) {
-							inputfilePath = ((IFile)selObjects[i]).getLocation().toString();
-						} else {
-							inputfilePath = ((File)selObjects[i]).getAbsolutePath();
-						}
-						if (inputfilePath==null) {
-							continue;
-						}
-						
- 					    try {
-							IStatus status = service.process(inputfilePath, context, monitor);
-							if (status.getSeverity()==IStatus.CANCEL) {
-								monitor.done();
-								return status;
-							}
-						} catch (Exception e) {
-							logger.error("SCISOFT NCD: Error reading data reduction parameters", e);
-							return new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
-						}
-					}
+					ncdProcess.run(monitor);
 					monitor.done();
 					return Status.OK_STATUS;
 				}
 			};
 			
 			ncdJob.setUser(true);
-			ncdJob.schedule();				
-
+			ncdJob.schedule();
+			}
 		}
 		return Boolean.TRUE;
 	}

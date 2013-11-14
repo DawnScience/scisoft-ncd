@@ -24,6 +24,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
 public class NcdPreferenceInitializer extends AbstractPreferenceInitializer {
 	
+	private final boolean runModal = true;
 	private final Integer cmaesLambda = 5;
 	private final Integer cmaesInputSigma = 3;
 	private final Integer cmaesMaxIterations = 1000;
@@ -36,6 +37,9 @@ public class NcdPreferenceInitializer extends AbstractPreferenceInitializer {
 	@Override
 	public void initializeDefaultPreferences() {
 		IPreferenceStore store = Activator.getDefault().getPreferenceStore();
+		
+		store.setDefault(NcdPreferences.NCD_REDUCTION_MODAL, runModal);
+		
 		store.setDefault(NcdPreferences.CMAESlambda, cmaesLambda);
 		store.setDefault(NcdPreferences.CMAESsigma, cmaesInputSigma);
 		store.setDefault(NcdPreferences.CMAESmaxiteration, cmaesMaxIterations);

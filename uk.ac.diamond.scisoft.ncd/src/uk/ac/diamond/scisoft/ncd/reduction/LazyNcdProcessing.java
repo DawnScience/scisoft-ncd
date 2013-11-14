@@ -306,10 +306,9 @@ public class LazyNcdProcessing {
 	 * @param dim      - dimension of detector
 	 * @param filename - file path to io file (processing done in this folder) 
 	 * @param monitor
-	 * @throws NullPointerException
-	 * @throws HDF5Exception
+	 * @throws HDF5Exception 
 	 */
-	public void execute(String detector, int dim, String filename, final IProgressMonitor monitor) throws NullPointerException, HDF5Exception {
+	public void execute(String detector, int dim, String filename, final IProgressMonitor monitor) throws HDF5Exception {
 		
 		String[] tmpName = FilenameUtils.getName(filename).split("_");
 		final String monitorFile = tmpName[1];
