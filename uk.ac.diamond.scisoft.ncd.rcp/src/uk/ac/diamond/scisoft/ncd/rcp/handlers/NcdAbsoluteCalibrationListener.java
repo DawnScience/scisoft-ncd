@@ -170,7 +170,8 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
 		}
-		final Unit<ScatteringVector> unit = crb.getUnit(detectorSaxs).inverse().asType(ScatteringVector.class);
+		
+		final Unit<ScatteringVector> unit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
 		
 		dataQ = new ArrayList<Amount<ScatteringVector>>();
 		
