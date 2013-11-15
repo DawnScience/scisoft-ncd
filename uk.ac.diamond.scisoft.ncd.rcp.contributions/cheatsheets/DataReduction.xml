@@ -3,8 +3,7 @@
       title="Basic NCD Data Reduction">
    <intro>
       <description>
-         Prerequisites: <br/>
-		 <br/>
+         Prerequisites:<br/><br/>
          Create project with data<br/>
          Load detector information
       </description>
@@ -14,7 +13,7 @@
       <description>
          If data reduction process includes sector integration stage, please open one of the images and select &quot;Radial Profile&quot; and/or &quot;Azimuthal Profile&quot;tool
          to check corresponding integrated profiles. Adjust sector dimensions, if needed. <br/>
-         IMPORTANT! Please take care not to move the sector region while trying to adjust dimensions. If sector region is accidentally moved, it can be returned back to the currently set
+         <b>Important!</b> Please take care not to move the sector region while trying to adjust dimensions. If sector region is accidentally moved, it can be returned back to the currently set
          beam center position pressing &quot;Center sector&quot; button on the integrated profile plot toolbar. When appropriate sector region size is selected,
          it is recommended to select &quot;Lock to Metadata&quot; button that positions sector origin at currently set beam stop position and fixes region so that it can't be accidentally moved. <br/>
          Current beam center position can be checked in the table view in &quot;Diffraction&quot; tool. It gets updated when NCD calibration procedure is completed or q-axis calibration data is loaded from NCD processing results file.
@@ -45,8 +44,10 @@
       <description>
          If &quot;1. Detector Response&quot; stage is enabled we need to specify detector response parameters under &quot;Reference Data&quot; group. 
       </description>
-      <subitem
-         label="Reference to the file with detector response data needs to be specified in &quot;Detector Response File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Detector Response File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog. Detector response file should contain only single frame.">
+      <subitem>
+      	<description>
+         Reference to the file with detector response data needs to be specified in &quot;Detector Response File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Detector Response File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog. Detector response file should contain only single frame.
+      	</description>
       </subitem>   
    </item>
    <item
@@ -54,16 +55,26 @@
       <description>
          If &quot;2. Sector Integration&quot; stage is enabled we need to specify parameters under the &quot;Sector Integration Parameters&quot; group. 
       </description>
-      <subitem
-         label="To enable calculation of radial and azimuthal profiles select corresponding checkboxes.">
+      <subitem>
+      	<description>
+         To enable calculation of radial and azimuthal profiles select corresponding checkboxes.
+      	</description>
       </subitem>   
-      <subitem
-         label="&quot;Fast Integration&quot; checkbox activates faster but less accurate algorithm for sector integration.">
+      <subitem>
+      	<description>
+         &quot;Fast Integration&quot; checkbox activates faster but less accurate algorithm for sector integration.
+      	</description>
       </subitem>   
       <subitem>
       	<description>
          &quot;Apply Detector Mask&quot; checkbox uses detector mask in integrated profile calculations.<br/>      
-         <b>Important!!!</b> Make sure that mask in visible on the image plot. See &quot;Configuring NCD Data Reduction &gt; Setting Detector Mask&quot; section for further information on loading and saving mask data.
+         <b>Important!</b> Make sure that mask in visible on the image plot. See &quot;Configuring NCD Data Reduction &gt; Setting Detector Mask&quot; section for further information on loading and saving mask data.
+      	</description>
+      </subitem>   
+      <subitem>
+      	<description>
+         Selecting checkboxes in &quot;1D SAXS Analysis Data&quot; section will include data for the selected SAXS plots into results files.
+         These plots are also accessible via &quot;SAXS Analysis&quot; tool in plot views with integrated data reduction results data.   
       	</description>
       </subitem>   
    </item>
@@ -72,14 +83,22 @@
       <description>
          If &quot;3. Normalisation&quot; stage is enabled we need to specify normalisation parameters under &quot;Normalisation&quot; group. 
       </description>
-      <subitem
-         label="Select detector name holding normalisation values from &quot;Normalisation Data&quot; drop-down list. IMPORTANT! If the list is empty, repeat &quot;Loading Detector Information&quot; step from &quot;Setup for NCD Data Reduction&quot; section.">
+      <subitem>
+      <description>
+         Select detector name holding normalisation values from &quot;Normalisation Dataset&quot; drop-down list in the &quot;NCD Detector Parameters&quot; view.<br/>
+         <b>Important!</b> If the list is empty, repeat &quot;Loading Detector Information&quot; step from &quot;Setup for NCD Data Reduction&quot; section.
+      </description>
       </subitem>   
-      <subitem
-         label="If normalisation dataset contains values from several channels, specify channel number that should be used for data reduction with &quot;Channel&quot; spinner.">
+      <subitem>
+      <description>
+         If normalisation dataset contains values from several channels, specify channel number that should be used for data reduction with &quot;Channel&quot; spinner.
+      </description>
       </subitem>   
-      <subitem
-         label="Specify scaling value for normalisation data in &quot;Abs. Scale&quot; field (optional). This value can be set to calibrate scattering intensity on an absolute scale (see &quot;Absolute Intensity Calibration&quot; for details).">
+      <subitem>
+      <description>
+         Specify scaling value for normalisation data in &quot;Abs. Scale&quot; field (optional).
+         This value can be set to calibrate scattering intensity on an absolute scale (see &quot;Absolute Intensity Calibration&quot; section for details).
+      </description>
       </subitem>   
    </item>
    <item
@@ -87,11 +106,16 @@
       <description>
          If &quot;4. Background Subtraction&quot; stage is enabled we need to specify background subtraction parameters in &quot;Reference Data&quot; group. 
       </description>
-      <subitem
-         label="Reference to the file with background data needs to be specified in &quot;Background Subtraction File&quot; field. This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Background Subtraction File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog.">
+      <subitem>
+      <description>
+         Reference to the file with background data needs to be specified in &quot;Background Subtraction File&quot; field.
+         This can be accomplished either by selecting the appropriate file in Project Explorer and selecting NCD &gt; Set as Background Subtraction File in popup menu or pressing &quot;...&quot; button next to the input field and selecting the file in file dialog.
+      </description>
       </subitem>   
-      <subitem
-         label="Background data can be rescaled using values specified in &quot;Bg. Scale&quot; field (optional).">
+      <subitem>
+      <description>
+         Background data can be rescaled using values specified in &quot;Bg. Scale&quot; field (optional).
+      </description>
       </subitem>   
    </item>
    <item
@@ -112,37 +136,5 @@
          Data reduction results are stored in output directory in results_detectorname_DDMMYY_HHMMSS_inputfilename.nxs file under &quot;/entry1/detectorname_processing/&quot; node. Every data reduction stage has separate subnode with output result stored under data subnode.
          Output dataset of NCD data reduction is stored in &quot;/entry1/dtectorname_result/data&quot; node.
       </description>
-   </item>
-   <item
-         title="Absolute intensity calibration (optional)">
-      <description>
-         Absolute intensity calibration procedure calculates scaling value that needs to be applied to normalised data to obtain integrated intensities on an absolute scale.
-         This calculation requires reduced data from a glassy carbon sample and sample thickness. Reference dataset with glassy carbon scattering data will be fitted to the input profile to identify correct scaling value.   
-      </description>
-      <subitem
-         label="Plot the results of data reduction (normalised and background subtracted) for a glassy carbon sample.">
-      </subitem>   
-      <subitem
-         label="Check that NCD calibration settings are correct. Scattering vector units specified by NCD calibration setting should be the same as units of the plotted glassy carbon data. You can update current NCD calibration data in &quot;NCD Calibration&quot; perspective by loading q-axis information from the glassy carbon processing results file.">
-      </subitem>   
-      <subitem
-         label="If only part of input data should be used in fitting (e.g. to exclude masked areas near beamstop or detector edge), zoom into the requred range of the input data. Only values that are visible on the plot would be used for calculation of the scaling factor.">
-      </subitem>   
-      <subitem
-         label="Specify sample thickness (in mm) in the &quot;Sample Thickness&quot; input box in the &quot;Normalisation&quot; section of the &quot;NCD Data Reduction Parameters&quot; view.">
-      </subitem>   
-      <subitem
-         label="Press &quot;Run Absolute Intensity Calibration&quot; button to estimate required scaling factor.">
-      </subitem>   
-      <subitem
-         label="After calibration completes, result of the fit of the reference data to the input glassy carbon profile will be plotted in the &quot;Dataset Plot&quot; view. Calculated scaling factor value is set in &quot;Abs.Scale&quot; input field.">
-      </subitem>   
-      <subitem
-         label="Value in the &quot;Offset&quot; field can be viewed as a measure of accuracy of the scaling factor estimation. This value is a shift along the intensity axis that was applied by the fitting process to get best match for reference and input data. In ideal case this value should be zero.
-Large offset value could be indicative of poor background subtraction in the input glassy carbon data.">
-      </subitem>   
-      <subitem
-         label="Make sure that sample thickness parameter is set correctly in &quot;NCD Data Reduction Parameters&quot; view before running NCD data reduction process. Sample thickness data is currently not recorded in experimental files and needs to be updated manually for correct absolute intensity calculation.">
-      </subitem>   
    </item>
 </cheatsheet>

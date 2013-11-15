@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cheatsheet
+      title="Absolute Intensity Calibration (optional)">
+   <intro>
+      <description>
+         Absolute intensity calibration procedure calculates scaling value that needs to be applied to normalised data to obtain integrated intensities on an absolute scale.
+         This calculation requires data from a glassy carbon sample and sample thickness. Reference dataset with glassy carbon scattering profile will be fitted to the input data to identify correct scaling value.   
+      </description>
+   </intro>
+   <item
+         title="Complete q-axis calibration">
+      <description>
+      Complete q-axis calibration stage, i.e. check that correct values for beam center, distance, wavelength are set in the &quot;Diffraction&quot; tool page.
+      </description>
+   </item>
+   <item
+         title="Center sector region">
+      <description>
+       Make sure that sector region is locked to beam center by pressing the &quot;Lock to Metadata&quot; button on the toolbar of the &quot;Raidal Profile&quot; tool page.
+      </description>
+   </item>
+   <item
+         title="Apply detector mask">
+      <description>
+       Check that appropriate detector mask is set in &quot;Masking&quot; tool. See &quot;Setting Detector Mask&quot; section for more details.
+      </description>
+   </item>
+   <item
+         title="Select calibrant file">
+      <description>
+       Select NeXus file with calibrant data in the &quot;Project Explorer&quot; view. Name of the selected file is shown in the &quot;Selected Calibrant File&quot; field. 
+      </description>
+   </item>
+   <item
+         title="Select normalisation dataset">
+      <description>
+       Check that correct &quot;Normalisation Dataset&quot; is selected in &quot;NCD Detector Parameters&quot; view and, if applicable, select appropriate number in &quot;Channel&quot; spinner. Reload detector information if you need to refresh the list of available normalisation datasets. 
+      </description>
+   </item>
+   <item
+         title="Specify sample thickness">
+      <description>
+       Specify in the &quot;Sample Thickness&quot; input field the selected calibrant thickness in millimeters. 
+      </description>
+   </item>
+   <item
+         title="Running calibration process">
+      <description>
+       Press &quot;Run Absolute Intensity Calibration&quot; button to calculate absolute intensity scaling factor. The scaling factor in output in the &quot;Absolute Intensity Scale&quot; field.
+       The corresponding field in &quot;NCD Data Reduction Parameters&quot; view is also populated at the end of the calibration process.  
+      </description>
+   </item>
+   <item
+         title="Manual setting of scaler value">
+      <description>
+       To override absolute scale factor set by the calibration process in the &quot;Normalisation&quot; section of the &quot;NCD Data Reduction Parameters&quot; view, press &quot;Clear Calibration Data&quot; button.
+       This will remove the existing value and make &quot;Abs. Scale&quot; field in the &quot;NCD Data Reduction Parameters&quot; view editable. 
+      </description>
+   </item>
+</cheatsheet>

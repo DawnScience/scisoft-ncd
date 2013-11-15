@@ -46,11 +46,11 @@
 				<intro>
 					These tutorials describes how to access NCD Calibration perspective and load calibration image.
 					Following files will be needed to complete these task:
-					<br />
+					<br/>
 					<b>i22-34820.nxs</b>
 					- Ag Behenate calibration file. It has four circles that correspond
 					to first four calibration peaks.
-					<br />
+					<br/>
 				</intro>
 				<param name="path"
 					value="CalibrationImage.xml" />
@@ -91,13 +91,22 @@
 					Results file that has q-axis calibration and/or mask information
 					can be used to load this data back into NCD perspective for
 					processing data.
-					<br />
+					<br/>
 					<b>results_Pilatus2M_050112_154741_i22-34774.nxs</b>
 					- Example of processing results file for frames 50-60 with q-axis
 					calibration and detector mask data.
 				</intro>
 				<param name="path"
 					value="RestoringData.xml" />
+			</task>
+			<task kind="cheatsheet" name="Absolute Intensity Calibration (Optional)"
+				skip="true">
+				<intro>
+					This stage can be used to find scaling factor that is required to get
+					1D integrated scattering profiles on an absolute intensity scale.
+				</intro>
+				<param name="path"
+					value="IntensityCalibration.xml" />
 			</task>
 		</taskGroup>
 		<taskGroup kind="set" name="Running NCD Data Reduction"
