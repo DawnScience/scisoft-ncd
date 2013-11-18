@@ -101,6 +101,7 @@ public class DataReductionHandler extends AbstractHandler {
 					IStatus status = service.process(inputfilePath, context, monitor);
 					if (status.getSeverity() == IStatus.CANCEL) {
 						monitor.done();
+						return;
 					}
 				} catch (Exception e) {
 					String msg = "SCISOFT NCD: Error running NCD data reduction process";
@@ -110,6 +111,8 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 					StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
 					logger.error(msg, e);
+					monitor.done();
+					return;
 				}
 			}
 			monitor.done();
