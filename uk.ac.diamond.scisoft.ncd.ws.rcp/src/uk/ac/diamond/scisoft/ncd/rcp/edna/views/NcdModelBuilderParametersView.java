@@ -24,6 +24,7 @@ import java.util.Map;
 import org.csstudio.swt.xygraph.undo.ZoomType;
 import org.dawnsci.algorithm.ui.views.runner.AbstractAlgorithmProcessPage;
 import org.dawnsci.algorithm.ui.views.runner.IAlgorithmProcessContext;
+import org.dawnsci.common.widgets.content.FileContentProposalProvider;
 import org.dawnsci.common.widgets.decorator.BoundsDecorator;
 import org.dawnsci.common.widgets.decorator.FloatDecorator;
 import org.dawnsci.common.widgets.decorator.IValueChangeListener;
@@ -119,7 +120,6 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.ModelBuildingParameters;
 import uk.ac.diamond.scisoft.ncd.rcp.edna.actions.RunNcdModelBuilderPipeline;
 import uk.ac.diamond.scisoft.ncd.ws.rcp.Activator;
-import uk.ac.gda.ui.content.FileContentProposalProvider;
 
 public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage {
 	private static final String Q_REGION_NAME = "q Region";

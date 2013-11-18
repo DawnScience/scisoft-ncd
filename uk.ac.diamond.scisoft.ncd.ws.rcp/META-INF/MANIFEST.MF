@@ -17,9 +17,9 @@ Require-Bundle: org.eclipse.ui,
  org.eclipse.ui.forms,
  org.csstudio.swt.xygraph,
  org.dawnsci.common.widgets;bundle-version="1.2.0",
- org.dawnsci.algorithm.ui;bundle-version="1.0.0"
+ org.dawnsci.algorithm.ui;bundle-version="1.0.0",
+ org.dawnsci.common.widgets.gda;bundle-version="1.2.0"
 Import-Package: org.eclipse.ui.navigator.resources,
  org.slf4j;version="1.5.6",
- uk.ac.diamond.scisoft.analysis.rcp.views,
- uk.ac.gda.ui.content
+ uk.ac.diamond.scisoft.analysis.rcp.views
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.ws.rcp.Activator
