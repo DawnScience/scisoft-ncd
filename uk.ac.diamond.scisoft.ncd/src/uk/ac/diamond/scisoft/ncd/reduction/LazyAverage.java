@@ -224,6 +224,7 @@ public class LazyAverage extends LazyDataReduction {
 			H5.H5Sclose(memspace_id);
 			H5.H5Tclose(type_id);
 			
+			monitor.worked(1);
 		}
 		
 		input_ids.setIDs(ave_group_id, ave_data_id);
