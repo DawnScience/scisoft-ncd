@@ -360,9 +360,19 @@ public class LazyNcdProcessing {
 		if (frameSelection != null) {
 		    int sel_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySelection.name, Nexus.DETECT);
 		    
+			monitor.beginTask(monitorFile + " : Slicing Input Data", IProgressMonitor.UNKNOWN);
 		    LazySelection selection = new LazySelection(frames_int);
 		    selection.setFormat(frameSelection);
+		    selection.setMonitor(monitor);
 		    DataSliceIdentifiers[] obj_ids = selection.execute(dim, input_ids, input_errors_ids, sel_group_id);
+		    
+		    if (monitor.isCanceled()) {
+		    	closeHDF5Identifiers();
+		    	return;
+		    }
+		    
+		    monitor.done();
+		    
 		    input_ids = obj_ids[0];
 		    input_errors_ids = obj_ids[1];
 			H5.H5Sget_simple_extent_dims(input_ids.dataspace_id, frames, null);
@@ -694,6 +704,8 @@ public class LazyNcdProcessing {
 				return;
 			}
 			
+			monitor.done();
+			
 			dim = 1;
 			rank = secRank;
 			sliceDim = 0;
@@ -911,6 +923,8 @@ public class LazyNcdProcessing {
 			return;
 		}
 		
+		monitor.done();
+		
 		if (!processingJobList.isEmpty()) {
 			DataReductionJob tmpJob = processingJobList.get(0);
 			input_ids = new DataSliceIdentifiers(tmpJob.tmp_ids);
@@ -919,7 +933,7 @@ public class LazyNcdProcessing {
 		}
 		
 		if(flags.isEnableAverage()) {
-			monitor.beginTask(monitorFile + " : Averaging  datasets", 1);
+			monitor.beginTask(monitorFile + " : Averaging  datasets", IProgressMonitor.UNKNOWN);
 			int[] averageIndices = new int[] {frames.length - dim};
 			if (gridAverage != null) {
 				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
@@ -939,6 +953,8 @@ public class LazyNcdProcessing {
 				lazyAverage.writeQaxisData(frames_int.length, input_ids.datagroup_id);
 			}
 			lazyAverage.writeNcdMetadata(input_ids.datagroup_id);
+			
+			monitor.done();
 		}
 		
 	    H5.H5Lcreate_hard(input_ids.datagroup_id, "./data", result_group_id, "./data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);

@@ -231,22 +231,22 @@ public class DataReductionHandler extends AbstractHandler {
 				} else {
 					throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
 				}
-				if (context.isEnableMask()) {
-					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
-					Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
-					if (imageTraces == null || imageTraces.isEmpty()) {
-						mask = MaskingTool.getSavedMask();
-					} else {
-						ITrace imageTrace = imageTraces.iterator().next();
-						if (imageTrace instanceof IImageTrace) {
-							mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
-						}
+			}
+			if (context.isEnableMask()) {
+				IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+				Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
+				if (imageTraces == null || imageTraces.isEmpty()) {
+					mask = MaskingTool.getSavedMask();
+				} else {
+					ITrace imageTrace = imageTraces.iterator().next();
+					if (imageTrace instanceof IImageTrace) {
+						mask = (BooleanDataset) ((IImageTrace) imageTrace).getMask();
 					}
-					if (mask != null) {
-						context.setMask(new BooleanDataset(mask));
-					} else {
-						throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
-					}
+				}
+				if (mask != null) {
+					context.setMask(new BooleanDataset(mask));
+				} else {
+					throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
 				}
 			}
 		}
@@ -273,7 +273,8 @@ public class DataReductionHandler extends AbstractHandler {
 		context.setEnableDetectorResponse(ncdResponseSourceProvider.isEnableDetectorResponse());
 		
 		NcdProcessingSourceProvider ncdSectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SECTOR_STATE);
-		context.setEnableSector(ncdSectorSourceProvider.isEnableSector());
+		boolean enableSector = ncdSectorSourceProvider.isEnableSector();
+		context.setEnableSector(enableSector);
 	
 		NcdProcessingSourceProvider ncdInvariantSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.INVARIANT_STATE);
 		context.setEnableInvariant(ncdInvariantSourceProvider.isEnableInvariant());
@@ -282,22 +283,22 @@ public class DataReductionHandler extends AbstractHandler {
 		context.setEnableAverage(ncdAverageSourceProvider.isEnableAverage());
 		
 		SaxsPlotsSourceProvider loglogPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
-		context.setEnableLogLogPlot(loglogPlotSourceProvider.isEnableLogLog());
+		context.setEnableLogLogPlot(enableSector && loglogPlotSourceProvider.isEnableLogLog());
 		
 		SaxsPlotsSourceProvider guinierPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.GUINIER_STATE);
-		context.setEnableGuinierPlot(guinierPlotSourceProvider.isEnableGuinier());
+		context.setEnableGuinierPlot(enableSector && guinierPlotSourceProvider.isEnableGuinier());
 		
 		SaxsPlotsSourceProvider porodPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.POROD_STATE);
-		context.setEnablePorodPlot(porodPlotSourceProvider.isEnablePorod());
+		context.setEnablePorodPlot(enableSector && porodPlotSourceProvider.isEnablePorod());
 		
 		SaxsPlotsSourceProvider kratkyPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.KRATKY_STATE);
-		context.setEnableKratkyPlot(kratkyPlotSourceProvider.isEnableKratky());
+		context.setEnableKratkyPlot(enableSector && kratkyPlotSourceProvider.isEnableKratky());
 		
 		SaxsPlotsSourceProvider zimmPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.ZIMM_STATE);
-		context.setEnableZimmPlot(zimmPlotSourceProvider.isEnableZimm());
+		context.setEnableZimmPlot(enableSector && zimmPlotSourceProvider.isEnableZimm());
 		
 		SaxsPlotsSourceProvider debyebuechePlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE);
-		context.setEnableDebyeBuechePlot(debyebuechePlotSourceProvider.isEnableDebyeBueche());
+		context.setEnableDebyeBuechePlot(enableSector && debyebuechePlotSourceProvider.isEnableDebyeBueche());
 		
 		NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);	
 		context.setCalibrationName(ncdScalerSourceProvider.getScaler());
@@ -329,7 +330,7 @@ public class DataReductionHandler extends AbstractHandler {
 		context.setWorkingDir(ncdWorkingDirSourceProvider.getWorkingDir());
 
 		NcdProcessingSourceProvider ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);		
-        context.setEnableMask(ncdMaskSourceProvider.isEnableMask());
+        context.setEnableMask(enableSector && ncdMaskSourceProvider.isEnableMask());
 
 		NcdProcessingSourceProvider ncdRadialSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.RADIAL_STATE);
 		context.setEnableRadial(ncdRadialSourceProvider.isEnableRadial());

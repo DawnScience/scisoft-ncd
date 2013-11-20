@@ -27,6 +27,8 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -41,12 +43,18 @@ public class LazySelection extends LazyDataReduction {
 	private String format;
 	private int[] frames;
 	
+	private IProgressMonitor monitor = new NullProgressMonitor();
+	
 	public LazySelection(int[] frames) {
 		this.frames = Arrays.copyOf(frames, frames.length);
 	}
 
 	public void setFormat(String format) {
 		this.format = format;
+	}
+
+	public void setMonitor(IProgressMonitor monitor) {
+		this.monitor = monitor;
 	}
 
 	public DataSliceIdentifiers[] execute(int dim, DataSliceIdentifiers ids, DataSliceIdentifiers error_ids, int output_group_id) throws HDF5Exception {
@@ -119,6 +127,13 @@ public class LazySelection extends LazyDataReduction {
 					block);
 			H5.H5Dwrite(errors_data_id, errors_datatype_id, errors_memspace_id, errors_dataspace_id, HDF5Constants.H5P_DEFAULT,
 					data.getError().getBuffer());
+			
+			if (monitor.isCanceled()) {
+				return null;
+			}
+			
+			monitor.worked(1);
+			
 		}
 		
 		DataSliceIdentifiers outputDataIds = new DataSliceIdentifiers();
