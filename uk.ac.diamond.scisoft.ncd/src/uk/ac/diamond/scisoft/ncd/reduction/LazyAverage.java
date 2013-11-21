@@ -159,7 +159,13 @@ public class LazyAverage extends LazyDataReduction {
 				
 				sliceSettings.setStart(data_iter.getPos());
 				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
-				AbstractDataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
+				AbstractDataset errors_slice;
+				if (input_errors_ids.dataset_id != -1) {
+					errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
+					errors_slice.ipower(2);
+				} else {
+					errors_slice = data_slice.clone();
+				}
 				int data_slice_rank = data_slice.getRank();
 				
 				if (monitor.isCanceled()) {
@@ -168,7 +174,6 @@ public class LazyAverage extends LazyDataReduction {
 				}
 				
 				int totalFramesBatch = 1;
-				errors_slice.ipower(2);
 				for (int idx = (data_slice_rank - dim - 1); idx >= sliceDim; idx--) {
 					if (ArrayUtils.contains(averageIndices, idx + 1)) {
 						totalFramesBatch *= data_slice.getShape()[idx];
