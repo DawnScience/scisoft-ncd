@@ -22,7 +22,15 @@ import java.util.Iterator;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
+import uk.ac.diamond.scisoft.ncd.data.plots.DebyeBuechePlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.KratkyPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.LogLogPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.PorodPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.SaxsPlotData;
+import uk.ac.diamond.scisoft.ncd.data.plots.ZimmPlotData;
 
 public enum SaxsAnalysisPlotType {
 
@@ -77,51 +85,44 @@ public enum SaxsAnalysisPlotType {
 	 */
 	private static void process(AbstractDataset xTraceData, AbstractDataset yTraceData, SaxsAnalysisPlotType plotType) {
 		
+    	SaxsPlotData plotData;
 		if (plotType.equals(SaxsAnalysisPlotType.LOGLOG_PLOT)) {
-			IndexIterator itr = yTraceData.getIterator();
-			while (itr.hasNext()) {
-				int idx = itr.index;
-				yTraceData.set(Math.log10(yTraceData.getDouble(idx)), idx);
-			}
-			itr = xTraceData.getIterator();
-			while (itr.hasNext()) {
-				int idx = itr.index;
-				xTraceData.set(Math.log10(xTraceData.getDouble(idx)), idx);
-			}
+			plotData = new LogLogPlotData();
 		} else if (plotType.equals(SaxsAnalysisPlotType.GUINIER_PLOT)) {
-			IndexIterator itr = yTraceData.getIterator();
-			while (itr.hasNext()) {
-				int idx = itr.index;
-				yTraceData.set(Math.log(yTraceData.getDouble(idx)), idx);
-			}
-			xTraceData.ipower(2);
-			
+			plotData = new GuinierPlotData();
 		} else if (plotType.equals(SaxsAnalysisPlotType.POROD_PLOT)) {
-			IndexIterator itr = yTraceData.getIterator();
-			while (itr.hasNext()) {
-				int idx = itr.index;
-				yTraceData.set(Math.pow(xTraceData.getDouble(idx), 4) * yTraceData.getDouble(idx), idx);
-			}
-			
+			plotData = new PorodPlotData();
 		} else if (plotType.equals(SaxsAnalysisPlotType.KRATKY_PLOT)) {
-			IndexIterator itr = yTraceData.getIterator();
-			while (itr.hasNext()) {
-				int idx = itr.index;
-				yTraceData.set(Math.pow(xTraceData.getDouble(idx), 2) * yTraceData.getDouble(idx), idx);
-			}
-			
+			plotData = new KratkyPlotData();
 		} else if (plotType.equals(SaxsAnalysisPlotType.ZIMM_PLOT)) {
-			yTraceData.ipower(-1);
-			xTraceData.ipower(2);
-			
+			plotData = new ZimmPlotData();
 		} else if (plotType.equals(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT)) {
-			yTraceData.ipower(-0.5);
-			xTraceData.ipower(2);
-			
+			plotData = new DebyeBuechePlotData();
+		} else {
+			return;
 		}
-		xTraceData.setErrorBuffer(null);
-		yTraceData.setErrorBuffer(null);
+    	
+		IndexIterator itr = yTraceData.getIterator();
+		while (itr.hasNext()) {
+			int idx = itr.index;
+			double val = plotData.getDataValue(idx, xTraceData, yTraceData);
+			if (yTraceData.hasErrors()) {
+				double err = plotData.getDataError(idx, xTraceData, yTraceData);
+				((DoubleDataset)(yTraceData.getErrorBuffer())).set(err*err, idx);
+			}
+			yTraceData.set(val, idx);
+		}
 
+		itr = xTraceData.getIterator();
+		while (itr.hasNext()) {
+			int idx = itr.index;
+			double val = plotData.getAxisValue(idx, xTraceData);
+			if (xTraceData.hasErrors()) {
+				double err = plotData.getAxisError(idx, xTraceData);
+				((DoubleDataset)(xTraceData.getErrorBuffer())).set(err*err, idx);
+			}
+			xTraceData.set(val, idx);
+		}
 	}
 
 	/**

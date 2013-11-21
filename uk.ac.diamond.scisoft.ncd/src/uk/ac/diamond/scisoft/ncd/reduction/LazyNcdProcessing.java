@@ -1004,7 +1004,7 @@ public class LazyNcdProcessing {
 	private void addPlotData(SaxsPlotData plotData, String detector, AbstractDataset qaxis) throws HDF5Exception {
     	plotData.setDetector(detector);
     	plotData.setQaxis(qaxis, qaxisUnit);
-    	plotData.execute(entry_group_id, input_ids);
+    	plotData.execute(entry_group_id, input_ids, input_errors_ids);
 	}
 	
 	private void closeHDF5Identifiers() throws HDF5LibraryException {

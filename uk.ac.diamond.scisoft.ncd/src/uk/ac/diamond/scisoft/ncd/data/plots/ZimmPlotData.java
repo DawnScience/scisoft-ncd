@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class ZimmPlotData extends SaxsPlotData {
@@ -32,12 +33,32 @@ public class ZimmPlotData extends SaxsPlotData {
 	}
 	
 	@Override
-	protected double getDataValue(int idx, IDataset axis, IDataset data) {
+	public double getDataValue(int idx, IDataset axis, IDataset data) {
 		return 1.0 / data.getDouble(idx);
 	}
 	
 	@Override
-	protected double getAxisValue(int idx, IDataset axis) {
+	public double getAxisValue(int idx, IDataset axis) {
 		return Math.pow(axis.getDouble(idx), 2);
+	}
+
+	@Override
+	public double getDataError(int idx, IDataset axis, IDataset data) {
+		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+			double val = data.getDouble(idx);
+			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			return Math.pow(val, -2.0) * err;
+		}
+		return Double.NaN;
+	}
+
+	@Override
+	public double getAxisError(int idx, IDataset axis) {
+		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+			double val = axis.getDouble(idx);
+			double err = ((IErrorDataset) axis).getError().getDouble(idx);
+			return 2.0 * val * err;
+		}
+		return Double.NaN;
 	}
 }
