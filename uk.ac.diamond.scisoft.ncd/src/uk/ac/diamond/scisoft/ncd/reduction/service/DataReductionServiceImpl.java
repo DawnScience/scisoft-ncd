@@ -652,8 +652,12 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		
 		processing.setBgFile(bgFile);
-		if (absScaling != null && thickness != null) {
-			processing.setAbsScaling(absScaling / thickness);
+		if (absScaling != null) {
+			if (thickness != null) {
+				processing.setAbsScaling(absScaling / thickness);
+			} else {
+				processing.setAbsScaling(absScaling);
+			}
 		}
 		processing.setBgScaling(bgScaling);
 		processing.setDrFile(drFile);
