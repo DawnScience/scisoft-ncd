@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class PorodPlotData extends SaxsPlotData {
@@ -32,12 +33,33 @@ public class PorodPlotData extends SaxsPlotData {
 	}
 	
 	@Override
-	protected double getDataValue(int idx, IDataset axis, IDataset data) {
+	public double getDataValue(int idx, IDataset axis, IDataset data) {
 		return (Math.pow(axis.getDouble(idx), 4) * data.getDouble(idx));
 	}
 	
 	@Override
-	protected double getAxisValue(int idx, IDataset axis) {
+	public double getAxisValue(int idx, IDataset axis) {
 		return axis.getDouble(idx);
+	}
+	
+	@Override
+	public double getDataError(int idx, IDataset axis, IDataset data) {
+		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors() && axis instanceof IErrorDataset
+				&& ((IErrorDataset) axis).hasErrors()) {
+			double val = data.getDouble(idx);
+			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double axval = axis.getDouble(idx);
+			double axerr = ((IErrorDataset) axis).getError().getDouble(idx);
+			return Math.sqrt(Math.pow(4.0*Math.pow(axval, 3.0)*val*axerr, 2.0) + Math.pow(Math.pow(axval, 4.0)*err, 2.0));
+		}
+		return Double.NaN;
+	}
+
+	@Override
+	public double getAxisError(int idx, IDataset axis) {
+		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+			return ((IErrorDataset) axis).getError().getDouble(idx);
+		}
+		return Double.NaN;
 	}
 }

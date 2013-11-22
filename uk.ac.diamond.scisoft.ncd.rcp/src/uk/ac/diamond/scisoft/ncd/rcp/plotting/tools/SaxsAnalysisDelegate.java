@@ -41,6 +41,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
@@ -135,11 +137,33 @@ class SaxsAnalysisDelegate {
 			saxsPlottingSystem.clear();
 			for (ITrace trace : traces) {
 				ILineTrace lineTrace = (ILineTrace) trace;
-				if (!lineTrace.isUserTrace())                                 return Status.CANCEL_STATUS;
-				if (lineTrace.getXData()==null || lineTrace.getYData()==null) return Status.CANCEL_STATUS;
-
-				AbstractDataset xTraceData = (AbstractDataset) lineTrace.getXData().clone();
-				AbstractDataset yTraceData = (AbstractDataset) lineTrace.getYData().clone();
+				if (!lineTrace.isUserTrace()) {
+					return Status.CANCEL_STATUS;
+				}
+				
+				IDataset xData = lineTrace.getXData();
+				IDataset yData = lineTrace.getYData();
+				if (xData == null || yData == null) {
+					return Status.CANCEL_STATUS;
+				}
+				
+				IDataset xErrors = null;
+				IDataset yErrors = null;
+				if (xData instanceof IErrorDataset && ((IErrorDataset) xData).hasErrors()) {
+					xErrors = ((IErrorDataset) xData).getError().clone();
+				}
+				if (yData instanceof IErrorDataset && ((IErrorDataset) yData).hasErrors()) {
+					yErrors = ((IErrorDataset) yData).getError().clone();
+				}
+				
+				AbstractDataset xTraceData = (AbstractDataset) xData.clone();
+				if (xErrors != null) {
+					xTraceData.setError(xErrors);
+				}
+				AbstractDataset yTraceData = (AbstractDataset) yData.clone();
+				if (yErrors != null) {
+					yTraceData.setError(yErrors);
+				}
 
 				try {
 				    this.pt.process(xTraceData, yTraceData.squeeze());
@@ -150,6 +174,7 @@ class SaxsAnalysisDelegate {
 				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
 				tr.setData(xTraceData, yTraceData);
 				tr.setTraceColor(lineTrace.getTraceColor());
+				tr.setErrorBarColor(lineTrace.getErrorBarColor());
 				saxsPlottingSystem.addTrace(tr);
 				saxsPlottingSystem.repaint();
 			}
