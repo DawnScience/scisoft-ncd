@@ -111,7 +111,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			final String fileName = scalar!=null ? scalar.get("file_name") : null;
 			//final File  output = new File(scalar.get("file_path"));
 			
-			final String filePath = getDirectoryPath();
+			final String filePath = getDirectoryPath(cache);
 			fileFullPath = filePath + File.separator + FilenameUtils.getBaseName(fileName) + ".nxs";
 			
 			final DataMessageComponent comp = new DataMessageComponent();
@@ -140,7 +140,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		} 
 	}
 
-	private String getDirectoryPath() throws Exception {
+	private String getDirectoryPath(List<DataMessageComponent> cache) throws Exception {
 		try {
 			String dir  = ParameterUtils.getSubstituedValue(filePathParam, cache);
 			try {
