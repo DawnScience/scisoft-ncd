@@ -225,7 +225,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
 		xAxis.imultiply(px.getEstimatedValue());
-		AbstractDataset qvalues = calibrationFunction.makeDataset(xAxis);
+		AbstractDataset qvalues = calibrationFunction.calculateValues(xAxis);
 		
         ILineTrace calibrationLine = plottingSystem.createLineTrace("Fitting line");
         calibrationLine.setTraceType(TraceType.SOLID_LINE);
