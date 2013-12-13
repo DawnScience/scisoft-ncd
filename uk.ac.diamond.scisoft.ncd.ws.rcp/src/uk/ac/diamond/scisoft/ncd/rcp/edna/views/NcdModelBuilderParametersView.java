@@ -1635,7 +1635,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 			DataHolder data = loadDataFile();
 			IDataset dataset = null;
 			if (isNxsFile(modelBuildingParameters.getDataFilename())) {
-				Map<String, ILazyDataset> map = data.getMap();
+				Map<String, ILazyDataset> map = data.toLazyMap();
 				for (String key : map.keySet()) {
 					if (key.matches("(^/entry1/).*(_result/data$)")) {
 						dataset = data.getLazyDataset(key).getSlice(new Slice());
