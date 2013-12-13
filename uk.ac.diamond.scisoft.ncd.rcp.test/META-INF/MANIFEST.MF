@@ -5,7 +5,7 @@ Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.rcp.test
 Bundle-Version: 2.1.0.qualifier
 Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="2.1.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Require-Bundle: org.junit4;bundle-version="4.8.1"
+Require-Bundle: org.junit;bundle-version="[4.10.0,5.0.0)"
 Import-Package: gda.util,
  ncsa.hdf.hdf5lib,
  ncsa.hdf.hdf5lib.exceptions,
