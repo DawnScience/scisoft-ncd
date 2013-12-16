@@ -1639,6 +1639,11 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 				for (String key : map.keySet()) {
 					if (key.matches("(^/entry1/).*(_result/data$)")) {
 						dataset = data.getLazyDataset(key).getSlice(new Slice());
+						if (dataset != null) {
+							String sliceName = dataset.getName();
+							dataset = dataset.squeeze();
+							dataset.setName(sliceName);
+						}
 						continue;
 					}
 				}
