@@ -79,13 +79,6 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="com.springsource.org.apache.commons.beanutils"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="com.springsource.org.apache.commons.lang"
          download-size="0"
          install-size="0"
@@ -109,6 +102,13 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
    <plugin
          id="uk.ac.diamond.scisoft.ncd.ws.rcp"
          os="linux"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="org.apache.commons.beanutils"
          download-size="0"
          install-size="0"
          version="0.0.0"
