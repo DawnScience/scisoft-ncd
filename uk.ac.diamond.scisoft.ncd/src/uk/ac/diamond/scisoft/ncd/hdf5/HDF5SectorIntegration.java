@@ -28,7 +28,6 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
@@ -72,22 +71,10 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		azimuthalErrorsIds = new DataSliceIdentifiers(input_error_id);
 	}
 	
-	@SuppressWarnings("hiding")
-	private AbstractDataset mask;
-	
 	public HDF5SectorIntegration(String name, String key) {
 		super(name, key);
 		azimuthalIds = new DataSliceIdentifiers();
 		azimuthalErrorsIds = new DataSliceIdentifiers();
-	}
-
-	public void setMask(IDataset mask) {
-		this.mask = DatasetUtils.convertToAbstractDataset(mask);
-	}
-
-	@Override
-	public AbstractDataset getMask() {
-		return mask;
 	}
 
 	public void setROI(SectorROI ds) {
@@ -138,16 +125,20 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
-			data.setErrorBuffer(errors);
+			if (data.hasErrors()) {
+				AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+				data.setErrorBuffer(errors);
+			}
 			
 			roi.setAverageArea(false);
 			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
-				myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
 				if (myazdata != null) {
+					if (myazdata.hasErrors()) {
+						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
+					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
 					resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
@@ -155,32 +146,38 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 					
 					if (myazerrors != null) {
 						myazerrors = myazerrors.reshape(resAzShape);
+						myazdata.setErrorBuffer(myazerrors);
 					}
-					myazdata.setErrorBuffer(myazerrors);
 				}
 			}
 			if (calculateRadial) {
 				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
-				myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
 				if (myraddata != null) {
+					if (myraddata.hasErrors()) {
+						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
+					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
 					myraddata = myraddata.reshape(resRadShape);
 					if (myraderrors != null) {
 						myraderrors = myraderrors.reshape(resRadShape);
+						myraddata.setErrorBuffer(myraderrors);
 					}
-					myraddata.setErrorBuffer(myraderrors);
 				}
 			}
 			try {
 				lock.acquire();
 				if (calculateAzimuthal && myazdata != null) {
 					writeResults(azimuthalIds, myazdata, dataShape, dim);
-					writeResults(azimuthalErrorsIds, myazdata.getError(), dataShape, dim);
+					if (myazdata.hasErrors()) {
+						writeResults(azimuthalErrorsIds, myazdata.getError(), dataShape, dim);
+					}
 				}
 				if(calculateRadial && myraddata != null) {
 					writeResults(ids, myraddata, dataShape, dim);
-					writeResults(errIds, myraddata.getError(), dataShape, dim);
+					if (myraddata.hasErrors()) {
+						writeResults(errIds, myraddata.getError(), dataShape, dim);
+					}
 				}
 			} catch (Exception e) {
 				throw e;

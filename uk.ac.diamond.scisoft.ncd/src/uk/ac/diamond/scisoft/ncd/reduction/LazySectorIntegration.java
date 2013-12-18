@@ -49,7 +49,6 @@ public class LazySectorIntegration extends LazyDataReduction {
 
 	private SectorROI intSector;
 	private AbstractDataset[] areaData;
-	private AbstractDataset mask;
 	private Amount<ScatteringVectorOverDistance> gradient;
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
@@ -63,10 +62,6 @@ public class LazySectorIntegration extends LazyDataReduction {
 
 	public void setIntSector(SectorROI intSector) {
 		this.intSector = intSector;
-	}
-
-	public void setMask(AbstractDataset mask) {
-		this.mask = mask;
 	}
 
 	public void setAreaData(AbstractDataset... area) {

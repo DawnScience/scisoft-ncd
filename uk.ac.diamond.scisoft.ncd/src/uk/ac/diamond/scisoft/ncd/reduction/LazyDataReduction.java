@@ -38,6 +38,7 @@ public abstract class LazyDataReduction {
 	protected String detector;
 	protected String calibration;
 	protected int normChannel;
+	protected AbstractDataset mask;
 
 	public LazyDataReduction() {
 	}
@@ -57,6 +58,10 @@ public abstract class LazyDataReduction {
 	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
+	}
+
+	public void setMask(AbstractDataset mask) {
+		this.mask = mask;
 	}
 
 	public void writeQaxisData(int dim, int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {

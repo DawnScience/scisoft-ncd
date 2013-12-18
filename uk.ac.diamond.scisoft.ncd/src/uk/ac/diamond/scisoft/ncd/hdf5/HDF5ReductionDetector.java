@@ -42,7 +42,7 @@ public class HDF5ReductionDetector {
 	protected Map<String, Object> attributeMap = new HashMap<String, Object>();
 	public static final String descriptionLabel = "description";
 	protected String description;
-	protected DoubleDataset mask = null;
+	protected AbstractDataset mask = null;
 	
 	public HDF5ReductionDetector(String name, String key) {
 		this.key = key;
@@ -111,7 +111,7 @@ public class HDF5ReductionDetector {
 		return mask;
 	}
 
-	public void setMask(DoubleDataset mask) {
+	public void setMask(AbstractDataset mask) {
 		if (mask == null || mask.getShape() == getDataDimensions()) {
 			this.mask = mask;
 		}

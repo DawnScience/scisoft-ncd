@@ -21,12 +21,15 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -41,6 +44,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
 import org.jscience.physics.amount.Amount;
+import org.jscience.physics.amount.Constants;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
@@ -50,6 +54,10 @@ import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
+import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
@@ -441,7 +449,7 @@ public class LazyNcdProcessing {
 			if(enableMask) {
 				lazySectorIntegration.setMask(mask);
 			}
-			qaxis = calculateQaxisDataset(detector, dim, secFrames);
+			qaxis = calculateQaxisDataset(detector, dim, secFrames, frames);
 			if (qaxis != null) {
 				lazySectorIntegration.setQaxis(qaxis, qaxisUnit);
 				lazySectorIntegration.setCalibrationData(slope, intercept);
@@ -963,7 +971,7 @@ public class LazyNcdProcessing {
 	    }
 	    if (qaxis != null) {
 		    H5.H5Lcopy(input_ids.datagroup_id, "./q", result_group_id, "./q", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-		    if (input_errors_ids.dataset_id != -1) {
+		    if (input_errors_ids.dataset_id != -1 && qaxis.hasErrors()) {
 		    	H5.H5Lcopy(input_ids.datagroup_id, "./q_errors", result_group_id, "./q_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		    }
 	    }
@@ -1125,10 +1133,28 @@ public class LazyNcdProcessing {
 		}
 	}
 
-	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] frames) {
+	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] secFrames, long[] frames) throws HDF5LibraryException {
 		
 		AbstractDataset qaxis = null;
 		AbstractDataset qaxisErr = null;
+		IDiffractionMetadata dm = null;
+		
+		H5L_info_t link_info = H5.H5Lget_info(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		int[] shape = new int[] {(int) frames[frames.length - 2], (int) frames[frames.length - 1]};
+		if (link_info.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
+			String[] buff = new String[(int) link_info.address_val_size];
+			H5.H5Lget_val(detector_group_id, "data", buff, HDF5Constants.H5P_DEFAULT);
+			if (buff[1] != null) {
+				NexusDiffractionMetaReader nexusDiffReader = new NexusDiffractionMetaReader(buff[1]);
+				dm = nexusDiffReader.getDiffractionMetadataFromNexus(shape);
+				if (!nexusDiffReader.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.BEAM_CENTRE) ||
+					!nexusDiffReader.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.ENERGY)      || 
+					!nexusDiffReader.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.DISTANCE)    ||
+					!nexusDiffReader.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.PIXEL_SIZE)) { 
+						dm = null;
+				}
+			}
+		}
 		
 		if (crb != null && crb.containsKey(detector)) {
 			if (slope == null) {
@@ -1143,8 +1169,21 @@ public class LazyNcdProcessing {
 			cameraLength = crb.getMeanCameraLength(detector);
 		}
 		
+		// If calibration bean is empty, we will estimate gradient and intercept values from diffraction metadata
+		if ((slope == null || intercept == null) && dm != null) {
+			DetectorProperties detectorProperties = dm.getDetector2DProperties();
+			DiffractionCrystalEnvironment crystalEnvironment = dm.getDiffractionCrystalEnvironment();
+			qaxisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+			Unit<Length> pxUnit = ncdDetectors.getPxSaxs().getUnit();
+			cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
+			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
+			energy = Constants.ℎ.times(Constants.c).divide(wv).to(SI.KILO(NonSI.ELECTRON_VOLT));
+			slope = wv.inverse().times(4.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
+			intercept = Amount.valueOf(0.0, qaxisUnit);
+		}
+		
 		if (slope != null && intercept != null) {
-			int numPoints = (int) frames[frames.length - 1];
+			int numPoints = (int) secFrames[secFrames.length - 1];
 			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
 			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
 			if (dim == 1) {
@@ -1166,10 +1205,6 @@ public class LazyNcdProcessing {
 				}
 			}
 			qaxis.setError(qaxisErr);
-		}
-		
-		if (qaxis == null) {
-			return null;
 		}
 		
 		return qaxis;
