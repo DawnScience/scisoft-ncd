@@ -1137,7 +1137,7 @@ public class LazyNcdProcessing {
 			cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
 			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
 			energy = Constants.ℎ.times(Constants.c).divide(wv).to(SI.KILO(NonSI.ELECTRON_VOLT));
-			slope = wv.inverse().times(4.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
+			slope = wv.inverse().times(2.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
 			intercept = Amount.valueOf(0.0, qaxisUnit);
 			
 			// Diffraction metadata currently doesn't include error estimates
