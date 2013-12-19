@@ -1138,6 +1138,7 @@ public class LazyNcdProcessing {
 		AbstractDataset qaxis = null;
 		AbstractDataset qaxisErr = null;
 		IDiffractionMetadata dm = null;
+		boolean hasErrors = true;
 		
 		H5L_info_t link_info = H5.H5Lget_info(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		int[] shape = new int[] {(int) frames[frames.length - 2], (int) frames[frames.length - 1]};
@@ -1180,6 +1181,9 @@ public class LazyNcdProcessing {
 			energy = Constants.ℎ.times(Constants.c).divide(wv).to(SI.KILO(NonSI.ELECTRON_VOLT));
 			slope = wv.inverse().times(4.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
 			intercept = Amount.valueOf(0.0, qaxisUnit);
+			
+			// Diffraction metadata currently doesn't include error estimates
+			hasErrors = false;
 		}
 		
 		if (slope != null && intercept != null) {
@@ -1191,20 +1195,26 @@ public class LazyNcdProcessing {
 				for (int i = 0; i < numPoints; i++) {
 					Amount<ScatteringVector> amountQaxis = slope.times(i).times(pxWaxs).plus(intercept).to(qaxisUnit); 
 					qaxis.set(amountQaxis.getEstimatedValue(), i);
-					qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+					if (hasErrors) {
+						qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+					}
 				}
 			} else {
 				if (dim > 1 && flags.isEnableSector()) {
 					double d2bs = intSector.getRadii()[0];
 					Amount<Length> pxSaxs = ncdDetectors.getPxSaxs();
 					for (int i = 0; i < numPoints; i++) {
-						Amount<ScatteringVector> amountQaxis = slope.times(i + d2bs).times(pxSaxs).plus(intercept).to(qaxisUnit); 
+						Amount<ScatteringVector> amountQaxis = slope.times(i + d2bs).times(pxSaxs).plus(intercept).to(qaxisUnit);
 						qaxis.set(amountQaxis.getEstimatedValue(), i);
-						qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+						if (hasErrors) {
+							qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+						}
 					}
 				}
 			}
-			qaxis.setError(qaxisErr);
+			if (hasErrors) {
+				qaxis.setError(qaxisErr);
+			}
 		}
 		
 		return qaxis;
