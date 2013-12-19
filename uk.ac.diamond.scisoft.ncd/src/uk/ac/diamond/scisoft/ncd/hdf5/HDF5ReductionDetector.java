@@ -20,6 +20,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.commons.lang.ArrayUtils;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
@@ -76,7 +78,7 @@ public class HDF5ReductionDetector {
 	}
 
 	public int[] getDataDimensions() {
-		return null;
+		return AbstractDataset.squeezeShape(data.getShape(), false);
 	}
 	
 	public void setAttribute(String attributeName, Object value) {
@@ -112,7 +114,7 @@ public class HDF5ReductionDetector {
 	}
 
 	public void setMask(AbstractDataset mask) {
-		if (mask == null || mask.getShape() == getDataDimensions()) {
+		if (mask == null || ArrayUtils.isEquals(mask.getShape(), getDataDimensions())) {
 			this.mask = mask;
 		}
 	}

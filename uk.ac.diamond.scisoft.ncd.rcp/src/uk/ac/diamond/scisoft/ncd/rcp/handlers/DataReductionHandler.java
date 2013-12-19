@@ -146,8 +146,9 @@ public class DataReductionHandler extends AbstractHandler {
 						.openConfirm(
 								window.getShell(),
 								"Missing NCD calibration data",
-								"IMPORTANT! NCD calibration data was not found for currently selected SAXS detector. " +
-								"Please open NCD Calibration perspective to configure calibration data.\nProceed with data reduction anyway?");
+								"IMPORTANT! NCD calibration data was not found for currently selected SAXS detector.\n"
+								+ "Data reduction pipeline will look for calibration information in the input files.\n"
+								+ "Proceed with data reduction anyway?");
 				if (!proceed) {
 					return Boolean.FALSE;
 				}
