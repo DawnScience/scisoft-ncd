@@ -1015,107 +1015,65 @@ public class LazyNcdProcessing {
     	plotData.execute(entry_group_id, input_ids, input_errors_ids);
 	}
 	
-	private void closeHDF5Identifiers() throws HDF5LibraryException {
-		if (result_group_id != -1) {
-			H5.H5Gclose(result_group_id);
-		}
-		if (dr_data_id != -1) {
-	    	H5.H5Dclose(dr_data_id);
-		}
-		if (dr_errors_id != -1) {
-	    	H5.H5Dclose(dr_errors_id);
-		}
-		if (dr_group_id != -1) {
-	    	H5.H5Gclose(dr_group_id);
-		}
+	private void closeHDF5Identifiers() {
+		int[] identifiers = new int[] { dr_data_id,
+				dr_errors_id,
+				dr_group_id,
+				sec_data_id,
+				sec_errors_id,
+				az_data_id,
+				az_errors_id,
+				sec_group_id,
+				bg_data_id,
+				bg_errors_id,
+				bg_group_id,
+				norm_data_id,
+				norm_errors_id,
+				norm_group_id,
+				inv_data_id,
+				inv_errors_id,
+				inv_group_id,
+				input_calibration_id,
+				calibration_group_id,
+				background_input_data_id,
+				background_input_errors_id,
+				background_detector_group_id,
+				background_entry_group_id,
+				background_file_handle,
+				input_data_id,
+				input_errors_id,
+				detector_group_id,
+				processing_group_id,
+				result_group_id,
+				entry_group_id,
+				nxsfile_handle,
+				inputfile_handle };
 		
-		if (sec_data_id != -1) {
-	    	H5.H5Dclose(sec_data_id);
-		}
-		if (sec_errors_id != -1) {
-	    	H5.H5Dclose(sec_errors_id);
-		}
-		if (az_data_id != -1) {
-	    	H5.H5Dclose(az_data_id);
-		}
-		if (az_errors_id != -1) {
-	    	H5.H5Dclose(az_errors_id);
-		}
-		if (sec_group_id != -1) {
-	    	H5.H5Gclose(sec_group_id);
-		}
-	    
-		if (bg_data_id != -1) {
-	    	H5.H5Dclose(bg_data_id);
-		}
-		if (bg_errors_id != -1) {
-	    	H5.H5Dclose(bg_errors_id);
-		}
-		if (bg_group_id != -1) {
-	    	H5.H5Gclose(bg_group_id);
-		}
-	    
-		if (norm_data_id != -1) {
-	    	H5.H5Dclose(norm_data_id);
-		}
-		if (norm_errors_id != -1) {
-	    	H5.H5Dclose(norm_errors_id);
-		}
-		if (norm_group_id != -1) {
-	    	H5.H5Gclose(norm_group_id);
-		}
-	    
-		if (inv_data_id != -1) {
-	    	H5.H5Dclose(inv_data_id);
-		}
-		if (inv_errors_id != -1) {
-	    	H5.H5Dclose(inv_errors_id);
-		}
-		if (inv_group_id != -1) {
-	    	H5.H5Gclose(inv_group_id);
-		}
-		
-		if (input_calibration_id != -1) {
-			H5.H5Dclose(input_calibration_id);
-		}
-		if (calibration_group_id != -1) {
-			H5.H5Gclose(calibration_group_id);
-		}
-		if (background_input_data_id != -1) {
-			H5.H5Dclose(background_input_data_id);
-		}
-		if (background_input_errors_id != -1) {
-			H5.H5Dclose(background_input_errors_id);
-		}
-		if (background_detector_group_id != -1) {
-			H5.H5Gclose(background_detector_group_id);
-		}
-		if (background_entry_group_id != -1) {
-			H5.H5Gclose(background_entry_group_id);
-		}
-		if (background_file_handle != -1) {
-			H5.H5Fclose(background_file_handle);
-		}
-		if (input_data_id != -1) {
-			H5.H5Dclose(input_data_id);
-		}
-		if (input_errors_id != -1) {
-			H5.H5Dclose(input_errors_id);
-		}
-		if (detector_group_id != -1) {
-			H5.H5Gclose(detector_group_id);
-		}
-		if (processing_group_id != -1) {
-			H5.H5Gclose(processing_group_id);
-		}
-		if (entry_group_id != -1) {
-			H5.H5Gclose(entry_group_id);
-		}
-		if (nxsfile_handle != -1) {
-			H5.H5Fclose(nxsfile_handle);
-		}
-		if (inputfile_handle != -1) {
-			H5.H5Fclose(inputfile_handle);
+		for (int id : identifiers) {
+			if (id != -1) {
+				try {
+					final int type = H5.H5Iget_type(id);
+					if (type != HDF5Constants.H5I_BADID) {
+						final int ref = H5.H5Iget_ref(id);
+						if (ref > 0) {
+							if (type == HDF5Constants.H5I_DATASET) {
+								H5.H5Dclose(id);
+								continue;
+							}
+							if (type == HDF5Constants.H5I_GROUP) {
+								H5.H5Gclose(id);
+								continue;
+							}
+							if (type == HDF5Constants.H5I_FILE) {
+								H5.H5Fclose(id);
+								continue;
+							}
+						}
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	
