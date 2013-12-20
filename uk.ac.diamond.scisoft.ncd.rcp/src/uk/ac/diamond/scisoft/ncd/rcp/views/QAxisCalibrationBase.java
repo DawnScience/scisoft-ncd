@@ -138,7 +138,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 			Real realVal = Real.valueOf(input);
 			Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE)
 					.asType(ScatteringVectorOverDistance.class);
-			return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+			return Amount.valueOf(realVal.doubleValue(), unit);
 		} catch (Exception e) {
 			return null;
 		}
@@ -150,7 +150,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 		try {
 			Real realVal = Real.valueOf(input);
 			Unit<ScatteringVector> unit = getUnit().inverse().asType(ScatteringVector.class);
-			return Amount.valueOf(realVal.doubleValue(), Math.pow(10, realVal.getExponent() - 1), unit);
+			return Amount.valueOf(realVal.doubleValue(), unit);
 		} catch (Exception e) {
 			return null;
 		}
