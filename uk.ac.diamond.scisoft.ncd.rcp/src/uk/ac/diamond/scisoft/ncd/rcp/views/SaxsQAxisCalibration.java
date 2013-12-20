@@ -54,6 +54,7 @@ import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
+import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -116,7 +117,13 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 							crb.clearData(det);
 							plottingSystem.clear();
 					} else {
-						crb.putCalibrationResult(det, gradient, intercept, null, null, getUnit());
+						Amount<Length> meanCameraLength = null;
+						Amount<Energy> amountEnergy = getEnergy();
+						if (amountEnergy != null) {
+							Amount<Length> wv = Constants.ℎ.times(Constants.c).divide(amountEnergy).to(Length.UNIT);
+							meanCameraLength = Constants.two_π.divide(gradient).divide(wv).to(Length.UNIT);
+						}
+						crb.putCalibrationResult(det, gradient, intercept, null, meanCameraLength, getUnit());
 					}
 					ncdCalibrationSourceProvider.putCalibrationResult(crb);
 					break;
