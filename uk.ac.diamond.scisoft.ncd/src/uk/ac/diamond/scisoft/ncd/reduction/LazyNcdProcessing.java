@@ -1050,30 +1050,7 @@ public class LazyNcdProcessing {
 				inputfile_handle };
 		
 		for (int id : identifiers) {
-			if (id != -1) {
-				try {
-					final int type = H5.H5Iget_type(id);
-					if (type != HDF5Constants.H5I_BADID) {
-						final int ref = H5.H5Iget_ref(id);
-						if (ref > 0) {
-							if (type == HDF5Constants.H5I_DATASET) {
-								H5.H5Dclose(id);
-								continue;
-							}
-							if (type == HDF5Constants.H5I_GROUP) {
-								H5.H5Gclose(id);
-								continue;
-							}
-							if (type == HDF5Constants.H5I_FILE) {
-								H5.H5Fclose(id);
-								continue;
-							}
-						}
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
+			NcdNexusUtils.closeHDF5Reference(id);
 		}
 	}
 	

@@ -16,7 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.utils;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 
 import ncsa.hdf.hdf5lib.H5;
@@ -25,12 +24,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.math3.util.MultidimensionalCounter;
-import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
@@ -225,28 +220,6 @@ public class NcdNexusUtils {
 		return dataset_id;
 	}
 	
-	public static DataSliceIdentifiers[] readDataId(String dataFile, String detector, String dataset, String errors) throws HDF5Exception {
-		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		//int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
-		//int detector_group_id = H5.H5Gopen(instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, dataset, HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = -1;
-		if (errors != null) {
-			input_errors_id = H5.H5Dopen(detector_group_id, errors, HDF5Constants.H5P_DEFAULT);
-		}
-		
-		DataSliceIdentifiers ids = new DataSliceIdentifiers();
-		ids.setIDs(detector_group_id, input_data_id);
-		DataSliceIdentifiers errors_ids = null;
-		if (errors != null) {
-			errors_ids = new DataSliceIdentifiers();
-			errors_ids.setIDs(detector_group_id, input_errors_id);
-		}
-		return new DataSliceIdentifiers[] {ids, errors_ids};
-	}
-	
 	public static long[] getIdsDatasetShape(DataSliceIdentifiers ids) throws HDF5LibraryException {
 		final int ndims = H5.H5Sget_simple_extent_ndims(ids.dataspace_id);
 		long[] dims = new long[ndims];
@@ -287,55 +260,33 @@ public class NcdNexusUtils {
 		return data;
 	}
 	
-	public static AbstractDataset sliceInputData(int dim, int[] frames, String format, DataSliceIdentifiers ids) throws HDF5Exception {
-		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
-		int[] imageSize = Arrays.copyOfRange(frames, frames.length - dim, frames.length);
-		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
-		for (int i = 0; i < datDimMake.length; i++)
-			datDimMake[i] = list.get(i).length;
-		int[] framesTotal = ArrayUtils.addAll(datDimMake, imageSize);
-
-		
-		long[] block = new long[frames.length];
-		block = Arrays.copyOf((long[]) ConvertUtils.convert(frames, long[].class), block.length);
-		Arrays.fill(block, 0, block.length - dim, 1);
-		int[] block_int = (int[]) ConvertUtils.convert(block, int[].class);
-		
-		long[] count = new long[frames.length];
-		Arrays.fill(count, 1);
-		
-		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
-		AbstractDataset data = AbstractDataset.zeros(block_int, dtype);
-		AbstractDataset result = null;
-		
-		MultidimensionalCounter bgFrameCounter = new MultidimensionalCounter(datDimMake);
-		Iterator iter = bgFrameCounter.iterator();
-		while (iter.hasNext()) {
-			iter.next();
-			long[] bgFrame = (long[]) ConvertUtils.convert(iter.getCounts(), long[].class);
-			long[] gridFrame = new long[datDimMake.length];
-			for (int i = 0; i < datDimMake.length; i++)
-				gridFrame[i] = list.get(i)[(int) bgFrame[i]];
-			
-				long[] start = new long[frames.length];
-				start = Arrays.copyOf(gridFrame, frames.length);
-				
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
-				H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET,
-						start, block, count, block);
-				H5.H5Dread(ids.dataset_id, ids.datatype_id, memspace_id, ids.dataspace_id,
-						HDF5Constants.H5P_DEFAULT, data.getBuffer());
-				if (result == null) {
-					result = data.clone();
-				} else {
-					result = DatasetUtils.append(result, data, block.length - dim - 1);
+	public static void closeHDF5Reference(int id) {
+		if (id > 0) {
+			try {
+				final int type = H5.H5Iget_type(id);
+				if (type != HDF5Constants.H5I_BADID) {
+					final int ref = H5.H5Iget_ref(id);
+					if (ref > 0) {
+						if (type == HDF5Constants.H5I_DATASET) {
+							H5.H5Dclose(id);
+							return;
+						}
+						if (type == HDF5Constants.H5I_GROUP) {
+							H5.H5Gclose(id);
+							return;
+						}
+						if (type == HDF5Constants.H5I_FILE) {
+							H5.H5Fclose(id);
+							return;
+						}
+					}
 				}
+			} catch (HDF5LibraryException ex) {
+				ex.printStackTrace();
+				String msg = "Failed to close HDF5 id " + String.valueOf(id) + " in a Nexus file";
+				throw new RuntimeException(msg, ex.getCause());
+			}
 		}
-		
-		if (result != null) {
-			result.setShape(framesTotal);
-		}
-		return result;
 	}
 	
 }

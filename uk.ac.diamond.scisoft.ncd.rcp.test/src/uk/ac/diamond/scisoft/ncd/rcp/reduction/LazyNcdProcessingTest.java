@@ -49,6 +49,7 @@ import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtilsTest;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyBackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyDetectorResponse;
@@ -190,7 +191,7 @@ public class LazyNcdProcessingTest {
 		
 		testbgClass.setNcdDetectors(ncdDetectors);
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(drFile, detector, "data", null)[0];
+	    DataSliceIdentifiers dr_id = NcdNexusUtilsTest.readDataId(drFile, detector, "data", null)[0];
 	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);
 	    int[] start = new int[] {0, 0, 0, 0};
 	    drSlice.setStart(start);
@@ -203,7 +204,7 @@ public class LazyNcdProcessingTest {
 	@Test
 	public void checkDetectorResponse() throws HDF5Exception {
 
-	    DataSliceIdentifiers data_id = NcdNexusUtils.readDataId(filename, detector, "data", null)[0];
+	    DataSliceIdentifiers data_id = NcdNexusUtilsTest.readDataId(filename, detector, "data", null)[0];
 	    SliceSettings dataSlice = new SliceSettings(frames, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, firstFrame, 0, 0};
 	    dataSlice.setStart(start);
@@ -309,7 +310,7 @@ public class LazyNcdProcessingTest {
 		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
-	    DataSliceIdentifiers norm_id = NcdNexusUtils.readDataId(filename, calibration, "data", null)[0];
+	    DataSliceIdentifiers norm_id = NcdNexusUtilsTest.readDataId(filename, calibration, "data", null)[0];
 	    SliceSettings normSlice = new SliceSettings(framesCal, 1, lastFrame - firstFrame + 1);
 	    normSlice.setStart(start);
 		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
@@ -358,7 +359,7 @@ public class LazyNcdProcessingTest {
 		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
 		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
-	    DataSliceIdentifiers[] bg_ids = NcdNexusUtils.readDataId(bgFilename, detectorBg, "data", "errors");
+	    DataSliceIdentifiers[] bg_ids = NcdNexusUtilsTest.readDataId(bgFilename, detectorBg, "data", "errors");
 	    DataSliceIdentifiers bg_data_id = bg_ids[0];
 	    DataSliceIdentifiers bg_error_id = bg_ids[1];
 	    SliceSettings bgSlice = new SliceSettings(framesBg, 1, 1);

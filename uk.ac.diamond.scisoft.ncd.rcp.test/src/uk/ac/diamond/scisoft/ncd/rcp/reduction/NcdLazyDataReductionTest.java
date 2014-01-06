@@ -39,6 +39,7 @@ import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtilsTest;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyBackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyDetectorResponse;
@@ -280,7 +281,7 @@ public class NcdLazyDataReductionTest {
 			H5.H5Fclose(nxsFile);
 		}
 		
-	    DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(filename, testDatasetName, "data", "errors");
+	    DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(filename, testDatasetName, "data", "errors");
 	    DataSliceIdentifiers data_id = ids[0];
 	    DataSliceIdentifiers errors_id = ids[1];
 	    SliceSettings dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
@@ -303,7 +304,7 @@ public class NcdLazyDataReductionTest {
 		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape.length, shape, true, "counts");
 		int norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, shape.length, shape, true, "counts");
 
-		DataSliceIdentifiers calibration_ids = NcdNexusUtils.readDataId(filename, testNormName, "data", null)[0];
+		DataSliceIdentifiers calibration_ids = NcdNexusUtilsTest.readDataId(filename, testNormName, "data", null)[0];
 
 		int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
 		long[] framesCal = new long[rankCal];
@@ -362,7 +363,7 @@ public class NcdLazyDataReductionTest {
 		type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		int bg_error_id = NcdNexusUtils.makedata(bg_group_id, "error", type, shape.length, shape, true, "counts");
 			
-		DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(bgFile, testDatasetName, "data", "errors");
+		DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(bgFile, testDatasetName, "data", "errors");
 		DataSliceIdentifiers bgIds = ids[0];
 		H5.H5Sget_simple_extent_dims(bgIds.dataspace_id, bgShape, null);
 		int[] bgShape_int = (int[]) ConvertUtils.convert(bgShape, int[].class);
@@ -587,7 +588,7 @@ public class NcdLazyDataReductionTest {
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
-	    DataSliceIdentifiers[] ids = NcdNexusUtils.readDataId(filename, testDatasetName, "data", "errors");
+	    DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(filename, testDatasetName, "data", "errors");
 	    DataSliceIdentifiers input_ids = ids[0];
 		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
 		long[] count = new long[] { 1, 1, 1, 1, 1 };

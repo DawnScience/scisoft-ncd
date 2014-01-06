@@ -23,9 +23,12 @@ import java.util.Arrays;
 
 import gda.util.TestUtils;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 import org.junit.Assert;
@@ -33,6 +36,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
@@ -96,7 +100,7 @@ public class NcdNexusUtilsTest {
 		int[] step = new int[] {1, 1, 1, 1};
 		IDataset data = lazyDataset.getSlice(start, stop, step);
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector, "data", null)[0];
+	    DataSliceIdentifiers dr_id = readDataId(inputPath, detector, "data", null)[0];
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
 	    SliceSettings drSlice = new SliceSettings(frames_long, sliceDim, sliceBatch);
 	    drSlice.setStart(start);
@@ -125,14 +129,14 @@ public class NcdNexusUtilsTest {
 		for (int i = 0; i < datDimMake.length; i++)
 			datDimMake[i] = list.get(i).length;
 		
-	    DataSliceIdentifiers dr_id = NcdNexusUtils.readDataId(inputPath, detector, "data", null)[0];
+	    DataSliceIdentifiers dr_id = readDataId(inputPath, detector, "data", null)[0];
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
 	    
 	    SliceSettings drSlice = new SliceSettings(frames_long, 0, 1);
 		int[] start = new int[] {0, 0, 0, 0};
 	    drSlice.setStart(start);
 		AbstractDataset data = NcdNexusUtils.sliceInputData(drSlice, dr_id);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(dim, frames, format, dr_id);
+		AbstractDataset result = sliceInputData(dim, frames, format, dr_id);
 		
 		MultidimensionalCounter resultCounter = new MultidimensionalCounter(result.getShape());
 		Iterator resIter = resultCounter.iterator();
@@ -148,5 +152,79 @@ public class NcdNexusUtilsTest {
 			assertEquals(String.format("Data slicing test for pixel %s has failed.", Arrays.toString(resIter.getCounts())),
 								valData, valResult, acc);
 		}
+	}
+	
+	
+	public static DataSliceIdentifiers[] readDataId(String dataFile, String detector, String dataset, String errors) throws HDF5Exception {
+		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		//int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		//int detector_group_id = H5.H5Gopen(instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, dataset, HDF5Constants.H5P_DEFAULT);
+		int input_errors_id = -1;
+		if (errors != null) {
+			input_errors_id = H5.H5Dopen(detector_group_id, errors, HDF5Constants.H5P_DEFAULT);
+		}
+		
+		DataSliceIdentifiers ids = new DataSliceIdentifiers();
+		ids.setIDs(detector_group_id, input_data_id);
+		DataSliceIdentifiers errors_ids = null;
+		if (errors != null) {
+			errors_ids = new DataSliceIdentifiers();
+			errors_ids.setIDs(detector_group_id, input_errors_id);
+		}
+		return new DataSliceIdentifiers[] {ids, errors_ids};
+	}
+	
+	public static AbstractDataset sliceInputData(int dim, int[] frames, String format, DataSliceIdentifiers ids) throws HDF5Exception {
+		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
+		int[] imageSize = Arrays.copyOfRange(frames, frames.length - dim, frames.length);
+		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
+		for (int i = 0; i < datDimMake.length; i++)
+			datDimMake[i] = list.get(i).length;
+		int[] framesTotal = ArrayUtils.addAll(datDimMake, imageSize);
+
+		
+		long[] block = new long[frames.length];
+		block = Arrays.copyOf((long[]) ConvertUtils.convert(frames, long[].class), block.length);
+		Arrays.fill(block, 0, block.length - dim, 1);
+		int[] block_int = (int[]) ConvertUtils.convert(block, int[].class);
+		
+		long[] count = new long[frames.length];
+		Arrays.fill(count, 1);
+		
+		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
+		AbstractDataset data = AbstractDataset.zeros(block_int, dtype);
+		AbstractDataset result = null;
+		
+		MultidimensionalCounter bgFrameCounter = new MultidimensionalCounter(datDimMake);
+		Iterator iter = bgFrameCounter.iterator();
+		while (iter.hasNext()) {
+			iter.next();
+			long[] bgFrame = (long[]) ConvertUtils.convert(iter.getCounts(), long[].class);
+			long[] gridFrame = new long[datDimMake.length];
+			for (int i = 0; i < datDimMake.length; i++)
+				gridFrame[i] = list.get(i)[(int) bgFrame[i]];
+			
+				long[] start = new long[frames.length];
+				start = Arrays.copyOf(gridFrame, frames.length);
+				
+				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET,
+						start, block, count, block);
+				H5.H5Dread(ids.dataset_id, ids.datatype_id, memspace_id, ids.dataspace_id,
+						HDF5Constants.H5P_DEFAULT, data.getBuffer());
+				if (result == null) {
+					result = data.clone();
+				} else {
+					result = DatasetUtils.append(result, data, block.length - dim - 1);
+				}
+		}
+		
+		if (result != null) {
+			result.setShape(framesTotal);
+		}
+		return result;
 	}
 }
