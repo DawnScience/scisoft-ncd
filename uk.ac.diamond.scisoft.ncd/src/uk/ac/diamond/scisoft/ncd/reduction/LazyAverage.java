@@ -16,7 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -44,6 +46,16 @@ public class LazyAverage extends LazyDataReduction {
 	private int ave_group_id, ave_data_id, ave_errors_id;
 	
 	private IProgressMonitor monitor = new NullProgressMonitor();
+
+	private int sliceDim;
+	private int sliceSize;
+
+	private int dim;
+	private long[] frames;
+	private int[] frames_int;
+	private long[] framesAve;
+	private int[] framesAve_int;
+
 	
 	public int[] getAverageIndices() {
 		return averageIndices;
@@ -57,17 +69,19 @@ public class LazyAverage extends LazyDataReduction {
 		this.monitor = monitor;
 	}
 
-	public void execute(int dim, int[] frames_int, int processing_group_id, int frameBatch, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
+	public void configure(int dimmension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
 		
-		long[] frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
+		dim = dimmension;
+		frames_int = inputFrames;
+		frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		
 		// Calculate shape of the averaged dataset based on the dimensions selected for averaging
-		long[] framesAve = Arrays.copyOf(frames, frames.length);
+		framesAve = Arrays.copyOf(frames, frames.length);
 		for (int idx : averageIndices) {
 			framesAve[idx - 1] = 1;
 		}
 		
-		int[] framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
+		framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
 	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
@@ -75,17 +89,8 @@ public class LazyAverage extends LazyDataReduction {
 		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
 		H5.H5Tclose(type);
 		
-		// Loop over dimensions that aren't averaged
-		int[] iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
-		int[] start = new int[iter_array.length];
-		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
-		Arrays.fill(start, 0);
-		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
-		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
-		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
-		
-		int sliceDim = 0;
-		int sliceSize = frames_int[0];
+		sliceDim = 0;
+		sliceSize = frames_int[0];
 
 		// We will slice only 2D data. 1D data is loaded into memory completely
 		if (averageIndices.length > 0 || dim == 2) {
@@ -103,12 +108,23 @@ public class LazyAverage extends LazyDataReduction {
 				}
 			}
 		}
+	}
+	
+	public void execute(DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
+		
+		// Loop over dimensions that aren't averaged
+		int[] iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
+		int[] start = new int[iter_array.length];
+		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
+		Arrays.fill(start, 0);
+		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
+		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
 		
 		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
 			
 			if (monitor.isCanceled()) {
-				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -153,7 +169,6 @@ public class LazyAverage extends LazyDataReduction {
 			while (data_iter.hasNext()) {
 				
 				if (monitor.isCanceled()) {
-					closeHDF5Identifiers();
 					return;
 				}
 				
@@ -169,7 +184,6 @@ public class LazyAverage extends LazyDataReduction {
 				int data_slice_rank = data_slice.getRank();
 				
 				if (monitor.isCanceled()) {
-					closeHDF5Identifiers();
 					return;
 				}
 				
@@ -187,7 +201,6 @@ public class LazyAverage extends LazyDataReduction {
 			}
 			
 			if (monitor.isCanceled()) {
-				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -195,7 +208,6 @@ public class LazyAverage extends LazyDataReduction {
 			ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
 			
 			if (monitor.isCanceled()) {
-				closeHDF5Identifiers();
 				return;
 			}
 			
@@ -236,15 +248,11 @@ public class LazyAverage extends LazyDataReduction {
 		input_errors_ids.setIDs(ave_group_id, ave_errors_id);
 	}
 
-	private void closeHDF5Identifiers() throws HDF5LibraryException {
-		if (ave_data_id != -1) {
-	    	H5.H5Dclose(ave_data_id);
-		}
-		if (ave_errors_id != -1) {
-	    	H5.H5Dclose(ave_errors_id);
-		}
-		if (ave_group_id != -1) {
-	    	H5.H5Gclose(ave_group_id);
-		}
+	public void complete() throws HDF5LibraryException {
+		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(ave_data_id,
+				ave_errors_id,
+				ave_group_id));
+		
+		NcdNexusUtils.closeH5idList(identifiers);
 	}
 }
