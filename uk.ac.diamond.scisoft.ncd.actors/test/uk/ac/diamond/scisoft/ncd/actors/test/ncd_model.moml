@@ -1,7 +1,7 @@
 <?xml version="1.0" standalone="no"?>
 <!DOCTYPE entity PUBLIC "-//UC Berkeley//DTD MoML 1//EN"
     "http://ptolemy.eecs.berkeley.edu/xml/dtd/MoML_1.dtd">
-<entity name="new_model" class="ptolemy.actor.TypedCompositeActor" source="/home/voo82357/tmp/ncd_model.moml">
+<entity name="new_model" class="ptolemy.actor.TypedCompositeActor" source="C:\Work\runtime-uk.ac.diamond.dawn.product\workflows\ncd\ncd_model.moml">
     <property name="_createdBy" class="ptolemy.kernel.attributes.VersionAttribute" value="7.0.1">
     </property>
     <property name="_workbenchVersion" class="ptolemy.kernel.attributes.VersionAttribute" value="8.4.0.qualifier">
