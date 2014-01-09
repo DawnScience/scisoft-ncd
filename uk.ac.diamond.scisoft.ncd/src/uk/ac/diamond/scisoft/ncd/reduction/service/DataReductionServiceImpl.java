@@ -16,11 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction.service;
 
-import gda.analysis.io.ScanFileHolderException;
-
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.text.SimpleDateFormat;
@@ -30,7 +26,6 @@ import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -50,8 +45,6 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
@@ -96,7 +89,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 	@Override
-	public void configure(IDataReductionContext context) throws Exception {
+	public void configure(IDataReductionContext context) {
 		
 		LazyNcdProcessing processing   = context.getProcessing();
 		LazyNcdProcessing bgProcessing = context.getBgProcessing();
@@ -136,14 +129,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		int idxMonitor = 0;
 		if (context.isEnableWaxs()) idxMonitor += 6;
 		if (context.isEnableSaxs()) idxMonitor += 6;
-		context.setWorkAmount(idxMonitor);
-		
-		if (flags.isEnableSector() && !isCalibrationResultsBean(context)) {
-			
-			throw new CalibrationAbsentException("IMPORTANT! NCD calibration data was not found for currently selected SAXS detector. " +
-					                             "Please open NCD Calibration perspective to configure calibration data.\nProceed with data reduction anyway?");
-		}
-				
+		context.setWorkAmount(idxMonitor);		
 	}
 	
 	/**
@@ -190,43 +176,67 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		// Process background
 		IHierarchicalDataFile dawbReader = null;
 		IHierarchicalDataFile dawbWriter = null;
+		String bgFilename = null;
 		
 		if (context.isEnableBackground()) {  // Processes the background once after the configure and sets
 			                                 // background processing disabled for future calls.
 			try {
 				dawbReader = HierarchicalDataFactory.getReader(context.getBgPath());
-				String bgFilename = createResultsFile(context, bgName, bgPath, "background");
+				bgFilename = createResultsFile(context, bgName, bgPath, "background");
 				dawbWriter = HierarchicalDataFactory.getWriter(bgFilename);
-				if (enableWaxs) {
-					bgProcessing.execute(detectorWaxs, dimWaxs, bgFilename, monitor);
-				}
-				if (enableSaxs) {
-					bgProcessing.execute(detectorSaxs, dimSaxs, bgFilename, monitor);
-				}
-				processing.setBgFile(bgFilename);
-				dawbReader.close();
-				dawbWriter.close();
-				
-				context.setBgName(bgFilename);
-				context.setEnableBackground(false); // We have done it now.
-				
-			} catch (Exception e) {
-				logger.error("SCISOFT NCD: Error processing background file", e);
-				if (dawbReader != null) {
+				if (enableWaxs && bgFilename != null) {
 					try {
-						dawbReader.close();
-					} catch (Exception ex) {
-						logger.error("SCISOFT NCD: Failed to close input background file", ex);
+						bgProcessing.configure(detectorWaxs, dimWaxs, bgFilename, monitor);
+						bgProcessing.execute(monitor);
+					} catch (HDF5Exception e) {
+						logger.error("SCISOFT NCD: Error caught during backgrond WAXS data reduction", e);
+						throw e;
+					} finally {
+						try {
+							bgProcessing.complete();
+						} catch (Exception ex) {
+							logger.error("SCISOFT NCD: Failed to close background results file", ex);
+						}
 					}
 				}
-				if (dawbWriter != null) {
+				if (enableSaxs && bgFilename != null) {
 					try {
-						dawbWriter.close();
+						bgProcessing.configure(detectorSaxs, dimSaxs, bgFilename, monitor);
+						bgProcessing.execute(monitor);
+					} catch (HDF5Exception e) {
+						logger.error("SCISOFT NCD: Error caught during backgrond SAXS data reduction", e);
+						throw e;
+					} finally {
+						try {
+							bgProcessing.complete();
+						} catch (Exception ex) {
+							logger.error("SCISOFT NCD: Failed to close background results file", ex);
+						}
+					}
+				}
+				processing.setBgFile(bgFilename);
+
+				context.setBgName(bgFilename);
+				context.setEnableBackground(false); // We have done it now.
+			} catch (Exception e) {
+				logger.error("SCISOFT NCD: Error processing background file", e);
+				throw e;
+			} finally {
+				try {
+					if (dawbReader != null) {
+						dawbReader.close();
+					}
+				} catch (Exception ex) {
+					logger.error("SCISOFT NCD: Failed to close input background file", ex);
+				} finally {
+					try {
+						if (dawbWriter != null) {
+							dawbWriter.close();
+						}
 					} catch (Exception ex) {
 						logger.error("SCISOFT NCD: Failed to close processing background file", ex);
 					}
 				}
-				throw e;
 			}
 		}
 	
@@ -248,136 +258,155 @@ public class DataReductionServiceImpl implements IDataReductionService {
 				dawbBgReader = HierarchicalDataFactory.getReader(context.getBgName());
 			}
 
-			if (monitor.isCanceled()) {
-				dawbOutputReader.close();
-				dawbOutputWriter.close();
-				if (dawbBgReader != null) {
-					dawbBgReader.close();
-				}
-				return Status.CANCEL_STATUS;
-			}
-
 			if (enableWaxs) {
 				processing.setBgDetector(detectorWaxs+"_result");
-				processing.execute(detectorWaxs, dimWaxs, filename, monitor);
+				try {
+					processing.configure(detectorWaxs, dimWaxs, filename, monitor);
+					processing.execute(monitor);
+				} catch (HDF5Exception e) {
+					logger.error("SCISOFT NCD: Error caught during input WAXS data reduction", e);
+					throw e;
+				} finally {
+					try {
+						processing.complete();
+					} catch (Exception ex) {
+						logger.error("SCISOFT NCD: Failed to close NCD data reduction result file", ex);
+					} 
+				}
 			}
 
 			if (monitor.isCanceled()) {
-				dawbOutputReader.close();
-				dawbOutputWriter.close();
-				if (dawbBgReader != null) {
-					dawbBgReader.close();
-				}
 				return Status.CANCEL_STATUS;
 			}
 
 			if (enableSaxs) {
 				processing.setBgDetector(detectorSaxs+"_result");
-				processing.execute(detectorSaxs, dimSaxs, filename, monitor);
+				try {
+					processing.configure(detectorSaxs, dimSaxs, filename, monitor);
+					processing.execute(monitor);
+				} catch (HDF5Exception e) {
+					logger.error("SCISOFT NCD: Error caught during input SAXS data reduction", e);
+					throw e;
+				} finally {
+					try {
+						processing.complete();
+					} catch (Exception ex) {
+						logger.error("SCISOFT NCD: Failed to close NCD data reduction result file", ex);
+					} 
+				}
 			}
 
 			if (monitor.isCanceled()) {
-				dawbOutputReader.close();
-				dawbOutputWriter.close();
-				if (dawbBgReader != null) {
-					dawbBgReader.close();
-				}
 				return Status.CANCEL_STATUS;
 			}
-
-			dawbOutputReader.close();
-			dawbOutputWriter.close();
-			if (dawbBgReader != null) {
-				dawbBgReader.close();
-			}
-
 		} catch (final Exception e) {
+			logger.error("SCISOFT NCD: Error processing input file", e);
+			throw e;
+		} finally {
 			try {
 				if (dawbOutputReader != null) {
 					dawbOutputReader.close();
 				}
 			} catch (Exception ex) {
 				logger.error("SCISOFT NCD: Error closing input data file", ex);
-			}
-			try {
-				if (dawbOutputWriter != null) {
-					dawbOutputWriter.close();
+			} finally {
+				try {
+					if (dawbOutputWriter != null) {
+						dawbOutputWriter.close();
+					}
+				} catch (Exception ex) {
+					logger.error("SCISOFT NCD: Error closing NCD data reduction result file", ex);
+				} finally {
+					try {
+						if (dawbBgReader != null) {
+							dawbBgReader.close();
+						}
+					} catch (Exception ex) {
+						logger.error("SCISOFT NCD: Error closing background processing results file", ex);
+					}
 				}
-			} catch (Exception ex) {
-				logger.error("SCISOFT NCD: Error closing NCD data reduction result file", ex);
 			}
-			try {
-				if (dawbBgReader != null) {
-					dawbBgReader.close();
-				}
-			} catch (Exception ex) {
-				logger.error("SCISOFT NCD: Error closing background processing results file", ex);
-			}
-			throw e;
 		}
 
 		return Status.OK_STATUS; // Will then process next file, if required.
 	}
 	
-	private String createResultsFile(IDataReductionContext context, String inputfileName, String inputfilePath, String prefix) throws HDF5Exception, URISyntaxException {
+	private String createResultsFile(IDataReductionContext context, String inputfileName, String inputfilePath, String prefix) {
 		
 		String datetime = generateDateTimeStamp();
 		String detNames = "_" + ((context.isEnableWaxs()) ? context.getWaxsDetectorName() : "") + ((context.isEnableSaxs()) ? context.getSaxsDetectorName() : "") + "_";
 		final String filename = context.getWorkingDir() + File.separator + prefix + "_" + FilenameUtils.getBaseName(inputfileName) + detNames + datetime + ".nxs";
 		
-		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
-		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-		int fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);  
-		H5.H5Pclose(fapl);
-		
-		int[] libversion = new int[3];
-		H5.H5get_libversion(libversion);
-		putattr(fid, "HDF5_version", StringUtils.join(ArrayUtils.toObject(libversion), "."));
-		putattr(fid, "file_name", filename);
-		
-		Date date = new Date();
-		SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
-		String dt =  format.format(date);
-		putattr(fid, "file_time", dt);
-		
-		int entry_id = NcdNexusUtils.makegroup(fid, "entry1", NXEntryClassName);
-		
-		final String calibration = context.getCalibrationName();
-		if (calibration != null) {
-			int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NXDataClassName);
-		    H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-		    H5.H5Gclose(calib_id);
-		}
-		
+		int fid = -1;
+		int entry_id = -1;
 		try {
+			int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
+			fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);
+			H5.H5Pclose(fapl);
+
+			int[] libversion = new int[3];
+			H5.H5get_libversion(libversion);
+			putattr(fid, "HDF5_version", StringUtils.join(ArrayUtils.toObject(libversion), "."));
+			putattr(fid, "file_name", filename);
+
+			Date date = new Date();
+			SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssZ");
+			String dt = format.format(date);
+			putattr(fid, "file_time", dt);
+
+			entry_id = NcdNexusUtils.makegroup(fid, "entry1", NXEntryClassName);
+
+			final String calibration = context.getCalibrationName();
+			if (calibration != null) {
+				int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NXDataClassName);
+				H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data",
+						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+				H5.H5Gclose(calib_id);
+			}
+
 			writeNCDMetadata(entry_id, inputfilePath);
-		} catch (ScanFileHolderException e) {
-			logger.warn("Couldn't open scan data file. Scan metadata won't be written into NCD processing results file", e);
+
+			if (context.isEnableWaxs()) {
+				createDetectorNode(context.getWaxsDetectorName(), entry_id, inputfilePath);
+			}
+
+			if (context.isEnableSaxs()) {
+				createDetectorNode(context.getSaxsDetectorName(), entry_id, inputfilePath);
+			}
+
+		} catch (HDF5Exception e) {
+			throw new RuntimeException("Failed to create results NeXus file", e);
+		} catch (URISyntaxException e) {
+			throw new RuntimeException("Invalind NeXus link path in the input data file", e);
+		} finally {
+			try {
+				NcdNexusUtils.closeH5id(entry_id);
+			} catch (Exception e2) {
+				logger.error("Failed to close entry group in the NeXus results file", e2);
+			} finally {
+				try {
+					NcdNexusUtils.closeH5id(fid);
+				} catch (Exception e3) {
+					logger.error("Failed to close reference id of the NeXus results file", e3);
+				}
+			}
 		}
-		
-		if (context.isEnableWaxs()) {
-			createDetectorNode(context.getWaxsDetectorName(), entry_id, inputfilePath);
-		}
-		
-		if (context.isEnableSaxs())  {
-			createDetectorNode(context.getSaxsDetectorName(), entry_id, inputfilePath);
-		}
-		
-		H5.H5Gclose(entry_id);
-		H5.H5Fclose(fid);
-		
 		return filename;
 	}
 
 
-	private void writeNCDMetadata(int entry_id, String inputfilePath) throws ScanFileHolderException, HDF5Exception {
-		HDF5File inputFileTree = new HDF5Loader(inputfilePath).loadTree();
-		
-		writeStringMetadata("/entry1/entry_identifier", "entry_identifier", entry_id, inputFileTree);
-		writeStringMetadata("/entry1/scan_command", "scan_command", entry_id, inputFileTree);
-		writeStringMetadata("/entry1/scan_identifier", "scan_identifier", entry_id, inputFileTree);
-		writeStringMetadata("/entry1/title", "title", entry_id, inputFileTree);
-			
+	private void writeNCDMetadata(int entry_id, String inputfilePath) {
+		try {
+			HDF5File inputFileTree = new HDF5Loader(inputfilePath).loadTree();
+
+			writeStringMetadata("/entry1/entry_identifier", "entry_identifier", entry_id, inputFileTree);
+			writeStringMetadata("/entry1/scan_command", "scan_command", entry_id, inputFileTree);
+			writeStringMetadata("/entry1/scan_identifier", "scan_identifier", entry_id, inputFileTree);
+			writeStringMetadata("/entry1/title", "title", entry_id, inputFileTree);
+		} catch (Exception e) {
+			logger.warn("Couldn't open scan data file. Scan metadata won't be written into NCD processing results file",e);
+		}
 	}
 	
 	private void writeStringMetadata(String nodeName, String textName, int entry_id, HDF5File inputFileTree) throws HDF5Exception {
@@ -473,7 +502,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		H5.H5Fclose(file_handle);
 	}
 	
-	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
+	private void putattr(int dataset_id, String name, Object value) throws HDF5Exception {
 		int attr_type = -1;
 		int dataspace_id = -1;
 		byte[] data = null;
@@ -528,23 +557,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		return false;
 	}
 
-	private boolean isCalibrationResultsBean(IDataReductionContext context) {
-		CalibrationResultsBean crb = context.getCalibrationResults();
-		if (crb != null) {
-			if (crb.containsKey(context.getSaxsDetectorName())) {
-				Unit<Length> qaxisUnit = crb.getUnit(context.getSaxsDetectorName());
-				Amount<ScatteringVectorOverDistance> slope = crb.getGradient(context.getSaxsDetectorName());
-				Amount<ScatteringVector> intercept = crb.getIntercept(context.getSaxsDetectorName());
-				if (slope != null && intercept != null && qaxisUnit != null) {
-					return true;
-				}
-			}
-		}
-		return false;
-	}
-
 	
-	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, LazyNcdProcessing processing) throws FileNotFoundException, IOException {
+	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, LazyNcdProcessing processing) {
 
 		String workingDir = context.getWorkingDir();
 		if (workingDir == null || workingDir.isEmpty()) {
@@ -552,7 +566,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 		File testDir = new File(workingDir);
 		if (!(testDir.isDirectory())) {
-			throw new FileNotFoundException(NLS.bind(NcdMessages.NO_WORKINGDIR_DATA, testDir.getCanonicalPath()));
+			throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_WORKINGDIR_DATA, testDir.getAbsolutePath()));
 		}
 		if (!(testDir.canWrite())) {
 			throw new IllegalArgumentException(NcdMessages.NO_WORKINGDIR_WRITE);
@@ -585,10 +599,10 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			}
 			File testFile = new File(bgFile);
 			if (!(testFile.isFile())) {
-				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_BG_DATA, testFile.getCanonicalPath()));
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_BG_DATA, testFile.getAbsolutePath()));
 			}
 			if (!(testFile.canRead())) {
-				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_BG_READ, testFile.getCanonicalPath()));
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_BG_READ, testFile.getAbsolutePath()));
 			}
 		}
 
@@ -601,10 +615,10 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			}
 			File testFile = new File(drFile);
 			if (!(testFile.isFile())) {
-				throw new FileNotFoundException(NLS.bind(NcdMessages.NO_DR_DATA, testFile.getCanonicalPath()));
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_DR_DATA, testFile.getAbsolutePath()));
 			}
 			if (!(testFile.canRead())) {
-				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_DR_READ, testFile.getCanonicalPath()));
+				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_DR_READ, testFile.getAbsolutePath()));
 			}
 		}
 		
@@ -670,7 +684,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 	
-	private void readDetectorInformation(IDataReductionContext context, final NcdReductionFlags flags, NcdDetectors ncdDetectors) throws Exception {
+	private void readDetectorInformation(IDataReductionContext context, final NcdReductionFlags flags, NcdDetectors ncdDetectors) {
 		
 		String detectorWaxs = null;
 		NcdDetectorSettings detWaxsInfo = null;
@@ -713,25 +727,25 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		if (flags.isEnableWaxs()) {
 			if (detectorWaxs == null || detWaxsInfo == null) {
-				throw new Exception(NcdMessages.NO_WAXS_DETECTOR);
+				throw new IllegalArgumentException(NcdMessages.NO_WAXS_DETECTOR);
 			}
 			if (pxWaxs == null) {
-				throw new Exception(NcdMessages.NO_WAXS_PIXEL);
+				throw new IllegalArgumentException(NcdMessages.NO_WAXS_PIXEL);
 			}
 			if (dimWaxs == null) {
-				throw new Exception(NcdMessages.NO_WAXS_DIM);
+				throw new IllegalArgumentException(NcdMessages.NO_WAXS_DIM);
 			}
 		}
 		
 		if (flags.isEnableSaxs()) {
 			if (detectorSaxs == null || detSaxsInfo == null) {
-				throw new Exception(NcdMessages.NO_SAXS_DETECTOR);
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
 			}
 			if (pxSaxs == null) {
-				throw new Exception(NcdMessages.NO_SAXS_PIXEL);
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
 			}
 			if (dimSaxs == null) {
-				throw new Exception(NcdMessages.NO_SAXS_DIM);
+				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DIM);
 			}
 		}
 		

@@ -21,8 +21,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 
 import javax.measure.quantity.Energy;
+import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -55,6 +57,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.Activator;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
@@ -66,7 +70,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
-import uk.ac.diamond.scisoft.ncd.reduction.service.CalibrationAbsentException;
 import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionContext;
 import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionService;
 
@@ -128,20 +131,30 @@ public class DataReductionHandler extends AbstractHandler {
 				
 		if (sel != null) {
 			
-			// We get the data reduction service using OSGI
-			service = (IDataReductionService)Activator.getService(IDataReductionService.class);
-			
-			// Get data from NcdProcessingSourceProvider's and store in IDataReductionContext
-			context = service.createContext();
-			createData(context, window);
-		
-			// Now we configure the context, which throws exceptions if 
-			// the configuration is invalid.
 			try {
+				// We get the data reduction service using OSGI
+				service = (IDataReductionService)Activator.getService(IDataReductionService.class);
+			
+				// Get data from NcdProcessingSourceProvider's and store in IDataReductionContext
+				context = service.createContext();
+				createData(context, window);
+			
+				// Now we configure the context, which throws exceptions if 
+				// the configuration is invalid.
 				createMaskAndRegion(context);
 				service.configure(context);
-				
-			} catch (CalibrationAbsentException exception) {
+			} catch (Exception e) {
+				String msg = "SCISOFT NCD: Error reading data reduction parameters";
+				logger.error(msg, e);
+				MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
+				for (StackTraceElement ste : e.getStackTrace()) {
+					mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
+				}
+				StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
+				return Boolean.FALSE;
+			}
+			
+			if (context.isEnableSector() && !isCalibrationResultsBean(context)) {
 				boolean proceed = MessageDialog
 						.openConfirm(
 								window.getShell(),
@@ -152,15 +165,6 @@ public class DataReductionHandler extends AbstractHandler {
 				if (!proceed) {
 					return Boolean.FALSE;
 				}
-			} catch (Exception e) {
-				String msg = "SCISOFT NCD: Error reading data reduction parameters";
-				logger.error(msg, e);
-				MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
-				for (StackTraceElement ste : e.getStackTrace()) {
-					mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
-				}
-				StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
-				return Boolean.FALSE;
 			}
 			
 			selObjects = sel.toArray();
@@ -366,5 +370,19 @@ public class DataReductionHandler extends AbstractHandler {
 			context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 		}
 	}
-
+	
+	private boolean isCalibrationResultsBean(IDataReductionContext context) {
+		CalibrationResultsBean crb = context.getCalibrationResults();
+		if (crb != null) {
+			if (crb.containsKey(context.getSaxsDetectorName())) {
+				Unit<Length> qaxisUnit = crb.getUnit(context.getSaxsDetectorName());
+				Amount<ScatteringVectorOverDistance> slope = crb.getGradient(context.getSaxsDetectorName());
+				Amount<ScatteringVector> intercept = crb.getIntercept(context.getSaxsDetectorName());
+				if (slope != null && intercept != null && qaxisUnit != null) {
+					return true;
+				}
+			}
+		}
+		return false;
+	}
 }

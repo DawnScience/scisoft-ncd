@@ -17,6 +17,8 @@
 package uk.ac.diamond.scisoft.ncd.utils;
 
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -260,33 +262,47 @@ public class NcdNexusUtils {
 		return data;
 	}
 	
-	public static void closeHDF5Reference(int id) {
+	public static void closeH5id(int id) throws HDF5LibraryException {
 		if (id > 0) {
-			try {
-				final int type = H5.H5Iget_type(id);
-				if (type != HDF5Constants.H5I_BADID) {
-					final int ref = H5.H5Iget_ref(id);
-					if (ref > 0) {
-						if (type == HDF5Constants.H5I_DATASET) {
-							H5.H5Dclose(id);
-							return;
-						}
-						if (type == HDF5Constants.H5I_GROUP) {
-							H5.H5Gclose(id);
-							return;
-						}
-						if (type == HDF5Constants.H5I_FILE) {
-							H5.H5Fclose(id);
-							return;
-						}
+			final int type = H5.H5Iget_type(id);
+			if (type != HDF5Constants.H5I_BADID) {
+				final int ref = H5.H5Iget_ref(id);
+				if (ref > 0) {
+					if (type == HDF5Constants.H5I_ATTR) {
+						H5.H5Aclose(id);
+						return;
+					}
+					if (type == HDF5Constants.H5I_DATASET) {
+						H5.H5Dclose(id);
+						return;
+					}
+					if (type == HDF5Constants.H5I_GROUP) {
+						H5.H5Gclose(id);
+						return;
+					}
+					if (type == HDF5Constants.H5I_FILE) {
+						H5.H5Fclose(id);
+						return;
 					}
 				}
-			} catch (HDF5LibraryException ex) {
-				ex.printStackTrace();
-				String msg = "Failed to close HDF5 id " + String.valueOf(id) + " in a Nexus file";
-				throw new RuntimeException(msg, ex.getCause());
 			}
 		}
 	}
 	
+	public static void closeH5idList(List<Integer> identifiers) throws HDF5LibraryException {
+		
+		if (identifiers == null || identifiers.isEmpty()) {
+			return;
+		}
+		
+		Iterator<Integer> itr = identifiers.iterator();
+		Integer id = itr.next();
+		try {
+			NcdNexusUtils.closeH5id(id);
+		} finally {
+			itr.remove();
+			closeH5idList(identifiers);
+		}
+	}
+
 }

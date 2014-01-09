@@ -197,8 +197,13 @@ public class LazyNcdProcessingTest {
 	    drSlice.setStart(start);
 		dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
-		testbgClass.execute(detector, dim, bgFilename, new NullProgressMonitor());
-		testClass.execute(detector, dim, filename, new NullProgressMonitor());
+		testbgClass.configure(detector, dim, bgFilename, new NullProgressMonitor());
+		testbgClass.execute(new NullProgressMonitor());
+		testClass.complete();
+		
+		testClass.configure(detector, dim, filename, new NullProgressMonitor());
+		testClass.execute(new NullProgressMonitor());
+		testClass.complete();
 	}
 
 	@Test

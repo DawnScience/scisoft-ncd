@@ -599,7 +599,8 @@ public class NcdLazyDataReductionTest {
 		
 		LazyAverage lazyAverage = new LazyAverage();
 		lazyAverage.setAverageIndices(new int[] {1,3});
-		lazyAverage.execute(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 100, input_ids, input_errors_ids);
+		lazyAverage.configure(dim, (int[]) ConvertUtils.convert(shape, int[].class), processing_group_id, 100);
+		lazyAverage.execute(input_ids, input_errors_ids);
 		
 	    long[] shapeRes = new long[] {1, shape[1], 1, imageShape[0], imageShape[1]}; 
 		SliceSettings resultsSlice = new SliceSettings(shapeRes, 0, (int) shapeRes[0]);
