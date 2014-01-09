@@ -20,8 +20,8 @@ import java.io.File;
 import java.text.DecimalFormat;
 import java.util.Map;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.math3.util.Pair;
-import org.apache.commons.validator.routines.DoubleValidator;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
@@ -105,21 +105,29 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private ExpansionAdapter expansionAdapter;
 	
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getAbsScale() {
 		String input = absScale.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getBgScale() {
 		String input = bgScale.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Integer getBgFirstFrame() {

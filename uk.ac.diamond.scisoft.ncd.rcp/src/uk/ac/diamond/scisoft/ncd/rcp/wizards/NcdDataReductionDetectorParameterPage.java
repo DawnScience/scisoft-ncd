@@ -21,7 +21,7 @@ import java.util.HashMap;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -73,8 +73,6 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 	private Label calListLabel, normChanLabel;
 	private static Spinner normChan;
 	
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-
 	public NcdDataReductionDetectorParameterPage() {
 		super("Detector Parameters");
 		setTitle("NCD Detector Parameters");
@@ -415,12 +413,18 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 
 	private Double getSaxsPixel() {
 		String input = pxSaxs.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getWaxsPixel() {
 		String input = pxWaxs.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private SelectionListener modeSelectionListenerWaxs = new SelectionAdapter() {

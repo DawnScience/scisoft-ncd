@@ -19,7 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 import java.text.DecimalFormat;
 import java.util.Map;
 
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlotType;
 import org.dawnsci.plotting.api.PlottingFactory;
@@ -76,7 +76,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private NcdProcessingSourceProvider ncdAbsOffsetSourceProvider;
 	private static final Logger logger = LoggerFactory.getLogger(AbsoluteIntensityCalibration.class);
 
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 	private IMemento memento;
 	
 	private final class FileSelectionListener implements ISelectionListener {
@@ -102,17 +101,26 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getAbsScale() {
 		String input = absScale.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getAbsOffset() {
 		String input = absOffset.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	@Override

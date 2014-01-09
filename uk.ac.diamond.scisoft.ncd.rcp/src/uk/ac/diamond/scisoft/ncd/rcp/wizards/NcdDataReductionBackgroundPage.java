@@ -18,7 +18,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.io.File;
 
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
@@ -47,7 +47,6 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 	private Button browseBg;
 	private Text bgScale;
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider;
 	private NcdProcessingSourceProvider ncdBgScaleSourceProvider;
 	private NcdProcessingSourceProvider ncdBkgSliceSourceProvider;
@@ -223,26 +222,32 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 
 	private Double getBgScale() {
 		String input = bgScale.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 
 	private Integer getBgFirstFrame() {
 		String input = bgFramesStart.getText();
-		if (bgFramesStart.isEnabled())
+		if (bgFramesStart.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 
 	private Integer getBgLastFrame() {
 		String input = bgFramesStop.getText();
-		if (bgFramesStop.isEnabled())
+		if (bgFramesStop.isEnabled()) {
 			return integerValidator.validate(input);
+		}
 		return null;
 	}
 
 	private String getBgAdvancedSelection() {
-		if (bgAdvanced.isEnabled())
+		if (bgAdvanced.isEnabled()) {
 			return bgAdvanced.getText();
+		}
 		return null;
 	}
 

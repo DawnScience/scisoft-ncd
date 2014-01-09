@@ -24,7 +24,7 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -86,16 +86,20 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private Label calListLabel, normChanLabel;
 	private static Spinner normChan;
 	
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-	
 	private Double getSaxsPixel() {
 		String input = pxSaxs.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private Double getWaxsPixel() {
 		String input = pxWaxs.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 	
 	private SelectionListener modeSelectionListenerWaxs = new SelectionAdapter() {

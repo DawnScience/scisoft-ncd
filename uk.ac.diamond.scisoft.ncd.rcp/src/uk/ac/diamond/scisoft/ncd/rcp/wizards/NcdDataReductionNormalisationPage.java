@@ -16,7 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -103,16 +103,20 @@ public class NcdDataReductionNormalisationPage extends AbstractNcdDataReductionP
 		setControl(container);
 	}
 
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 
 	private Double getAbsScale() {
 		String input = absScale.getText();
-		return doubleValidator.validate(input);
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
 	}
 
 }

@@ -24,7 +24,7 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import org.apache.commons.validator.routines.DoubleValidator;
+import org.apache.commons.lang.math.NumberUtils;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IRegion;
@@ -106,8 +106,6 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected static HashMap<Unit<Length>, Button> unitSel;
 
-	private DoubleValidator doubleValidator = DoubleValidator.getInstance();
-
 	private static class Compare implements Comparator<IPeak> {
 
 		@Override
@@ -124,8 +122,8 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	protected Amount<Energy> getEnergy() {
 		String input = energy.getText();
-		Double val = doubleValidator.validate(input);
-		if (val != null) {
+		if (NumberUtils.isNumber(input)) {
+			Double val = Double.valueOf(input);
 			return Amount.valueOf(val, SI.KILO(NonSI.ELECTRON_VOLT));
 		}
 		return null;
