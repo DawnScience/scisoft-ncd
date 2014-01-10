@@ -43,7 +43,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 	
 	public void execute(int entry_group_id, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
 		
-		long[] frames = NcdNexusUtils.getIdsDatasetShape(input_ids);
+		long[] frames = NcdNexusUtils.getIdsDatasetShape(input_ids.dataspace_id);
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
 	    int group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
