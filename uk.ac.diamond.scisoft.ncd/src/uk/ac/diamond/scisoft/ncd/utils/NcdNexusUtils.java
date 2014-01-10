@@ -70,11 +70,11 @@ public class NcdNexusUtils {
 		return open_group_id;
 	}
 	
-	public static int makedata(int parent_id, String name, int type, int rank, long[] dim) throws HDF5Exception {
+	public static int makedata(int parent_id, String name, int type, long[] dim) throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
-		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
+		int dataspace_id = H5.H5Screate_simple(dim.length, dim, null);
 		if (dataspace_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
 		}
@@ -93,11 +93,11 @@ public class NcdNexusUtils {
 		return dataset_id;
 	}
 		
-	public static int makedata(int parent_id, String name, int type, int rank, long[] dim, boolean signal, String units) throws HDF5Exception {
+	public static int makedata(int parent_id, String name, int type, long[] dim, boolean signal, String units) throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
-		int dataset_id = makedata(parent_id, name, type, rank, dim);
+		int dataset_id = makedata(parent_id, name, type, dim);
 		if (dataset_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to create dataset");
 		}

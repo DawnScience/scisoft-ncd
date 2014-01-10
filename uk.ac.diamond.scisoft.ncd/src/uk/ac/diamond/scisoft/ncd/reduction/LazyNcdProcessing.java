@@ -418,9 +418,9 @@ public class LazyNcdProcessing {
 		if(flags.isEnableDetectorResponse()) {
 		    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, rank, frames, true, "counts");
+			dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, frames, true, "counts");
 		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, rank, frames, true, "counts");
+			dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, frames, true, "counts");
 			
 			lazyDetectorResponse.createDetectorResponseInput();
 			lazyDetectorResponse.writeNcdMetadata(dr_group_id);
@@ -437,8 +437,8 @@ public class LazyNcdProcessing {
 			double[] radii = intSector.getRadii();
 			double dpp = intSector.getDpp();
 			secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
-			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", typeFloat, secRank, secFrames, true, "counts");
-			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", typeDouble, secRank, secFrames, false, "counts");
+			sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", typeFloat, secFrames, true, "counts");
+			sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", typeDouble, secFrames, false, "counts");
 			
 			double[] angles = intSector.getAngles();
 			long[] azFrames = Arrays.copyOf(frames, secRank);
@@ -446,8 +446,8 @@ public class LazyNcdProcessing {
 				angles[1] = angles[0] + 2 * Math.PI;
 			}
 			azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
-			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", typeFloat, secRank, azFrames, false, "counts");
-			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", typeDouble, secRank, azFrames, false, "counts");
+			az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", typeFloat, azFrames, false, "counts");
+			az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", typeDouble, azFrames, false, "counts");
 			
 			intSector.setAverageArea(false);
 			lazySectorIntegration.setIntSector(intSector);
@@ -501,10 +501,10 @@ public class LazyNcdProcessing {
 			
 		    norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
+			norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
+			norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
 			lazyNormalisation.setAbsScaling(absScaling);
@@ -523,10 +523,10 @@ public class LazyNcdProcessing {
 		if(flags.isEnableBackground()) {
 		    bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, Nexus.DETECT);
 		    int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, flags.isEnableSector() ? secRank : rank,
+			bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			bg_errors_id = NcdNexusUtils.makedata(bg_group_id, "errors", type, flags.isEnableSector() ? secRank : rank,
+			bg_errors_id = NcdNexusUtils.makedata(bg_group_id, "errors", type,
 					flags.isEnableSector() ? secFrames : frames, true, "counts");
 			
 			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
@@ -557,7 +557,7 @@ public class LazyNcdProcessing {
 			// Store background filename used in data reduction
 			int str_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(str_type, bgFile.length());
-			int metadata_id = NcdNexusUtils.makedata(bg_group_id, "filename", str_type, 1, new long[] {1});
+			int metadata_id = NcdNexusUtils.makedata(bg_group_id, "filename", str_type, new long[] {1});
 			
 			int filespace_id = H5.H5Dget_space(metadata_id);
 			int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
@@ -579,9 +579,9 @@ public class LazyNcdProcessing {
 		    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, Nexus.DETECT);
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
 			long[] invFrames = Arrays.copyOf(flags.isEnableSector() ? secFrames : frames, invRank);
-			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invRank, invFrames, true, "counts");
+			inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invFrames, true, "counts");
 		    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invRank, invFrames, true, "counts");
+			inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invFrames, true, "counts");
 			
 			lazyInvariant.writeNcdMetadata(inv_group_id);
 		}

@@ -85,7 +85,7 @@ public abstract class LazyDataReduction {
 		
 		if (qaxis.hasErrors()) {
 			long[] qaxisShapeError = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
-			int qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError.length, qaxisShapeError,
+			int qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError,
 				false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
@@ -106,7 +106,7 @@ public abstract class LazyDataReduction {
 		String detType = DetectorTypes.REDUCTION_DETECTOR;
 		int type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(type, detType.length());
-		int metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, 1, new long[] {1});
+		int metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, new long[] {1});
 		
 		int filespace_id = H5.H5Dget_space(metadata_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);

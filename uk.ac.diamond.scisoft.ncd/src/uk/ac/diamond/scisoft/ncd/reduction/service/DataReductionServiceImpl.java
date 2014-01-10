@@ -421,7 +421,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 				
 				int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());
-				int text_id = NcdNexusUtils.makedata(entry_id, textName, text_type, 1, new long[] {1});
+				int text_id = NcdNexusUtils.makedata(entry_id, textName, text_type, new long[] {1});
 				int filespace_id = H5.H5Dget_space(text_id);
 				int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 				H5.H5Sselect_all(filespace_id);

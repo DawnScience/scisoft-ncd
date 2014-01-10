@@ -78,12 +78,12 @@ public class LazySelection extends LazyDataReduction {
 		
 		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
 		AbstractDataset data = AbstractDataset.zeros(block_int, dtype);
-		int output_data_id = NcdNexusUtils.makedata(output_group_id, "data", ids.datatype_id, frames.length, framesTotal, true, "counts");
+		int output_data_id = NcdNexusUtils.makedata(output_group_id, "data", ids.datatype_id, framesTotal, true, "counts");
 		int output_dataspace_id = H5.H5Dget_space(output_data_id);
 		
 		AbstractDataset errors = AbstractDataset.zeros(block_int, dtype);
 		int errors_datatype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
-		int errors_data_id = NcdNexusUtils.makedata(output_group_id, "errors", errors_datatype_id, frames.length, framesTotal, true, "counts");
+		int errors_data_id = NcdNexusUtils.makedata(output_group_id, "errors", errors_datatype_id, framesTotal, true, "counts");
 		int errors_dataspace_id = H5.H5Dget_space(errors_data_id);
 		
 		MultidimensionalCounter frameCounter = new MultidimensionalCounter(datDimMake);

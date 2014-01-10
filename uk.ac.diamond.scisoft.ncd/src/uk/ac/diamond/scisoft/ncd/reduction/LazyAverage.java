@@ -85,8 +85,8 @@ public class LazyAverage extends LazyDataReduction {
 		
 	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
-		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
+		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve, true, "counts");
+		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve, true, "counts");
 		H5.H5Tclose(type);
 		
 		sliceDim = 0;

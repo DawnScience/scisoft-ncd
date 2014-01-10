@@ -48,10 +48,10 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		
 	    int group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-	    int data_id = NcdNexusUtils.makedata(group_id, "data", type, frames.length, frames, true, "a.u.");
+	    int data_id = NcdNexusUtils.makedata(group_id, "data", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 	    type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
-	    int errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames.length, frames, true, "a.u.");
+	    int errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 		
     	SliceSettings sliceSettings = new SliceSettings(frames, frames.length - 2, 1);
@@ -172,8 +172,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		H5.H5Dclose(qaxis_id);
 		
 		if (qaxisNew.hasErrors()) {
-			int qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape.length, axisShape,
-				false, units);
+			int qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape, false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
 			type_id = H5.H5Dget_type(qaxis_error_id);
