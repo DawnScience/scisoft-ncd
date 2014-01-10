@@ -137,7 +137,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape.length, axisShape,
+		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);

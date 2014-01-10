@@ -142,11 +142,11 @@ public class NcdNexusUtils {
 		return dataset_id;
 	}
 	
-	public static int makeaxis(int parent_id, String name, int type, int rank, long[] dim, int[] axis, int primary, String units) throws HDF5Exception {
+	public static int makeaxis(int parent_id, String name, int type, long[] dim, int[] axis, int primary, String units) throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
-		int dataspace_id = H5.H5Screate_simple(rank, dim, null);
+		int dataspace_id = H5.H5Screate_simple(dim.length, dim, null);
 		if (dataspace_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to allocate space for dataset");
 		}

@@ -90,9 +90,9 @@ public class NcdLazyDataReductionTest {
 			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
 			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape.length, shape, true, "counts");
-			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape.length, normShape, true, "counts");
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
+			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape, true, "counts");
+			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape, true, "counts");
 
 			for (int m = 0; m < shape[0]; m++)
 			  for (int n = 0; n < shape[1]; n++) {
@@ -161,8 +161,8 @@ public class NcdLazyDataReductionTest {
 			int nxsFile = H5.H5Fcreate(bgFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape.length, bgShape, true, "counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, bgShape.length, bgShape, true, "counts");
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape, true, "counts");
+			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, bgShape, true, "counts");
 
 			for (int k = 0; k < bgShape[0]; k++) {
 				for (int frames = 0; frames < bgShape[1]; frames++) {
@@ -213,7 +213,7 @@ public class NcdLazyDataReductionTest {
 			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			int processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NXInstrumentClassName);
 			int datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NXDetectorClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape.length, imageShape, true, "counts");
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape, true, "counts");
 
 			float[] data = new float[points];
 			for (int i = 0; i < imageShape[0]; i++) {
@@ -246,7 +246,7 @@ public class NcdLazyDataReductionTest {
 			int nxsFile = H5.H5Fcreate(secFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape.length, shape, true, "counts");
+			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
 
 			for (int m = 0; m < shape[0]; m++) {
 			  for (int n = 0; n < shape[1]; n++) {
@@ -301,8 +301,8 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		int norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape.length, shape, true, "counts");
-		int norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, shape.length, shape, true, "counts");
+		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape, true, "counts");
+		int norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, shape, true, "counts");
 
 		DataSliceIdentifiers calibration_ids = NcdNexusUtilsTest.readDataId(filename, testNormName, "data", null)[0];
 
@@ -359,9 +359,9 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		int bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, shape.length, shape, true, "counts");
+		int bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, shape, true, "counts");
 		type = HDF5Constants.H5T_NATIVE_DOUBLE;
-		int bg_error_id = NcdNexusUtils.makedata(bg_group_id, "error", type, shape.length, shape, true, "counts");
+		int bg_error_id = NcdNexusUtils.makedata(bg_group_id, "error", type, shape, true, "counts");
 			
 		DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(bgFile, testDatasetName, "data", "errors");
 		DataSliceIdentifiers bgIds = ids[0];
@@ -420,8 +420,8 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 	    int dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, shape.length, shape, true, "counts");
-		int dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, shape.length, shape, true, "counts");
+		int dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, shape, true, "counts");
+		int dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, shape, true, "counts");
 			
 		lazyDetectorResponse.createDetectorResponseInput();
 		
@@ -463,8 +463,8 @@ public class NcdLazyDataReductionTest {
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 	    int inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invShape.length, invShape, true, "counts");
-		int inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invShape.length, invShape, true, "counts");
+		int inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invShape, true, "counts");
+		int inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invShape, true, "counts");
 		
 		DataSliceIdentifiers invId = new DataSliceIdentifiers();
 		invId.setIDs(inv_group_id, inv_data_id);
@@ -514,18 +514,14 @@ public class NcdLazyDataReductionTest {
 		double dpp = intSector.getDpp();
 		long[] secFrames = Arrays.copyOf(shape, shape.length - dim + 1);
 		secFrames[secFrames.length - 1] = intRadii[1] - intRadii[0] + 1;
-		int sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secFrames.length, secFrames, true,
-				"counts");
-		int sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secFrames.length, secFrames, true,
-				"counts");
+		int sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secFrames, true, "counts");
+		int sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secFrames, true, "counts");
 
 		double[] angles = intSector.getAngles();
 		long[] azFrames = Arrays.copyOf(secFrames, secFrames.length);
 		azFrames[azFrames.length - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
-		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames.length, azFrames, false,
-				"counts");
-		int az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, azFrames.length, azFrames, false,
-				"counts");
+		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames, false, "counts");
+		int az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, azFrames, false, "counts");
 
 		intSector.setClippingCompensation(true);
 		lazySectorIntegration.setIntSector(intSector);
