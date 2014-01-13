@@ -299,36 +299,15 @@ public class NcdLazyDataReductionTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-		int norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, "NXdetector");
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, shape, true, "counts");
-		int norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, shape, true, "counts");
-
-		DataSliceIdentifiers calibration_ids = NcdNexusUtilsTest.readDataId(filename, testNormName, "data", null)[0];
-
-		int rankCal = H5.H5Sget_simple_extent_ndims(calibration_ids.dataspace_id);
-		long[] framesCal = new long[rankCal];
-		H5.H5Sget_simple_extent_dims(calibration_ids.dataspace_id, framesCal, null);
 
 		lazyNormalisation.setAbsScaling((double) absScale);
 		lazyNormalisation.setNormChannel(0);
+		lazyNormalisation.setCalibration(testNormName);
 
-		SliceSettings calibrationSliceParams = new SliceSettings(framesCal, 0, (int) framesCal[0]);
-	    int[] start = new int[] {0, 0, 0, 0};
-	    calibrationSliceParams.setStart(start);
-		AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
-
-		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
-		input_ids.setIDs(norm_group_id, norm_data_id);
-	    long[] lstart = new long[] {0, 0, 0, 0, 0};
-		long[] count = new long[] {1, 1, 1, 1, 1};
-		input_ids.setSlice(lstart, shape, count, shape);
-		
-		DataSliceIdentifiers input_errors_ids = new DataSliceIdentifiers();
-		input_errors_ids.setIDs(norm_group_id, norm_errors_id);
-		input_errors_ids.setSlice(lstart, shape, count, shape);
-		
-		AbstractDataset outData = lazyNormalisation.execute(dim, data, dataCal, input_ids, input_errors_ids, lock);
+		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
+		slice.setStart(new int[] {0, 0, 0, 0, 0});
+		lazyNormalisation.configure(dim, shape, entry_id, processing_group_id);
+		AbstractDataset outData = lazyNormalisation.execute(dim, data, slice, lock);
 		AbstractDataset outErrors = outData.getError();
 		
 		for (int h = 0; h < shape[0]; h++) {
@@ -506,22 +485,7 @@ public class NcdLazyDataReductionTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-		int sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, "NXdetector");
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
 		SectorROI intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
-		int[] intRadii = intSector.getIntRadii();
-		double[] radii = intSector.getRadii();
-		double dpp = intSector.getDpp();
-		long[] secFrames = Arrays.copyOf(shape, shape.length - dim + 1);
-		secFrames[secFrames.length - 1] = intRadii[1] - intRadii[0] + 1;
-		int sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", type, secFrames, true, "counts");
-		int sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", type, secFrames, true, "counts");
-
-		double[] angles = intSector.getAngles();
-		long[] azFrames = Arrays.copyOf(secFrames, secFrames.length);
-		azFrames[azFrames.length - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
-		int az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", type, azFrames, false, "counts");
-		int az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", type, azFrames, false, "counts");
 
 		intSector.setClippingCompensation(true);
 		lazySectorIntegration.setIntSector(intSector);
@@ -531,21 +495,14 @@ public class NcdLazyDataReductionTest {
 		long[] count = new long[] { 1, 1, 1, 1, 1 };
 		input_ids.setSlice(lstart, shape, count, shape);
 
-		DataSliceIdentifiers sector_id = new DataSliceIdentifiers(input_ids);
-		sector_id.setIDs(sec_group_id, sec_data_id);
-		DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers(input_ids);
-		err_sector_id.setIDs(sec_group_id, sec_errors_id);
-		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers(input_ids);
-		azimuth_id.setIDs(sec_group_id, az_data_id);
-		DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers(input_ids);
-		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
-		
-		AbstractDataset[] areaData = ROIProfile.area((int[])ConvertUtils.convert(imageShape, int[].class), AbstractDataset.FLOAT32, null, intSector);
-		lazySectorIntegration.setAreaData(areaData);
 		lazySectorIntegration.setCalculateRadial(true);
 		lazySectorIntegration.setCalculateAzimuthal(true);
 		lazySectorIntegration.setFast(false);
-		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, sector_id, err_sector_id, azimuth_id, err_azimuth_id, lock);
+		lazySectorIntegration.configure(dim, shape, processing_group_id);
+		
+		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
+		slice.setStart(new int[] {0, 0, 0, 0, 0});
+		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, slice, lock);
 		AbstractDataset[] outErrors = new AbstractDataset[] {outDataset[0].getError(), outDataset[1].getError()};
 			
 		intSector.setAverageArea(true);

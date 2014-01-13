@@ -69,9 +69,9 @@ public class LazyAverage extends LazyDataReduction {
 		this.monitor = monitor;
 	}
 
-	public void configure(int dimmension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
+	public void configure(int dimension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
 		
-		dim = dimmension;
+		dim = dimension;
 		frames_int = inputFrames;
 		frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		

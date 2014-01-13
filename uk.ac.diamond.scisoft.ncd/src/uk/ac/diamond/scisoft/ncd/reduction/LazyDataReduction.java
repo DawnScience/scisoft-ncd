@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.util.Arrays;
+
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
@@ -36,8 +38,6 @@ public abstract class LazyDataReduction {
 	protected AbstractDataset qaxis;
 	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
-	protected String calibration;
-	protected int normChannel;
 	protected AbstractDataset mask;
 
 	public LazyDataReduction() {
@@ -45,14 +45,6 @@ public abstract class LazyDataReduction {
 	
 	public void setDetector(String detector) {
 		this.detector = detector;
-	}
-
-	public void setCalibration(String calibration) {
-		this.calibration = calibration;
-	}
-
-	public void setNormChannel(int normChannel) {
-		this.normChannel = normChannel;
 	}
 
 	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
@@ -64,7 +56,7 @@ public abstract class LazyDataReduction {
 		this.mask = mask;
 	}
 
-	public void writeQaxisData(int dim, int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	public void writeQaxisData(int dim, int datagroup_id) throws HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
@@ -117,5 +109,22 @@ public abstract class LazyDataReduction {
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);
 		H5.H5Dclose(metadata_id);
+	}
+	
+	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+		
+		int dataRank = data.getRank();
+		int[] dataShape = data.getShape();
+		if (dataRank > (dimension + 1)) {
+			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
+			int totalFrames = 1;
+			for (int val : frameArray) {
+				totalFrames *= val;
+			}
+			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
+			newShape[0] = totalFrames;
+			return data.reshape(newShape);
+		}
+		return data;
 	}
 }

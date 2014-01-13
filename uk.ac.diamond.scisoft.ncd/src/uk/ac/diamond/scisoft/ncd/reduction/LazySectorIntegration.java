@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import javax.measure.quantity.Energy;
@@ -40,9 +41,11 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazySectorIntegration extends LazyDataReduction {
@@ -57,11 +60,15 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
+	
+	private int sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
 
 	public static String name = "SectorIntegration";
 
 	public void setIntSector(SectorROI intSector) {
-		this.intSector = intSector;
+		this.intSector = intSector.copy();
+		this.intSector.setAverageArea(false);
+		this.intSector.setClippingCompensation(true);
 	}
 
 	public void setAreaData(AbstractDataset... area) {
@@ -110,24 +117,146 @@ public class LazySectorIntegration extends LazyDataReduction {
 		}
 	}
 
-	public AbstractDataset[] execute(int dim, AbstractDataset data,
-			DataSliceIdentifiers sector_id, DataSliceIdentifiers err_sector_id,
-			DataSliceIdentifiers azimuth_id, DataSliceIdentifiers err_azimuth_id, ILock lock) {
+	public void configure(int dim, long[] frames, int processing_group_id) throws HDF5Exception {
+	    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
+		int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
+		int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
+		int[] intRadii = intSector.getIntRadii();
+		double[] radii = intSector.getRadii();
+		double dpp = intSector.getDpp();
+		int secRank = frames.length - dim + 1;
+		long[] secFrames = Arrays.copyOf(frames, secRank);
+		secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
+		sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", typeFloat, secFrames, true, "counts");
+		sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", typeDouble, secFrames, false, "counts");
 		
-		HDF5SectorIntegration reductionStep = new HDF5SectorIntegration("sector", "data");
-		reductionStep.setData(data);
-		reductionStep.setROI(intSector);
-		if (mask != null) {
-			reductionStep.setMask(mask);
+		double[] angles = intSector.getAngles();
+		long[] azFrames = Arrays.copyOf(frames, secRank);
+		if (intSector.getSymmetry() == SectorROI.FULL) {
+			angles[1] = angles[0] + 2 * Math.PI;
 		}
-		reductionStep.setIDs(sector_id, err_sector_id);
-		reductionStep.setAzimuthalIDs(azimuth_id, err_azimuth_id);
-		reductionStep.setAreaData(areaData);
-		reductionStep.setCalculateRadial(calculateRadial);
-		reductionStep.setCalculateAzimuthal(calculateAzimuthal);
-		reductionStep.setFast(fast);
+		azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
+		az_data_id = NcdNexusUtils.makedata(sec_group_id, "azimuth", typeFloat, azFrames, false, "counts");
+		az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", typeDouble, azFrames, false, "counts");
 		
-		return reductionStep.writeout(dim, lock);
+		int[] areaShape = (int[]) ConvertUtils.convert(Arrays.copyOfRange(frames, frames.length - dim, frames.length), int[].class); 
+		areaData = ROIProfile.area(areaShape, AbstractDataset.FLOAT32, mask, intSector, calculateRadial, calculateAzimuthal, fast);
+		
+		if (qaxis != null) {
+			writeQaxisData(secRank, sec_group_id);
+		}
+		writeNcdMetadata(sec_group_id);
+	}
+	
+	public AbstractDataset[] execute(int dim, AbstractDataset inputData, SliceSettings currentSliceParams, ILock lock) throws Exception {
+		
+		DataSliceIdentifiers sector_id = new DataSliceIdentifiers();
+		sector_id.setIDs(sec_group_id, sec_data_id);
+		sector_id.setSlice(currentSliceParams);
+		DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers();
+		err_sector_id.setIDs(sec_group_id, sec_errors_id);
+		err_sector_id.setSlice(currentSliceParams);
+		
+		DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers();
+		azimuth_id.setIDs(sec_group_id, az_data_id);
+		azimuth_id.setSlice(currentSliceParams);
+		DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers();
+		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
+		err_azimuth_id.setSlice(currentSliceParams);
+		
+			AbstractDataset myazdata = null, myazerrors = null;
+			AbstractDataset myraddata = null, myraderrors = null;
+
+			SectorIntegration sec = new SectorIntegration();
+			sec.setROI(intSector);
+			sec.setAreaData(areaData);
+			sec.setCalculateRadial(calculateRadial);
+			sec.setCalculateAzimuthal(calculateAzimuthal);
+			sec.setFast(fast);
+			int[] dataShape = inputData.getShape();
+			
+			AbstractDataset data = flattenGridData(inputData, dim);
+			if (inputData.hasErrors()) {
+				AbstractDataset errors = flattenGridData((AbstractDataset) inputData.getErrorBuffer(), dim);
+				data.setErrorBuffer(errors);
+			}
+			
+			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], mask);
+			int resLength =  dataShape.length - dim + 1;
+			if (calculateAzimuthal) {
+				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+				if (myazdata != null) {
+					if (myazdata.hasErrors()) {
+						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
+					}
+					
+					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
+					resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
+					myazdata = myazdata.reshape(resAzShape);
+					
+					if (myazerrors != null) {
+						myazerrors = myazerrors.reshape(resAzShape);
+						myazdata.setErrorBuffer(myazerrors);
+					}
+				}
+			}
+			if (calculateRadial) {
+				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+				if (myraddata != null) {
+					if (myraddata.hasErrors()) {
+						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
+					}
+					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
+					myraddata = myraddata.reshape(resRadShape);
+					if (myraderrors != null) {
+						myraderrors = myraderrors.reshape(resRadShape);
+						myraddata.setErrorBuffer(myraderrors);
+					}
+				}
+			}
+			try {
+				lock.acquire();
+				if (calculateAzimuthal && myazdata != null) {
+					writeResults(azimuth_id, myazdata, dataShape, dim);
+					if (myazdata.hasErrors()) {
+						writeResults(err_azimuth_id, myazdata.getError(), dataShape, dim);
+					}
+				}
+				if(calculateRadial && myraddata != null) {
+					writeResults(sector_id, myraddata, dataShape, dim);
+					if (myraddata.hasErrors()) {
+						writeResults(err_sector_id, myraddata.getError(), dataShape, dim);
+					}
+				}
+			} catch (Exception e) {
+				throw e;
+			} finally {
+				lock.release();
+			}
+			
+			
+			return new AbstractDataset[] {myazdata, myraddata};
+	}
+	
+	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim) throws HDF5Exception {
+		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
+		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
+		
+		int resLength =  dataShape.length - dim + 1;
+		int integralLength = data.getShape()[data.getRank() - 1];
+		
+		long[] res_start = Arrays.copyOf(dataIDs.start, resLength);
+		long[] res_count = Arrays.copyOf(dataIDs.count, resLength);
+		long[] res_block = Arrays.copyOf(dataIDs.block, resLength);
+		res_block[resLength - 1] = integralLength;
+		
+		int memspace_id = H5.H5Screate_simple(resLength, res_block, null);
+		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
+				res_start, res_block, res_count, res_block);
+		
+		H5.H5Dwrite(dataIDs.dataset_id, type_id, memspace_id, filespace_id,
+				HDF5Constants.H5P_DEFAULT, data.getBuffer());
 	}
 	
 	@Override
