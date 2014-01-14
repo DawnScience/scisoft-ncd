@@ -19,10 +19,12 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -31,8 +33,10 @@ import org.eclipse.core.runtime.jobs.ILock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
+import uk.ac.diamond.scisoft.ncd.BackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.hdf5.HDF5BackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyBackgroundSubtraction extends LazyDataReduction {
@@ -113,7 +117,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		H5.H5Dclose(metadata_id);
 	}
 		
-	public void average(int dim, long[] frames, int frameBatch) throws HDF5Exception {
+	public void preprocess(int dim, long[] frames, int frameBatch) throws HDF5Exception {
 		final int[] final_bgFrames_int;
 		if (bgFrames != null) {
 			if (!Arrays.equals(bgFrames, frames)) {
@@ -152,11 +156,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		}
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData,
-			DataSliceIdentifiers bg_id, DataSliceIdentifiers bg_error_id, ILock lock) {
-		HDF5BackgroundSubtraction reductionStep = new HDF5BackgroundSubtraction("background", "data");
-		
-		reductionStep.setData(data);
+	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, SliceSettings sliceData, ILock lock) throws HDF5Exception {
 		
 		if (bgScaling != null) {
 			bgData.imultiply(bgScaling);
@@ -173,9 +173,73 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 				bgData.setErrorBuffer(bgErrors);
 			}
 		}
-		reductionStep.setBackground(bgData);
-		reductionStep.setIDs(bg_id, bg_error_id);
 		
-		return reductionStep.writeout(dim, lock);
+			int[] dataShape = data.getShape();
+
+			data = flattenGridData(data, dim);
+			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			
+			AbstractDataset background = bgData.squeeze();
+
+			BackgroundSubtraction bs = new BackgroundSubtraction();
+			bs.setBackground(background);
+
+			int[] flatShape = data.getShape();
+			Object[] myobj = bs.process(data.getBuffer(), errors.getBuffer(), flatShape);
+			float[] mydata = (float[]) myobj[0];
+			double[] myerror = (double[]) myobj[1];
+					
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setErrorBuffer(myerror);
+			
+			try {
+				lock.acquire();
+				
+				long[] frames = sliceData.getFrames();
+				long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
+				int sliceDim = sliceData.getSliceDim();
+				int sliceSize = sliceData.getSliceSize();
+
+				long[] start = Arrays.copyOf(start_pos, frames.length);
+
+				long[] block = Arrays.copyOf(frames, frames.length);
+				Arrays.fill(block, 0, sliceData.getSliceDim(), 1);
+				block[sliceDim] = Math.min(frames[sliceDim] - start_pos[sliceDim], sliceSize);
+
+				long[] count = new long[frames.length];
+				Arrays.fill(count, 1);
+				
+				int filespace_id = H5.H5Dget_space(bg_data_id);
+				int type_id = H5.H5Dget_type(bg_data_id);
+				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+				H5.H5Dwrite(bg_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getBuffer());
+				
+				
+				int err_filespace_id = H5.H5Dget_space(bg_errors_id);
+				int err_type_id = H5.H5Dget_type(bg_errors_id);
+				int err_memspace_id = H5.H5Screate_simple(block.length, block, null);
+				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+				H5.H5Dwrite(bg_errors_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+				
+			} finally {
+				lock.release();
+			}
+
+			return myres;
+			
 	}	
+	
+	public void complete() throws HDF5LibraryException {
+		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(bg_data_id,
+				bg_errors_id,
+				bg_group_id,
+				background_input_data_id,
+				background_input_errors_id,
+				background_detector_group_id,
+				background_entry_group_id,
+				background_file_handle));
+
+		NcdNexusUtils.closeH5idList(identifiers);
+	}
 }

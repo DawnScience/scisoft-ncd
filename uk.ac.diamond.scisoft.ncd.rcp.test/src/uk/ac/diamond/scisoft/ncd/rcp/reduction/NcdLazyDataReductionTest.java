@@ -336,11 +336,6 @@ public class NcdLazyDataReductionTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-		int bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, "NXdetector");
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type, shape, true, "counts");
-		type = HDF5Constants.H5T_NATIVE_DOUBLE;
-		int bg_error_id = NcdNexusUtils.makedata(bg_group_id, "error", type, shape, true, "counts");
 			
 		DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(bgFile, testDatasetName, "data", "errors");
 		DataSliceIdentifiers bgIds = ids[0];
@@ -360,18 +355,14 @@ public class NcdLazyDataReductionTest {
 		bgError = bgError.ipower(2).sum(0).sum(0).idivide(bgFrames);
 		bgData.setErrorBuffer(bgError);
 
-		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
-		input_ids.setIDs(bg_group_id, bg_data_id);
-		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1, 1 };
-		input_ids.setSlice(lstart, shape, count, shape);
-		input_ids.setIDs(bg_group_id, bg_data_id);
+		lazyBackgroundSubtraction.setBgFile(bgFile);
+		lazyBackgroundSubtraction.setBgDetector(testDatasetName);
+		lazyBackgroundSubtraction.setBgScale((double) scaleBg);
 		
-		DataSliceIdentifiers input_error_ids = new DataSliceIdentifiers();
-		input_error_ids.setIDs(bg_group_id, bg_error_id);
-		input_error_ids.setSlice(lstart, shape, count, shape);
-		
-		AbstractDataset outData = lazyBackgroundSubtraction.execute(dim, data, bgData, input_ids, input_error_ids, lock);
+		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
+		slice.setStart(new int[] {0, 0, 0, 0, 0});
+		lazyBackgroundSubtraction.configure(dim, shape, processing_group_id);
+		AbstractDataset outData = lazyBackgroundSubtraction.execute(dim, data, bgData, slice, lock);
 		AbstractDataset outErrors = outData.getError();
 			
 		for (int h = 0; h < shape[0]; h++)
@@ -397,24 +388,13 @@ public class NcdLazyDataReductionTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-	    int dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, "NXdetector");
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, shape, true, "counts");
-		int dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, shape, true, "counts");
-			
-		lazyDetectorResponse.createDetectorResponseInput();
 		
-		DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
-		input_ids.setIDs(dr_group_id, dr_data_id);
-		long[] lstart = new long[] { 0, 0, 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1, 1, 1 };
-		input_ids.setSlice(lstart, shape, count, shape);
+		lazyDetectorResponse.setDrFile(drFile);
 		
-		DataSliceIdentifiers errors_ids = new DataSliceIdentifiers();
-		errors_ids.setIDs(dr_group_id, dr_errors_id);
-		errors_ids.setSlice(lstart, shape, count, shape);
-		
-		AbstractDataset outData = lazyDetectorResponse.execute(dim, data, input_ids, errors_ids, lock);
+		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
+		slice.setStart(new int[] {0, 0, 0, 0, 0});
+		lazyDetectorResponse.configure(dim, shape, entry_id, processing_group_id);
+		AbstractDataset outData = lazyDetectorResponse.execute(dim, data, slice, lock);
 		AbstractDataset outErrors = outData.getError(); 
 		
 		for (int h = 0; h < shape[0]; h++)
@@ -440,22 +420,11 @@ public class NcdLazyDataReductionTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-	    int inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, "NXdetector");
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		int inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invShape, true, "counts");
-		int inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invShape, true, "counts");
-		
-		DataSliceIdentifiers invId = new DataSliceIdentifiers();
-		invId.setIDs(inv_group_id, inv_data_id);
-		long[] lstart = new long[] { 0, 0, 0 };
-		long[] count = new long[] { 1, 1, 1 };
-		invId.setSlice(lstart, invShape, count, invShape);
-		
-		DataSliceIdentifiers invErrorsId = new DataSliceIdentifiers();
-		invErrorsId.setIDs(inv_group_id, inv_errors_id);
-		invErrorsId.setSlice(lstart, invShape, count, invShape);
     
-		AbstractDataset outData = lazyInvariant.execute(dim, data, invId, invErrorsId, lock);
+		SliceSettings slice = new SliceSettings(invShape, 0, (int) invShape[0]);
+		slice.setStart(new int[] {0, 0, 0});
+		lazyInvariant.configure(dim, shape, entry_id, processing_group_id);
+		AbstractDataset outData = lazyInvariant.execute(dim, data, slice, lock);
 		AbstractDataset outErrors = outData.getError();
 		for (int h = 0; h < invShape[0]; h++) {
 		  for (int g = 0; g < invShape[1]; g++) {
