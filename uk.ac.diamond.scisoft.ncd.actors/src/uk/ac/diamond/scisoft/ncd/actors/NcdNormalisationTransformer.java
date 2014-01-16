@@ -29,12 +29,10 @@ import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.jobs.ILock;
 
-import ptolemy.data.ArrayToken;
 import ptolemy.data.DoubleToken;
+import ptolemy.data.IntMatrixToken;
 import ptolemy.data.IntToken;
-import ptolemy.data.LongToken;
 import ptolemy.data.StringToken;
-import ptolemy.data.Token;
 import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
@@ -100,7 +98,7 @@ public class NcdNormalisationTransformer extends Actor {
 			IllegalActionException {
 		super(container, name);
 
-		input = PortFactory.getInstance().createInputPort(this, null);
+		input = PortFactory.getInstance().createInputPort(this, "input", NcdProcessingObject.class);
 		output = PortFactory.getInstance().createOutputPort(this, "result");
 
 		calibrationParam = new StringParameter(this, "calibrationParam");
@@ -108,7 +106,7 @@ public class NcdNormalisationTransformer extends Actor {
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
 
 		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
-		framesParam = new Parameter(this, "framesParam", new ArrayToken(new LongToken().getType()));
+		framesParam = new Parameter(this, "framesParam", new IntMatrixToken());
 
 		entryGroupParam = new Parameter(this, "entryGroupParam", new IntToken(-1));
 		processingGroupParam = new Parameter(this, "processingGroupParam", new IntToken(-1));
@@ -133,11 +131,11 @@ public class NcdNormalisationTransformer extends Actor {
 			long[] tmpFramesCal = new long[rankCal];
 			H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
 
-			Token[] frameTokens = ((ArrayToken) framesParam.getToken()).arrayValue();
-			long[] frames = new long[frameTokens.length];
-			for (int i = 0; i < frames.length; i++) {
-				frames[i] = ((LongToken) frameTokens[i]).longValue();
+			int[][] framesMatrix = ((IntMatrixToken) framesParam.getToken()).intMatrix();
+			if (framesMatrix == null || framesMatrix.length != 1) {
+				throw new InitializationException(ErrorCode.ACTOR_EXECUTION_ERROR, "Invalid data shape", this, null);
 			}
+			long[] frames = (long[]) ConvertUtils.convert(framesMatrix[0], long[].class);
 
 			dim = ((IntToken) dimensionParam.getToken()).intValue();
 			// This is a workaround to add extra dimensions to the end of scaler
@@ -166,7 +164,8 @@ public class NcdNormalisationTransformer extends Actor {
 
 			absScaling = ((DoubleToken) absScalingParam.getToken()).doubleValue();
 			normChannel = ((IntToken) normChannelParam.getToken()).intValue();
-
+			
+			// TODO: add axis support
 			// if (qaxis != null) {
 			// setQaxis(qaxis, qaxisUnit);
 			// writeQaxisData(frames.length, normGroupID);
@@ -267,6 +266,10 @@ public class NcdNormalisationTransformer extends Actor {
 				throw new HDF5Exception("Failed to write Normalisation error data into the results file");
 			}
 
+			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
+			NcdProcessingObject obj = new NcdProcessingObject(myres, sliceData, lock);
+			outputMsg.setBodyContent(obj, "application/octet-stream");
+			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
 			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
 		} catch (HDF5LibraryException e) {
