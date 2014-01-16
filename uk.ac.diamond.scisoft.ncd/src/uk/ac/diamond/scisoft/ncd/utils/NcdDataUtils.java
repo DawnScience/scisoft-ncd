@@ -224,5 +224,21 @@ public class NcdDataUtils {
 		}
 		return new AbstractDataset[] {data, bgData, revPermData, revPermBg}; 
 	}
-
+	
+	public static AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+		
+		int dataRank = data.getRank();
+		int[] dataShape = data.getShape();
+		if (dataRank > (dimension + 1)) {
+			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
+			int totalFrames = 1;
+			for (int val : frameArray) {
+				totalFrames *= val;
+			}
+			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
+			newShape[0] = totalFrames;
+			return data.reshape(newShape);
+		}
+		return data;
+	}
 }

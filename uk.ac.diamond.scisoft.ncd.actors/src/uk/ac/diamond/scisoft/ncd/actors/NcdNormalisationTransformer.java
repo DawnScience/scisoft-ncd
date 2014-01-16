@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package uk.ac.diamond.scisoft.ncd.actors;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
-import org.dawb.passerelle.common.message.DataMessageComponent;
+import org.eclipse.core.runtime.jobs.ILock;
 
 import ptolemy.data.ArrayToken;
 import ptolemy.data.DoubleToken;
@@ -34,10 +35,8 @@ import ptolemy.data.IntToken;
 import ptolemy.data.LongToken;
 import ptolemy.data.StringToken;
 import ptolemy.data.Token;
-import ptolemy.data.TokenUtilities;
 import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
-import ptolemy.data.type.BaseType.IntType;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -47,6 +46,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
@@ -59,6 +59,7 @@ import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.core.Port;
 import com.isencia.passerelle.core.PortFactory;
 import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.message.MessageException;
 
 /**
  * Actor for normalising scattering data using scaler values
@@ -73,142 +74,156 @@ public class NcdNormalisationTransformer extends Actor {
 
 	public Port input;
 	public Port output;
-	
+
 	protected String calibration;
 	private Double absScaling;
 	protected int normChannel;
-	
+
 	// Normalisation data shapes
 	private int dim, rankCal;
 	private long[] framesCal;
-	
+
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 	public Parameter framesParam, dimensionParam;
-	
+
 	public static String dataName = "Normalisation";
-	
+
 	private int calibrationGroupID, inputCalibrationID;
 	private int normGroupID, normDataID, normErrorsID;
-	
+
 	public Parameter entryGroupParam, processingGroupParam;
-	
+
 	private DataSliceIdentifiers calibrationIDs;
 
-	public NcdNormalisationTransformer(CompositeEntity container, String name)
-			throws NameDuplicationException, IllegalActionException {
+	public NcdNormalisationTransformer(CompositeEntity container, String name) throws NameDuplicationException,
+			IllegalActionException {
 		super(container, name);
-		
-	    input = PortFactory.getInstance().createInputPort(this, null);
-	    output = PortFactory.getInstance().createOutputPort(this, "result");
-	    
-		calibrationParam = new StringParameter(this,"calibrationParam");
-		absScalingParam = new Parameter(this,"absScalingParam", new DoubleToken(0.0));
-		normChannelParam = new Parameter(this,"normChannelParam", new IntToken(-1));
-		
-		dimensionParam = new Parameter(this,"dimensionParam", new IntToken(-1));
-		framesParam = new Parameter(this,"framesParam", new ArrayToken(new LongToken().getType()));
-		
-	    entryGroupParam = new Parameter(this,"entryGroupParam", new IntToken(-1));
-	    processingGroupParam = new Parameter(this,"processingGroupParam", new IntToken(-1));
+
+		input = PortFactory.getInstance().createInputPort(this, null);
+		output = PortFactory.getInstance().createOutputPort(this, "result");
+
+		calibrationParam = new StringParameter(this, "calibrationParam");
+		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(0.0));
+		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
+
+		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
+		framesParam = new Parameter(this, "framesParam", new ArrayToken(new LongToken().getType()));
+
+		entryGroupParam = new Parameter(this, "entryGroupParam", new IntToken(-1));
+		processingGroupParam = new Parameter(this, "processingGroupParam", new IntToken(-1));
 	}
 
-    @Override
-    protected void doInitialize() throws InitializationException {
-            super.doInitialize();
-            try {
-        	    // create the ports with their default names
-            	int entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
-            	int processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
-                
-            	calibration = ((StringToken) calibrationParam.getToken()).stringValue();
-            	
-        		calibrationGroupID = H5.H5Gopen(entryGroupID, calibration, HDF5Constants.H5P_DEFAULT);
-        		inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
-        		calibrationIDs = new DataSliceIdentifiers();
-        		calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
-        		
-        		rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
-        		long[] tmpFramesCal = new long[rankCal];
-        		H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
-        		
-        		Token[] frameTokens = ((ArrayToken) framesParam.getToken()).arrayValue();
-        		long[] frames = new long[frameTokens.length];
-        		for (int i=0; i < frames.length; i++) {
-        			frames[i] = ((LongToken) frameTokens[i]).longValue();
-        		}
-        		
-        		dim = ((IntToken) dimensionParam.getToken()).intValue();
-        		// This is a workaround to add extra dimensions to the end of scaler data shape
-        		// to match them with scan data dimensions
-        		int extraDims = frames.length - dim + 1 - rankCal;
-        		if (extraDims > 0) {
-        			rankCal += extraDims;
-        			for (int dm = 0; dm < extraDims; dm++) {
-        				tmpFramesCal = ArrayUtils.add(tmpFramesCal, 1);
-        			}
-        		}
-        		framesCal = Arrays.copyOf(tmpFramesCal, rankCal);
-        		
-        		for (int i = 0; i < frames.length - dim; i++) {
-        			if (frames[i] != framesCal[i]) {
-        				frames[i] = Math.min(frames[i], framesCal[i]);
-        			}
-        		}
-        		
-        	    normGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
-        	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
-        		normDataID = NcdNexusUtils.makedata(normGroupID, "data", type, frames, true, "counts");
-        	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
-        		normErrorsID = NcdNexusUtils.makedata(normGroupID, "errors", type, frames, true, "counts");
-        		
-            	absScaling = ((DoubleToken) absScalingParam.getToken()).doubleValue();
-            	normChannel = ((IntToken) normChannelParam.getToken()).intValue();
-        		
-        		//if (qaxis != null) {
-        		//	setQaxis(qaxis, qaxisUnit);
-        		//	writeQaxisData(frames.length, normGroupID);
-        		//}
-        		//writeNcdMetadata(normGroupID);
-            } catch (Exception e) {
-              throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor", this, e);
-            }
-    }
-    
-    
 	@Override
-	protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response) throws ProcessingException {
-		Normalisation nm = new Normalisation();
-		nm.setCalibChannel(normChannel);
-		if(absScaling != null) {
-			nm.setNormvalue(absScaling);
-		}
-		int[] dataShape = data.getShape();
-		
-		data = flattenGridData(data, dim);
-		AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
-		
-		SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
-		calibrationSliceParams.setFrames(framesCal);
-		AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
-		AbstractDataset calibngd = flattenGridData(dataCal, 1);
-		
-		Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
-		float[] mydata = (float[]) myobj[0];
-		double[] myerrors = (double[]) myobj[1];
-		
-		AbstractDataset myres = new FloatDataset(mydata, dataShape);
-		myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+	protected void doInitialize() throws InitializationException {
+		super.doInitialize();
+		try {
+			// create the ports with their default names
+			int entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
+			int processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
 
+			calibration = ((StringToken) calibrationParam.getToken()).stringValue();
+
+			calibrationGroupID = H5.H5Gopen(entryGroupID, calibration, HDF5Constants.H5P_DEFAULT);
+			inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
+			calibrationIDs = new DataSliceIdentifiers();
+			calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
+
+			rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
+			long[] tmpFramesCal = new long[rankCal];
+			H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
+
+			Token[] frameTokens = ((ArrayToken) framesParam.getToken()).arrayValue();
+			long[] frames = new long[frameTokens.length];
+			for (int i = 0; i < frames.length; i++) {
+				frames[i] = ((LongToken) frameTokens[i]).longValue();
+			}
+
+			dim = ((IntToken) dimensionParam.getToken()).intValue();
+			// This is a workaround to add extra dimensions to the end of scaler
+			// data shape
+			// to match them with scan data dimensions
+			int extraDims = frames.length - dim + 1 - rankCal;
+			if (extraDims > 0) {
+				rankCal += extraDims;
+				for (int dm = 0; dm < extraDims; dm++) {
+					tmpFramesCal = ArrayUtils.add(tmpFramesCal, 1);
+				}
+			}
+			framesCal = Arrays.copyOf(tmpFramesCal, rankCal);
+
+			for (int i = 0; i < frames.length - dim; i++) {
+				if (frames[i] != framesCal[i]) {
+					frames[i] = Math.min(frames[i], framesCal[i]);
+				}
+			}
+
+			normGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
+			int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			normDataID = NcdNexusUtils.makedata(normGroupID, "data", type, frames, true, "counts");
+			type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			normErrorsID = NcdNexusUtils.makedata(normGroupID, "errors", type, frames, true, "counts");
+
+			absScaling = ((DoubleToken) absScalingParam.getToken()).doubleValue();
+			normChannel = ((IntToken) normChannelParam.getToken()).intValue();
+
+			// if (qaxis != null) {
+			// setQaxis(qaxis, qaxisUnit);
+			// writeQaxisData(frames.length, normGroupID);
+			// }
+			// writeNcdMetadata(normGroupID);
+		} catch (Exception e) {
+			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
+					this, e);
+		}
+	}
+
+	@Override
+	protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response)
+			throws ProcessingException {
+
+		ILock lock = null; 
+		ManagedMessage receivedMsg = request.getMessage(input);
+		NcdProcessingObject receivedObject;
+		
 		int filespaceID = -1;
 		int typeID = -1;
 		int memspace_id = -1;
-		int selectID = -1;
-		int writeID = -1;
-		
-		try{
+		try {
+			receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
+			lock = receivedObject.getLock();
+			SliceSettings sliceData = receivedObject.getSliceData();
+			AbstractDataset data = receivedObject.getData();
+
+			Normalisation nm = new Normalisation();
+			nm.setCalibChannel(normChannel);
+			if (absScaling != null) {
+				nm.setNormvalue(absScaling);
+			}
+			int[] dataShape = data.getShape();
+
+			data = NcdDataUtils.flattenGridData(data, dim);
+			AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+
+			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
+			calibrationSliceParams.setFrames(framesCal);
+			AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+			AbstractDataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
+
+			Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0],
+					data.getShape(), calibngd.getShape());
+
+			float[] mydata = (float[]) myobj[0];
+			double[] myerrors = (double[]) myobj[1];
+
+			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+
+			int selectID = -1;
+			int writeID = -1;
+
 			lock.acquire();
-			
+
 			long[] frames = sliceData.getFrames();
 			long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
 			int sliceDim = sliceData.getSliceDim();
@@ -226,38 +241,47 @@ public class NcdNormalisationTransformer extends Actor {
 			filespaceID = H5.H5Dget_space(normDataID);
 			typeID = H5.H5Dget_type(normDataID);
 			memspace_id = H5.H5Screate_simple(block.length, block, null);
-			
-			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET,
-					start, block, count, block);
+
+			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 			if (selectID < 0) {
 				throw new HDF5Exception("Failed to allocate space fro writing Normalisation data");
 			}
-			
-			writeID = H5.H5Dwrite(normDataID, typeID, memspace_id, filespaceID,
-					HDF5Constants.H5P_DEFAULT, mydata);
+
+			writeID = H5.H5Dwrite(normDataID, typeID, memspace_id, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
 			if (writeID < 0) {
 				throw new HDF5Exception("Failed to write Normalisation data into the results file");
 			}
-			
+
 			NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, typeID, filespaceID)));
-			
+
 			filespaceID = H5.H5Dget_space(normErrorsID);
 			typeID = H5.H5Dget_type(normErrorsID);
 			memspace_id = H5.H5Screate_simple(block.length, block, null);
-			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET,
-					start, block, count, block);
+			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 			if (selectID < 0) {
 				throw new HDF5Exception("Failed to allocate space for writing Normalisation error data");
 			}
-			writeID = H5.H5Dwrite(normErrorsID, typeID, memspace_id, filespaceID,
-					HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+			writeID = H5.H5Dwrite(normErrorsID, typeID, memspace_id, filespaceID, HDF5Constants.H5P_DEFAULT, myres
+					.getError().getBuffer());
 			if (writeID < 0) {
 				throw new HDF5Exception("Failed to write Normalisation error data into the results file");
 			}
-			
+
+		} catch (MessageException e) {
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+		} catch (HDF5LibraryException e) {
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+		} catch (HDF5Exception e) {
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
 		} finally {
-			lock.release();
-			NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, typeID, filespaceID)));
+			if (lock != null) {
+				lock.release();
+			}
+			try {
+				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, typeID, filespaceID)));
+			} catch (HDF5LibraryException e) {
+				throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+			}
 		}
 	}
 
