@@ -36,10 +36,10 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.ncd.actors.NcdNormalisationTransformer;
-import uk.ac.diamond.scisoft.ncd.actors.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdNormalisationTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.ProcessingException;

@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
 Bundle-Name: NCD Actor Tests
-Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.actors.test
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.passerelle.actors.test
 Bundle-Version: 2.1.0.qualifier
-Fragment-Host: uk.ac.diamond.scisoft.ncd.actors;bundle-version="[2.1.0,2.2.0)"
+Fragment-Host: uk.ac.diamond.scisoft.ncd.passerelle.actors;bundle-version="[2.1.0.qualifier,2.2.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: com.isencia.passerelle.domain.et,
  com.isencia.passerelle.actor,

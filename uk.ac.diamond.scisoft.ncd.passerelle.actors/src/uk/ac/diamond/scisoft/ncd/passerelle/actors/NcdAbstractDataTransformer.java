@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.actors;
+package uk.ac.diamond.scisoft.ncd.passerelle.actors;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
