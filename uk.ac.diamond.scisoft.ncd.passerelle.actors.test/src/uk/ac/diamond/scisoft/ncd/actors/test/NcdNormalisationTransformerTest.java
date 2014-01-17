@@ -28,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
+import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -306,6 +307,12 @@ public class NcdNormalisationTransformerTest {
 		props.put("Normalisation.processingGroupParam", Integer.toString(processing_group_id));
 
 		flowMgr.executeBlockingLocally(flow, props);
+	}
+	
+	@AfterClass
+	public static void removeTmpFiles() throws Exception {
+		//Clear scratch directory 
+		TestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
 
 }
