@@ -29,9 +29,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.jobs.ILock;
 
-import ptolemy.data.BooleanToken;
 import ptolemy.data.DoubleToken;
-import ptolemy.data.IntMatrixToken;
 import ptolemy.data.IntToken;
 import ptolemy.data.StringToken;
 import ptolemy.data.expr.Parameter;
@@ -50,13 +48,10 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
-import com.isencia.passerelle.actor.v5.Actor;
 import com.isencia.passerelle.actor.v5.ActorContext;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
 import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.core.Port;
-import com.isencia.passerelle.core.PortFactory;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.message.MessageException;
 
@@ -67,33 +62,24 @@ import com.isencia.passerelle.message.MessageException;
  * @author Irakli Sikharulidze
  * 
  */
-public class NcdNormalisationTransformer extends Actor {
+public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 
 	private static final long serialVersionUID = 5494752725472250946L;
 
-	public Port input;
-	public Port output;
-
-	private boolean enabled;
 	private String calibration;
 	private Double absScaling;
 	private int normChannel;
 
 	// Normalisation data shapes
-	private int dim;
 	private long[] framesCal;
 
-	public Parameter isEnabled;
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
-	public Parameter framesParam, dimensionParam;
 
 	public static String dataName = "Normalisation";
 
 	private int calibrationGroupID, inputCalibrationID;
 	private int normGroupID, normDataID, normErrorsID;
-
-	public Parameter entryGroupParam, processingGroupParam;
 
 	private DataSliceIdentifiers calibrationIDs;
 
@@ -101,33 +87,15 @@ public class NcdNormalisationTransformer extends Actor {
 			IllegalActionException {
 		super(container, name);
 
-		input = PortFactory.getInstance().createInputPort(this, "input", NcdProcessingObject.class);
-		output = PortFactory.getInstance().createOutputPort(this, "result");
-
-		isEnabled = new Parameter(this, "enableNormalisation", new BooleanToken(false));
-
 		calibrationParam = new StringParameter(this, "calibrationParam");
 		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(0.0));
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
-
-		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
-		framesParam = new Parameter(this, "framesParam", new IntMatrixToken());
-
-		entryGroupParam = new Parameter(this, "entryGroupParam", new IntToken(-1));
-		processingGroupParam = new Parameter(this, "processingGroupParam", new IntToken(-1));
 	}
 
 	@Override
 	protected void doInitialize() throws InitializationException {
 		super.doInitialize();
 		try {
-			enabled = ((BooleanToken) isEnabled.getToken()).booleanValue();
-			if (!enabled) {
-				return;
-			}
-
-			int entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
-			int processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
 
 			calibration = ((StringToken) calibrationParam.getToken()).stringValue();
 
@@ -140,17 +108,10 @@ public class NcdNormalisationTransformer extends Actor {
 			long[] tmpFramesCal = new long[rankCal];
 			H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
 
-			int[][] framesMatrix = ((IntMatrixToken) framesParam.getToken()).intMatrix();
-			if (framesMatrix == null || framesMatrix.length != 1) {
-				throw new InitializationException(ErrorCode.ACTOR_EXECUTION_ERROR, "Invalid data shape", this, null);
-			}
-			long[] frames = (long[]) ConvertUtils.convert(framesMatrix[0], long[].class);
-
-			dim = ((IntToken) dimensionParam.getToken()).intValue();
 			// This is a workaround to add extra dimensions to the end of scaler
 			// data shape
 			// to match them with scan data dimensions
-			int extraDims = frames.length - dim + 1 - rankCal;
+			int extraDims = frames.length - dimension + 1 - rankCal;
 			if (extraDims > 0) {
 				rankCal += extraDims;
 				for (int dm = 0; dm < extraDims; dm++) {
@@ -159,7 +120,7 @@ public class NcdNormalisationTransformer extends Actor {
 			}
 			framesCal = Arrays.copyOf(tmpFramesCal, rankCal);
 
-			for (int i = 0; i < frames.length - dim; i++) {
+			for (int i = 0; i < frames.length - dimension; i++) {
 				if (frames[i] != framesCal[i]) {
 					frames[i] = Math.min(frames[i], framesCal[i]);
 				}
@@ -215,8 +176,8 @@ public class NcdNormalisationTransformer extends Actor {
 			}
 			int[] dataShape = data.getShape();
 
-			data = NcdDataUtils.flattenGridData(data, dim);
-			AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			data = NcdDataUtils.flattenGridData(data, dimension);
+			AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(), dimension);
 
 			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
 			calibrationSliceParams.setFrames(framesCal);
