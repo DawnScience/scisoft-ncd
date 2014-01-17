@@ -193,7 +193,7 @@ public class NcdNormalisationTransformerTest {
 		data.setError(error);
 	}
 
-	class NcdMessageSource extends Source {
+	private class NcdMessageSource extends Source {
 
 		private static final long serialVersionUID = -6462158669206987591L;
 
@@ -228,7 +228,7 @@ public class NcdNormalisationTransformerTest {
 
 	}
 
-	class NcdMessageSink extends Sink {
+	private class NcdMessageSink extends Sink {
 
 		private static final long serialVersionUID = 79096075353029810L;
 
@@ -296,6 +296,7 @@ public class NcdNormalisationTransformerTest {
 
 		Map<String, String> props = new HashMap<String, String>();
 
+		props.put("Normalisation.enableNormalisation", Boolean.toString(true));
 		props.put("Normalisation.calibrationParam", testNormName);
 		props.put("Normalisation.absScalingParam", Float.toString(absScale));
 		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));

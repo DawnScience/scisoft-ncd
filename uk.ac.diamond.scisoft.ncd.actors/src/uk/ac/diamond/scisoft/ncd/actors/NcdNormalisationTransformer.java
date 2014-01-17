@@ -29,6 +29,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.jobs.ILock;
 
+import ptolemy.data.BooleanToken;
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntMatrixToken;
 import ptolemy.data.IntToken;
@@ -73,14 +74,16 @@ public class NcdNormalisationTransformer extends Actor {
 	public Port input;
 	public Port output;
 
-	protected String calibration;
+	private boolean enabled;
+	private String calibration;
 	private Double absScaling;
-	protected int normChannel;
+	private int normChannel;
 
 	// Normalisation data shapes
-	private int dim, rankCal;
+	private int dim;
 	private long[] framesCal;
 
+	public Parameter isEnabled;
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 	public Parameter framesParam, dimensionParam;
@@ -101,6 +104,8 @@ public class NcdNormalisationTransformer extends Actor {
 		input = PortFactory.getInstance().createInputPort(this, "input", NcdProcessingObject.class);
 		output = PortFactory.getInstance().createOutputPort(this, "result");
 
+		isEnabled = new Parameter(this, "enableNormalisation", new BooleanToken(false));
+
 		calibrationParam = new StringParameter(this, "calibrationParam");
 		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(0.0));
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
@@ -116,7 +121,11 @@ public class NcdNormalisationTransformer extends Actor {
 	protected void doInitialize() throws InitializationException {
 		super.doInitialize();
 		try {
-			// create the ports with their default names
+			enabled = ((BooleanToken) isEnabled.getToken()).booleanValue();
+			if (!enabled) {
+				return;
+			}
+
 			int entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
 			int processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
 
@@ -127,7 +136,7 @@ public class NcdNormalisationTransformer extends Actor {
 			calibrationIDs = new DataSliceIdentifiers();
 			calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
 
-			rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
+			int rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
 			long[] tmpFramesCal = new long[rankCal];
 			H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
 
@@ -164,7 +173,7 @@ public class NcdNormalisationTransformer extends Actor {
 
 			absScaling = ((DoubleToken) absScalingParam.getToken()).doubleValue();
 			normChannel = ((IntToken) normChannelParam.getToken()).intValue();
-			
+
 			// TODO: add axis support
 			// if (qaxis != null) {
 			// setQaxis(qaxis, qaxisUnit);
@@ -181,10 +190,15 @@ public class NcdNormalisationTransformer extends Actor {
 	protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response)
 			throws ProcessingException {
 
-		ILock lock = null; 
 		ManagedMessage receivedMsg = request.getMessage(input);
+		if (!enabled) {
+			response.addOutputMessage(output, receivedMsg);
+			return;
+		}
+
 		NcdProcessingObject receivedObject;
-		
+
+		ILock lock = null;
 		int filespaceID = -1;
 		int typeID = -1;
 		int memspace_id = -1;
