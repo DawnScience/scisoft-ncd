@@ -43,6 +43,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -76,7 +77,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 
-	public static String dataName = "Normalisation";
+	public static final String dataName = "Normalisation";
 
 	private int calibrationGroupID, inputCalibrationID;
 	private int normGroupID, normDataID, normErrorsID;
@@ -162,12 +163,13 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 		ILock lock = null;
 		int filespaceID = -1;
 		int typeID = -1;
-		int memspace_id = -1;
+		int memspaceID = -1;
 		try {
 			receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
 			lock = receivedObject.getLock();
 			SliceSettings sliceData = receivedObject.getSliceData();
 			AbstractDataset data = receivedObject.getData();
+			AbstractDataset qaxis = receivedObject.getAxis();
 
 			Normalisation nm = new Normalisation();
 			nm.setCalibChannel(normChannel);
@@ -214,35 +216,35 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 
 			filespaceID = H5.H5Dget_space(normDataID);
 			typeID = H5.H5Dget_type(normDataID);
-			memspace_id = H5.H5Screate_simple(block.length, block, null);
+			memspaceID = H5.H5Screate_simple(block.length, block, null);
 
 			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 			if (selectID < 0) {
 				throw new HDF5Exception("Failed to allocate space fro writing Normalisation data");
 			}
 
-			writeID = H5.H5Dwrite(normDataID, typeID, memspace_id, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
+			writeID = H5.H5Dwrite(normDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
 			if (writeID < 0) {
 				throw new HDF5Exception("Failed to write Normalisation data into the results file");
 			}
 
-			NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, typeID, filespaceID)));
+			NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
 
 			filespaceID = H5.H5Dget_space(normErrorsID);
 			typeID = H5.H5Dget_type(normErrorsID);
-			memspace_id = H5.H5Screate_simple(block.length, block, null);
+			memspaceID = H5.H5Screate_simple(block.length, block, null);
 			selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 			if (selectID < 0) {
 				throw new HDF5Exception("Failed to allocate space for writing Normalisation error data");
 			}
-			writeID = H5.H5Dwrite(normErrorsID, typeID, memspace_id, filespaceID, HDF5Constants.H5P_DEFAULT, myres
+			writeID = H5.H5Dwrite(normErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
 					.getError().getBuffer());
 			if (writeID < 0) {
 				throw new HDF5Exception("Failed to write Normalisation error data into the results file");
 			}
 
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
-			NcdProcessingObject obj = new NcdProcessingObject(myres, sliceData, lock);
+			NcdProcessingObject obj = new NcdProcessingObject(myres, qaxis, sliceData, lock);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
@@ -256,7 +258,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 				lock.release();
 			}
 			try {
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, typeID, filespaceID)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
 			} catch (HDF5LibraryException e) {
 				throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
 			}

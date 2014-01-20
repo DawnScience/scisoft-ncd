@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.passerelle.actors;
+package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import org.eclipse.core.runtime.jobs.ILock;
 
@@ -24,11 +24,13 @@ import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 public class NcdProcessingObject {
 	
 	private AbstractDataset data;
+	private AbstractDataset axis;
 	private SliceSettings sliceData;
 	private ILock lock;
 	
-	public NcdProcessingObject(AbstractDataset data, SliceSettings sliceData, ILock lock) {
+	public NcdProcessingObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ILock lock) {
 		this.data = data;
+		this.axis = axis;
 		this.sliceData = sliceData;
 		this.lock = lock;
 	}
@@ -41,6 +43,14 @@ public class NcdProcessingObject {
 		this.data = data;
 	}
 	
+	public AbstractDataset getAxis() {
+		return axis;
+	}
+
+	public void setAxis(AbstractDataset axis) {
+		this.axis = axis;
+	}
+
 	public SliceSettings getSliceData() {
 		return sliceData;
 	}

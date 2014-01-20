@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.actors.test;
+package uk.ac.diamond.scisoft.ncd.actors.forkjoin.test;
 
 import static org.junit.Assert.assertEquals;
 
@@ -24,6 +24,7 @@ import java.util.Map;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.eclipse.core.runtime.jobs.ILock;
@@ -39,8 +40,8 @@ import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdNormalisationTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.ProcessingException;
@@ -55,7 +56,7 @@ import com.isencia.passerelle.model.Flow;
 import com.isencia.passerelle.model.FlowAlreadyExecutingException;
 import com.isencia.passerelle.model.FlowManager;
 
-public class NcdNormalisationTransformerTest {
+public class NcdNormalisationForkJoinTransformerTest {
 
 	private static final String NXEntryClassName = "NXentry";
 	private static final String NXInstrumentClassName = "NXinstrument";
@@ -88,7 +89,7 @@ public class NcdNormalisationTransformerTest {
 		flow.setDirector(director);
 
 		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(
-				NcdNormalisationTransformerTest.class.getCanonicalName());
+				NcdNormalisationForkJoinTransformerTest.class.getCanonicalName());
 		TestUtils.makeScratchDirectory(testScratchDirectoryName);
 
 		for (long n : imageShape)
@@ -241,13 +242,26 @@ public class NcdNormalisationTransformerTest {
 		@Override
 		protected void sendMessage(ManagedMessage message) throws ProcessingException {
 			if (message != null) {
-				NcdProcessingObject content = null;
 				try {
+					SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
+					slice.setStart(new int[] { 0, 0, 0, 0, 0 });
+
+					int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+					int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+					int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+					int result_group_id = H5.H5Gopen(processing_group_id, NcdNormalisationForkJoinTransformer.dataName,
+							HDF5Constants.H5P_DEFAULT);
+					int result_data_id = H5.H5Dopen(result_group_id, "data", HDF5Constants.H5P_DEFAULT);
+					int result_errors_id = H5.H5Dopen(result_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+					DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
+					result_ids.setIDs(result_group_id, result_data_id);
+					DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
+					result_error_ids.setIDs(result_group_id, result_errors_id);
+					AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+					AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+
 					Object obj = message.getBodyContent();
 					if (obj instanceof NcdProcessingObject) {
-						content = (NcdProcessingObject) obj;
-						AbstractDataset outData = content.getData();
-						AbstractDataset outErrors = outData.getError();
 						for (int h = 0; h < shape[0]; h++) {
 							for (int g = 0; g < shape[1]; g++) {
 								for (int k = 0; k < shape[2]; k++) {
@@ -275,17 +289,23 @@ public class NcdNormalisationTransformerTest {
 				} catch (MessageException e) {
 					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
 							message, e);
+				} catch (HDF5LibraryException e) {
+					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
+							message, e);
+				} catch (HDF5Exception e) {
+					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
+							message, e);
 				}
 			}
 		}
 	}
 
 	@Test
-	public void testNcdNormalisationTransformer() throws FlowAlreadyExecutingException, PasserelleException,
+	public void testNcdNormalisationForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
 			IllegalActionException, NameDuplicationException, HDF5LibraryException, NullPointerException {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
-		NcdNormalisationTransformer normalisation = new NcdNormalisationTransformer(flow, "Normalisation");
+		NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
 		NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
 		flow.connect(source.output, normalisation.input);
@@ -294,6 +314,9 @@ public class NcdNormalisationTransformerTest {
 		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(entry_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 
 		Map<String, String> props = new HashMap<String, String>();
 
@@ -305,6 +328,9 @@ public class NcdNormalisationTransformerTest {
 		props.put("Normalisation.framesParam", Arrays.toString(shape));
 		props.put("Normalisation.entryGroupParam", Integer.toString(entry_id));
 		props.put("Normalisation.processingGroupParam", Integer.toString(processing_group_id));
+		props.put("Normalisation.inputGroupParam", Integer.toString(detector_group_id));
+		props.put("Normalisation.inputDataParam", Integer.toString(input_data_id));
+		props.put("Normalisation.inputErrorsParam", Integer.toString(input_errors_id));
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}

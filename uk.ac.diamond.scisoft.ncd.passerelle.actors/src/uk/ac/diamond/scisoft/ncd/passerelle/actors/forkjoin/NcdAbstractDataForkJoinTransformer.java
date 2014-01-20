@@ -14,9 +14,10 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.passerelle.actors;
+package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
 import java.util.Arrays;
+import java.util.concurrent.ForkJoinPool;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
@@ -35,15 +36,18 @@ import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.core.Port;
 import com.isencia.passerelle.core.PortFactory;
 
-public abstract class NcdAbstractDataTransformer extends Actor {
+public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 	private static final long serialVersionUID = -289682801810608304L;
 	
+	protected static final ForkJoinPool forkJoinPool = new ForkJoinPool();
+
 	public Port input;
 	public Port output;
 
 	public Parameter isEnabled;
 	public Parameter entryGroupParam, processingGroupParam;
+	public Parameter inputGroupParam, inputDataParam, inputErrorsParam;
 	public Parameter framesParam, dimensionParam;
 	
 	protected boolean enabled;
@@ -52,8 +56,9 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 	protected long[] frames;
 	protected int[] grid;
 	protected int entryGroupID, processingGroupID;
+	protected int inputGroupID, inputDataID, inputErrorsID;
 	
-	public NcdAbstractDataTransformer(CompositeEntity container, String name) throws IllegalActionException,
+	public NcdAbstractDataForkJoinTransformer(CompositeEntity container, String name) throws IllegalActionException,
 			NameDuplicationException {
 		super(container, name);
 
@@ -67,6 +72,9 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 
 		entryGroupParam = new Parameter(this, "entryGroupParam", new IntToken(-1));
 		processingGroupParam = new Parameter(this, "processingGroupParam", new IntToken(-1));
+		inputGroupParam = new Parameter(this, "inputGroupParam", new IntToken(-1));
+		inputDataParam = new Parameter(this, "inputDataParam", new IntToken(-1));
+		inputErrorsParam = new Parameter(this, "inputErrorsParam", new IntToken(-1));
 	}
 	
 	@Override
@@ -83,6 +91,9 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 			
 			entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
 			processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
+			inputGroupID = ((IntToken) inputGroupParam.getToken()).intValue();
+			inputDataID = ((IntToken) inputDataParam.getToken()).intValue();
+			inputErrorsID = ((IntToken) inputErrorsParam.getToken()).intValue();
 			
 			int[][] framesMatrix = ((IntMatrixToken) framesParam.getToken()).intMatrix();
 			if (framesMatrix == null || framesMatrix.length != 1) {
@@ -103,6 +114,14 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing NCD actor",
 					this, e);
 		}
+	}
+	
+	
+	protected static final class NcdForkJoinPool {
+		
+		private NcdForkJoinPool() {
+		}
+
 	}
 
 }
