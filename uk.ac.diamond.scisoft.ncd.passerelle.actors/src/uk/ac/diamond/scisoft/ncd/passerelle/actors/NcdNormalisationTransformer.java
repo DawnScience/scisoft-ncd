@@ -27,7 +27,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
-import org.eclipse.core.runtime.jobs.ILock;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
@@ -160,7 +159,6 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 
 		NcdProcessingObject receivedObject;
 
-		ILock lock = null;
 		int filespaceID = -1;
 		int typeID = -1;
 		int memspaceID = -1;
@@ -198,7 +196,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			int selectID = -1;
 			int writeID = -1;
 
-			lock.acquire();
+			lock.lock();
 
 			long[] frames = sliceData.getFrames();
 			long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
@@ -254,8 +252,8 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 		} catch (HDF5Exception e) {
 			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
 		} finally {
-			if (lock != null) {
-				lock.release();
+			if (lock != null && lock.isHeldByCurrentThread()) {
+				lock.unlock();
 			}
 			try {
 				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));

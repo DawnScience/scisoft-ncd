@@ -16,7 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
-import org.eclipse.core.runtime.jobs.ILock;
+import java.util.concurrent.locks.ReentrantLock;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
@@ -26,9 +26,9 @@ public class NcdProcessingObject {
 	private AbstractDataset data;
 	private AbstractDataset axis;
 	private SliceSettings sliceData;
-	private ILock lock;
+	private ReentrantLock lock;
 	
-	public NcdProcessingObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ILock lock) {
+	public NcdProcessingObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ReentrantLock lock) {
 		this.data = data;
 		this.axis = axis;
 		this.sliceData = sliceData;
@@ -59,11 +59,11 @@ public class NcdProcessingObject {
 		this.sliceData = sliceData;
 	}
 	
-	public ILock getLock() {
+	public ReentrantLock getLock() {
 		return lock;
 	}
 	
-	public void setLock(ILock lock) {
+	public void setLock(ReentrantLock lock) {
 		this.lock = lock;
 	}
 	

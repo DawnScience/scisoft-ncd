@@ -21,14 +21,13 @@ import static org.junit.Assert.assertEquals;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.ReentrantLock;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
-import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.core.runtime.jobs.Job;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -66,7 +65,7 @@ public class NcdNormalisationForkJoinTransformerTest {
 	private static String testDatasetName = "testInput";
 	private static String testNormName = "testNorm";
 
-	private ILock lock = Job.getJobManager().newLock();
+	private ReentrantLock lock = new ReentrantLock();
 
 	private static AbstractDataset data;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };

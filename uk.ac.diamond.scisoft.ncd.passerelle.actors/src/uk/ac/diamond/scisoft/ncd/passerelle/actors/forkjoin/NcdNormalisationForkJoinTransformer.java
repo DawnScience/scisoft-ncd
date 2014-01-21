@@ -30,7 +30,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
-import org.eclipse.core.runtime.jobs.ILock;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
@@ -69,7 +68,6 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 	private static final long serialVersionUID = 5494752725472250946L;
 
-	ILock lock;
 
 	private String calibration;
 	private Double absScaling;
@@ -162,34 +160,18 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			return;
 		}
 
-		NcdProcessingObject receivedObject;
-
-		int filespaceID = -1;
-		int typeID = -1;
-		int memspaceID = -1;
 		try {
-			receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
+			NcdProcessingObject receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
 			lock = receivedObject.getLock();
-			SliceSettings sliceData = receivedObject.getSliceData();
-			AbstractDataset qaxis = receivedObject.getAxis();
 
 			forkJoinPool.invoke(new NormalisationTask(true, null));
 
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
-			NcdProcessingObject obj = new NcdProcessingObject(null, qaxis, sliceData, lock);
+			NcdProcessingObject obj = new NcdProcessingObject(null, null, null, lock);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
 			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
-		} finally {
-			if (lock != null) {
-				lock.release();
-			}
-			try {
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
-			} catch (HDF5LibraryException e) {
-				throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
-			}
 		}
 	}
 
@@ -203,7 +185,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 			this.forkTask = forkTask;
 			if (pos != null) {
-				this.pos = ArrayUtils.clone(pos);
+				this.pos = Arrays.copyOf(pos, pos.length);
 			}
 		}
 
@@ -237,27 +219,33 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				SliceSettings sliceData = new SliceSettings(frames, frames.length - dimension - 1, 1);
 				int[] startPos = Arrays.copyOf(pos, frames.length);
 				sliceData.setStart(startPos);
+				
+				SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
+				calibrationSliceParams.setFrames(framesCal);
+				
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 				DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 				tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 
-				AbstractDataset data = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
-				AbstractDataset errors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+				lock.lock();
+				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+				lock.unlock();
 
+				inputData.setError(inputErrors);
+				
 				Normalisation nm = new Normalisation();
 				nm.setCalibChannel(normChannel);
 				if (absScaling != null) {
 					nm.setNormvalue(absScaling);
 				}
-				int[] dataShape = data.getShape();
+				int[] dataShape = inputData.getShape();
 
-				data = NcdDataUtils.flattenGridData(data, dimension);
-				errors = NcdDataUtils.flattenGridData(errors, dimension);
-
-				SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
-				calibrationSliceParams.setFrames(framesCal);
-				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				// We need to get variance values for further calculations
+				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(), dimension);
 				AbstractDataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
 
 				Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(),
@@ -271,8 +259,6 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 				int selectID = -1;
 				int writeID = -1;
-
-				lock.acquire();
 
 				long[] frames = sliceData.getFrames();
 				long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
@@ -288,6 +274,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				long[] count = new long[frames.length];
 				Arrays.fill(count, 1);
 
+				lock.lock();
 				filespaceID = H5.H5Dget_space(normDataID);
 				typeID = H5.H5Dget_type(normDataID);
 				memspaceID = H5.H5Screate_simple(block.length, block, null);
@@ -324,9 +311,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			} catch (HDF5Exception e) {
 				throw new RuntimeException(e);
 			} finally {
-				if (lock != null) {
-					lock.release();
-					System.out.println("Finished: " + Arrays.toString(pos));
+				if (lock != null && lock.isHeldByCurrentThread()) {
+					lock.unlock();
 				}
 				try {
 					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));

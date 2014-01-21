@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.passerelle.actors;
 
 import java.util.Arrays;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
@@ -42,6 +43,8 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 	public Port input;
 	public Port output;
 
+	protected ReentrantLock lock;
+	
 	public Parameter isEnabled;
 	public Parameter entryGroupParam, processingGroupParam;
 	public Parameter framesParam, dimensionParam;

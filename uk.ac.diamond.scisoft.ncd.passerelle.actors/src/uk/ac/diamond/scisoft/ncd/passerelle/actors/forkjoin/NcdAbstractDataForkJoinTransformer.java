@@ -18,6 +18,7 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
 import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
+import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
@@ -44,7 +45,9 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 	public Port input;
 	public Port output;
-
+	
+	protected ReentrantLock lock;
+	
 	public Parameter isEnabled;
 	public Parameter entryGroupParam, processingGroupParam;
 	public Parameter inputGroupParam, inputDataParam, inputErrorsParam;
@@ -116,12 +119,4 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		}
 	}
 	
-	
-	protected static final class NcdForkJoinPool {
-		
-		private NcdForkJoinPool() {
-		}
-
-	}
-
 }
