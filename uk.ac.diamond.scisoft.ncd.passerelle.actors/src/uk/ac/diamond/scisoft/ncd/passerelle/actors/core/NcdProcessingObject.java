@@ -28,10 +28,23 @@ public class NcdProcessingObject {
 	private SliceSettings sliceData;
 	private ReentrantLock lock;
 	
+	private int entryGroupID, processingGroupID;
+	private int inputGroupID, inputDataID, inputErrorsID;
+	
 	public NcdProcessingObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ReentrantLock lock) {
 		this.data = data;
 		this.axis = axis;
 		this.sliceData = sliceData;
+		this.lock = lock;
+	}
+
+	public NcdProcessingObject(int entryGroupID, int processingGroupID, int inputGroupID, int inputDataID, int inputErrorsID, ReentrantLock lock) {
+		super();
+		this.entryGroupID = entryGroupID;
+		this.processingGroupID = processingGroupID;
+		this.inputGroupID = inputGroupID;
+		this.inputDataID = inputDataID;
+		this.inputErrorsID = inputErrorsID;
 		this.lock = lock;
 	}
 
@@ -65,6 +78,26 @@ public class NcdProcessingObject {
 	
 	public void setLock(ReentrantLock lock) {
 		this.lock = lock;
+	}
+
+	public int getEntryGroupID() {
+		return entryGroupID;
+	}
+
+	public int getProcessingGroupID() {
+		return processingGroupID;
+	}
+
+	public int getInputGroupID() {
+		return inputGroupID;
+	}
+
+	public int getInputDataID() {
+		return inputDataID;
+	}
+
+	public int getInputErrorsID() {
+		return inputErrorsID;
 	}
 	
 }

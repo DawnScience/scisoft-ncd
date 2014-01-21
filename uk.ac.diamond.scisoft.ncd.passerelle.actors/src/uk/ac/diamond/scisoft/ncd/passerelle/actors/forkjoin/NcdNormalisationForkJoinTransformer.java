@@ -29,7 +29,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.dawb.hdf5.Nexus;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
@@ -46,18 +45,11 @@ import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.actor.ProcessingException;
-import com.isencia.passerelle.actor.v5.ActorContext;
-import com.isencia.passerelle.actor.v5.ProcessRequest;
-import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.message.ManagedMessage;
-import com.isencia.passerelle.message.MessageException;
 
 /**
  * Actor for normalising scattering data using scaler values
@@ -79,10 +71,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 
-	public static final String dataName = "Normalisation";
-
 	private int calibrationGroupID, inputCalibrationID;
-	private int normGroupID, normDataID, normErrorsID;
 
 	private DataSliceIdentifiers calibrationIDs;
 
@@ -90,9 +79,12 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			IllegalActionException {
 		super(container, name);
 
+		dataName = "Normalisation";
+		
 		calibrationParam = new StringParameter(this, "calibrationParam");
 		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(0.0));
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
+		
 	}
 
 	@Override
@@ -102,41 +94,10 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 			calibration = ((StringToken) calibrationParam.getToken()).stringValue();
 
-			calibrationGroupID = H5.H5Gopen(entryGroupID, calibration, HDF5Constants.H5P_DEFAULT);
-			inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
-			calibrationIDs = new DataSliceIdentifiers();
-			calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
-
-			int rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
-			long[] tmpFramesCal = new long[rankCal];
-			H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
-
-			// This is a workaround to add extra dimensions to the end of scaler
-			// data shape
-			// to match them with scan data dimensions
-			int extraDims = frames.length - dimension + 1 - rankCal;
-			if (extraDims > 0) {
-				rankCal += extraDims;
-				for (int dm = 0; dm < extraDims; dm++) {
-					tmpFramesCal = ArrayUtils.add(tmpFramesCal, 1);
-				}
-			}
-			framesCal = Arrays.copyOf(tmpFramesCal, rankCal);
-
-			for (int i = 0; i < frames.length - dimension; i++) {
-				if (frames[i] != framesCal[i]) {
-					frames[i] = Math.min(frames[i], framesCal[i]);
-				}
-			}
-
-			normGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
-			int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			normDataID = NcdNexusUtils.makedata(normGroupID, "data", type, frames, true, "counts");
-			type = HDF5Constants.H5T_NATIVE_DOUBLE;
-			normErrorsID = NcdNexusUtils.makedata(normGroupID, "errors", type, frames, true, "counts");
-
 			absScaling = ((DoubleToken) absScalingParam.getToken()).doubleValue();
 			normChannel = ((IntToken) normChannelParam.getToken()).intValue();
+			
+			task = new NormalisationTask(true, null);
 
 			// TODO: add axis support
 			// if (qaxis != null) {
@@ -151,30 +112,37 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	}
 
 	@Override
-	protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response)
-			throws ProcessingException {
+	protected void configureActorParameters() throws HDF5Exception {
+		super.configureActorParameters();
+		
+		calibrationGroupID = H5.H5Gopen(entryGroupID, calibration, HDF5Constants.H5P_DEFAULT);
+		inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
+		calibrationIDs = new DataSliceIdentifiers();
+		calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
 
-		ManagedMessage receivedMsg = request.getMessage(input);
-		if (!enabled) {
-			response.addOutputMessage(output, receivedMsg);
-			return;
+		int rankCal = H5.H5Sget_simple_extent_ndims(calibrationIDs.dataspace_id);
+		long[] tmpFramesCal = new long[rankCal];
+		H5.H5Sget_simple_extent_dims(calibrationIDs.dataspace_id, tmpFramesCal, null);
+
+		// This is a workaround to add extra dimensions to the end of scaler
+		// data shape
+		// to match them with scan data dimensions
+		int extraDims = frames.length - dimension + 1 - rankCal;
+		if (extraDims > 0) {
+			rankCal += extraDims;
+			for (int dm = 0; dm < extraDims; dm++) {
+				tmpFramesCal = ArrayUtils.add(tmpFramesCal, 1);
+			}
 		}
+		framesCal = Arrays.copyOf(tmpFramesCal, rankCal);
 
-		try {
-			NcdProcessingObject receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
-			lock = receivedObject.getLock();
-
-			forkJoinPool.invoke(new NormalisationTask(true, null));
-
-			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
-			NcdProcessingObject obj = new NcdProcessingObject(null, null, null, lock);
-			outputMsg.setBodyContent(obj, "application/octet-stream");
-			response.addOutputMessage(output, outputMsg);
-		} catch (MessageException e) {
-			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+		for (int i = 0; i < frames.length - dimension; i++) {
+			if (frames[i] != framesCal[i]) {
+				frames[i] = Math.min(frames[i], framesCal[i]);
+			}
 		}
 	}
-
+	
 	private class NormalisationTask extends RecursiveAction {
 
 		private boolean forkTask;
@@ -193,6 +161,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 		protected void compute() {
 
 			if (forkTask) {
+				int[] grid = (int[]) ConvertUtils.convert(Arrays.copyOf(frames, frames.length-dimension), int[].class);
 				PositionIterator itr = new PositionIterator(grid);
 				List<NormalisationTask> taskArray = new ArrayList<NormalisationTask>();
 				if (itr.hasNext()) {
@@ -275,8 +244,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				Arrays.fill(count, 1);
 
 				lock.lock();
-				filespaceID = H5.H5Dget_space(normDataID);
-				typeID = H5.H5Dget_type(normDataID);
+				filespaceID = H5.H5Dget_space(resultDataID);
+				typeID = H5.H5Dget_type(resultDataID);
 				memspaceID = H5.H5Screate_simple(block.length, block, null);
 
 				selectID = H5
@@ -285,22 +254,22 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 					throw new HDF5Exception("Failed to allocate space fro writing Normalisation data");
 				}
 
-				writeID = H5.H5Dwrite(normDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
+				writeID = H5.H5Dwrite(resultDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write Normalisation data into the results file");
 				}
 
 				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
 
-				filespaceID = H5.H5Dget_space(normErrorsID);
-				typeID = H5.H5Dget_type(normErrorsID);
+				filespaceID = H5.H5Dget_space(resultErrorsID);
+				typeID = H5.H5Dget_type(resultErrorsID);
 				memspaceID = H5.H5Screate_simple(block.length, block, null);
 				selectID = H5
 						.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				if (selectID < 0) {
 					throw new HDF5Exception("Failed to allocate space for writing Normalisation error data");
 				}
-				writeID = H5.H5Dwrite(normErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
+				writeID = H5.H5Dwrite(resultErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
 						.getError().getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write Normalisation error data into the results file");

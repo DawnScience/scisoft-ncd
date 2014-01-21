@@ -18,7 +18,6 @@ package uk.ac.diamond.scisoft.ncd.actors.forkjoin.test;
 
 import static org.junit.Assert.assertEquals;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
@@ -213,10 +212,14 @@ public class NcdNormalisationForkJoinTransformerTest {
 				return null;
 			}
 			try {
-				SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
-				slice.setStart(new int[] { 0, 0, 0, 0, 0 });
+				int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+				int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+				int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+				int detector_group_id = H5.H5Gopen(entry_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
+				int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+				int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 
-				NcdProcessingObject obj = new NcdProcessingObject(data, null, slice, lock);
+				NcdProcessingObject obj = new NcdProcessingObject(entry_id, processing_group_id, detector_group_id, input_data_id, input_errors_id, lock);
 
 				dataMsg = createMessage(obj, "application/octet-stream");
 			} catch (Exception e) {
@@ -245,22 +248,19 @@ public class NcdNormalisationForkJoinTransformerTest {
 					SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 					slice.setStart(new int[] { 0, 0, 0, 0, 0 });
 
-					int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-					int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-					int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-					int result_group_id = H5.H5Gopen(processing_group_id, NcdNormalisationForkJoinTransformer.dataName,
-							HDF5Constants.H5P_DEFAULT);
-					int result_data_id = H5.H5Dopen(result_group_id, "data", HDF5Constants.H5P_DEFAULT);
-					int result_errors_id = H5.H5Dopen(result_group_id, "errors", HDF5Constants.H5P_DEFAULT);
-					DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
-					result_ids.setIDs(result_group_id, result_data_id);
-					DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
-					result_error_ids.setIDs(result_group_id, result_errors_id);
-					AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-					AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
-
 					Object obj = message.getBodyContent();
 					if (obj instanceof NcdProcessingObject) {
+						NcdProcessingObject content = (NcdProcessingObject) obj;
+						int result_group_id = content.getInputGroupID();
+						int result_data_id = content.getInputDataID();
+						int result_errors_id = content.getInputErrorsID();
+						
+						DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
+						result_ids.setIDs(result_group_id, result_data_id);
+						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
+						result_error_ids.setIDs(result_group_id, result_errors_id);
+						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
 						for (int h = 0; h < shape[0]; h++) {
 							for (int g = 0; g < shape[1]; g++) {
 								for (int k = 0; k < shape[2]; k++) {
@@ -301,7 +301,7 @@ public class NcdNormalisationForkJoinTransformerTest {
 
 	@Test
 	public void testNcdNormalisationForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
-			IllegalActionException, NameDuplicationException, HDF5LibraryException, NullPointerException {
+			IllegalActionException, NameDuplicationException {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 		NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
@@ -310,13 +310,6 @@ public class NcdNormalisationForkJoinTransformerTest {
 		flow.connect(source.output, normalisation.input);
 		flow.connect(normalisation.output, sink.input);
 
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
-
 		Map<String, String> props = new HashMap<String, String>();
 
 		props.put("Normalisation.enable", Boolean.toString(true));
@@ -324,12 +317,6 @@ public class NcdNormalisationForkJoinTransformerTest {
 		props.put("Normalisation.absScalingParam", Float.toString(absScale));
 		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
 		props.put("Normalisation.dimensionParam", Integer.toString(dim));
-		props.put("Normalisation.framesParam", Arrays.toString(shape));
-		props.put("Normalisation.entryGroupParam", Integer.toString(entry_id));
-		props.put("Normalisation.processingGroupParam", Integer.toString(processing_group_id));
-		props.put("Normalisation.inputGroupParam", Integer.toString(detector_group_id));
-		props.put("Normalisation.inputDataParam", Integer.toString(input_data_id));
-		props.put("Normalisation.inputErrorsParam", Integer.toString(input_errors_id));
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}
