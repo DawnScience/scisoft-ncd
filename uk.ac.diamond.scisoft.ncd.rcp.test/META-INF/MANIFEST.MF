@@ -9,6 +9,5 @@ Require-Bundle: org.junit;bundle-version="[4.10.0,5.0.0)",
  org.apache.commons.beanutils;bundle-version="[1.8.3,1.9.0)"
 Import-Package: gda.util,
  ncsa.hdf.hdf5lib,
- ncsa.hdf.hdf5lib.exceptions,
- org.apache.commons.io
+ ncsa.hdf.hdf5lib.exceptions
 Bundle-Vendor: Diamond Light Source
