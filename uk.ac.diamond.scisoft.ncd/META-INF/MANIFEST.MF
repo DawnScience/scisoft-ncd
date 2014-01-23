@@ -22,7 +22,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.uncommons.maths;bundle-version="[1.2.3,2.0.0)",
  org.apache.commons.math3;bundle-version="[3.2.0,3.3.0)",
  uk.ac.diamond.org.jscience4;bundle-version="[4.3.1,5.0.0)",
- com.springsource.org.apache.commons.lang;bundle-version="[2.5.0,3.0.0)",
+ org.apache.commons.lang;bundle-version="[2.6.0,2.7.0)",
  org.apache.commons.beanutils;bundle-version="[1.9.1,1.9.2)",
  ncsa.hdf;bundle-version="2.8.0",
  org.apache.commons.io;bundle-version="[2.4.0,2.5.0)"
