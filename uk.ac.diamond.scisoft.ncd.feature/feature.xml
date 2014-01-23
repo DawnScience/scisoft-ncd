@@ -79,7 +79,7 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="com.springsource.org.apache.commons.lang"
+         id="org.apache.commons.lang"
          download-size="0"
          install-size="0"
          version="0.0.0"
