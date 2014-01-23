@@ -18,8 +18,6 @@ package uk.ac.diamond.scisoft.ncd.rcp.reduction;
 
 import static org.junit.Assert.assertEquals;
 
-import gda.util.TestUtils;
-
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
@@ -40,6 +38,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
