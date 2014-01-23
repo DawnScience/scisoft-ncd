@@ -4,8 +4,7 @@ Bundle-Name: NCD Actor Tests
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.passerelle.actors.test
 Bundle-Version: 2.1.0.qualifier
 Fragment-Host: uk.ac.diamond.scisoft.ncd.passerelle.actors;bundle-version="[2.1.0.qualifier,2.2.0)"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
-Require-Bundle: com.isencia.passerelle.domain.et,
- org.eclipse.core.jobs,
- com.springsource.slf4j.org.apache.commons.logging;bundle-version="[1.5.6,2.0.0)"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Import-Package: org.junit;version="4.10.0"
+Require-Bundle: com.isencia.passerelle.domain.et;bundle-version="[8.4.0,8.5.0)",
+ org.apache.commons.logging;bundle-version="1.0.4"
