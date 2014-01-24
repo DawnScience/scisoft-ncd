@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
+import java.util.Arrays;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.locks.ReentrantLock;
@@ -148,12 +149,17 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
 		NcdNexusUtils.closeH5id(inputDataSpaceID);
 		
+		long[] resultFrames = getResultDataShape();
 		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, frames, true, "counts");
+		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "counts");
 		type = HDF5Constants.H5T_NATIVE_DOUBLE;
-		resultErrorsID = NcdNexusUtils.makedata(resultGroupID, "errors", type, frames, true, "counts");
+		resultErrorsID = NcdNexusUtils.makedata(resultGroupID, "errors", type, resultFrames, true, "counts");
 		
+	}
+
+	protected long[] getResultDataShape() {
+		return Arrays.copyOf(frames, frames.length);
 	}
 	
 }
