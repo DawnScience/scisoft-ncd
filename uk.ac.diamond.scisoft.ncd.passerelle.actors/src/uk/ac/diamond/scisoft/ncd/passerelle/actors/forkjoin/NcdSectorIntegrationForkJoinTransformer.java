@@ -24,7 +24,10 @@ import java.util.concurrent.RecursiveAction;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -32,6 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.dawb.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.BooleanToken;
@@ -373,6 +377,197 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, res_start, res_block, res_count, res_block);
 
 		H5.H5Dwrite(dataIDs.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data.getBuffer());
+	}
+	
+	@Override
+	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		super.writeNcdMetadata(datagroup_id);
+
+		if (intSector != null) {
+			writeBeamCenterMetadata(datagroup_id);
+			writeIntegrationAnglesMetadata(datagroup_id);
+			writeIntegrationRadiiMetadata(datagroup_id);
+			writeIntegrationSymmetryMetadata(datagroup_id);
+		}
+		if (cameraLength != null) {
+			writeCameraLengthMetadata(datagroup_id);
+		}
+		if (energy != null) {
+			writeEnergyMetadata(datagroup_id);
+		}
+		if (mask != null) {
+			writeMaskMetadata(datagroup_id);
+		}
+		if (gradient != null && intercept != null) {
+			writeQcalibrationMetadata(datagroup_id);
+		}
+	}
+
+	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		int filespace_id = H5.H5Dget_space(beamcenter_id);
+		int type = H5.H5Dget_type(beamcenter_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(beamcenter_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getPoint());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(beamcenter_id);
+	}
+	
+	private void writeCameraLengthMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int cameralength_id = NcdNexusUtils.makegroup(datagroup_id, "camera length", Nexus.DATA);
+		int cameralength_data_id = NcdNexusUtils.makedata(cameralength_id, "data", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		int cameralength_error_id = NcdNexusUtils.makedata(cameralength_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		int filespace_id = H5.H5Dget_space(cameralength_data_id);
+		int type = H5.H5Dget_type(cameralength_data_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(cameralength_data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getEstimatedValue()});
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(cameralength_data_id);
+		
+		filespace_id = H5.H5Dget_space(cameralength_error_id);
+		type = H5.H5Dget_type(cameralength_error_id);
+		memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(cameralength_error_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getAbsoluteError()});
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(cameralength_error_id);
+		H5.H5Gclose(cameralength_id);
+	}
+	
+	private void writeEnergyMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "keV");
+		int filespace_id = H5.H5Dget_space(energy_id);
+		int type = H5.H5Dget_type(energy_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))});
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(energy_id);
+	}
+	
+	private void writeIntegrationAnglesMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "Deg");
+		int filespace_id = H5.H5Dget_space(angles_id);
+		int type = H5.H5Dget_type(angles_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(angles_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getAnglesDegrees());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(angles_id);
+	}
+	
+	private void writeIntegrationRadiiMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		int filespace_id = H5.H5Dget_space(radii_id);
+		int type = H5.H5Dget_type(radii_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(radii_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getRadii());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(radii_id);
+	}
+	
+	private void writeIntegrationSymmetryMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		int symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		String sym = intSector.getSymmetryText();
+		H5.H5Tset_size(symmetry_type, sym.length());
+		int symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, new long[] {1});
+		int filespace_id = H5.H5Dget_space(symmetry_id);
+		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(symmetry_id, symmetry_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, sym.getBytes());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(symmetry_type);
+		H5.H5Dclose(symmetry_id);
+	}
+	
+	private void writeMaskMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long[] maskShape = (long []) ConvertUtils.convert(mask.getShape(), long[].class);
+		int mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, maskShape, false, "pixels");
+		int filespace_id = H5.H5Dget_space(mask_id);
+		int type = H5.H5Dget_type(mask_id);
+		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, AbstractDataset.INT8)).getBuffer());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type);
+		H5.H5Dclose(mask_id);
+	}
+	
+	private void writeQcalibrationMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException,	HDF5Exception {
+
+		int qcalibration_id = NcdNexusUtils.makegroup(datagroup_id, "qaxis calibration", Nexus.DATA);
+
+		List<Object[]> data = new ArrayList<Object[]>();
+		data.add(new Object[] { "gradient", gradient.getEstimatedValue(), gradient.getUnit() });
+		data.add(new Object[] { "gradient_errors", gradient.getAbsoluteError(), gradient.getUnit() });
+		data.add(new Object[] { "intercept", intercept.getEstimatedValue(), intercept.getUnit() });
+		data.add(new Object[] { "intercept_errors", intercept.getAbsoluteError(), intercept.getUnit() });
+
+		for (Object[] element : data) {
+			String name = (String) element[0];
+			double[] value = new double[] { (Double) element[1] };
+			Unit<?> unit = (Unit<?>) element[2];
+
+			int data_id = NcdNexusUtils.makedata(qcalibration_id, name, HDF5Constants.H5T_NATIVE_DOUBLE,
+					new long[] { 1 });
+			int filespace_id = H5.H5Dget_space(data_id);
+			int type = H5.H5Dget_type(data_id);
+			int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			H5.H5Sselect_all(filespace_id);
+
+			H5.H5Dwrite(data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, value);
+
+			// add unit attribute
+			{
+				UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+				String unitString = unitFormat.format(unit);
+				int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+				int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				H5.H5Tset_size(attrtype_id, unitString.length());
+
+				int attr_id = H5.H5Acreate(data_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+						HDF5Constants.H5P_DEFAULT);
+				if (attr_id < 0) {
+					throw new HDF5Exception("H5 putattr write error: can't create attribute");
+				}
+				int write_id = H5.H5Awrite(attr_id, attrtype_id, unitString.getBytes());
+				if (write_id < 0) {
+					throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+				}
+				H5.H5Aclose(attr_id);
+				H5.H5Sclose(attrspace_id);
+				H5.H5Tclose(attrtype_id);
+			}
+
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(type);
+			H5.H5Dclose(data_id);
+		}
+		H5.H5Gclose(qcalibration_id);
 	}
 
 }

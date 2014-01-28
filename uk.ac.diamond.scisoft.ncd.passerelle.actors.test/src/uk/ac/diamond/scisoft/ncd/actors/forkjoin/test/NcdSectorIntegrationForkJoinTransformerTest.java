@@ -66,7 +66,6 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 	private static String testScratchDirectoryName;
 	private static String filename;
 	private static String testDatasetName = "testInput";
-	private static String testNormName = "testNorm";
 
 	private ReentrantLock lock = new ReentrantLock();
 	private SectorROI intSector;
@@ -104,7 +103,6 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
 			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
 			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true,
 					"counts");
 			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape,
@@ -153,7 +151,6 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 			H5.H5Dclose(data_id);
 			H5.H5Dclose(errors_id);
 			H5.H5Gclose(datagroup_id);
-			H5.H5Gclose(normgroup_id);
 			H5.H5Gclose(entry_id);
 			H5.H5Fclose(nxsFile);
 		}

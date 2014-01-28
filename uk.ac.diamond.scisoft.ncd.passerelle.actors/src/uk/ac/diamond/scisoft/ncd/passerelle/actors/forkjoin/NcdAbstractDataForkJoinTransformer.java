@@ -24,6 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.dawb.hdf5.Nexus;
 
@@ -33,6 +34,7 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
+import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -130,7 +132,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			lock.unlock();
 
 			forkJoinPool.invoke(task);
-
+			writeNcdMetadata(resultGroupID);
+			
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
 			NcdProcessingObject obj = new NcdProcessingObject(entryGroupID, processingGroupID, resultGroupID, resultDataID, resultErrorsID, lock);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
@@ -160,6 +163,23 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 	protected long[] getResultDataShape() {
 		return Arrays.copyOf(frames, frames.length);
+	}
+	
+	public void writeNcdMetadata(int datagroupID) throws HDF5LibraryException, HDF5Exception {
+		String detType = DetectorTypes.REDUCTION_DETECTOR;
+		int typeID = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		H5.H5Tset_size(typeID, detType.length());
+		int metadataID = NcdNexusUtils.makedata(datagroupID, "sas_type", typeID, new long[] {1});
+		
+		int filespaceID = H5.H5Dget_space(metadataID);
+		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespaceID);
+		H5.H5Dwrite(metadataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, detType.getBytes());
+		
+		H5.H5Sclose(filespaceID);
+		H5.H5Sclose(memspaceID);
+		H5.H5Tclose(typeID);
+		H5.H5Dclose(metadataID);
 	}
 	
 }
