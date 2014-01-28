@@ -372,11 +372,6 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		return lambdaDim;
 	}
 
-	@Override
-	protected Amount<Energy> getEnergy() {
-		return ncdEnergySourceProvider.getEnergy();
-	}
-	
 	protected String getDetectorName() {
 		return null;
 	}
