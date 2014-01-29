@@ -198,7 +198,7 @@ public class LazyNcdProcessingTest {
 		
 		testbgClass.configure(detector, dim, bgFilename, new NullProgressMonitor());
 		testbgClass.execute(new NullProgressMonitor());
-		testClass.complete();
+		testbgClass.complete();
 		
 		testClass.configure(detector, dim, filename, new NullProgressMonitor());
 		testClass.execute(new NullProgressMonitor());
