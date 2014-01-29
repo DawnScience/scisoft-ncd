@@ -27,8 +27,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 
-import ptolemy.data.IntMatrixToken;
-import ptolemy.data.expr.Parameter;
+import ptolemy.data.StringToken;
+import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -37,6 +37,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
@@ -51,8 +52,9 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 
 	private static final long serialVersionUID = -8213944227944915689L;
 
-	public Parameter averageIndicesParam;
+	public StringParameter gridAverageParam;
 
+	private String gridAverage;
 	private int[] averageIndices;
 	private long[] framesAve;
 
@@ -64,7 +66,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 
 		dataName = "Average";
 		
-		averageIndicesParam = new Parameter(this, "averageIndicesParam");
+		gridAverageParam = new StringParameter(this, "gridAverageParam");
 	}
 
 	@Override
@@ -73,11 +75,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 		try {
 			
 			
-			int[][] framesMatrix = ((IntMatrixToken) averageIndicesParam.getToken()).intMatrix();
-			if (framesMatrix == null || framesMatrix.length != 1) {
-				throw new InitializationException(ErrorCode.ACTOR_EXECUTION_ERROR, "Invalid data shape", this, null);
-			}
-			averageIndices = framesMatrix[0];
+			gridAverage = ((StringToken) gridAverageParam.getToken()).stringValue();
 			
 			task = new AverageTask();
 
@@ -122,6 +120,11 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 	@Override
 	protected long[] getResultDataShape() {
 		// Calculate shape of the averaged dataset based on the dimensions selected for averaging
+		averageIndices = new int[] {frames.length - dimension};
+		if (gridAverage != null) {
+			averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dimension + 1);
+		}
+		
 		framesAve = Arrays.copyOf(frames, frames.length);
 		for (int idx : averageIndices) {
 			framesAve[idx - 1] = 1;

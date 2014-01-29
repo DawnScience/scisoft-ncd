@@ -283,7 +283,7 @@ public class NcdAverageForkJoinTransformerTest {
 
 		props.put("Average.enable", Boolean.toString(true));
 		props.put("Average.dimensionParam", Integer.toString(dim));
-		props.put("Average.averageIndicesParam", "[1,3]");
+		props.put("Average.gridAverageParam", "1,3");
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}
