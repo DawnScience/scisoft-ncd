@@ -39,7 +39,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdNormalisationTransformer;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingSliceObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.ProcessingException;
@@ -215,7 +215,7 @@ public class NcdNormalisationTransformerTest {
 				SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 				slice.setStart(new int[] { 0, 0, 0, 0, 0 });
 
-				NcdProcessingObject obj = new NcdProcessingObject(data, null, slice, lock);
+				NcdProcessingSliceObject obj = new NcdProcessingSliceObject(data, null, slice, lock);
 
 				dataMsg = createMessage(obj, "application/octet-stream");
 			} catch (Exception e) {
@@ -240,11 +240,11 @@ public class NcdNormalisationTransformerTest {
 		@Override
 		protected void sendMessage(ManagedMessage message) throws ProcessingException {
 			if (message != null) {
-				NcdProcessingObject content = null;
+				NcdProcessingSliceObject content = null;
 				try {
 					Object obj = message.getBodyContent();
-					if (obj instanceof NcdProcessingObject) {
-						content = (NcdProcessingObject) obj;
+					if (obj instanceof NcdProcessingSliceObject) {
+						content = (NcdProcessingSliceObject) obj;
 						AbstractDataset outData = content.getData();
 						AbstractDataset outErrors = outData.getError();
 						for (int h = 0; h < shape[0]; h++) {

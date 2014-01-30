@@ -42,7 +42,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.Normalisation;
 import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingSliceObject;
 import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -157,13 +157,13 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			return;
 		}
 
-		NcdProcessingObject receivedObject;
+		NcdProcessingSliceObject receivedObject;
 
 		int filespaceID = -1;
 		int typeID = -1;
 		int memspaceID = -1;
 		try {
-			receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
+			receivedObject = (NcdProcessingSliceObject) receivedMsg.getBodyContent();
 			lock = receivedObject.getLock();
 			SliceSettings sliceData = receivedObject.getSliceData();
 			AbstractDataset data = receivedObject.getData();
@@ -242,7 +242,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			}
 
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
-			NcdProcessingObject obj = new NcdProcessingObject(myres, qaxis, sliceData, lock);
+			NcdProcessingSliceObject obj = new NcdProcessingSliceObject(myres, qaxis, sliceData, lock);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {

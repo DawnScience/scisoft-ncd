@@ -18,26 +18,13 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-
 public class NcdProcessingObject {
 	
-	private AbstractDataset data;
-	private AbstractDataset axis;
-	private SliceSettings sliceData;
 	private ReentrantLock lock;
 	
 	private int entryGroupID, processingGroupID;
 	private int inputGroupID, inputDataID, inputErrorsID;
 	
-	public NcdProcessingObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ReentrantLock lock) {
-		this.data = data;
-		this.axis = axis;
-		this.sliceData = sliceData;
-		this.lock = lock;
-	}
-
 	public NcdProcessingObject(int entryGroupID, int processingGroupID, int inputGroupID, int inputDataID, int inputErrorsID, ReentrantLock lock) {
 		super();
 		this.entryGroupID = entryGroupID;
@@ -46,30 +33,6 @@ public class NcdProcessingObject {
 		this.inputDataID = inputDataID;
 		this.inputErrorsID = inputErrorsID;
 		this.lock = lock;
-	}
-
-	public AbstractDataset getData() {
-		return data;
-	}
-	
-	public void setData(AbstractDataset data) {
-		this.data = data;
-	}
-	
-	public AbstractDataset getAxis() {
-		return axis;
-	}
-
-	public void setAxis(AbstractDataset axis) {
-		this.axis = axis;
-	}
-
-	public SliceSettings getSliceData() {
-		return sliceData;
-	}
-	
-	public void setSliceData(SliceSettings sliceData) {
-		this.sliceData = sliceData;
 	}
 	
 	public ReentrantLock getLock() {
