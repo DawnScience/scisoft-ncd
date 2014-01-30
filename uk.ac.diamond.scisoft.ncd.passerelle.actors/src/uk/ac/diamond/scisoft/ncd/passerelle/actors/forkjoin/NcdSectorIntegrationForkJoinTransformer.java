@@ -48,6 +48,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -270,16 +271,22 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 				tmp_ids.setSlice(currentSliceParams);
-				DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
-				tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-				tmp_errors_ids.setSlice(currentSliceParams);
 
 				lock.lock();
 				AbstractDataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
-				AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+				if (hasErrors) {
+					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
+					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
+					tmp_errors_ids.setSlice(currentSliceParams);
+					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+					inputData.setError(inputErrors);
+				} else {
+					// Use counting statistics if no input error estimates are available 
+					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					inputData.setErrorBuffer(inputErrorsBuffer);
+				}
 				lock.unlock();
 
-				inputData.setError(inputErrors);
 
 				AbstractDataset myazdata = null, myazerrors = null;
 				AbstractDataset myraddata = null, myraderrors = null;

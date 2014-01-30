@@ -201,7 +201,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 					sliceSettings.setStart(data_iter.getPos());
 					AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
 					AbstractDataset errors_slice;
-					if (inputErrorsID != -1) {
+					if (hasErrors) {
 						errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
 						errors_slice.ipower(2);
 					} else {

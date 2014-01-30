@@ -194,16 +194,22 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
-				DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
-				tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 
 				lock.lock();
 				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
-				AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+				if (hasErrors) {
+					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
+					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
+					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+					inputData.setError(inputErrors);
+				} else {
+					// Use counting statistics if no input error estimates are available 
+					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					inputData.setErrorBuffer(inputErrorsBuffer);
+				}
 				lock.unlock();
 
-				inputData.setError(inputErrors);
 				
 				Normalisation nm = new Normalisation();
 				nm.setCalibChannel(normChannel);

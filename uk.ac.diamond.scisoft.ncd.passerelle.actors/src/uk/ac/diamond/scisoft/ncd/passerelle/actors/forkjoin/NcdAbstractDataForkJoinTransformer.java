@@ -66,7 +66,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	public Parameter isEnabled;
 	public Parameter dimensionParam;
 	
-	protected boolean enabled;
+	protected boolean enabled, hasErrors;
 	
 	protected int dimension;
 	protected long[] frames;
@@ -152,6 +152,17 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
 		NcdNexusUtils.closeH5id(inputDataSpaceID);
 		
+		hasErrors = false;
+		if (inputErrorsID > 0) {
+			try {
+				final int type = H5.H5Iget_type(inputErrorsID);
+				if (type != HDF5Constants.H5I_BADID) {
+					hasErrors = true;
+				}
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Input dataset with error values wasn't found");
+			}
+		}
 		long[] resultFrames = getResultDataShape();
 		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
