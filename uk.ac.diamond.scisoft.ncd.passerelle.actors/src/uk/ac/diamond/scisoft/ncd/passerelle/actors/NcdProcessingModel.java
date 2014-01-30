@@ -55,6 +55,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
@@ -227,17 +228,20 @@ public class NcdProcessingModel {
 
 			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 			NcdDetectorResponseForkJoinTransformer detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow,
-					"DetectorRespose");
+					"DetectorResponse");
 			NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(
 					flow, "SectorIntegration");
 			NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow,
 					"Normalisation");
+			NcdInvariantForkJoinTransformer invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
 			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
 			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
 			flow.connect(source.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
 			flow.connect(sectorIntegration.output, normalisation.input);
+			flow.connect(normalisation.output, invariant.input);
+			flow.connect(invariant.output, sink.input);
 			flow.connect(normalisation.output, average.input);
 			flow.connect(average.output, sink.input);
 
@@ -257,6 +261,9 @@ public class NcdProcessingModel {
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detectorName);
 
+			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
+			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
+			
 			props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
 			props.put("SectorIntegration.dimensionParam", Integer.toString(dimension));
 			props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
@@ -273,6 +280,9 @@ public class NcdProcessingModel {
 			props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
 			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
 
+			props.put("Invariant.enable", Boolean.toString(flags.isEnableInvariant()));
+			props.put("Invariant.dimensionParam", Integer.toString(dimension));
+			
 			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
 			props.put("Average.dimensionParam", Integer.toString(dimension));
 			props.put("Average.gridAverageParam", gridAverage);
