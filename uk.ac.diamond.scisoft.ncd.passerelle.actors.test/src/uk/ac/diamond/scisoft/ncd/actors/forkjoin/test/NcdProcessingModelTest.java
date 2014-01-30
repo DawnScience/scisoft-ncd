@@ -49,7 +49,7 @@ public class NcdProcessingModelTest {
 	private static Double absScaling = 1.0;
 	private static int normChannel = 1;
 	private static CalibrationResultsBean crb = null;
-	//private static String drFile;
+	private static String drFile;
 	//private static boolean enableMask = false;
 	private static NcdReductionFlags flags;
 	private static SectorROI intSector;
@@ -94,7 +94,7 @@ public class NcdProcessingModelTest {
 		}
 
 		//Path bgPath = new Path(testFileFolder + "/NCDReductionTest/i22-24132.nxs");
-		//Path drPath = new Path(testFileFolder + "/NCDReductionTest/i22-24125.nxs");
+		Path drPath = new Path(testFileFolder + "/NCDReductionTest/i22-24125.nxs");
 		Path inputPath = new Path(testFileFolder + "/NCDReductionTest/i22-24139.nxs");
 
 		FileInputStream inFile = new FileInputStream(inputPath.toOSString());
@@ -107,7 +107,7 @@ public class NcdProcessingModelTest {
 
 		//IOUtils.copy(inFile, outFile);
 		
-		//drFile = drPath.toOSString();
+		drFile = drPath.toOSString();
 
 		flags = new NcdReductionFlags();
 		flags.setEnableNormalisation(true);
@@ -139,7 +139,7 @@ public class NcdProcessingModelTest {
 
 		testClass = new NcdProcessingModel();
 		//testClass.setBgFile(bgFilename);
-		//testClass.setDrFile(drFile);
+		testClass.setDrFile(drFile);
 		testClass.setAbsScaling(absScaling);
 		//testClass.setBgDetector(detectorBg);
 		//testClass.setBgScaling(bgScaling);

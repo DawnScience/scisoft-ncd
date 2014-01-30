@@ -16,13 +16,22 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
+import org.apache.commons.beanutils.ConvertUtils;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
@@ -37,26 +46,31 @@ import com.isencia.passerelle.model.FlowManager;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdProcessingModel {
 
 	private int normChannel;
-	private String calibration;
+	private String drFile, calibration;
 	private SectorROI intSector;
 	private Amount<ScatteringVectorOverDistance> slope;
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
 	private Amount<Energy> energy;
 	private BooleanDataset mask;
+	private AbstractDataset drData;
 
 	private CalibrationResultsBean crb;
 	
@@ -80,6 +94,10 @@ public class NcdProcessingModel {
 		} catch (NameDuplicationException e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	public void setDrFile(String drFile) {
+		this.drFile = drFile;
 	}
 
 	public void setAbsScaling(Double absScaling) {
@@ -130,7 +148,7 @@ public class NcdProcessingModel {
 		this.energy = energy;
 	}
 	
-	public void configure(String detector) {
+	public void configure(String detector) throws HDF5LibraryException, HDF5Exception {
 		if (crb != null && crb.containsKey(detector)) {
 			if (slope == null) {
 				slope = crb.getGradient(detector);
@@ -140,61 +158,127 @@ public class NcdProcessingModel {
 			}
 			cameraLength = crb.getMeanCameraLength(detector);
 		}
+		
+		if (flags.isEnableDetectorResponse()) {
+			int drEntryGroupID = -1;
+			int drInstrumentGroupID = -1;
+			int drDetectorGroupID = -1;
+			int drDataID = -1;
+			int drDataspaceID = -1;
+			int drDatatypeID = -1;
+			int memspaceID = -1;
+			int drFileID = -1;
+			try {
+				int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
+				drFileID = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+				H5.H5Pclose(fapl);
+
+				drEntryGroupID = H5.H5Gopen(drFileID, "entry1", HDF5Constants.H5P_DEFAULT);
+				drInstrumentGroupID = H5.H5Gopen(drEntryGroupID, "instrument", HDF5Constants.H5P_DEFAULT);
+				drDetectorGroupID = H5.H5Gopen(drInstrumentGroupID, detector, HDF5Constants.H5P_DEFAULT);
+
+				drDataID = H5.H5Dopen(drDetectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+				drDataspaceID = H5.H5Dget_space(drDataID);
+				drDatatypeID = H5.H5Dget_type(drDataID);
+				int drDataclassID = H5.H5Tget_class(drDatatypeID);
+				int drDatasizeID = H5.H5Tget_size(drDatatypeID);
+
+				int rank = H5.H5Sget_simple_extent_ndims(drDataspaceID);
+				int dtype = HDF5Loader.getDtype(drDataclassID, drDatasizeID);
+
+				long[] drFrames = new long[rank];
+				H5.H5Sget_simple_extent_dims(drDataspaceID, drFrames, null);
+				memspaceID = H5.H5Screate_simple(rank, drFrames, null);
+
+				int[] drFramesInt = (int[]) ConvertUtils.convert(drFrames, int[].class);
+				drData = AbstractDataset.zeros(drFramesInt, dtype);
+
+				int readID = -1;
+				if ((drDataID >= 0) && (drDataspaceID >= 0) && (memspaceID >= 0)) {
+					readID = H5.H5Dread(drDataID, drDatatypeID, memspaceID, drDataspaceID,
+							HDF5Constants.H5P_DEFAULT, drData.getBuffer());
+				}
+				if (readID < 0) {
+					throw new HDF5Exception("Failed to read detector response dataset");
+				}
+			} finally {
+				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+						memspaceID,
+						drDataspaceID,
+						drDatatypeID,
+						drDataID,
+						drDetectorGroupID,
+						drInstrumentGroupID,
+						drEntryGroupID,
+						drFileID));
+
+				NcdNexusUtils.closeH5idList(identifiers);
+
+			}
+		}
 	}
 
 	public void execute(String detectorName, int dimension, String filename) {
-		
-		configure(detectorName);
-		
+
 		try {
-		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
-		NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
-		NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
-		NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
-		NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
-		flow.connect(source.output, sectorIntegration.input);
-		flow.connect(sectorIntegration.output, normalisation.input);
-		flow.connect(normalisation.output, average.input);
-		flow.connect(average.output, sink.input);
-		
-		source.lockParam.setToken(new ObjectToken(new ReentrantLock()));
-		
-		sectorIntegration.sectorROIParam.setToken(new ObjectToken(intSector));
-		sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
-		sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
-		sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
-		sectorIntegration.energyParam.setToken(new ObjectToken(energy));
-		sectorIntegration.maskParam.setToken(new ObjectToken(mask));
-		
-		
-		Map<String, String> props = new HashMap<String, String>();
-		
-		props.put("MessageSource.filenameParam", filename);
-		props.put("MessageSource.detectorParam", detectorName);
-		
-		props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
-		props.put("SectorIntegration.dimensionParam", Integer.toString(dimension));
-		props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
-		props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
-		props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
-		
-		if (flags.isEnableSector()) {
-			dimension = 1;
-		}
+			configure(detectorName);
 
-		props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
-		props.put("Normalisation.calibrationParam", calibration);
-		props.put("Normalisation.absScalingParam", Double.toString(absScaling));
-		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
-		props.put("Normalisation.dimensionParam", Integer.toString(dimension));
-		
-		props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
-		props.put("Average.dimensionParam", Integer.toString(dimension));
-		props.put("Average.gridAverageParam", gridAverage);
+			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
+			NcdDetectorResponseForkJoinTransformer detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow,
+					"DetectorRespose");
+			NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(
+					flow, "SectorIntegration");
+			NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow,
+					"Normalisation");
+			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
+			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
-		flowMgr.executeBlockingLocally(flow, props);
-		
+			flow.connect(source.output, detectorResponse.input);
+			flow.connect(detectorResponse.output, sectorIntegration.input);
+			flow.connect(sectorIntegration.output, normalisation.input);
+			flow.connect(normalisation.output, average.input);
+			flow.connect(average.output, sink.input);
+
+			source.lockParam.setToken(new ObjectToken(new ReentrantLock()));
+
+			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
+
+			sectorIntegration.sectorROIParam.setToken(new ObjectToken(intSector));
+			sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
+			sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
+			sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
+			sectorIntegration.energyParam.setToken(new ObjectToken(energy));
+			sectorIntegration.maskParam.setToken(new ObjectToken(mask));
+
+			Map<String, String> props = new HashMap<String, String>();
+
+			props.put("MessageSource.filenameParam", filename);
+			props.put("MessageSource.detectorParam", detectorName);
+
+			props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
+			props.put("SectorIntegration.dimensionParam", Integer.toString(dimension));
+			props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
+			props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
+			props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
+
+			if (flags.isEnableSector()) {
+				dimension = 1;
+			}
+
+			props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
+			props.put("Normalisation.calibrationParam", calibration);
+			props.put("Normalisation.absScalingParam", Double.toString(absScaling));
+			props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
+
+			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
+			props.put("Average.dimensionParam", Integer.toString(dimension));
+			props.put("Average.gridAverageParam", gridAverage);
+
+			flowMgr.executeBlockingLocally(flow, props);
+
 		} catch (FlowAlreadyExecutingException e) {
 			throw new RuntimeException(e);
 		} catch (PasserelleException e) {
@@ -202,6 +286,10 @@ public class NcdProcessingModel {
 		} catch (IllegalActionException e) {
 			throw new RuntimeException(e);
 		} catch (NameDuplicationException e) {
+			throw new RuntimeException(e);
+		} catch (HDF5LibraryException e) {
+			throw new RuntimeException(e);
+		} catch (HDF5Exception e) {
 			throw new RuntimeException(e);
 		}
 	}
