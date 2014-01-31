@@ -305,7 +305,7 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 	}
 
 	@Test
-	public void testNcdNormalisationForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
+	public void testNcdDetectorResponseForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
 			IllegalActionException, NameDuplicationException {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");

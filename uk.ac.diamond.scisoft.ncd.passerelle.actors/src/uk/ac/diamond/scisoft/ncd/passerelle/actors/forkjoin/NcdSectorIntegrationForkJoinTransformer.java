@@ -133,7 +133,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					ScatteringVectorOverDistance.UNIT);
 			intercept = (Amount<ScatteringVector>) readAmountObject(interceptParam, ScatteringVector.UNIT);
 			cameraLength = (Amount<Length>) readAmountObject(cameraLengthParam, Length.UNIT);
-			energy = (Amount<Energy>) readAmountObject(cameraLengthParam, Energy.UNIT);
+			energy = (Amount<Energy>) readAmountObject(energyParam, Energy.UNIT);
 
 			doRadial = ((BooleanToken) doRadialParam.getToken()).booleanValue();
 			doAzimuthal = ((BooleanToken) doAzimuthalParam.getToken()).booleanValue();
