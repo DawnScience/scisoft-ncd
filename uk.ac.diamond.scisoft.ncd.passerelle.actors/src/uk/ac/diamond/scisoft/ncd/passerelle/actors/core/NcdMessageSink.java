@@ -20,7 +20,14 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.dawb.hdf5.Nexus;
+
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ptolemy.data.StringToken;
+import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -34,9 +41,13 @@ import com.isencia.passerelle.message.MessageException;
 
 public class NcdMessageSink extends Sink {
 
+	public StringParameter detectorParam;
+
 	public NcdMessageSink(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
 		super(container, name);
+		
+		detectorParam = new StringParameter(this, "detectorParam");
 	}
 
 	@Override
@@ -52,7 +63,26 @@ public class NcdMessageSink extends Sink {
 					int resultGroupID = content.getInputGroupID();
 					int resultDataID = content.getInputDataID();
 					int resultErrorsID = content.getInputErrorsID();
+					int outputGroupID = -1;
+					try {
+						String detector = ((StringToken) detectorParam.getToken()).stringValue();
+						if (detector != null) {
+							outputGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_result", Nexus.DATA);
+							H5.H5Lcopy(resultGroupID, "./data", outputGroupID, "./data", HDF5Constants.H5P_DEFAULT,
+									HDF5Constants.H5P_DEFAULT);
+							if (resultErrorsID != -1) {
+								H5.H5Lcopy(resultGroupID, "./errors", outputGroupID, "./errors",
+										HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+							}
+						}
+					} catch (HDF5Exception e) {
+						throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, "Error creating processing results group", this, e);
+					} catch (IllegalActionException e) {
+						throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, "Error reading detector name parameter", this, e);
+					}
+				    
 					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+							outputGroupID,
 							resultDataID,
 							resultErrorsID,
 							resultGroupID,

@@ -32,6 +32,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang.StringUtils;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
@@ -48,12 +49,14 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
@@ -64,7 +67,9 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 public class NcdProcessingModel {
 
 	private int normChannel;
-	private String drFile, calibration;
+	private Double bgScaling;
+	private String  bgFile, drFile;
+	private String  calibration, bgDetector;
 	private SectorROI intSector;
 	private Amount<ScatteringVectorOverDistance> slope;
 	private Amount<ScatteringVector> intercept;
@@ -77,24 +82,67 @@ public class NcdProcessingModel {
 	
 	private NcdReductionFlags flags;
 	private Double absScaling;
-	private String gridAverage;
 	
-	private static Flow flow;
-	private static FlowManager flowMgr;
+	private String gridAverage, bgGridAverage;
+	private boolean enableBgAverage;
+	
+	private Flow flow;
+	private FlowManager flowMgr;
+	
+	private static ReentrantLock lock;
 
 	
 	public NcdProcessingModel() {
 		super();
+		
 		try {
-		flow = new Flow("NCD Data Reduction", null);
-		flowMgr = new FlowManager();
-		ETDirector director = new ETDirector(flow, "director");
-		flow.setDirector(director);
+			flow = new Flow("NCD Data Reduction", null);
+			flowMgr = new FlowManager();
+			ETDirector director = new ETDirector(flow, "director");
+			flow.setDirector(director);
 		} catch (IllegalActionException e) {
 			throw new RuntimeException(e);
 		} catch (NameDuplicationException e) {
 			throw new RuntimeException(e);
 		}
+
+		lock = new ReentrantLock();
+		
+		normChannel = -1;
+		bgScaling = 1.0;
+		bgFile = "";
+		drFile = "";
+		calibration = "";
+		bgDetector = "";
+		intSector = new SectorROI();
+		slope = Amount.valueOf(0, ScatteringVectorOverDistance.UNIT);
+		intercept = Amount.valueOf(0, ScatteringVector.UNIT);
+		cameraLength = Amount.valueOf(0, Length.UNIT);
+		energy = Amount.valueOf(0, Energy.UNIT);
+		mask = new BooleanDataset();
+		drData = new FloatDataset();
+
+		crb = new CalibrationResultsBean();
+		
+		flags = new NcdReductionFlags();
+		absScaling = 1.0;
+		
+		gridAverage = "";
+		bgGridAverage = "";
+		enableBgAverage = false;
+		
+	}
+
+	public void setBgScaling(Double bgScaling) {
+		this.bgScaling = bgScaling;
+	}
+
+	public void setBgDetector(String bgDetector) {
+		this.bgDetector = bgDetector;
+	}
+
+	public void setBgFile(String bgFile) {
+		this.bgFile = bgFile;
 	}
 
 	public void setDrFile(String drFile) {
@@ -149,7 +197,70 @@ public class NcdProcessingModel {
 		this.energy = energy;
 	}
 	
-	public void configure(String detector) throws HDF5LibraryException, HDF5Exception {
+	private long[] readDataShape(String detector, String filename) throws HDF5Exception {
+		int fapl = -1;
+		int fileID = -1;
+		int entryGroupID = -1;
+		int detectorGroupID = -1;
+		int dataID = -1;
+		int dataspaceID = -1;
+		try {
+			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
+			
+			fileID = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+
+			entryGroupID = H5.H5Gopen(fileID, "entry1", HDF5Constants.H5P_DEFAULT);
+			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
+
+			dataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+			dataspaceID = H5.H5Dget_space(dataID);
+
+			int rank = H5.H5Sget_simple_extent_ndims(dataspaceID);
+			long[] frames = new long[rank];
+			H5.H5Sget_simple_extent_dims(dataspaceID, frames, null);
+			
+			return frames;
+
+		} finally {
+			if (fapl > 0) {
+				H5.H5Pclose(fapl);
+			}
+			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+					dataspaceID,
+					dataID,
+					detectorGroupID,
+					entryGroupID,
+					fileID));
+
+			NcdNexusUtils.closeH5idList(identifiers);
+		}
+				
+	}
+	
+	private void preprocessBackgroundData(String detector, int dimension, String filename) throws HDF5Exception {
+
+		long[] bgFrames = readDataShape(bgDetector, bgFile);
+		long[] frames = readDataShape(detector, filename);
+
+		if (frames != null && bgFrames != null) {
+			if (!Arrays.equals(bgFrames, frames)) {
+				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
+				int bgRank = bgFrames.length;
+				for (int i = (bgRank - dimension - 1); i >= 0; i--) {
+					int fi = i - bgRank + frames.length;
+					if ((bgFrames[i] != 1) && (fi < 0 || (bgFrames[i] != frames[fi]))) {
+						bgAverageIndices.add(i + 1);
+						bgFrames[i] = 1;
+					}
+				}
+				enableBgAverage = true;
+				bgGridAverage = StringUtils.join(bgAverageIndices, ",");
+			}
+		}
+	}
+
+	public void configure(String detector, int dimension, String filename) throws HDF5LibraryException, HDF5Exception {
 		if (crb != null && crb.containsKey(detector)) {
 			if (slope == null) {
 				slope = crb.getGradient(detector);
@@ -218,13 +329,18 @@ public class NcdProcessingModel {
 
 			}
 		}
+		
+		if (flags.isEnableBackground()) {
+			preprocessBackgroundData(detector, dimension, filename);
+		}
+		
 	}
 
 	public void execute(String detectorName, int dimension, String filename) {
 
 		try {
 
-			configure(detectorName);
+			configure(detectorName, dimension, filename);
 
 			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 			NcdDetectorResponseForkJoinTransformer detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow,
@@ -233,6 +349,8 @@ public class NcdProcessingModel {
 					flow, "SectorIntegration");
 			NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow,
 					"Normalisation");
+			NcdBackgroundSubtractionForkJoinTransformer backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(
+					flow, "BackgroundSubtraction");
 			NcdInvariantForkJoinTransformer invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
 			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
 			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
@@ -240,13 +358,14 @@ public class NcdProcessingModel {
 			flow.connect(source.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
 			flow.connect(sectorIntegration.output, normalisation.input);
-			flow.connect(normalisation.output, invariant.input);
-			flow.connect(invariant.output, sink.input);
+			flow.connect(normalisation.output, backgroundSubtraction.input);
+			flow.connect(backgroundSubtraction.output, invariant.input);
+			//flow.connect(invariant.output, sink.input);
 			flow.connect(normalisation.output, average.input);
 			flow.connect(average.output, sink.input);
-
-			source.lockParam.setToken(new ObjectToken(new ReentrantLock()));
-
+			
+			source.lockParam.setToken(new ObjectToken(lock));
+			
 			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
 
 			sectorIntegration.sectorROIParam.setToken(new ObjectToken(intSector));
@@ -260,6 +379,8 @@ public class NcdProcessingModel {
 
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detectorName);
+			
+			props.put("MessageSink.detectorParam", detectorName);
 
 			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
 			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
@@ -275,17 +396,38 @@ public class NcdProcessingModel {
 			}
 
 			props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
+			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
 			props.put("Normalisation.calibrationParam", calibration);
 			props.put("Normalisation.absScalingParam", Double.toString(absScaling));
 			props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
-			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
-
+			
+			props.put("BackgroundSubtraction.enable", Boolean.toString(flags.isEnableBackground()));
+			props.put("BackgroundSubtraction.dimensionParam", Integer.toString(dimension));
+			props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
+			
 			props.put("Invariant.enable", Boolean.toString(flags.isEnableInvariant()));
 			props.put("Invariant.dimensionParam", Integer.toString(dimension));
 			
 			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
 			props.put("Average.dimensionParam", Integer.toString(dimension));
 			props.put("Average.gridAverageParam", gridAverage);
+
+			if (flags.isEnableBackground()) {
+				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
+				NcdAverageForkJoinTransformer bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
+				
+				flow.connect(bgsource.output, bgAverage.input);
+				flow.connect(bgAverage.output, backgroundSubtraction.bgInput);
+				
+				bgsource.lockParam.setToken(new ObjectToken(lock));
+				
+				props.put("BackgroundMessageSource.filenameParam", bgFile);
+				props.put("BackgroundMessageSource.detectorParam", bgDetector);
+				
+				props.put("BackgroundAverage.enable", Boolean.toString(enableBgAverage));
+				props.put("BackgroundAverage.dimensionParam", Integer.toString(dimension));
+				props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
+			}
 
 			flowMgr.executeBlockingLocally(flow, props);
 

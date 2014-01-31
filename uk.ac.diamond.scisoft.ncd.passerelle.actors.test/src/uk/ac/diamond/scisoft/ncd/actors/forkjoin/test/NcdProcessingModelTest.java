@@ -43,9 +43,8 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 
 public class NcdProcessingModelTest {
 
-	private static NcdProcessingModel testClass;
-	//private static NcdProcessingModel testbgClass;
-	//private static Double bgScaling = 0.1;
+	private static NcdProcessingModel testClass, testbgClass;
+	private static Double bgScaling = 0.1;
 	private static Double absScaling = 1.0;
 	private static int normChannel = 1;
 	private static CalibrationResultsBean crb = null;
@@ -54,12 +53,12 @@ public class NcdProcessingModelTest {
 	private static NcdReductionFlags flags;
 	private static SectorROI intSector;
 	private static int intPoints, azPoints;
-	private static BooleanDataset mask;
+	//private static BooleanDataset mask;
 	private static NcdDetectors ncdDetectors;
 
 	private static String detector = "Rapid2D";
 	private static String detectorOut = "Rapid2D_processing";
-	//private static String detectorBg = "Rapid2D_result";
+	private static String detectorBg = "Rapid2D_result";
 	private static String calibration = "Scalers";
 	private static Amount<Length> pxSaxs = Amount.valueOf(0.1, SI.MILLIMETER);
 	private static int dim = 2;
@@ -93,7 +92,7 @@ public class NcdProcessingModelTest {
 			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
 		}
 
-		//Path bgPath = new Path(testFileFolder + "/NCDReductionTest/i22-24132.nxs");
+		Path bgPath = new Path(testFileFolder + "/NCDReductionTest/i22-24132.nxs");
 		Path drPath = new Path(testFileFolder + "/NCDReductionTest/i22-24125.nxs");
 		Path inputPath = new Path(testFileFolder + "/NCDReductionTest/i22-24139.nxs");
 
@@ -102,10 +101,10 @@ public class NcdProcessingModelTest {
 
 		IOUtils.copy(inFile, outFile);
 
-		//inFile = new FileInputStream(bgPath.toOSString());
-		//outFile = new FileOutputStream(bgFilename);
+		inFile = new FileInputStream(bgPath.toOSString());
+		outFile = new FileOutputStream(bgFilename);
 
-		//IOUtils.copy(inFile, outFile);
+		IOUtils.copy(inFile, outFile);
 		
 		drFile = drPath.toOSString();
 
@@ -138,11 +137,11 @@ public class NcdProcessingModelTest {
 		framesBg = new long[] {1, 1, intPoints};
 
 		testClass = new NcdProcessingModel();
-		//testClass.setBgFile(bgFilename);
+		testClass.setBgFile(bgFilename);
+		testClass.setBgDetector(detectorBg);
 		testClass.setDrFile(drFile);
 		testClass.setAbsScaling(absScaling);
-		//testClass.setBgDetector(detectorBg);
-		//testClass.setBgScaling(bgScaling);
+		testClass.setBgScaling(bgScaling);
 		//testClass.setFirstFrame(firstFrame);
 		//testClass.setLastFrame(lastFrame);
 		testClass.setCalibration(calibration);
@@ -151,27 +150,26 @@ public class NcdProcessingModelTest {
 		//testClass.setEnableMask(enableMask);
 		testClass.setFlags(flags);
 		testClass.setIntSector(intSector);
-		testClass.setMask(mask);
+		//testClass.setMask(mask);
 		//testClass.setNcdDetectors(ncdDetectors);
 
-		//testbgClass = new NcdProcessingModel();
-		//testbgClass.setDrFile(drFile);
-		//testbgClass.setAbsScaling(absScaling);
+		testbgClass = new NcdProcessingModel();
+		testbgClass.setDrFile(drFile);
+		testbgClass.setAbsScaling(absScaling);
 		//testbgClass.setFirstFrame(bgFirstFrame);
 		//testbgClass.setLastFrame(bgLastFrame);
 		//testbgClass.setFrameSelection(bgFrameSelection);
-		//testbgClass.setCalibration(calibration);
-		//testbgClass.setNormChannel(normChannel);
-		//testbgClass.setCrb(crb);
+		testbgClass.setCalibration(calibration);
+		testbgClass.setNormChannel(normChannel);
+		testbgClass.setCrb(crb);
 		//testbgClass.setEnableMask(enableMask);
-		//
-		//flags.setEnableBackground(false);
-		//flags.setEnableInvariant(false);
-		//testbgClass.setFlags(flags);
-		//
-		//testbgClass.setIntSector(intSector);
+		
+		flags.setEnableBackground(false);
+		flags.setEnableInvariant(false);
+		testbgClass.setFlags(flags);
+		
+		testbgClass.setIntSector(intSector);
 		//testbgClass.setMask(mask);
-		//
 		//testbgClass.setNcdDetectors(ncdDetectors);
 		
 	    //DataSliceIdentifiers dr_id = NcdNexusUtilsTest.readDataId(drFile, detector, "data", null)[0];
@@ -180,7 +178,7 @@ public class NcdProcessingModelTest {
 	    //drSlice.setStart(start);
 		//dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
-		//testbgClass.execute(detector, dim, bgFilename);
+		testbgClass.execute(detector, dim, bgFilename);
 		testClass.execute(detector, dim, filename);
 	}
 

@@ -74,8 +74,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	protected int inputGroupID, inputDataID, inputErrorsID;
 	protected int resultGroupID, resultDataID, resultErrorsID;
 
-	protected ManagedMessage receivedMsg;
-	
 	protected RecursiveAction task;
 	
 	public NcdAbstractDataForkJoinTransformer(CompositeEntity container, String name) throws IllegalActionException,
@@ -112,7 +110,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response)
 			throws ProcessingException {
 
-		receivedMsg = request.getMessage(input);
+		ManagedMessage receivedMsg = request.getMessage(input);
 		if (!enabled) {
 			response.addOutputMessage(output, receivedMsg);
 			return;
@@ -126,6 +124,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			inputDataID = receivedObject.getInputDataID();
 			inputErrorsID = receivedObject.getInputErrorsID();
 			lock = receivedObject.getLock();
+			
+			readAdditionalPorts(request);
 			
 			lock.lock();
 			configureActorParameters();
@@ -145,6 +145,10 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		}
 	}
 	
+	@SuppressWarnings("unused")
+	protected void readAdditionalPorts(ProcessRequest request) throws MessageException {
+	}
+
 	protected void configureActorParameters() throws HDF5Exception {
 		int inputDataSpaceID = H5.H5Dget_space(inputDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(inputDataSpaceID);
