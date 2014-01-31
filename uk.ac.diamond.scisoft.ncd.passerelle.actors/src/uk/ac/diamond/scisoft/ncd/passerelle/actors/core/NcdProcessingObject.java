@@ -18,49 +18,101 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-public class NcdProcessingObject {
+import org.dawb.passerelle.common.message.DataMessageComponent;
+
+public class NcdProcessingObject extends DataMessageComponent {
+
+	private static final long serialVersionUID = 1L;
 	
-	private ReentrantLock lock;
-	
-	private int entryGroupID, processingGroupID;
-	private int inputGroupID, inputDataID, inputErrorsID;
-	
-	public NcdProcessingObject(int entryGroupID, int processingGroupID, int inputGroupID, int inputDataID, int inputErrorsID, ReentrantLock lock) {
+	private static final String ENTRY_GROUP_ID = "entryGroupID";
+	private static final String PROCESSING_GROUP_ID = "processingGroupID";
+	private static final String INPUT_GROUP_ID = "inputGroupID";
+	private static final String INPUT_DATA_ID = "inputDataID";
+	private static final String INPUT_ERRORS_ID = "inputErrorsID";
+	private static final String LOCK = "lock";
+
+	public NcdProcessingObject(int entryGroupID, int processingGroupID, int inputGroupID, int inputDataID,
+			int inputErrorsID, ReentrantLock lock) {
 		super();
-		this.entryGroupID = entryGroupID;
-		this.processingGroupID = processingGroupID;
-		this.inputGroupID = inputGroupID;
-		this.inputDataID = inputDataID;
-		this.inputErrorsID = inputErrorsID;
-		this.lock = lock;
-	}
-	
-	public ReentrantLock getLock() {
-		return lock;
-	}
-	
-	public void setLock(ReentrantLock lock) {
-		this.lock = lock;
+
+		setEntryGroupID(entryGroupID);
+		setProcessingGroupID(processingGroupID);
+		setInputGroupID(inputGroupID);
+		setInputDataID(inputDataID);
+		setInputErrorsID(inputErrorsID);
+		setLock(lock);
 	}
 
 	public int getEntryGroupID() {
-		return entryGroupID;
+		Object obj = getUserObject(ENTRY_GROUP_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setEntryGroupID(int entryGroupID) {
+		addUserObject(ENTRY_GROUP_ID, entryGroupID);
 	}
 
 	public int getProcessingGroupID() {
-		return processingGroupID;
+		Object obj = getUserObject(PROCESSING_GROUP_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setProcessingGroupID(int processingGroupID) {
+		addUserObject(PROCESSING_GROUP_ID, processingGroupID);
 	}
 
 	public int getInputGroupID() {
-		return inputGroupID;
+		Object obj = getUserObject(INPUT_GROUP_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setInputGroupID(int inputGroupID) {
+		addUserObject(INPUT_GROUP_ID, inputGroupID);
 	}
 
 	public int getInputDataID() {
-		return inputDataID;
+		Object obj = getUserObject(INPUT_DATA_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setInputDataID(int inputDataID) {
+		addUserObject(INPUT_DATA_ID, inputDataID);
 	}
 
 	public int getInputErrorsID() {
-		return inputErrorsID;
+		Object obj = getUserObject(INPUT_ERRORS_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
 	}
-	
+
+	public void setInputErrorsID(int inputErrorsID) {
+		addUserObject(INPUT_ERRORS_ID, inputErrorsID);
+	}
+
+	public ReentrantLock getLock() {
+		Object obj = getUserObject(LOCK);
+		if (obj instanceof ReentrantLock) {
+			return (ReentrantLock) obj;
+		}
+		return null;
+	}
+
+	public void setLock(ReentrantLock lock) {
+		addUserObject(LOCK, lock);
+	}
+
 }

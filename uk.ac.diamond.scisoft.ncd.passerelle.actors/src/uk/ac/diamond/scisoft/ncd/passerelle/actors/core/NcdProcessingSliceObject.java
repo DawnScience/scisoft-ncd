@@ -18,53 +18,76 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import java.util.concurrent.locks.ReentrantLock;
 
+import org.dawb.passerelle.common.message.DataMessageComponent;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
 
-public class NcdProcessingSliceObject {
+public class NcdProcessingSliceObject extends DataMessageComponent {
+
+	private static final long serialVersionUID = 1L;
 	
-	private AbstractDataset data;
-	private AbstractDataset axis;
-	private SliceSettings sliceData;
-	private ReentrantLock lock;
-	
-	public NcdProcessingSliceObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData, ReentrantLock lock) {
-		this.data = data;
-		this.axis = axis;
-		this.sliceData = sliceData;
-		this.lock = lock;
+	private static final String DATA = "data";
+	private static final String AXIS = "axis";
+	private static final String SLICE = "slice";
+	private static final String LOCK = "lock";
+
+	public NcdProcessingSliceObject(AbstractDataset data, AbstractDataset axis, SliceSettings sliceData,
+			ReentrantLock lock) {
+		super();
+
+		setData(data);
+		setAxis(axis);
+		setSliceData(sliceData);
+		setLock(lock);
 	}
-	
+
 	public AbstractDataset getData() {
-		return data;
+		Object obj = getList(DATA);
+		if (obj instanceof AbstractDataset) {
+			return (AbstractDataset) obj;
+		}
+		return null;
 	}
-	
+
 	public void setData(AbstractDataset data) {
-		this.data = data;
+		addList(DATA, data);
 	}
-	
+
 	public AbstractDataset getAxis() {
-		return axis;
+		Object obj = getList(AXIS);
+		if (obj instanceof AbstractDataset) {
+			return (AbstractDataset) obj;
+		}
+		return null;
 	}
 
 	public void setAxis(AbstractDataset axis) {
-		this.axis = axis;
+		addList(AXIS, axis);
 	}
 
 	public SliceSettings getSliceData() {
-		return sliceData;
+		Object obj = getUserObject(SLICE);
+		if (obj instanceof SliceSettings) {
+			return (SliceSettings) obj;
+		}
+		return null;
 	}
-	
+
 	public void setSliceData(SliceSettings sliceData) {
-		this.sliceData = sliceData;
+		addUserObject(SLICE, sliceData);
 	}
-	
+
 	public ReentrantLock getLock() {
-		return lock;
+		Object obj = getUserObject(LOCK);
+		if (obj instanceof ReentrantLock) {
+			return (ReentrantLock) obj;
+		}
+		return null;
 	}
-	
+
 	public void setLock(ReentrantLock lock) {
-		this.lock = lock;
+		addUserObject(LOCK, lock);
 	}
-	
+
 }
