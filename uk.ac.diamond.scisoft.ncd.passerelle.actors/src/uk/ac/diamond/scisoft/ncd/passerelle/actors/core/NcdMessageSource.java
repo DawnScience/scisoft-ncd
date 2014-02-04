@@ -73,8 +73,11 @@ public class NcdMessageSource extends Source {
 			Object obj = ((ObjectToken) lockParam.getToken()).getValue();
 			if (obj instanceof ReentrantLock) {
 				lock = (ReentrantLock) obj;
+			} else {
+				throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Invalid lock object", this, null);
 			}
 			
+			lock.lock();
 			int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 			int entryGroupID = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 			int detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
@@ -92,18 +95,20 @@ public class NcdMessageSource extends Source {
 			dataMsg = createMessage(msg, "application/octet-stream");
 		} catch (IllegalActionException e) {
 			messageSent = false;
-			throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} catch (HDF5LibraryException e) {
 			messageSent = false;
-			throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} catch (HDF5Exception e) {
 			messageSent = false;
-			throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} catch (MessageException e) {
 			messageSent = false;
-			throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} finally {
-			
+			if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+				lock.unlock();
+			}
 		}
 		messageSent = true;
 		return dataMsg;

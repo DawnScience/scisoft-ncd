@@ -36,6 +36,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -71,13 +72,15 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 
 	private long[] bgFrames;
 
+	private boolean hasBgErrors;
+
 	public NcdBackgroundSubtractionForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
 		bgInput = PortFactory.getInstance().createInputPort(this, "bgInput", PortMode.PULL, NcdProcessingObject.class);
 		
-		dataName = "Background Subtraction";
+		dataName = "BackgroundSubtraction";
 
 		bgScalingParam = new Parameter(this, "bgScalingParam", new DoubleToken());
 	}
@@ -111,6 +114,17 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		bgDetectorGroupID = receivedObject.getInputGroupID();
 		bgDataID = receivedObject.getInputDataID();
 		bgErrorsID = receivedObject.getInputErrorsID();
+		hasBgErrors = false;
+		if (bgErrorsID > 0) {
+			try {
+				final int type = H5.H5Iget_type(bgErrorsID);
+				if (type != HDF5Constants.H5I_BADID) {
+					hasBgErrors = true;
+				}
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Background error values dataset wasn't found");
+			}
+		}
 	}
 
 	@Override
@@ -193,12 +207,14 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 
 				SliceSettings bgSliceData = new SliceSettings(bgFrames, bgFrames.length - dimension - 1, 1);
 				
-				int[] bgPos = new int[pos.length];
-				for (int i = 0; i < pos.length; i++) {
-					if (bgFrames[i] > 1) {
-						bgPos[i] = pos[i];
+				// Account for mismatch in rank of input and background data
+				int[] bgPos = new int[bgFrames.length - dimension];
+				for (int i = bgPos.length - 1; i >= 0; i--) {
+					int j = i + pos.length - bgPos.length;
+					if (j < 0) {
+						bgPos[i] = 0;
 					} else {
-						bgPos[i] = 1;
+						bgPos[i] = (bgFrames[i] > 1 ? pos[j] : 0);
 					}
 				}
 				
@@ -210,29 +226,24 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				
 				lock.lock();
 				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceData, bgIDs);
-				if (hasErrors) {
+				if (hasBgErrors) {
 					DataSliceIdentifiers bgErrorsIDs = new DataSliceIdentifiers();
 					bgErrorsIDs.setIDs(bgDetectorGroupID, bgErrorsID);
 					AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceData, bgErrorsIDs);
 					bgData.setError(bgErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
-					DoubleDataset bgErrorsBuffer = new DoubleDataset(bgData);
-					bgData.setErrorBuffer(bgErrorsBuffer);
+					DoubleDataset bgErrors = (DoubleDataset) DatasetUtils.cast(bgData.clone(), AbstractDataset.FLOAT64);
+					bgData.setErrorBuffer(bgErrors);
 				}
 				lock.unlock();
 				
 				if (bgScaling != null) {
 					bgData.imultiply(bgScaling);
-					Serializable bgErrorBuffer = bgData.getErrorBuffer();
-					if (bgErrorBuffer instanceof AbstractDataset) {
-						DoubleDataset bgError = new DoubleDataset((AbstractDataset) bgErrorBuffer);
-						bgError.imultiply(bgScaling * bgScaling);
-						bgData.setErrorBuffer(bgError);
-					}
+					AbstractDataset bgErrors = ((AbstractDataset) bgData.getErrorBuffer()).clone();
+					bgErrors.imultiply(bgScaling * bgScaling);
+					bgData.setErrorBuffer(bgErrors);
 				}
-
-				int[] dataShape = inputData.getShape();
 
 				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(),
@@ -248,7 +259,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				float[] mydata = (float[]) myobj[0];
 				double[] myerror = (double[]) myobj[1];
 
-				AbstractDataset myres = new FloatDataset(mydata, dataShape);
+				AbstractDataset myres = new FloatDataset(mydata, inputData.getShape());
 				myres.setErrorBuffer(myerror);
 
 
@@ -267,30 +278,32 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				Arrays.fill(count, 1);
 
 				lock.lock();
-				filespaceID = H5.H5Dget_space(inputDataID);
-				typeID = H5.H5Dget_type(inputDataID);
+				filespaceID = H5.H5Dget_space(resultDataID);
+				typeID = H5.H5Dget_type(resultDataID);
 				memspaceID = H5.H5Screate_simple(block.length, block, null);
 				selectID = H5
 						.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				if (selectID < 0) {
 					throw new HDF5Exception("Failed to allocate space for writing BackgroundSubtraction data");
 				}
-				writeID = H5.H5Dwrite(inputDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT,
+				writeID = H5.H5Dwrite(resultDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT,
 						myres.getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write BackgroundSubtraction data into the results file");
 				}
 
-				filespaceID = H5.H5Dget_space(inputErrorsID);
-				filespaceID = H5.H5Dget_type(inputErrorsID);
+				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+				
+				filespaceID = H5.H5Dget_space(resultErrorsID);
+				typeID = H5.H5Dget_type(resultErrorsID);
 				memspaceID = H5.H5Screate_simple(block.length, block, null);
 				selectID = H5
 						.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				if (selectID < 0) {
 					throw new HDF5Exception("Failed to allocate space for writing BackgroundSubtraction error data");
 				}
-				writeID = H5.H5Dwrite(inputErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
-						.getError().getBuffer());
+				writeID = H5.H5Dwrite(resultErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT,
+						myres.getError().getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write BackgroundSubtraction error data into the results file");
 				}
