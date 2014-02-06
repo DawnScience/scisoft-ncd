@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.utils;
+package uk.ac.diamond.scisoft.ncd.core.utils;
 
 import java.util.ArrayList;
 import java.util.Arrays;

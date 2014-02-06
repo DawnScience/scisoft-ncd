@@ -30,8 +30,8 @@ import org.apache.commons.beanutils.ConvertUtils;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 

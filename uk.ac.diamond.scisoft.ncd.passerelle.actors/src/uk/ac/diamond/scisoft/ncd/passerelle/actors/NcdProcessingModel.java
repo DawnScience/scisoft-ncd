@@ -52,7 +52,6 @@ import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
@@ -62,8 +61,9 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoin
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public class NcdProcessingModel {
 
@@ -135,8 +135,8 @@ public class NcdProcessingModel {
 		flags = new NcdReductionFlags();
 		absScaling = 1.0;
 		
-		gridAverage = "";
-		bgGridAverage = "";
+		//gridAverage = "";
+		//bgGridAverage = "";
 		enableBgAverage = false;
 		
 	}

@@ -54,11 +54,11 @@ import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.SectorIntegration;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.core.ErrorCode;
@@ -117,7 +117,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		try {
 			IROI objSector = sectorROIParam.getRoi();
 			if (objSector instanceof SectorROI) {
-				intSector = (SectorROI) objSector;
+				intSector = ((SectorROI) objSector).copy();
+				intSector.setClippingCompensation(true);
+				intSector.setAverageArea(false);
 			} else {
 				throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR,
 						"Invalid sector region parameter", this, null);

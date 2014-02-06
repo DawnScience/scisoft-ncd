@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd;
+package uk.ac.diamond.scisoft.ncd.core;
 
 import java.io.Serializable;
 import java.util.Arrays;

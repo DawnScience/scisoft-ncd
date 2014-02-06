@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.preferences;
+package uk.ac.diamond.scisoft.ncd.core.preferences;
 
 public class NcdReductionFlags {
 

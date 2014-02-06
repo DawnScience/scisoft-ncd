@@ -25,7 +25,6 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
 import junit.framework.Assert;
-
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -43,11 +42,12 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.rcp.utils.NcdNexusUtilsTest;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyAverage;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyBackgroundSubtraction;
@@ -56,7 +56,6 @@ import uk.ac.diamond.scisoft.ncd.reduction.LazyInvariant;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyNormalisation;
 import uk.ac.diamond.scisoft.ncd.reduction.LazySectorIntegration;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class LazyNcdProcessingTest {
 

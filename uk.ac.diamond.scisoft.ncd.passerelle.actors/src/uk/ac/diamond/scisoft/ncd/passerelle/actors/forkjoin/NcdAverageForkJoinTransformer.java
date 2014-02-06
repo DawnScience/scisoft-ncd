@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Diamond Light Source Ltd.
+ * Copyright 2014 Diamond Light Source L"td.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,10 +35,10 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.core.ErrorCode;
@@ -121,7 +121,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 	protected long[] getResultDataShape() {
 		// Calculate shape of the averaged dataset based on the dimensions selected for averaging
 		averageIndices = new int[] {frames.length - dimension};
-		if (gridAverage != null) {
+		if (gridAverage != null && !gridAverage.equals("")) {
 			averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dimension + 1);
 		}
 		
