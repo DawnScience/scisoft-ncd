@@ -61,6 +61,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseF
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
@@ -82,6 +83,9 @@ public class NcdProcessingModel {
 	
 	private NcdReductionFlags flags;
 	private Double absScaling;
+	private Integer firstFrame;
+	private Integer lastFrame;
+	private String frameSelection;
 	
 	private String gridAverage, bgGridAverage;
 	private boolean enableBgAverage;
@@ -121,7 +125,10 @@ public class NcdProcessingModel {
 		energy = Amount.valueOf(0, Energy.UNIT);
 		mask = new BooleanDataset();
 		drData = new FloatDataset();
-
+		firstFrame = null;
+		lastFrame = null;
+		frameSelection = null;
+		
 		crb = new CalibrationResultsBean();
 		
 		flags = new NcdReductionFlags();
@@ -175,6 +182,18 @@ public class NcdProcessingModel {
 
 	public void setFlags(NcdReductionFlags flags) {
 		this.flags = new NcdReductionFlags(flags);
+	}
+
+	public void setFirstFrame(Integer firstFrame) {
+		this.firstFrame = firstFrame;
+	}
+
+	public void setLastFrame(Integer lastFrame) {
+		this.lastFrame = lastFrame;
+	}
+
+	public void setFrameSelection(String frameSelection) {
+		this.frameSelection = frameSelection;
 	}
 
 	public void setGridAverageSelection(String gridAverage) {
@@ -271,6 +290,19 @@ public class NcdProcessingModel {
 			cameraLength = crb.getMeanCameraLength(detector);
 		}
 		
+		if (firstFrame != null || lastFrame != null) {
+			long[] frames = readDataShape(detector, filename);
+			frameSelection = StringUtils.leftPad("", frames.length - dimension - 1, ";");
+			if (firstFrame != null) {
+				frameSelection += Integer.toString(firstFrame);
+			}
+			frameSelection += "-";
+			if (lastFrame != null) {
+				frameSelection += Integer.toString(lastFrame);
+			}
+			frameSelection += ";";
+		}
+		
 		if (flags.isEnableDetectorResponse()) {
 			int drEntryGroupID = -1;
 			int drInstrumentGroupID = -1;
@@ -343,6 +375,8 @@ public class NcdProcessingModel {
 			configure(detectorName, dimension, filename);
 
 			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
+			NcdSelectionForkJoinTransformer selection = new NcdSelectionForkJoinTransformer(flow,
+					"Selection");
 			NcdDetectorResponseForkJoinTransformer detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow,
 					"DetectorResponse");
 			NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(
@@ -355,7 +389,8 @@ public class NcdProcessingModel {
 			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
 			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
-			flow.connect(source.output, detectorResponse.input);
+			flow.connect(source.output, selection.input);
+			flow.connect(selection.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
 			flow.connect(sectorIntegration.output, normalisation.input);
 			flow.connect(normalisation.output, backgroundSubtraction.input);
@@ -380,8 +415,13 @@ public class NcdProcessingModel {
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detectorName);
 			
-			props.put("MessageSink.detectorParam", detectorName);
-
+			props.put("Selection.enable", Boolean.toString(frameSelection != null));
+			props.put("Selection.dimensionParam", Integer.toString(dimension));
+			props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
+			
+			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
+			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
+			
 			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
 			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
 			
@@ -411,6 +451,8 @@ public class NcdProcessingModel {
 			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
 			props.put("Average.dimensionParam", Integer.toString(dimension));
 			props.put("Average.gridAverageParam", gridAverage);
+
+			props.put("MessageSink.detectorParam", detectorName);
 
 			if (flags.isEnableBackground()) {
 				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");

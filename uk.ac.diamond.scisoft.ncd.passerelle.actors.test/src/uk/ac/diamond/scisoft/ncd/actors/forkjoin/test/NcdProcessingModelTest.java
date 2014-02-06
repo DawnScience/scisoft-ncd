@@ -66,10 +66,10 @@ public class NcdProcessingModelTest {
 	private static String testScratchDirectoryName;
 	private static Integer firstFrame = 60;
 	private static Integer lastFrame = 70;
-	//private static String frameSelection = "0;60-70";
-	//private static Integer bgFirstFrame = 5;
-	//private static Integer bgLastFrame = 5;
-	//private static String bgFrameSelection = "0;" + bgFirstFrame.toString() + "-" + bgLastFrame.toString();
+	private static String frameSelection = "0;60-70";
+	private static Integer bgFirstFrame = 5;
+	private static Integer bgLastFrame = 5;
+	private static String bgFrameSelection = "0;" + bgFirstFrame.toString() + "-" + bgLastFrame.toString();
 	
 	private static AbstractDataset dr;
 	
@@ -142,8 +142,8 @@ public class NcdProcessingModelTest {
 		testClass.setDrFile(drFile);
 		testClass.setAbsScaling(absScaling);
 		testClass.setBgScaling(bgScaling);
-		//testClass.setFirstFrame(firstFrame);
-		//testClass.setLastFrame(lastFrame);
+		testClass.setFirstFrame(firstFrame);
+		testClass.setLastFrame(lastFrame);
 		testClass.setCalibration(calibration);
 		testClass.setNormChannel(normChannel);
 		testClass.setCrb(crb);
@@ -156,9 +156,9 @@ public class NcdProcessingModelTest {
 		testbgClass = new NcdProcessingModel();
 		testbgClass.setDrFile(drFile);
 		testbgClass.setAbsScaling(absScaling);
-		//testbgClass.setFirstFrame(bgFirstFrame);
-		//testbgClass.setLastFrame(bgLastFrame);
-		//testbgClass.setFrameSelection(bgFrameSelection);
+		testbgClass.setFirstFrame(bgFirstFrame);
+		testbgClass.setLastFrame(bgLastFrame);
+		testbgClass.setFrameSelection(bgFrameSelection);
 		testbgClass.setCalibration(calibration);
 		testbgClass.setNormChannel(normChannel);
 		testbgClass.setCrb(crb);
