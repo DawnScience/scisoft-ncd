@@ -27,11 +27,13 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
+import org.dawb.common.services.IPersistenceService;
+import org.dawb.common.services.ServiceManager;
+import org.dawnsci.persistence.PersistenceServiceCreator;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import ptolemy.data.ObjectToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -83,6 +85,10 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 
 	@BeforeClass
 	public static void setUp() throws Exception {
+		
+		// This is required for ROIParameter class to work		
+		ServiceManager.setService(IPersistenceService.class, PersistenceServiceCreator.createPersistenceService());		
+		
 		flow = new Flow("unit test", null);
 		flowMgr = new FlowManager();
 		ETDirector director = new ETDirector(flow, "director");
@@ -316,7 +322,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		intSector.setClippingCompensation(true);
 		intSector.setAverageArea(false);
 
-		sectorIntegration.sectorROIParam.setToken(new ObjectToken(intSector));
+		sectorIntegration.sectorROIParam.setRoi(intSector);
 		
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("SectorIntegration.enable", Boolean.toString(true));

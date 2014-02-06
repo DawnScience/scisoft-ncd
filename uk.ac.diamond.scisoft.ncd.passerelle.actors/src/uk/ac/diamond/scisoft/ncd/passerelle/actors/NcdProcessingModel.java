@@ -67,6 +67,7 @@ import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
 public class NcdProcessingModel {
 
+	private boolean enableMask;
 	private int normChannel;
 	private Double bgScaling;
 	private String  bgFile, drFile;
@@ -170,6 +171,10 @@ public class NcdProcessingModel {
 
 	public void setIntSector(SectorROI intSector) {
 		this.intSector = intSector;
+	}
+
+	public void setEnableMask(boolean enableMask) {
+		this.enableMask = enableMask;
 	}
 
 	public void setMask(BooleanDataset mask) {
@@ -403,12 +408,14 @@ public class NcdProcessingModel {
 			
 			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
 
-			sectorIntegration.sectorROIParam.setToken(new ObjectToken(intSector));
+			sectorIntegration.sectorROIParam.setRoi(intSector);
 			sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
 			sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
 			sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
 			sectorIntegration.energyParam.setToken(new ObjectToken(energy));
-			sectorIntegration.maskParam.setToken(new ObjectToken(mask));
+			if (enableMask) {
+				sectorIntegration.maskParam.setToken(new ObjectToken(mask));
+			}
 
 			Map<String, String> props = new HashMap<String, String>();
 

@@ -36,6 +36,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.dawb.hdf5.Nexus;
+import org.dawb.passerelle.common.parameter.roi.ROIParameter;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.BooleanToken;
@@ -50,6 +51,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
+import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.SectorIntegration;
@@ -84,8 +86,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	private boolean doFast = false;
 
 	public Parameter gradientParam, interceptParam, cameraLengthParam, energyParam;
-	public Parameter sectorROIParam, maskParam, doRadialParam, doAzimuthalParam, doFastParam;
-
+	public Parameter maskParam, doRadialParam, doAzimuthalParam, doFastParam;
+	public ROIParameter sectorROIParam;
+	
 	private int azimuthalDataID, azimuthalErrorsID;
 
 	public NcdSectorIntegrationForkJoinTransformer(CompositeEntity container, String name)
@@ -94,7 +97,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 		dataName = "SectorIntegration";
 
-		sectorROIParam = new Parameter(this, "sectorROIParam", new ObjectToken());
+		sectorROIParam = new ROIParameter(this, "sectorROIParam");
 		maskParam = new Parameter(this, "maskParam", new ObjectToken());
 		doRadialParam = new Parameter(this, "doRadialParam", new BooleanToken(true));
 		doAzimuthalParam = new Parameter(this, "doAzimuthalParam", new BooleanToken(true));
@@ -108,10 +111,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 	@Override
 	protected void doInitialize() throws InitializationException {
+		
 		super.doInitialize();
-		try {
 
-			Object objSector = ((ObjectToken) sectorROIParam.getToken()).getValue();
+		try {
+			IROI objSector = sectorROIParam.getRoi();
 			if (objSector instanceof SectorROI) {
 				intSector = (SectorROI) objSector;
 			} else {
@@ -120,7 +124,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			}
 
 			Object objMask = ((ObjectToken) maskParam.getToken()).getValue();
-			if (mask != null) {
+			if (objMask != null) {
 				if (objMask instanceof AbstractDataset) {
 					mask = (AbstractDataset) objMask;
 				} else {
