@@ -83,9 +83,10 @@ public class NcdMessageSource extends Source {
 			int detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
 			int inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
 			int inputErrorsID = -1;
-			try {
+			boolean hasErrors = H5.H5Lexists(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
+			if (hasErrors) {
 				inputErrorsID = H5.H5Dopen(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
-			} catch (HDF5LibraryException e) {
+			} else {
 				getLogger().info("Input dataset with error estimates wasn't found");
 			}
 			int processingGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_processing", Nexus.INST);
