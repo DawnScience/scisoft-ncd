@@ -62,7 +62,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "Detector Response";
+		dataName = "DetectorResponse";
 
 		detectorResponseParam = new Parameter(this, "detectorResponseParam", new ObjectToken());
 	}
