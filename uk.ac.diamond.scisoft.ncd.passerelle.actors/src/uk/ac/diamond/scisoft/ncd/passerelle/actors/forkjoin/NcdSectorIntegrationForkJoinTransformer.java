@@ -187,30 +187,28 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		azimuthalErrorsID = NcdNexusUtils.makedata(resultGroupID, "azimuth_errors", typeDouble, azFrames, false,
 				"counts");
 
-		int[] areaShape = (int[]) ConvertUtils.convert(
-				Arrays.copyOfRange(frames, frames.length - dimension, frames.length), int[].class);
-		areaData = ROIProfile.area(areaShape, AbstractDataset.FLOAT32, mask, intSector, doRadial, doAzimuthal, doFast);
 	}
 
 	@Override
 	protected long[] getResultDataShape() {
-		int[] intRadii = intSector.getIntRadii();
+		int[] areaShape = (int[]) ConvertUtils.convert(
+				Arrays.copyOfRange(frames, frames.length - dimension, frames.length), int[].class);
+		areaData = ROIProfile.area(areaShape, AbstractDataset.FLOAT32, mask, intSector, doRadial, doAzimuthal, doFast);
+		
+		int areaDataRank = areaData[0].getRank();
+		int[] areaDataShape = areaData[0].getShape();
 		int secRank = frames.length - dimension + 1;
 		long[] secFrames = Arrays.copyOf(frames, secRank);
-		secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
+		secFrames[secRank - 1] = areaDataShape[areaDataRank - 1];
 		return secFrames;
 	}
 
 	private long[] getAzimuthalDataShape() {
-		double[] angles = intSector.getAngles();
-		double[] radii = intSector.getRadii();
-		double dpp = intSector.getDpp();
-		int secRank = frames.length - dimension + 1;
-		long[] azFrames = Arrays.copyOf(frames, secRank);
-		if (intSector.getSymmetry() == SectorROI.FULL) {
-			angles[1] = angles[0] + 2 * Math.PI;
-		}
-		azFrames[secRank - 1] = (int) Math.ceil((angles[1] - angles[0]) * radii[1] * dpp);
+		int areaDataRank = areaData[1].getRank();
+		int[] areaDataShape = areaData[1].getShape();
+		int azRank = frames.length - dimension + 1;
+		long[] azFrames = Arrays.copyOf(frames, azRank);
+		azFrames[azRank - 1] = areaDataShape[areaDataRank - 1];
 		return azFrames;
 	}
 
@@ -303,6 +301,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				sec.setCalculateRadial(doRadial);
 				sec.setCalculateAzimuthal(doAzimuthal);
 				sec.setFast(doFast);
+				
+				// We need this shape parameter to restore all relevant dimensions
+				// in the integrated sector results dataset shape
 				int[] dataShape = inputData.getShape();
 
 				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
@@ -375,21 +376,29 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
 			throws HDF5Exception {
-		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
-		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
 
-		int resLength = dataShape.length - dim + 1;
+		int resRank = dataShape.length - dim + 1;
 		int integralLength = data.getShape()[data.getRank() - 1];
 
-		long[] res_start = Arrays.copyOf(dataIDs.start, resLength);
-		long[] res_count = Arrays.copyOf(dataIDs.count, resLength);
-		long[] res_block = Arrays.copyOf(dataIDs.block, resLength);
-		res_block[resLength - 1] = integralLength;
+		long[] resStart = Arrays.copyOf(dataIDs.start, resRank);
+		long[] resCount = Arrays.copyOf(dataIDs.count, resRank);
+		long[] resBlock = Arrays.copyOf(dataIDs.block, resRank);
+		resBlock[resRank - 1] = integralLength;
 
-		int memspace_id = H5.H5Screate_simple(resLength, res_block, null);
-		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, res_start, res_block, res_count, res_block);
-
-		H5.H5Dwrite(dataIDs.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data.getBuffer());
+		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
+		if (selectID < 0) {
+			throw new HDF5Exception("Error allocating space for writing sector integration results");
+		}
+		int writeID = H5.H5Dwrite(dataIDs.dataset_id, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, data.getBuffer());
+		if (writeID < 0) {
+			throw new HDF5Exception("Error writing sector integration results");
+		}
+		H5.H5Sclose(filespaceID);
+		H5.H5Sclose(memspaceID);
+		H5.H5Tclose(typeID);
 	}
 	
 	@Override
