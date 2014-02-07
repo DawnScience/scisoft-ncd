@@ -21,7 +21,6 @@ import java.text.NumberFormat;
 import java.util.Iterator;
 import java.util.Map;
 
-import org.csstudio.swt.xygraph.undo.ZoomType;
 import org.dawnsci.algorithm.ui.views.runner.AbstractAlgorithmProcessPage;
 import org.dawnsci.algorithm.ui.views.runner.IAlgorithmProcessContext;
 import org.dawnsci.common.widgets.content.FileContentProposalProvider;
@@ -608,9 +607,8 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 				PlotType.XY,
 				null);
 
-		qIntensityPlot.getPlotActionSystem().fillZoomActions(man);
+		//qIntensityPlot.getPlotActionSystem().fillZoomActions(man);
 		qIntensityPlot.getPlotActionSystem().fillPrintActions(man);
-		removeZoomTypeIcons(man);
 		
 		plotScrollComposite.setMinHeight(400);
 		plotScrollComposite.setExpandHorizontal(true);
@@ -888,14 +886,6 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		plotScrollComposite.setMinWidth(scrolledComposite.computeSize(SWT.DEFAULT, SWT.DEFAULT).x);
 
 		return parent;
-	}
-
-	private void removeZoomTypeIcons(ToolBarManager man) {
-		ZoomType[] z = ZoomType.values();
-		for (ZoomType zoomTypeName : z) {
-			man.remove(zoomTypeName.getId());
-		}
-		man.update(true);
 	}
 
 	private ISelectionListener selectionListener = new ISelectionListener() {
