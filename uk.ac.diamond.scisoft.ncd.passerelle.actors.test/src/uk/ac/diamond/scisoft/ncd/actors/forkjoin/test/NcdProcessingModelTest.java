@@ -22,7 +22,9 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -40,6 +42,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
@@ -65,7 +69,6 @@ public class NcdProcessingModelTest {
 	private static Double bgScaling = 0.1;
 	private static Double absScaling = 1.0;
 	private static int normChannel = 1;
-	private static CalibrationResultsBean crb = null;
 	private static String drFile;
 	private static boolean enableMask = false;
 	private static NcdReductionFlags flags;
@@ -96,6 +99,19 @@ public class NcdProcessingModelTest {
 	private static long[] framesCal = new long[] {1, 120, 9};
 	private static long[] framesResult = new long[] {1, lastFrame - firstFrame + 1, 512, 512};
 	private static long[] framesSec, framesSecAz, framesAve, framesBg, framesInv;
+	
+	private static Unit<ScatteringVector> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+	private static Amount<ScatteringVectorOverDistance> gradient = Amount.valueOf(0.1,
+			axisUnit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+	private static Amount<ScatteringVector> intercept = Amount.valueOf(0.2, axisUnit);
+	private static Amount<Length> meanCameraLength = Amount.valueOf(3.5, SI.METER);
+
+	private static CalibrationResultsBean crb = new CalibrationResultsBean(detector,
+			gradient,
+			intercept,
+			null,
+			meanCameraLength,
+			axisUnit.inverse().asType(Length.class));
 	
 	@BeforeClass
 	public static void setUp() throws Exception {
@@ -172,7 +188,8 @@ public class NcdProcessingModelTest {
 		testClass.setFlags(flags);
 		testClass.setIntSector(intSector);
 		testClass.setMask(mask);
-		//testClass.setNcdDetectors(ncdDetectors);
+		testClass.setPxSize(pxSaxs);
+		testClass.setUnit(NonSI.ANGSTROM);
 
 		testbgClass = new NcdProcessingModel();
 		testbgClass.setDrFile(drFile);
@@ -191,8 +208,8 @@ public class NcdProcessingModelTest {
 		
 		testbgClass.setIntSector(intSector);
 		testbgClass.setMask(mask);
-		
-		//testbgClass.setNcdDetectors(ncdDetectors);
+		testbgClass.setPxSize(pxSaxs);
+		testbgClass.setUnit(NonSI.ANGSTROM);
 		
 	    DataSliceIdentifiers dr_id = readDataId(drFile, detector, "data", null)[0];
 	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);

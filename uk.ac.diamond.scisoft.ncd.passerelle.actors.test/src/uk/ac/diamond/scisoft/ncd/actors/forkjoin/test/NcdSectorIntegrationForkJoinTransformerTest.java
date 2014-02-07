@@ -22,6 +22,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReentrantLock;
 
+import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -30,14 +35,18 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.dawb.common.services.IPersistenceService;
 import org.dawb.common.services.ServiceManager;
 import org.dawnsci.persistence.PersistenceServiceCreator;
+import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ptolemy.data.ObjectToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
@@ -45,12 +54,12 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Sink;
-import com.isencia.passerelle.actor.Source;
 import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.core.PasserelleException;
 import com.isencia.passerelle.domain.et.ETDirector;
@@ -79,6 +88,12 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
 	private static int dim = 2;
 	private static int points = 1;
+	
+	private Unit<ScatteringVector> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+	private Amount<Length> pxSize = Amount.valueOf(0.172, SI.MILLIMETER);
+	private Amount<ScatteringVectorOverDistance> gradient = Amount.valueOf(0.1,
+			axisUnit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+	private Amount<ScatteringVector> intercept = Amount.valueOf(0.2, axisUnit);
 
 	private static Flow flow;
 	private static FlowManager flowMgr;
@@ -181,45 +196,6 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		data.setError(error);
 	}
 
-	private class NcdMessageSource extends Source {
-
-		private static final long serialVersionUID = -6462158669206987591L;
-
-		private boolean messageSent;
-
-		public NcdMessageSource(CompositeEntity container, String name) throws NameDuplicationException,
-				IllegalActionException {
-			super(container, name);
-			messageSent = false;
-		}
-
-		@Override
-		protected ManagedMessage getMessage() throws ProcessingException {
-			ManagedMessage dataMsg = null;
-			if (messageSent) {
-				return null;
-			}
-			try {
-				int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-				int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-				int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-				int detector_group_id = H5.H5Gopen(entry_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
-				int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-				int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
-
-				NcdProcessingObject obj = new NcdProcessingObject(entry_id, processing_group_id, detector_group_id, input_data_id, input_errors_id, lock);
-
-				dataMsg = createMessage(obj, "application/octet-stream");
-			} catch (Exception e) {
-				messageSent = false;
-				throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
-			}
-			messageSent = true;
-			return dataMsg;
-		}
-
-	}
-
 	private class NcdMessageSink extends Sink {
 
 		private static final long serialVersionUID = 79096075353029810L;
@@ -320,9 +296,16 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		
 		intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
 
+		source.lockParam.setToken(new ObjectToken(lock));
 		sectorIntegration.sectorROIParam.setRoi(intSector);
+		sectorIntegration.gradientParam.setToken(new ObjectToken(gradient));
+		sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
+		sectorIntegration.pxSizeParam.setToken(new ObjectToken(pxSize));
+		sectorIntegration.axisUnitParam.setToken(new ObjectToken(axisUnit));
 		
 		Map<String, String> props = new HashMap<String, String>();
+		props.put("MessageSource.filenameParam", filename);
+		props.put("MessageSource.detectorParam", testDatasetName);
 		props.put("SectorIntegration.enable", Boolean.toString(true));
 		props.put("SectorIntegration.dimensionParam", Integer.toString(dim));
 		props.put("SectorIntegration.doRadialParam", Boolean.toString(true));

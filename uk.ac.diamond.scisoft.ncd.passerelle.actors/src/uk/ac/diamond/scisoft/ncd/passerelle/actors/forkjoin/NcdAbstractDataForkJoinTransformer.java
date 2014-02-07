@@ -71,8 +71,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	protected int dimension;
 	protected long[] frames;
 	protected int entryGroupID, processingGroupID;
-	protected int inputGroupID, inputDataID, inputErrorsID;
-	protected int resultGroupID, resultDataID, resultErrorsID;
+	protected int inputGroupID, inputDataID, inputErrorsID, inputAxisDataID, inputAxisErrorsID;
+	protected int resultGroupID, resultDataID, resultErrorsID, resultAxisDataID, resultAxisErrorsID;
 
 	protected RecursiveAction task;
 	
@@ -123,6 +123,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			inputGroupID = receivedObject.getInputGroupID();
 			inputDataID = receivedObject.getInputDataID();
 			inputErrorsID = receivedObject.getInputErrorsID();
+			inputAxisDataID = receivedObject.getInputAxisDataID();
+			inputAxisErrorsID = receivedObject.getInputAxisErrorsID();
 			lock = receivedObject.getLock();
 			
 			readAdditionalPorts(request);
@@ -132,10 +134,21 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			lock.unlock();
 
 			forkJoinPool.invoke(task);
-			writeNcdMetadata(resultGroupID);
+			
+			lock.lock();
+			writeNcdMetadata();
+			lock.unlock();
 			
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
-			NcdProcessingObject obj = new NcdProcessingObject(entryGroupID, processingGroupID, resultGroupID, resultDataID, resultErrorsID, lock);
+			NcdProcessingObject obj = new NcdProcessingObject(
+					entryGroupID,
+					processingGroupID,
+					resultGroupID,
+					resultDataID,
+					resultErrorsID,
+					resultAxisDataID,
+					resultAxisErrorsID,
+					lock);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
@@ -180,11 +193,34 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		return Arrays.copyOf(frames, frames.length);
 	}
 	
-	public void writeNcdMetadata(int datagroupID) throws HDF5LibraryException, HDF5Exception {
+	protected void writeAxisData() throws HDF5Exception {
+		writeAxisDataset(inputAxisDataID);
+		writeAxisDataset(inputAxisErrorsID);
+		resultAxisDataID = inputAxisDataID;
+		resultAxisErrorsID = inputAxisErrorsID;
+	}
+	
+	private void writeAxisDataset(int inputDataset) throws HDF5LibraryException {
+		if (inputDataset > 0) {
+			final int type = H5.H5Iget_type(inputDataset);
+			if (type != HDF5Constants.H5I_BADID) {
+				String[] name = new String[] {""};
+				final long nameSize = H5.H5Iget_name(inputDataset, name, 1L) + 1;
+				H5.H5Iget_name(inputDataset, name, nameSize);
+				String[] nameTree = name[0].split("/");
+				H5.H5Lcreate_hard(inputDataset, "./", resultGroupID, nameTree[nameTree.length -1], HDF5Constants.H5P_DEFAULT,  HDF5Constants.H5P_DEFAULT);
+			}
+		}
+	}
+	
+	protected void writeNcdMetadata() throws HDF5LibraryException, HDF5Exception {
+		
+		writeAxisData();
+		
 		String detType = DetectorTypes.REDUCTION_DETECTOR;
 		int typeID = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(typeID, detType.length());
-		int metadataID = NcdNexusUtils.makedata(datagroupID, "sas_type", typeID, new long[] {1});
+		int metadataID = NcdNexusUtils.makedata(resultGroupID, "sas_type", typeID, new long[] {1});
 		
 		int filespaceID = H5.H5Dget_space(metadataID);
 		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);

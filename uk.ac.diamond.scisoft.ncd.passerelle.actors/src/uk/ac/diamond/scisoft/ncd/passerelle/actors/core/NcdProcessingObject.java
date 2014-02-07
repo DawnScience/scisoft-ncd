@@ -29,10 +29,14 @@ public class NcdProcessingObject extends DataMessageComponent {
 	private static final String INPUT_GROUP_ID = "inputGroupID";
 	private static final String INPUT_DATA_ID = "inputDataID";
 	private static final String INPUT_ERRORS_ID = "inputErrorsID";
+	private static final String INPUT_AXIS_DATA_ID = "inputAxisDataID";
+	private static final String INPUT_AXIS_ERRORS_ID = "inputAxisErrorsID";
 	private static final String LOCK = "lock";
 
-	public NcdProcessingObject(int entryGroupID, int processingGroupID, int inputGroupID, int inputDataID,
-			int inputErrorsID, ReentrantLock lock) {
+	public NcdProcessingObject(int entryGroupID, int processingGroupID,	int inputGroupID,
+			int inputDataID, int inputErrorsID,
+			int inputAxisDataID, int inputAxisErrorsID,
+			ReentrantLock lock) {
 		super();
 
 		setEntryGroupID(entryGroupID);
@@ -40,6 +44,8 @@ public class NcdProcessingObject extends DataMessageComponent {
 		setInputGroupID(inputGroupID);
 		setInputDataID(inputDataID);
 		setInputErrorsID(inputErrorsID);
+		setInputAxisDataID(inputAxisDataID);
+		setInputAxisErrorsID(inputAxisErrorsID);
 		setLock(lock);
 	}
 
@@ -101,6 +107,30 @@ public class NcdProcessingObject extends DataMessageComponent {
 
 	public void setInputErrorsID(int inputErrorsID) {
 		addUserObject(INPUT_ERRORS_ID, inputErrorsID);
+	}
+
+	public int getInputAxisDataID() {
+		Object obj = getUserObject(INPUT_AXIS_DATA_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setInputAxisDataID(int inputAxisDataID) {
+		addUserObject(INPUT_AXIS_DATA_ID, inputAxisDataID);
+	}
+
+	public int getInputAxisErrorsID() {
+		Object obj = getUserObject(INPUT_AXIS_ERRORS_ID);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setInputAxisErrorsID(int inputAxisErrorsID) {
+		addUserObject(INPUT_AXIS_ERRORS_ID, inputAxisErrorsID);
 	}
 
 	public ReentrantLock getLock() {

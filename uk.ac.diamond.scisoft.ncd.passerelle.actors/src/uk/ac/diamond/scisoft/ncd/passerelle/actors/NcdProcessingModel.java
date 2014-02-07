@@ -25,6 +25,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -77,12 +78,15 @@ public class NcdProcessingModel {
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
 	private Amount<Energy> energy;
+	private Amount<Length> pxSize;
+	private Unit<ScatteringVector> qaxisUnit;
 	private BooleanDataset mask;
 	private AbstractDataset drData;
 
 	private CalibrationResultsBean crb;
 	
 	private NcdReductionFlags flags;
+	
 	private Double absScaling;
 	private Integer firstFrame;
 	private Integer lastFrame;
@@ -189,6 +193,10 @@ public class NcdProcessingModel {
 		this.flags = new NcdReductionFlags(flags);
 	}
 
+	public void setPxSize(Amount<Length> pxSize) {
+		this.pxSize = pxSize;
+	}
+
 	public void setFirstFrame(Integer firstFrame) {
 		this.firstFrame = firstFrame;
 	}
@@ -219,6 +227,15 @@ public class NcdProcessingModel {
 
 	public void setEnergy(Amount<Energy> energy) {
 		this.energy = energy;
+	}
+	
+	public void setUnit(Unit<Length> unit) {
+		if (unit == null) {
+			this.qaxisUnit = null;
+			return;
+		}
+		// q-axis units need to be inverse of the linear dimension units
+		this.qaxisUnit = unit.inverse().asType(ScatteringVector.class);
 	}
 	
 	private long[] readDataShape(String detector, String filename) throws HDF5Exception {
@@ -413,6 +430,8 @@ public class NcdProcessingModel {
 			sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
 			sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
 			sectorIntegration.energyParam.setToken(new ObjectToken(energy));
+			sectorIntegration.pxSizeParam.setToken(new ObjectToken(pxSize));
+			sectorIntegration.axisUnitParam.setToken(new ObjectToken(qaxisUnit));
 			if (enableMask) {
 				sectorIntegration.maskParam.setToken(new ObjectToken(mask));
 			}

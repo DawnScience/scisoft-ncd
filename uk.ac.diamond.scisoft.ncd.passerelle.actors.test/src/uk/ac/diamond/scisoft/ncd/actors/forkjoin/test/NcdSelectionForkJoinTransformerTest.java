@@ -35,6 +35,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ptolemy.data.ObjectToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -44,12 +45,12 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Sink;
-import com.isencia.passerelle.actor.Source;
 import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.core.PasserelleException;
 import com.isencia.passerelle.domain.et.ETDirector;
@@ -175,43 +176,6 @@ public class NcdSelectionForkJoinTransformerTest {
 		errors = data.getError(); 
 	}
 
-	private class NcdMessageSource extends Source {
-
-		private boolean messageSent;
-
-		public NcdMessageSource(CompositeEntity container, String name) throws NameDuplicationException,
-				IllegalActionException {
-			super(container, name);
-			messageSent = false;
-		}
-
-		@Override
-		protected ManagedMessage getMessage() throws ProcessingException {
-			ManagedMessage dataMsg = null;
-			if (messageSent) {
-				return null;
-			}
-			try {
-				int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-				int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-				int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
-				int detector_group_id = H5.H5Gopen(entry_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
-				int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-				int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
-
-				NcdProcessingObject obj = new NcdProcessingObject(entry_id, processing_group_id, detector_group_id, input_data_id, input_errors_id, lock);
-
-				dataMsg = createMessage(obj, "application/octet-stream");
-			} catch (Exception e) {
-				messageSent = false;
-				throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Error creating msg", this, e);
-			}
-			messageSent = true;
-			return dataMsg;
-		}
-
-	}
-
 	private class NcdMessageSink extends Sink {
 
 		public NcdMessageSink(CompositeEntity container, String name) throws NameDuplicationException,
@@ -297,8 +261,12 @@ public class NcdSelectionForkJoinTransformerTest {
 		flow.connect(source.output, selection.input);
 		flow.connect(selection.output, sink.input);
 
+		source.lockParam.setToken(new ObjectToken(lock));
+		
 		Map<String, String> props = new HashMap<String, String>();
 
+		props.put("MessageSource.filenameParam", filename);
+		props.put("MessageSource.detectorParam", testDatasetName);
 		props.put("Selection.enable", Boolean.toString(true));
 		props.put("Selection.dimensionParam", Integer.toString(dim));
 		props.put("Selection.formatParam", frameSelection);

@@ -78,8 +78,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
 	private Amount<Energy> energy;
-
-	protected AbstractDataset mask;
+	private Amount<Length> pxSize;
+	private Unit<ScatteringVector> axisUnit;
+	private AbstractDataset mask;
 
 	private boolean doRadial = false;
 	private boolean doAzimuthal = false;
@@ -87,6 +88,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 	public Parameter gradientParam, interceptParam, cameraLengthParam, energyParam;
 	public Parameter maskParam, doRadialParam, doAzimuthalParam, doFastParam;
+	public Parameter axisUnitParam, pxSizeParam;
 	public ROIParameter sectorROIParam;
 	
 	private int azimuthalDataID, azimuthalErrorsID;
@@ -107,6 +109,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		interceptParam = new Parameter(this, "interceptParam", new ObjectToken());
 		cameraLengthParam = new Parameter(this, "cameraLengthParam", new ObjectToken());
 		energyParam = new Parameter(this, "energyParam", new ObjectToken());
+		axisUnitParam = new Parameter(this, "axisUnitParam", new ObjectToken());
+		pxSizeParam = new Parameter(this, "pxSizeParam", new ObjectToken());
 	}
 
 	@Override
@@ -140,10 +144,25 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			intercept = (Amount<ScatteringVector>) readAmountObject(interceptParam, ScatteringVector.UNIT);
 			cameraLength = (Amount<Length>) readAmountObject(cameraLengthParam, Length.UNIT);
 			energy = (Amount<Energy>) readAmountObject(energyParam, Energy.UNIT);
+			pxSize = (Amount<Length>) readAmountObject(pxSizeParam, Length.UNIT);
+			
+			Object obj = ((ObjectToken) axisUnitParam.getToken()).getValue();
+			if (obj != null) {
+				if (obj instanceof Unit<?>) {
+					Unit<?> unit = (Unit<?>) obj;
+					if (unit.isCompatible(ScatteringVector.UNIT)) {
+						axisUnit = (Unit<ScatteringVector>) unit;
+					}
+				} else {
+					String msg = axisUnitParam.getName() + ": Invalid input parameter";
+					throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, msg, this, null);
+				}
+			}
 
 			doRadial = ((BooleanToken) doRadialParam.getToken()).booleanValue();
 			doAzimuthal = ((BooleanToken) doAzimuthalParam.getToken()).booleanValue();
 			doFast = ((BooleanToken) doFastParam.getToken()).booleanValue();
+			
 
 			task = new SectorIntegrationTask(true, null);
 
@@ -212,6 +231,30 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		return azFrames;
 	}
 
+	private AbstractDataset calculateQaxisDataset() {
+		
+		AbstractDataset qaxis = null;
+		AbstractDataset qaxisErr = null;
+
+		long[] secFrames = getResultDataShape();
+		int numPoints = (int) secFrames[secFrames.length - 1];
+		if (gradient != null &&	intercept != null && pxSize != null &&	axisUnit != null) {
+			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
+			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
+			double d2bs = intSector.getRadii()[0];
+			for (int i = 0; i < numPoints; i++) {
+				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
+						.to(axisUnit);
+				qaxis.set(amountQaxis.getEstimatedValue(), i);
+				qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+			}
+			qaxis.setError(qaxisErr);
+			return qaxis;
+		}
+		qaxis = DatasetUtils.indices(numPoints).squeeze();
+		return qaxis;
+	}
+	
 	private class SectorIntegrationTask extends RecursiveAction {
 
 		private static final long serialVersionUID = 4409344480477216724L;
@@ -402,26 +445,70 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	}
 	
 	@Override
-	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		super.writeNcdMetadata(datagroup_id);
+	protected void writeAxisData() throws HDF5Exception {
+		AbstractDataset qaxis = calculateQaxisDataset();
+		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
+		
+		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+		String units = "a.u.";
+		String axisName = "indecies"; 
+		if (axisUnit != null) {
+			units = unitFormat.format(axisUnit);
+			axisName = "q";
+		}
+		int[] qaxisRank = new int[] { qaxis.getRank() };
+		resultAxisDataID = NcdNexusUtils.makeaxis(resultGroupID, axisName, HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, qaxisRank,
+				1, units);
+
+		int filespace_id = H5.H5Dget_space(resultAxisDataID);
+		int type_id = H5.H5Dget_type(resultAxisDataID);
+		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(resultAxisDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type_id);
+		
+		if (qaxis.hasErrors()) {
+			long[] qaxisShapeError = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
+			resultAxisErrorsID = NcdNexusUtils.makedata(resultGroupID, axisName + "_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError,
+				false, units);
+		
+			filespace_id = H5.H5Dget_space(resultAxisErrorsID);
+			type_id = H5.H5Dget_type(resultAxisErrorsID);
+			memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShapeError, null);
+			H5.H5Sselect_all(filespace_id);
+			H5.H5Dwrite(resultAxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getError().getBuffer());
+		
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(type_id);
+		}
+		
+	}
+	
+	@Override
+	protected void writeNcdMetadata() throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		super.writeNcdMetadata();
 
 		if (intSector != null) {
-			writeBeamCenterMetadata(datagroup_id);
-			writeIntegrationAnglesMetadata(datagroup_id);
-			writeIntegrationRadiiMetadata(datagroup_id);
-			writeIntegrationSymmetryMetadata(datagroup_id);
+			writeBeamCenterMetadata(resultGroupID);
+			writeIntegrationAnglesMetadata(resultGroupID);
+			writeIntegrationRadiiMetadata(resultGroupID);
+			writeIntegrationSymmetryMetadata(resultGroupID);
 		}
 		if (cameraLength != null) {
-			writeCameraLengthMetadata(datagroup_id);
+			writeCameraLengthMetadata(resultGroupID);
 		}
 		if (energy != null) {
-			writeEnergyMetadata(datagroup_id);
+			writeEnergyMetadata(resultGroupID);
 		}
 		if (mask != null) {
-			writeMaskMetadata(datagroup_id);
+			writeMaskMetadata(resultGroupID);
 		}
 		if (gradient != null && intercept != null) {
-			writeQcalibrationMetadata(datagroup_id);
+			writeQcalibrationMetadata(resultGroupID);
 		}
 	}
 

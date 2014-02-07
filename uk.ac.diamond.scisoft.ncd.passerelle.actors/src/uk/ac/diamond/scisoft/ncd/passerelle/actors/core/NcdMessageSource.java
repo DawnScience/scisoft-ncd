@@ -80,8 +80,10 @@ public class NcdMessageSource extends Source {
 			lock.lock();
 			int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 			int entryGroupID = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+			int processingGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_processing", Nexus.INST);
 			int detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
 			int inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+			
 			int inputErrorsID = -1;
 			boolean hasErrors = H5.H5Lexists(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 			if (hasErrors) {
@@ -89,10 +91,20 @@ public class NcdMessageSource extends Source {
 			} else {
 				getLogger().info("Input dataset with error estimates wasn't found");
 			}
-			int processingGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_processing", Nexus.INST);
-
-			NcdProcessingObject msg = new NcdProcessingObject(entryGroupID, processingGroupID, detectorGroupID, inputDataID, inputErrorsID, lock);
-
+			
+			//TODO: Add support for reading axis dataset
+			int inputAxisDataID = -1;
+			int inputAxisErrorsID = -1;
+			
+			NcdProcessingObject msg = new NcdProcessingObject(
+					entryGroupID,
+					processingGroupID,
+					detectorGroupID,
+					inputDataID,
+					inputErrorsID,
+					inputAxisDataID,
+					inputAxisErrorsID,
+					lock);
 			dataMsg = createMessage(msg, "application/octet-stream");
 		} catch (IllegalActionException e) {
 			messageSent = false;
