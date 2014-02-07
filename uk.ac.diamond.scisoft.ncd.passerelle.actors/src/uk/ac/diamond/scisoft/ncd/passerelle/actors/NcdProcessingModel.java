@@ -401,7 +401,7 @@ public class NcdProcessingModel {
 			flow.connect(normalisation.output, backgroundSubtraction.input);
 			flow.connect(backgroundSubtraction.output, invariant.input);
 			//flow.connect(invariant.output, sink.input);
-			flow.connect(normalisation.output, average.input);
+			flow.connect(backgroundSubtraction.output, average.input);
 			flow.connect(average.output, sink.input);
 			
 			source.lockParam.setToken(new ObjectToken(lock));
