@@ -98,8 +98,7 @@ public class NcdProcessingModel {
 	private String gridAverage, bgGridAverage;
 	private boolean enableBgAverage;
 	
-	private Flow flow;
-	private FlowManager flowMgr;
+	private static FlowManager flowMgr;
 	
 	private static ReentrantLock lock;
 
@@ -107,17 +106,7 @@ public class NcdProcessingModel {
 	public NcdProcessingModel() {
 		super();
 		
-		try {
-			flow = new Flow("NCD Data Reduction", null);
-			flowMgr = new FlowManager();
-			ETDirector director = new ETDirector(flow, "director");
-			flow.setDirector(director);
-		} catch (IllegalActionException e) {
-			throw new RuntimeException(e);
-		} catch (NameDuplicationException e) {
-			throw new RuntimeException(e);
-		}
-
+		flowMgr = new FlowManager();
 		lock = new ReentrantLock();
 		
 		normChannel = -1;
@@ -142,8 +131,8 @@ public class NcdProcessingModel {
 		flags = new NcdReductionFlags();
 		absScaling = 1.0;
 		
-		//gridAverage = "";
-		//bgGridAverage = "";
+		gridAverage = null;
+		bgGridAverage = null;
 		enableBgAverage = false;
 		
 	}
@@ -388,6 +377,8 @@ public class NcdProcessingModel {
 		try {
 			configure(filename);
 
+			Flow flow = new Flow("NCD Data Reduction", null);
+			
 			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 			NcdSelectionForkJoinTransformer selection = new NcdSelectionForkJoinTransformer(flow,
 					"Selection");
@@ -403,6 +394,9 @@ public class NcdProcessingModel {
 			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
 			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
+			ETDirector director = new ETDirector(flow, "director");
+			flow.setDirector(director);
+			
 			flow.connect(source.output, selection.input);
 			flow.connect(selection.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
