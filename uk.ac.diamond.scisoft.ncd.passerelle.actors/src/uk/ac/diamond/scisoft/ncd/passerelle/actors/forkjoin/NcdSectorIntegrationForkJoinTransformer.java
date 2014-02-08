@@ -18,7 +18,6 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
 
@@ -166,12 +165,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 			task = new SectorIntegrationTask(true, null);
 
-			// TODO: add axis support
-			// if (qaxis != null) {
-			// setQaxis(qaxis, qaxisUnit);
-			// writeQaxisData(frames.length, normGroupID);
-			// }
-			// writeNcdMetadata(normGroupID);
 		} catch (Exception e) {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
 					this, e);

@@ -76,13 +76,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			format = ((StringToken) formatParam.getToken()).stringValue();
 
 			task = new SelectionTask();
-
-			// TODO: add axis support
-			// if (qaxis != null) {
-			// setQaxis(qaxis, qaxisUnit);
-			// writeQaxisData(frames.length, normGroupID);
-			// }
-			// writeNcdMetadata(normGroupID);
+			
 		} catch (Exception e) {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
 					this, e);

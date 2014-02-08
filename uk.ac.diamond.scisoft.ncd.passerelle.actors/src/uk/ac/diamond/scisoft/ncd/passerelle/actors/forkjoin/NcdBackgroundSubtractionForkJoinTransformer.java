@@ -16,7 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -94,12 +93,6 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 
 			bgScaling = ((DoubleToken) bgScalingParam.getToken()).doubleValue();
 
-			// TODO: add axis support
-			// if (qaxis != null) {
-			// setQaxis(qaxis, qaxisUnit);
-			// writeQaxisData(frames.length, normGroupID);
-			// }
-			// writeNcdMetadata(normGroupID);
 		} catch (Exception e) {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
 					this, e);
