@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="com.isencia.passerelle.engine.actors">
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.selection"
+            name="Selection">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.detectorresponse"
+            name="Detector Response">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.sectorintegration"
+            name="Sector Integration">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.normalisation"
+            name="Normalisation">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.backgroundsubtraction"
+            name="Background Subtraction">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.invariant"
+            name="Invariant">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.average"
+            name="Average">
+      </actor>
+   </extension>
+
+</plugin>
