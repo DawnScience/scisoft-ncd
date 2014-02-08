@@ -278,19 +278,12 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				int[] grid = (int[]) ConvertUtils
 						.convert(Arrays.copyOf(frames, frames.length - dimension), int[].class);
 				PositionIterator itr = new PositionIterator(grid);
-				List<SectorIntegrationTask> taskArray = new ArrayList<SectorIntegrationTask>();
 				if (itr.hasNext()) {
-					SectorIntegrationTask firstTask = new SectorIntegrationTask(false, itr.getPos());
 					while (itr.hasNext()) {
 						SectorIntegrationTask task = new SectorIntegrationTask(false, itr.getPos());
-						task.fork();
-						taskArray.add(task);
-					}
-
-					firstTask.compute();
-					Iterator<SectorIntegrationTask> taskItr = taskArray.iterator();
-					while (taskItr.hasNext()) {
-						taskItr.next().join();
+						// Processing frames sequentially to avoid potential OutOfMemory problems
+						// as present sector integration algorithm already uses multiple fork/join threads 
+						task.compute();
 					}
 				}
 				return;
