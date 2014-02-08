@@ -34,6 +34,7 @@ import org.apache.commons.io.IOUtils;
 import org.dawb.common.services.IPersistenceService;
 import org.dawb.common.services.ServiceManager;
 import org.dawnsci.persistence.PersistenceServiceCreator;
+import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.Path;
 import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
@@ -51,7 +52,6 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdProcessingModel;
@@ -75,14 +75,12 @@ public class NcdProcessingModelTest {
 	private static SectorROI intSector;
 	private static int intPoints, azPoints;
 	private static BooleanDataset mask;
-	private static NcdDetectors ncdDetectors;
 
 	private static String detector = "Rapid2D";
 	private static String detectorOut = "Rapid2D_processing";
 	private static String detectorBg = "Rapid2D_result";
 	private static String calibration = "Scalers";
 	private static Amount<Length> pxSaxs = Amount.valueOf(0.1, SI.MILLIMETER);
-	private static int dim = 2;
 	private static String filename, bgFilename;
 	private static String testScratchDirectoryName;
 	private static Integer firstFrame = 60;
@@ -158,11 +156,10 @@ public class NcdProcessingModelTest {
 		flags.setEnableSaxs(true);
 		flags.setEnableWaxs(false);
 
-		ncdDetectors = new NcdDetectors();
-		ncdDetectors.setDetectorSaxs(detector);
-		ncdDetectors.setDetectorWaxs(null);
-		ncdDetectors.setPxSaxs(pxSaxs);
-		ncdDetectors.setPxWaxs(null);
+		DiffractionDetector ncdDetector = new DiffractionDetector();
+		ncdDetector.setDetectorName(detector);
+		ncdDetector.setxPixelSize(pxSaxs);
+		ncdDetector.setyPixelSize(pxSaxs);
 
 		intSector = new SectorROI(262.0, 11.0, 20.0, 500.0,  Math.toRadians(60.0), Math.toRadians(120.0));
 		intPoints = intSector.getIntRadius(1) - intSector.getIntRadius(0);
@@ -188,8 +185,7 @@ public class NcdProcessingModelTest {
 		testClass.setFlags(flags);
 		testClass.setIntSector(intSector);
 		testClass.setMask(mask);
-		testClass.setPxSize(pxSaxs);
-		testClass.setUnit(NonSI.ANGSTROM);
+		testClass.setNcdDetector(ncdDetector);
 
 		testbgClass = new NcdProcessingModel();
 		testbgClass.setDrFile(drFile);
@@ -208,8 +204,7 @@ public class NcdProcessingModelTest {
 		
 		testbgClass.setIntSector(intSector);
 		testbgClass.setMask(mask);
-		testbgClass.setPxSize(pxSaxs);
-		testbgClass.setUnit(NonSI.ANGSTROM);
+		testbgClass.setNcdDetector(ncdDetector);
 		
 	    DataSliceIdentifiers dr_id = readDataId(drFile, detector, "data", null)[0];
 	    SliceSettings drSlice = new SliceSettings(drFrames, 1, 1);
@@ -217,8 +212,8 @@ public class NcdProcessingModelTest {
 	    drSlice.setStart(start);
 		dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
-		testbgClass.execute(detector, dim, bgFilename);
-		testClass.execute(detector, dim, filename);
+		testbgClass.execute(bgFilename);
+		testClass.execute(filename);
 	}
 
 	@Test

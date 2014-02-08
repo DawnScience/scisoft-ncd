@@ -34,6 +34,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
+import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
@@ -86,6 +87,8 @@ public class NcdProcessingModel {
 	private CalibrationResultsBean crb;
 	
 	private NcdReductionFlags flags;
+	private String detector;
+	private int dimension;
 	
 	private Double absScaling;
 	private Integer firstFrame;
@@ -124,10 +127,10 @@ public class NcdProcessingModel {
 		calibration = "";
 		bgDetector = "";
 		intSector = new SectorROI();
-		slope = Amount.valueOf(0, ScatteringVectorOverDistance.UNIT);
-		intercept = Amount.valueOf(0, ScatteringVector.UNIT);
-		cameraLength = Amount.valueOf(0, Length.UNIT);
-		energy = Amount.valueOf(0, Energy.UNIT);
+		slope = null;
+		intercept = null;
+		cameraLength = null;
+		energy = null;
 		mask = new BooleanDataset();
 		drData = new FloatDataset();
 		firstFrame = null;
@@ -193,8 +196,14 @@ public class NcdProcessingModel {
 		this.flags = new NcdReductionFlags(flags);
 	}
 
-	public void setPxSize(Amount<Length> pxSize) {
-		this.pxSize = pxSize;
+	public void setNcdDetector(DiffractionDetector ncdDetector) {
+		this.detector = ncdDetector.getDetectorName();
+		if (ncdDetector.getxPixelSize() != null && ncdDetector.getPixelSize() != null) {
+			dimension = 2;
+		} else {
+			dimension = 1;
+		}
+		this.pxSize = ncdDetector.getPixelSize();
 	}
 
 	public void setFirstFrame(Integer firstFrame) {
@@ -213,29 +222,8 @@ public class NcdProcessingModel {
 		this.gridAverage = gridAverage;
 	}
 
-	public void setSlope(Amount<ScatteringVectorOverDistance> slope) {
-		this.slope = slope;
-	}
-
-	public void setIntercept(Amount<ScatteringVector> intercept) {
-		this.intercept = intercept;
-	}
-
-	public void setCameraLength(Amount<Length> cameraLength) {
-		this.cameraLength = cameraLength;
-	}
-
 	public void setEnergy(Amount<Energy> energy) {
 		this.energy = energy;
-	}
-	
-	public void setUnit(Unit<Length> unit) {
-		if (unit == null) {
-			this.qaxisUnit = null;
-			return;
-		}
-		// q-axis units need to be inverse of the linear dimension units
-		this.qaxisUnit = unit.inverse().asType(ScatteringVector.class);
 	}
 	
 	private long[] readDataShape(String detector, String filename) throws HDF5Exception {
@@ -279,7 +267,7 @@ public class NcdProcessingModel {
 				
 	}
 	
-	private void preprocessBackgroundData(String detector, int dimension, String filename) throws HDF5Exception {
+	private void preprocessBackgroundData(String filename) throws HDF5Exception {
 
 		long[] bgFrames = readDataShape(bgDetector, bgFile);
 		long[] frames = readDataShape(detector, filename);
@@ -301,7 +289,7 @@ public class NcdProcessingModel {
 		}
 	}
 
-	public void configure(String detector, int dimension, String filename) throws HDF5LibraryException, HDF5Exception {
+	private void configure(String filename) throws HDF5LibraryException, HDF5Exception {
 		if (crb != null && crb.containsKey(detector)) {
 			if (slope == null) {
 				slope = crb.getGradient(detector);
@@ -310,6 +298,11 @@ public class NcdProcessingModel {
 				intercept = crb.getIntercept(detector);
 			}
 			cameraLength = crb.getMeanCameraLength(detector);
+			Unit<Length> unit = crb.getUnit(detector);
+			if (unit != null) {
+				// q-axis units need to be inverse of the linear dimension units
+				this.qaxisUnit = unit.inverse().asType(ScatteringVector.class);
+			}
 		}
 		
 		if (firstFrame != null || lastFrame != null) {
@@ -385,16 +378,15 @@ public class NcdProcessingModel {
 		}
 		
 		if (flags.isEnableBackground()) {
-			preprocessBackgroundData(detector, dimension, filename);
+			preprocessBackgroundData(filename);
 		}
 		
 	}
 
-	public void execute(String detectorName, int dimension, String filename) {
+	public void execute(String filename) {
 
 		try {
-
-			configure(detectorName, dimension, filename);
+			configure(filename);
 
 			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 			NcdSelectionForkJoinTransformer selection = new NcdSelectionForkJoinTransformer(flow,
@@ -424,22 +416,36 @@ public class NcdProcessingModel {
 			source.lockParam.setToken(new ObjectToken(lock));
 			
 			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
-
-			sectorIntegration.sectorROIParam.setRoi(intSector);
-			sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
-			sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
-			sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
-			sectorIntegration.energyParam.setToken(new ObjectToken(energy));
-			sectorIntegration.pxSizeParam.setToken(new ObjectToken(pxSize));
-			sectorIntegration.axisUnitParam.setToken(new ObjectToken(qaxisUnit));
-			if (enableMask) {
+			
+			if (intSector != null) {
+				sectorIntegration.sectorROIParam.setRoi(intSector);
+			}
+			if (slope != null) {
+				sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
+			}
+			if (intercept != null) {
+				sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
+			}
+			if (cameraLength != null) {
+				sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
+			}
+			if (energy != null) {
+				sectorIntegration.energyParam.setToken(new ObjectToken(energy));
+			}
+			if (pxSize != null) {
+				sectorIntegration.pxSizeParam.setToken(new ObjectToken(pxSize));
+			}
+			if (qaxisUnit != null) {
+				sectorIntegration.axisUnitParam.setToken(new ObjectToken(qaxisUnit));
+			}
+			if (enableMask && mask != null) {
 				sectorIntegration.maskParam.setToken(new ObjectToken(mask));
 			}
 
 			Map<String, String> props = new HashMap<String, String>();
 
 			props.put("MessageSource.filenameParam", filename);
-			props.put("MessageSource.detectorParam", detectorName);
+			props.put("MessageSource.detectorParam", detector);
 			
 			props.put("Selection.enable", Boolean.toString(frameSelection != null));
 			props.put("Selection.dimensionParam", Integer.toString(dimension));
@@ -448,28 +454,30 @@ public class NcdProcessingModel {
 			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
 			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
 			
-			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
-			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
-			
 			props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
 			props.put("SectorIntegration.dimensionParam", Integer.toString(dimension));
-			props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
-			props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
-			props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
-
+			if (flags.isEnableSector()) {
+				props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
+				props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
+				props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
+			}
 			if (flags.isEnableSector()) {
 				dimension = 1;
 			}
 
 			props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
 			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
-			props.put("Normalisation.calibrationParam", calibration);
-			props.put("Normalisation.absScalingParam", Double.toString(absScaling));
-			props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+			if (flags.isEnableNormalisation()) {
+				props.put("Normalisation.calibrationParam", calibration);
+				props.put("Normalisation.absScalingParam", Double.toString(absScaling));
+				props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+			}
 			
 			props.put("BackgroundSubtraction.enable", Boolean.toString(flags.isEnableBackground()));
 			props.put("BackgroundSubtraction.dimensionParam", Integer.toString(dimension));
-			props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
+			if (flags.isEnableBackground()) {
+				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
+			}
 			
 			props.put("Invariant.enable", Boolean.toString(flags.isEnableInvariant()));
 			props.put("Invariant.dimensionParam", Integer.toString(dimension));
@@ -478,7 +486,7 @@ public class NcdProcessingModel {
 			props.put("Average.dimensionParam", Integer.toString(dimension));
 			props.put("Average.gridAverageParam", gridAverage);
 
-			props.put("MessageSink.detectorParam", detectorName);
+			props.put("MessageSink.detectorParam", detector);
 
 			if (flags.isEnableBackground()) {
 				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
