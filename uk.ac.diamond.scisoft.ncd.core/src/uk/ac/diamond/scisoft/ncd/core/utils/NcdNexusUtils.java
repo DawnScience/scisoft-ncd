@@ -255,6 +255,19 @@ public final class NcdNexusUtils {
 		return dataset_id;
 	}
 
+	public static void makelink(int inputDataset, int resultGroup) throws HDF5LibraryException {
+		if (inputDataset > 0) {
+			final int type = H5.H5Iget_type(inputDataset);
+			if (type != HDF5Constants.H5I_BADID) {
+				String[] name = new String[] {""};
+				final long nameSize = H5.H5Iget_name(inputDataset, name, 1L) + 1;
+				H5.H5Iget_name(inputDataset, name, nameSize);
+				String[] nameTree = name[0].split("/");
+				H5.H5Lcreate_hard(inputDataset, "./", resultGroup, nameTree[nameTree.length -1], HDF5Constants.H5P_DEFAULT,  HDF5Constants.H5P_DEFAULT);
+			}
+		}
+	}
+	
 	public static long[] getIdsDatasetShape(int dataspace_id) throws HDF5LibraryException {
 		final int ndims = H5.H5Sget_simple_extent_ndims(dataspace_id);
 		long[] dims = new long[ndims];
