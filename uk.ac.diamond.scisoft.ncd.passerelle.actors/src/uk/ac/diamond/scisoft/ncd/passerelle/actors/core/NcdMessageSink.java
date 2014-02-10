@@ -16,14 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import org.dawb.hdf5.Nexus;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.data.StringToken;
@@ -35,6 +29,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Sink;
+import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.message.MessageException;
@@ -42,6 +37,12 @@ import com.isencia.passerelle.message.MessageException;
 public class NcdMessageSink extends Sink {
 
 	public StringParameter detectorParam;
+	private int entryGroupID;
+	private int inputDataID;
+	private int inputErrorsID;
+	private int inputAxisDataID;
+	private int inputAxisErrorsID;
+	private int outputGroupID;
 
 	public NcdMessageSink(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -58,21 +59,27 @@ public class NcdMessageSink extends Sink {
 				Object obj = message.getBodyContent();
 				if (obj instanceof NcdProcessingObject) {
 					NcdProcessingObject content = (NcdProcessingObject) obj;
-					int entryGroupID = content.getEntryGroupID();
-					int processingGroupID = content.getProcessingGroupID();
-					int resultGroupID = content.getInputGroupID();
-					int resultDataID = content.getInputDataID();
-					int resultErrorsID = content.getInputErrorsID();
-					int outputGroupID = -1;
+					entryGroupID = content.getEntryGroupID();
+					inputDataID = content.getInputDataID();
+					inputErrorsID = content.getInputErrorsID();
+					inputAxisDataID = content.getInputAxisDataID();
+					inputAxisErrorsID = content.getInputAxisErrorsID();
+					outputGroupID = -1;
 					try {
 						String detector = ((StringToken) detectorParam.getToken()).stringValue();
 						if (detector != null) {
 							outputGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_result", Nexus.DATA);
-							H5.H5Lcopy(resultGroupID, "./data", outputGroupID, "./data", HDF5Constants.H5P_DEFAULT,
-									HDF5Constants.H5P_DEFAULT);
-							if (resultErrorsID != -1) {
-								H5.H5Lcopy(resultGroupID, "./errors", outputGroupID, "./errors",
-										HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+							if (inputDataID > 0) {
+								NcdNexusUtils.makelink(inputDataID, outputGroupID);
+							}
+							if (inputErrorsID  > 0) {
+								NcdNexusUtils.makelink(inputErrorsID, outputGroupID);
+							}
+							if (inputAxisDataID > 0) {
+								NcdNexusUtils.makelink(inputAxisDataID, outputGroupID);
+							}
+							if (inputAxisErrorsID  > 0) {
+								NcdNexusUtils.makelink(inputAxisErrorsID, outputGroupID);
 							}
 						}
 					} catch (HDF5Exception e) {
@@ -80,23 +87,20 @@ public class NcdMessageSink extends Sink {
 					} catch (IllegalActionException e) {
 						throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, "Error reading detector name parameter", this, e);
 					}
-				    
-					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
-							outputGroupID,
-							resultDataID,
-							resultErrorsID,
-							resultGroupID,
-							processingGroupID,
-							entryGroupID));
-					try {
-						NcdNexusUtils.closeH5idList(identifiers);
-					} catch (HDF5LibraryException e) {
-						getLogger().info("Trying to close invalid Nexus handle");
-					}
 				}
 			} catch (MessageException e) {
 				throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this, message, e);
 			}
 		}
 	}
+	
+	@Override
+	protected void doWrapUp() throws TerminationException {
+		try {
+			NcdNexusUtils.closeH5id(outputGroupID);
+		} catch (HDF5LibraryException e) {
+			getLogger().info("Trying to close invalid NeXus identifier", e);
+		}
+	}
+	
 }

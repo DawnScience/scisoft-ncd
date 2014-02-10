@@ -27,6 +27,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
+import org.apache.commons.lang.StringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -278,6 +279,9 @@ public class NcdNormalisationForkJoinTransformerTest {
 
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
+		props.put("MessageSource.processingParam", processingName);
+		
 		props.put("Normalisation.enable", Boolean.toString(true));
 		props.put("Normalisation.calibrationParam", testNormName);
 		props.put("Normalisation.absScalingParam", Float.toString(absScale));

@@ -31,6 +31,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -267,6 +268,9 @@ public class NcdSelectionForkJoinTransformerTest {
 
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
+		props.put("MessageSource.processingParam", processingName);
+		
 		props.put("Selection.enable", Boolean.toString(true));
 		props.put("Selection.dimensionParam", Integer.toString(dim));
 		props.put("Selection.formatParam", frameSelection);

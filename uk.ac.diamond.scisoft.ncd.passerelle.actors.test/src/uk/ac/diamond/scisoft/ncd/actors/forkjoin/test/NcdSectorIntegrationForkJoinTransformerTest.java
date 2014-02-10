@@ -32,6 +32,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
+import org.apache.commons.lang.StringUtils;
 import org.dawb.common.services.IPersistenceService;
 import org.dawb.common.services.ServiceManager;
 import org.dawnsci.persistence.PersistenceServiceCreator;
@@ -306,6 +307,9 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
+		props.put("MessageSource.processingParam", processingName);
+		
 		props.put("SectorIntegration.enable", Boolean.toString(true));
 		props.put("SectorIntegration.dimensionParam", Integer.toString(dim));
 		props.put("SectorIntegration.doRadialParam", Boolean.toString(true));

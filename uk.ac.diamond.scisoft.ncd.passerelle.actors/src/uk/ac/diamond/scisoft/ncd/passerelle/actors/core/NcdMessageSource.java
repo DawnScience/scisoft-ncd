@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.dawb.hdf5.Nexus;
@@ -26,6 +29,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ptolemy.data.BooleanToken;
 import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
 import ptolemy.data.Token;
@@ -38,6 +42,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Source;
+import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.message.MessageException;
@@ -48,9 +53,20 @@ public class NcdMessageSource extends Source {
 	private boolean messageSent;
 	private String filename;
 	private String detector;
+	private String processing;
 	
-	public Parameter lockParam, monitorParam;
-	public StringParameter filenameParam, detectorParam;
+	public Parameter lockParam, monitorParam, readOnlyParam;
+	public StringParameter filenameParam, detectorParam, processingParam;
+	
+	private int nxsFileID = -1;
+	private int entryGroupID = -1;
+	private int processingGroupID = -1;
+	private int detectorGroupID = -1;
+	private int inputDataID = -1;
+	private int inputErrorsID = -1;
+	//TODO: Add support for reading axis dataset
+	private int inputAxisDataID = -1;
+	private int inputAxisErrorsID = -1;
 
 	public NcdMessageSource(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -59,6 +75,8 @@ public class NcdMessageSource extends Source {
 		
 		filenameParam = new StringParameter(this, "filenameParam");
 		detectorParam = new StringParameter(this, "detectorParam");
+		processingParam = new StringParameter(this, "processingParam");
+		readOnlyParam = new Parameter(this, "readOnlyParam");
 		lockParam = new Parameter(this, "lockParam");
 		monitorParam = new Parameter(this, "monitorParam");
 	}
@@ -73,8 +91,15 @@ public class NcdMessageSource extends Source {
 		try {
 			filename = ((StringToken) filenameParam.getToken()).stringValue();
 			detector = ((StringToken) detectorParam.getToken()).stringValue();
+			processing = ((StringToken) processingParam.getToken()).stringValue();
 
-			Token token = lockParam.getToken();
+			boolean readOnly = false;
+			Token token = readOnlyParam.getToken();
+			if (token instanceof BooleanToken) {
+				readOnly = ((BooleanToken) token).booleanValue();
+			}
+			
+			token = lockParam.getToken();
 			if (token instanceof ObjectToken) {
 				Object obj = ((ObjectToken) token).getValue();
 				if (obj instanceof ReentrantLock) {
@@ -100,23 +125,25 @@ public class NcdMessageSource extends Source {
 			}
 
 			lock.lock();
-			int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-			int entryGroupID = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-			int processingGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_processing", Nexus.INST);
-			int detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
-			int inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+			nxsFileID = H5.H5Fopen(filename, readOnly ? HDF5Constants.H5F_ACC_RDONLY : HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+			entryGroupID = H5.H5Gopen(nxsFileID, "entry1", HDF5Constants.H5P_DEFAULT);
+			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
+			inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
 			
-			int inputErrorsID = -1;
+			boolean hasProcessing = H5.H5Lexists(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
+			if (hasProcessing) {
+				processingGroupID = H5.H5Gopen(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
+			} else {
+				if (!readOnly) {
+					processingGroupID = NcdNexusUtils.makegroup(entryGroupID, processing, Nexus.INST);
+				}
+			}
 			boolean hasErrors = H5.H5Lexists(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 			if (hasErrors) {
 				inputErrorsID = H5.H5Dopen(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 			} else {
 				getLogger().info("Input dataset with error estimates wasn't found");
 			}
-			
-			//TODO: Add support for reading axis dataset
-			int inputAxisDataID = -1;
-			int inputAxisErrorsID = -1;
 			
 			NcdProcessingObject msg = new NcdProcessingObject(
 					entryGroupID,
@@ -148,6 +175,25 @@ public class NcdMessageSource extends Source {
 		}
 		messageSent = true;
 		return dataMsg;
+	}
+
+	@Override
+	protected void doWrapUp() throws TerminationException {
+		try {
+			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+					inputDataID,
+					inputErrorsID,
+					inputAxisDataID,
+					inputAxisErrorsID,
+					detectorGroupID,
+					processingGroupID,
+					entryGroupID,
+					nxsFileID));
+
+			NcdNexusUtils.closeH5idList(identifiers);
+		} catch (HDF5LibraryException e) {
+			getLogger().info("Error closing NeXus handle identifier", e);
+		}
 	}
 
 }

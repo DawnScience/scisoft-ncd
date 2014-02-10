@@ -103,6 +103,7 @@ public class NcdProcessingModel {
 	
 	private static ReentrantLock lock;
 
+	private final String PROCESSING = "processing"; 
 	
 	public NcdProcessingModel() {
 		super();
@@ -444,6 +445,9 @@ public class NcdProcessingModel {
 
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detector);
+			String processingName = StringUtils.join(new String[] {detector, PROCESSING},  "_");
+			props.put("MessageSource.processingParam", processingName);
+			props.put("MessageSource.readOnlyParam", Boolean.toString(false));
 			
 			props.put("Selection.enable", Boolean.toString(frameSelection != null));
 			props.put("Selection.dimensionParam", Integer.toString(dimension));
@@ -497,6 +501,12 @@ public class NcdProcessingModel {
 				
 				props.put("BackgroundMessageSource.filenameParam", bgFile);
 				props.put("BackgroundMessageSource.detectorParam", bgDetector);
+				props.put("BackgroundMessageSource.readOnlyParam", Boolean.toString(!enableBgAverage));
+				String[] bgProcessingName = StringUtils.split(filename, "_");
+				if (bgProcessingName.length > 1 && enableBgAverage) {
+					String bgProcessing = StringUtils.join(new String[] {bgDetector, bgProcessingName[1]}, "_");
+					props.put("BackgroundMessageSource.processingParam", bgProcessing);
+				}
 				
 				props.put("BackgroundAverage.enable", Boolean.toString(enableBgAverage));
 				props.put("BackgroundAverage.dimensionParam", Integer.toString(dimension));

@@ -16,7 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ForkJoinPool;
 import java.util.concurrent.RecursiveAction;
 import java.util.concurrent.locks.ReentrantLock;
@@ -41,6 +43,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.actor.v5.Actor;
 import com.isencia.passerelle.actor.v5.ActorContext;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
@@ -138,7 +141,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 			if (!monitor.isCanceled()) {
 				
-				monitor.subTask("Executing task: " + getDisplayName());
+				monitor.subTask("Executing task : " + getDisplayName());
 				forkJoinPool.invoke(task);
 			
 				lock.lock();
@@ -160,12 +163,26 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
-			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} catch (HDF5Exception e) {
-			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
+			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		}
 	}
 	
+	@Override
+	protected void doWrapUp() throws TerminationException {
+		try {
+			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+					resultDataID,
+					resultErrorsID,
+					resultGroupID));
+
+			NcdNexusUtils.closeH5idList(identifiers);
+		} catch (HDF5LibraryException e) {
+			getLogger().info("Error closing NeXus handle identifier", e);
+		}
+	}
+
 	@SuppressWarnings("unused")
 	protected void readAdditionalPorts(ProcessRequest request) throws MessageException {
 	}
@@ -202,23 +219,10 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	}
 	
 	protected void writeAxisData() throws HDF5Exception {
-		writeAxisDataset(inputAxisDataID);
-		writeAxisDataset(inputAxisErrorsID);
+		NcdNexusUtils.makelink(inputAxisDataID, resultGroupID);
+		NcdNexusUtils.makelink(inputAxisErrorsID, resultGroupID);
 		resultAxisDataID = inputAxisDataID;
 		resultAxisErrorsID = inputAxisErrorsID;
-	}
-	
-	private void writeAxisDataset(int inputDataset) throws HDF5LibraryException {
-		if (inputDataset > 0) {
-			final int type = H5.H5Iget_type(inputDataset);
-			if (type != HDF5Constants.H5I_BADID) {
-				String[] name = new String[] {""};
-				final long nameSize = H5.H5Iget_name(inputDataset, name, 1L) + 1;
-				H5.H5Iget_name(inputDataset, name, nameSize);
-				String[] nameTree = name[0].split("/");
-				H5.H5Lcreate_hard(inputDataset, "./", resultGroupID, nameTree[nameTree.length -1], HDF5Constants.H5P_DEFAULT,  HDF5Constants.H5P_DEFAULT);
-			}
-		}
 	}
 	
 	protected void writeNcdMetadata() throws HDF5LibraryException, HDF5Exception {
