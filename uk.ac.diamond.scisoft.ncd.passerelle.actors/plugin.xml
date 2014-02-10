@@ -45,6 +45,24 @@
             id="uk.ac.diamond.scisoft.ncd.passerelle.actors.average"
             name="Average">
       </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.ncdmessagesource"
+            name="NCD Message Source">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.ncdmessagesink"
+            name="NCD Message Sink">
+      </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObjectTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.ncdprocessingobjecttransformer"
+            name="Dataset Extract">
+      </actor>
    </extension>
 
 </plugin>
