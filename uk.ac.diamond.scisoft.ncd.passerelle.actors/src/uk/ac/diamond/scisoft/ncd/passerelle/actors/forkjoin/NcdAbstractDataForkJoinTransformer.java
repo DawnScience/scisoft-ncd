@@ -27,6 +27,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.dawb.hdf5.Nexus;
+import org.eclipse.core.runtime.IProgressMonitor;
 
 import ptolemy.data.BooleanToken;
 import ptolemy.data.IntToken;
@@ -62,6 +63,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	public String dataName;
 	
 	protected ReentrantLock lock;
+	protected IProgressMonitor monitor;
 	
 	public Parameter isEnabled;
 	public Parameter dimensionParam;
@@ -115,7 +117,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			response.addOutputMessage(output, receivedMsg);
 			return;
 		}
-
+		
 		try {
 			NcdProcessingObject receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
 			entryGroupID = receivedObject.getEntryGroupID();
@@ -126,6 +128,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			inputAxisDataID = receivedObject.getInputAxisDataID();
 			inputAxisErrorsID = receivedObject.getInputAxisErrorsID();
 			lock = receivedObject.getLock();
+			monitor = receivedObject.getMonitor();
 			
 			readAdditionalPorts(request);
 			
@@ -133,11 +136,15 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			configureActorParameters();
 			lock.unlock();
 
-			forkJoinPool.invoke(task);
+			if (!monitor.isCanceled()) {
+				
+				monitor.subTask("Executing task: " + getDisplayName());
+				forkJoinPool.invoke(task);
 			
-			lock.lock();
-			writeNcdMetadata();
-			lock.unlock();
+				lock.lock();
+				writeNcdMetadata();
+				lock.unlock();
+			}
 			
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
 			NcdProcessingObject obj = new NcdProcessingObject(
@@ -148,7 +155,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 					resultErrorsID,
 					resultAxisDataID,
 					resultAxisErrorsID,
-					lock);
+					lock,
+					monitor);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {

@@ -212,8 +212,8 @@ public class NcdProcessingModelTest {
 	    drSlice.setStart(start);
 		dr = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
-		testbgClass.execute(bgFilename);
-		testClass.execute(filename);
+		testbgClass.execute(bgFilename, null);
+		testClass.execute(filename, null);
 	}
 
 	@Test

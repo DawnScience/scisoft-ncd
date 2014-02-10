@@ -19,6 +19,8 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.dawb.hdf5.Nexus;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
@@ -26,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
+import ptolemy.data.Token;
 import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
@@ -43,11 +46,10 @@ public class NcdMessageSource extends Source {
 
 
 	private boolean messageSent;
-	private ReentrantLock lock;
 	private String filename;
 	private String detector;
 	
-	public Parameter lockParam;
+	public Parameter lockParam, monitorParam;
 	public StringParameter filenameParam, detectorParam;
 
 	public NcdMessageSource(CompositeEntity container, String name) throws NameDuplicationException,
@@ -58,6 +60,7 @@ public class NcdMessageSource extends Source {
 		filenameParam = new StringParameter(this, "filenameParam");
 		detectorParam = new StringParameter(this, "detectorParam");
 		lockParam = new Parameter(this, "lockParam");
+		monitorParam = new Parameter(this, "monitorParam");
 	}
 
 	@Override
@@ -66,17 +69,36 @@ public class NcdMessageSource extends Source {
 		if (messageSent) {
 			return null;
 		}
+		ReentrantLock lock = null;
 		try {
 			filename = ((StringToken) filenameParam.getToken()).stringValue();
 			detector = ((StringToken) detectorParam.getToken()).stringValue();
-			
-			Object obj = ((ObjectToken) lockParam.getToken()).getValue();
-			if (obj instanceof ReentrantLock) {
-				lock = (ReentrantLock) obj;
-			} else {
-				throw new ProcessingException(ErrorCode.MSG_CONSTRUCTION_ERROR, "Invalid lock object", this, null);
+
+			Token token = lockParam.getToken();
+			if (token instanceof ObjectToken) {
+				Object obj = ((ObjectToken) token).getValue();
+				if (obj instanceof ReentrantLock) {
+					lock = (ReentrantLock) obj;
+				}
 			}
-			
+			if (lock == null) {
+				lock = new ReentrantLock();
+				getLogger().info("Creating new reentrant lock for working with HDF5 files");
+			}
+
+			IProgressMonitor monitor = null;
+			token = monitorParam.getToken();
+			if (token instanceof ObjectToken) {
+				Object obj = ((ObjectToken) token).getValue();
+				if (obj instanceof IProgressMonitor) {
+					monitor = (IProgressMonitor) obj;
+				}
+			}
+			if (monitor == null) {
+				monitor = new NullProgressMonitor();
+				getLogger().info("Monitor object was not provided");
+			}
+
 			lock.lock();
 			int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 			int entryGroupID = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
@@ -104,7 +126,8 @@ public class NcdMessageSource extends Source {
 					inputErrorsID,
 					inputAxisDataID,
 					inputAxisErrorsID,
-					lock);
+					lock,
+					monitor);
 			dataMsg = createMessage(msg, "application/octet-stream");
 		} catch (IllegalActionException e) {
 			messageSent = false;
@@ -119,7 +142,7 @@ public class NcdMessageSource extends Source {
 			messageSent = false;
 			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e);
 		} finally {
-			if (lock.isLocked() && lock.isHeldByCurrentThread()) {
+			if (lock != null && lock.isLocked() && lock.isHeldByCurrentThread()) {
 				lock.unlock();
 			}
 		}

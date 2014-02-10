@@ -19,6 +19,8 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.dawb.passerelle.common.message.DataMessageComponent;
+import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class NcdProcessingObject extends DataMessageComponent {
 
@@ -32,11 +34,12 @@ public class NcdProcessingObject extends DataMessageComponent {
 	private static final String INPUT_AXIS_DATA_ID = "inputAxisDataID";
 	private static final String INPUT_AXIS_ERRORS_ID = "inputAxisErrorsID";
 	private static final String LOCK = "lock";
+	private static final String MONITOR = "Monitor";
 
 	public NcdProcessingObject(int entryGroupID, int processingGroupID,	int inputGroupID,
 			int inputDataID, int inputErrorsID,
 			int inputAxisDataID, int inputAxisErrorsID,
-			ReentrantLock lock) {
+			ReentrantLock lock, IProgressMonitor monitor) {
 		super();
 
 		setEntryGroupID(entryGroupID);
@@ -47,6 +50,7 @@ public class NcdProcessingObject extends DataMessageComponent {
 		setInputAxisDataID(inputAxisDataID);
 		setInputAxisErrorsID(inputAxisErrorsID);
 		setLock(lock);
+		setMonitor(monitor);
 	}
 
 	public int getEntryGroupID() {
@@ -142,7 +146,27 @@ public class NcdProcessingObject extends DataMessageComponent {
 	}
 
 	public void setLock(ReentrantLock lock) {
-		addUserObject(LOCK, lock);
+		if (lock != null) {
+			addUserObject(LOCK, lock);
+		} else {
+			addUserObject(LOCK, new ReentrantLock());
+		}
+	}
+
+	public IProgressMonitor getMonitor() {
+		Object obj = getUserObject(MONITOR);
+		if (obj instanceof IProgressMonitor) {
+			return (IProgressMonitor) obj;
+		}
+		return null;
+	}
+
+	public void setMonitor(IProgressMonitor monitor) {
+		if (monitor != null) {
+			addUserObject(MONITOR, monitor);
+		} else {
+			addUserObject(MONITOR, new NullProgressMonitor());
+		}
 	}
 
 }

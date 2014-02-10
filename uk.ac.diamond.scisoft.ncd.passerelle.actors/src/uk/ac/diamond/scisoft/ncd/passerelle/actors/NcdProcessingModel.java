@@ -35,6 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
+import org.eclipse.core.runtime.IProgressMonitor;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
@@ -372,7 +373,7 @@ public class NcdProcessingModel {
 		
 	}
 
-	public void execute(String filename) {
+	public void execute(String filename, IProgressMonitor monitor) {
 
 		try {
 			configure(filename);
@@ -408,6 +409,9 @@ public class NcdProcessingModel {
 			flow.connect(average.output, sink.input);
 			
 			source.lockParam.setToken(new ObjectToken(lock));
+			if (monitor != null) {
+				source.monitorParam.setToken(new ObjectToken(monitor));
+			}
 			
 			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
 			
