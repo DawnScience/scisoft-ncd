@@ -311,7 +311,6 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
-		props.put("SectorIntegration.enable", Boolean.toString(true));
 		props.put("SectorIntegration.doRadialParam", Boolean.toString(true));
 		props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(true));
 		props.put("SectorIntegration.doFastParam", Boolean.toString(false));

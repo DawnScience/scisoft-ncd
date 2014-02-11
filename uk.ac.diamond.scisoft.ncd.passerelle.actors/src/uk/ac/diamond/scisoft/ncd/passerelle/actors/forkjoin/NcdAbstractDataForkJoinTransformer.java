@@ -31,7 +31,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.IProgressMonitor;
 
-import ptolemy.data.BooleanToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -40,7 +39,6 @@ import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
-import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.actor.v5.Actor;
@@ -69,7 +67,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	
 	public Parameter isEnabled;
 	
-	protected boolean enabled, hasErrors;
+	protected boolean hasErrors;
 	
 	protected int dimension;
 	protected long[] frames;
@@ -85,24 +83,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 		input = PortFactory.getInstance().createInputPort(this, "input", NcdProcessingObject.class);
 		output = PortFactory.getInstance().createOutputPort(this, "result");
-
-		isEnabled = new Parameter(this, "enable", new BooleanToken(false));
-	}
-	
-	@Override
-	protected void doInitialize() throws InitializationException {
-		super.doInitialize();
-		
-		try {
-			enabled = ((BooleanToken) isEnabled.getToken()).booleanValue();
-			if (!enabled) {
-				return;
-			}
-			
-		} catch (IllegalActionException e) {
-			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing NCD actor",
-					this, e);
-		}
 	}
 	
 	@Override
@@ -110,10 +90,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			throws ProcessingException {
 
 		ManagedMessage receivedMsg = request.getMessage(input);
-		if (!enabled) {
-			response.addOutputMessage(output, receivedMsg);
-			return;
-		}
 		
 		try {
 			NcdProcessingObject receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();

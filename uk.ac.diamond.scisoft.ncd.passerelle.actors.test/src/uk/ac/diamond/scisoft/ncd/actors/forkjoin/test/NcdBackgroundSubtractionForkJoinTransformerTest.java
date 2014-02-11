@@ -312,7 +312,6 @@ public class NcdBackgroundSubtractionForkJoinTransformerTest {
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
-		props.put("BackgroundSubtraction.enable", Boolean.toString(true));
 		props.put("BackgroundSubtraction.bgScalingParam", Float.toString(scaleBg));
 		
 		props.put("BackgroundMessageSource.filenameParam", bgFile);
@@ -321,7 +320,6 @@ public class NcdBackgroundSubtractionForkJoinTransformerTest {
 		String bgProcessingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("BackgroundMessageSource.processingParam", bgProcessingName);
 		
-		props.put("BackgroundAverage.enable", Boolean.toString(true));
 		props.put("BackgroundAverage.gridAverageParam", "1,2");
 		
 		flowMgr.executeBlockingLocally(flow, props);

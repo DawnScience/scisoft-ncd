@@ -254,7 +254,6 @@ public class NcdAverageForkJoinTransformerTest {
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
-		props.put("Average.enable", Boolean.toString(true));
 		props.put("Average.gridAverageParam", "1,3");
 
 		flowMgr.executeBlockingLocally(flow, props);

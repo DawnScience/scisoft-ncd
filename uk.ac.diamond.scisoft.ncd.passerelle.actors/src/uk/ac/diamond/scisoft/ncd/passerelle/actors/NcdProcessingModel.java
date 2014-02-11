@@ -39,11 +39,17 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
+import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 
+import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.v5.ActorContext;
+import com.isencia.passerelle.actor.v5.ProcessRequest;
+import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.PasserelleException;
 import com.isencia.passerelle.domain.et.ETDirector;
+import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.model.Flow;
 import com.isencia.passerelle.model.FlowAlreadyExecutingException;
 import com.isencia.passerelle.model.FlowManager;
@@ -57,6 +63,7 @@ import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAbstractDataForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
@@ -103,7 +110,29 @@ public class NcdProcessingModel {
 	
 	private static ReentrantLock lock;
 
-	private final String PROCESSING = "processing"; 
+	private final String PROCESSING = "processing";
+	
+	/**
+	 * Dummy message forwarder actor.
+	 * Intended as a stub for disabled data reduction stages
+	 *
+	 */
+	private class NcdMessageForwarder extends NcdAbstractDataForkJoinTransformer {
+
+		public NcdMessageForwarder(CompositeEntity container, String name) throws IllegalActionException,
+				NameDuplicationException {
+			super(container, name);
+		}
+		
+		@Override
+		protected void process(ActorContext ctxt, ProcessRequest request, ProcessResponse response)
+				throws ProcessingException {
+
+			ManagedMessage receivedMsg = request.getMessage(input);
+			response.addOutputMessage(output, receivedMsg);
+		}
+			
+	}
 	
 	public NcdProcessingModel() {
 		super();
@@ -376,73 +405,29 @@ public class NcdProcessingModel {
 
 	public void execute(String filename, IProgressMonitor monitor) {
 
+		NcdAbstractDataForkJoinTransformer selection;
+		NcdAbstractDataForkJoinTransformer detectorResponse;
+		NcdAbstractDataForkJoinTransformer sectorIntegration;
+		NcdAbstractDataForkJoinTransformer normalisation;
+		NcdAbstractDataForkJoinTransformer backgroundSubtraction;
+		NcdAbstractDataForkJoinTransformer invariant;
+		NcdAbstractDataForkJoinTransformer average;
+		
 		try {
 			configure(filename);
 
 			Flow flow = new Flow("NCD Data Reduction", null);
 			
-			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
-			NcdSelectionForkJoinTransformer selection = new NcdSelectionForkJoinTransformer(flow,
-					"Selection");
-			NcdDetectorResponseForkJoinTransformer detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow,
-					"DetectorResponse");
-			NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(
-					flow, "SectorIntegration");
-			NcdNormalisationForkJoinTransformer normalisation = new NcdNormalisationForkJoinTransformer(flow,
-					"Normalisation");
-			NcdBackgroundSubtractionForkJoinTransformer backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(
-					flow, "BackgroundSubtraction");
-			NcdInvariantForkJoinTransformer invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
-			NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
-			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
-
 			ETDirector director = new ETDirector(flow, "director");
 			flow.setDirector(director);
 			
-			flow.connect(source.output, selection.input);
-			flow.connect(selection.output, detectorResponse.input);
-			flow.connect(detectorResponse.output, sectorIntegration.input);
-			flow.connect(sectorIntegration.output, normalisation.input);
-			flow.connect(normalisation.output, backgroundSubtraction.input);
-			flow.connect(backgroundSubtraction.output, invariant.input);
-			//flow.connect(invariant.output, sink.input);
-			flow.connect(backgroundSubtraction.output, average.input);
-			flow.connect(average.output, sink.input);
-			
+			Map<String, String> props = new HashMap<String, String>();
+
+			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 			source.lockParam.setToken(new ObjectToken(lock));
 			if (monitor != null) {
 				source.monitorParam.setToken(new ObjectToken(monitor));
 			}
-			
-			detectorResponse.detectorResponseParam.setToken(new ObjectToken(drData));
-			
-			if (intSector != null) {
-				sectorIntegration.sectorROIParam.setRoi(intSector);
-			}
-			if (slope != null) {
-				sectorIntegration.gradientParam.setToken(new ObjectToken(slope));
-			}
-			if (intercept != null) {
-				sectorIntegration.interceptParam.setToken(new ObjectToken(intercept));
-			}
-			if (cameraLength != null) {
-				sectorIntegration.cameraLengthParam.setToken(new ObjectToken(cameraLength));
-			}
-			if (energy != null) {
-				sectorIntegration.energyParam.setToken(new ObjectToken(energy));
-			}
-			if (pxSize != null) {
-				sectorIntegration.pxSizeParam.setToken(new ObjectToken(pxSize));
-			}
-			if (qaxisUnit != null) {
-				sectorIntegration.axisUnitParam.setToken(new ObjectToken(qaxisUnit));
-			}
-			if (enableMask && mask != null) {
-				sectorIntegration.maskParam.setToken(new ObjectToken(mask));
-			}
-
-			Map<String, String> props = new HashMap<String, String>();
-
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detector);
 			props.put("MessageSource.dimensionParam", Integer.toString(dimension));
@@ -450,46 +435,68 @@ public class NcdProcessingModel {
 			props.put("MessageSource.processingParam", processingName);
 			props.put("MessageSource.readOnlyParam", Boolean.toString(false));
 			
-			props.put("Selection.enable", Boolean.toString(frameSelection != null));
-			props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
+			if (frameSelection != null) {
+				selection = new NcdSelectionForkJoinTransformer(flow, "Selection");
+				props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
+			} else {
+				selection = new NcdMessageForwarder(flow, "Selection");
+			}
 			
-			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
+			if (flags.isEnableDetectorResponse()) {
+				detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow, "DetectorResponse");
+				((NcdDetectorResponseForkJoinTransformer) detectorResponse).detectorResponseParam.setToken(new ObjectToken(drData));
+			} else {
+				detectorResponse = new NcdMessageForwarder(flow, "DetectorResponse");
+			}
 			
-			props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
 			if (flags.isEnableSector()) {
+				sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
 				props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
 				props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
 				props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
+				if (intSector != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).sectorROIParam.setRoi(intSector);
+				}
+				if (slope != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).gradientParam.setToken(new ObjectToken(slope));
+				}
+				if (intercept != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).interceptParam.setToken(new ObjectToken(intercept));
+				}
+				if (cameraLength != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).cameraLengthParam.setToken(new ObjectToken(cameraLength));
+				}
+				if (energy != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).energyParam.setToken(new ObjectToken(energy));
+				}
+				if (pxSize != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).pxSizeParam.setToken(new ObjectToken(pxSize));
+				}
+				if (qaxisUnit != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).axisUnitParam.setToken(new ObjectToken(qaxisUnit));
+				}
+				if (enableMask && mask != null) {
+					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).maskParam.setToken(new ObjectToken(mask));
+				}
+			} else {
+				sectorIntegration = new NcdMessageForwarder(flow, "SectorIntegration");
 			}
-
-			props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
+			
 			if (flags.isEnableNormalisation()) {
+				normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
 				props.put("Normalisation.calibrationParam", calibration);
 				props.put("Normalisation.absScalingParam", Double.toString(absScaling));
 				props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+			} else {
+				normalisation = new NcdMessageForwarder(flow, "Normalisation");
 			}
 			
-			props.put("BackgroundSubtraction.enable", Boolean.toString(flags.isEnableBackground()));
 			if (flags.isEnableBackground()) {
+				backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction");
 				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
-			}
-			
-			props.put("Invariant.enable", Boolean.toString(flags.isEnableInvariant()));
-			
-			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
-			props.put("Average.gridAverageParam", gridAverage);
-
-			props.put("MessageSink.detectorParam", detector);
-
-			if (flags.isEnableBackground()) {
+				
 				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
-				NcdAverageForkJoinTransformer bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
-				
-				flow.connect(bgsource.output, bgAverage.input);
-				flow.connect(bgAverage.output, backgroundSubtraction.bgInput);
-				
 				bgsource.lockParam.setToken(new ObjectToken(lock));
-				
 				props.put("BackgroundMessageSource.filenameParam", bgFile);
 				props.put("BackgroundMessageSource.detectorParam", bgDetector);
 				int bgDimension = flags.isEnableSector() ? 1 : dimension;
@@ -500,10 +507,45 @@ public class NcdProcessingModel {
 					String bgProcessing = StringUtils.join(new String[] {bgDetector, bgProcessingName[1]}, "_");
 					props.put("BackgroundMessageSource.processingParam", bgProcessing);
 				}
+			
+				NcdAbstractDataForkJoinTransformer bgAverage;
+				if (enableBgAverage) {
+					bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
+					props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
+				} else {
+					bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage");
+				}
 				
-				props.put("BackgroundAverage.enable", Boolean.toString(enableBgAverage));
-				props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
+				flow.connect(bgsource.output, bgAverage.input);
+				flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtraction).bgInput);
+			} else {
+				backgroundSubtraction = new NcdMessageForwarder(flow, "BackgroundSubtraction");
 			}
+			
+			if (flags.isEnableInvariant()) {
+				invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
+			} else {
+				invariant = new NcdMessageForwarder(flow, "Invariant");
+			}
+			
+			if (flags.isEnableAverage()) {
+				average = new NcdAverageForkJoinTransformer(flow, "Average");
+				props.put("Average.gridAverageParam", gridAverage);
+			} else {
+				average = new NcdMessageForwarder(flow, "Average");
+			}
+			
+			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
+			props.put("MessageSink.detectorParam", detector);
+
+			flow.connect(source.output, selection.input);
+			flow.connect(selection.output, detectorResponse.input);
+			flow.connect(detectorResponse.output, sectorIntegration.input);
+			flow.connect(sectorIntegration.output, normalisation.input);
+			flow.connect(normalisation.output, backgroundSubtraction.input);
+			flow.connect(backgroundSubtraction.output, invariant.input);
+			flow.connect(backgroundSubtraction.output, average.input);
+			flow.connect(average.output, sink.input);
 
 			flowMgr.executeBlockingLocally(flow, props);
 

@@ -283,7 +283,6 @@ public class NcdNormalisationForkJoinTransformerTest {
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
-		props.put("Normalisation.enable", Boolean.toString(true));
 		props.put("Normalisation.calibrationParam", testNormName);
 		props.put("Normalisation.absScalingParam", Float.toString(absScale));
 		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
