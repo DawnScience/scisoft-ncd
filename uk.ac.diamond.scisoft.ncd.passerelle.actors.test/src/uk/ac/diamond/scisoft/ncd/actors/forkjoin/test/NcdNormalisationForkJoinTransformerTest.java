@@ -279,6 +279,7 @@ public class NcdNormalisationForkJoinTransformerTest {
 
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		props.put("MessageSource.dimensionParam", Integer.toString(dim));
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
@@ -286,7 +287,6 @@ public class NcdNormalisationForkJoinTransformerTest {
 		props.put("Normalisation.calibrationParam", testNormName);
 		props.put("Normalisation.absScalingParam", Float.toString(absScale));
 		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
-		props.put("Normalisation.dimensionParam", Integer.toString(dim));
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}

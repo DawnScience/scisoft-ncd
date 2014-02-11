@@ -69,6 +69,11 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		return Arrays.copyOf(frames, frames.length - dimension);
 	}
 
+	@Override
+	protected int getResultDimension() {
+		return 1;
+	}
+	
 	private class InvariantTask extends RecursiveAction {
 
 		private boolean forkTask;

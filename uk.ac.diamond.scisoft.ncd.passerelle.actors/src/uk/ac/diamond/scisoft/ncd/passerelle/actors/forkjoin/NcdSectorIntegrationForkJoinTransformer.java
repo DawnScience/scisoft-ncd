@@ -216,6 +216,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		return secFrames;
 	}
 
+	@Override
+	protected int getResultDimension() {
+		return 1;
+	}
+	
 	private long[] getAzimuthalDataShape() {
 		int areaDataRank = areaData[1].getRank();
 		int[] areaDataShape = areaData[1].getShape();

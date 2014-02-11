@@ -445,30 +445,24 @@ public class NcdProcessingModel {
 
 			props.put("MessageSource.filenameParam", filename);
 			props.put("MessageSource.detectorParam", detector);
+			props.put("MessageSource.dimensionParam", Integer.toString(dimension));
 			String processingName = StringUtils.join(new String[] {detector, PROCESSING},  "_");
 			props.put("MessageSource.processingParam", processingName);
 			props.put("MessageSource.readOnlyParam", Boolean.toString(false));
 			
 			props.put("Selection.enable", Boolean.toString(frameSelection != null));
-			props.put("Selection.dimensionParam", Integer.toString(dimension));
 			props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
 			
 			props.put("DetectorResponse.enable", Boolean.toString(flags.isEnableDetectorResponse()));
-			props.put("DetectorResponse.dimensionParam", Integer.toString(dimension));
 			
 			props.put("SectorIntegration.enable", Boolean.toString(flags.isEnableSector()));
-			props.put("SectorIntegration.dimensionParam", Integer.toString(dimension));
 			if (flags.isEnableSector()) {
 				props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
 				props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
 				props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
 			}
-			if (flags.isEnableSector()) {
-				dimension = 1;
-			}
 
 			props.put("Normalisation.enable", Boolean.toString(flags.isEnableNormalisation()));
-			props.put("Normalisation.dimensionParam", Integer.toString(dimension));
 			if (flags.isEnableNormalisation()) {
 				props.put("Normalisation.calibrationParam", calibration);
 				props.put("Normalisation.absScalingParam", Double.toString(absScaling));
@@ -476,16 +470,13 @@ public class NcdProcessingModel {
 			}
 			
 			props.put("BackgroundSubtraction.enable", Boolean.toString(flags.isEnableBackground()));
-			props.put("BackgroundSubtraction.dimensionParam", Integer.toString(dimension));
 			if (flags.isEnableBackground()) {
 				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
 			}
 			
 			props.put("Invariant.enable", Boolean.toString(flags.isEnableInvariant()));
-			props.put("Invariant.dimensionParam", Integer.toString(dimension));
 			
 			props.put("Average.enable", Boolean.toString(flags.isEnableAverage()));
-			props.put("Average.dimensionParam", Integer.toString(dimension));
 			props.put("Average.gridAverageParam", gridAverage);
 
 			props.put("MessageSink.detectorParam", detector);
@@ -501,6 +492,8 @@ public class NcdProcessingModel {
 				
 				props.put("BackgroundMessageSource.filenameParam", bgFile);
 				props.put("BackgroundMessageSource.detectorParam", bgDetector);
+				int bgDimension = flags.isEnableSector() ? 1 : dimension;
+				props.put("BackgroundMessageSource.dimensionParam", Integer.toString(bgDimension));
 				props.put("BackgroundMessageSource.readOnlyParam", Boolean.toString(!enableBgAverage));
 				String[] bgProcessingName = StringUtils.split(filename, "_");
 				if (bgProcessingName.length > 1 && enableBgAverage) {
@@ -509,7 +502,6 @@ public class NcdProcessingModel {
 				}
 				
 				props.put("BackgroundAverage.enable", Boolean.toString(enableBgAverage));
-				props.put("BackgroundAverage.dimensionParam", Integer.toString(dimension));
 				props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
 			}
 

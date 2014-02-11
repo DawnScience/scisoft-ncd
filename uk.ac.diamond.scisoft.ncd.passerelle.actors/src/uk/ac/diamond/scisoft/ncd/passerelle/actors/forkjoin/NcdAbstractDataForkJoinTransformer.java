@@ -32,7 +32,6 @@ import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.IProgressMonitor;
 
 import ptolemy.data.BooleanToken;
-import ptolemy.data.IntToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -69,7 +68,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	protected IProgressMonitor monitor;
 	
 	public Parameter isEnabled;
-	public Parameter dimensionParam;
 	
 	protected boolean enabled, hasErrors;
 	
@@ -89,8 +87,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		output = PortFactory.getInstance().createOutputPort(this, "result");
 
 		isEnabled = new Parameter(this, "enable", new BooleanToken(false));
-
-		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
 	}
 	
 	@Override
@@ -102,8 +98,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			if (!enabled) {
 				return;
 			}
-			
-			dimension = ((IntToken) dimensionParam.getToken()).intValue();
 			
 		} catch (IllegalActionException e) {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing NCD actor",
@@ -123,6 +117,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		
 		try {
 			NcdProcessingObject receivedObject = (NcdProcessingObject) receivedMsg.getBodyContent();
+			dimension = receivedObject.getDataDimension();
 			entryGroupID = receivedObject.getEntryGroupID();
 			processingGroupID = receivedObject.getProcessingGroupID();
 			inputGroupID = receivedObject.getInputGroupID();
@@ -149,8 +144,11 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 				lock.unlock();
 			}
 			
+			dimension = getResultDimension();
+			
 			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
 			NcdProcessingObject obj = new NcdProcessingObject(
+					dimension,
 					entryGroupID,
 					processingGroupID,
 					resultGroupID,
@@ -216,6 +214,10 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 
 	protected long[] getResultDataShape() {
 		return Arrays.copyOf(frames, frames.length);
+	}
+	
+	protected int getResultDimension() {
+		return dimension;
 	}
 	
 	protected void writeAxisData() throws HDF5Exception {

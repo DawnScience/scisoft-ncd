@@ -26,6 +26,7 @@ public class NcdProcessingObject extends DataMessageComponent {
 
 	private static final long serialVersionUID = 1L;
 	
+	private static final String DIMENSION = "dimension";
 	private static final String ENTRY_GROUP_ID = "entryGroupID";
 	private static final String PROCESSING_GROUP_ID = "processingGroupID";
 	private static final String INPUT_GROUP_ID = "inputGroupID";
@@ -36,12 +37,14 @@ public class NcdProcessingObject extends DataMessageComponent {
 	private static final String LOCK = "lock";
 	private static final String MONITOR = "Monitor";
 
-	public NcdProcessingObject(int entryGroupID, int processingGroupID,	int inputGroupID,
+	public NcdProcessingObject(int dimension,
+			int entryGroupID, int processingGroupID,	int inputGroupID,
 			int inputDataID, int inputErrorsID,
 			int inputAxisDataID, int inputAxisErrorsID,
 			ReentrantLock lock, IProgressMonitor monitor) {
 		super();
 
+		setDataDimension(dimension);
 		setEntryGroupID(entryGroupID);
 		setProcessingGroupID(processingGroupID);
 		setInputGroupID(inputGroupID);
@@ -51,6 +54,18 @@ public class NcdProcessingObject extends DataMessageComponent {
 		setInputAxisErrorsID(inputAxisErrorsID);
 		setLock(lock);
 		setMonitor(monitor);
+	}
+
+	public int getDataDimension() {
+		Object obj = getUserObject(DIMENSION);
+		if (obj instanceof Integer) {
+			return (Integer) obj;
+		}
+		return -1;
+	}
+
+	public void setDataDimension(int dimension) {
+		addUserObject(DIMENSION, dimension);
 	}
 
 	public int getEntryGroupID() {

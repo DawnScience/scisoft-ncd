@@ -307,11 +307,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		Map<String, String> props = new HashMap<String, String>();
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		props.put("MessageSource.dimensionParam", Integer.toString(dim));
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
 		props.put("SectorIntegration.enable", Boolean.toString(true));
-		props.put("SectorIntegration.dimensionParam", Integer.toString(dim));
 		props.put("SectorIntegration.doRadialParam", Boolean.toString(true));
 		props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(true));
 		props.put("SectorIntegration.doFastParam", Boolean.toString(false));

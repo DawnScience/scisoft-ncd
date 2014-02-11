@@ -268,11 +268,11 @@ public class NcdSelectionForkJoinTransformerTest {
 
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		props.put("MessageSource.dimensionParam", Integer.toString(dim));
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
 		props.put("Selection.enable", Boolean.toString(true));
-		props.put("Selection.dimensionParam", Integer.toString(dim));
 		props.put("Selection.formatParam", frameSelection);
 
 		flowMgr.executeBlockingLocally(flow, props);

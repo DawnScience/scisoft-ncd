@@ -286,11 +286,11 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 
 		props.put("MessageSource.filenameParam", filename);
 		props.put("MessageSource.detectorParam", testDatasetName);
+		props.put("MessageSource.dimensionParam", Integer.toString(dim));
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
 		
 		props.put("DetectorResponse.enable", Boolean.toString(true));
-		props.put("DetectorResponse.dimensionParam", Integer.toString(dim));
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}

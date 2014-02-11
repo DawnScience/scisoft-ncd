@@ -30,6 +30,7 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.data.BooleanToken;
+import ptolemy.data.IntToken;
 import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
 import ptolemy.data.Token;
@@ -55,9 +56,10 @@ public class NcdMessageSource extends Source {
 	private String detector;
 	private String processing;
 	
-	public Parameter lockParam, monitorParam, readOnlyParam;
+	public Parameter dimensionParam, lockParam, monitorParam, readOnlyParam;
 	public StringParameter filenameParam, detectorParam, processingParam;
 	
+	private int dimension = -1;
 	private int nxsFileID = -1;
 	private int entryGroupID = -1;
 	private int processingGroupID = -1;
@@ -73,6 +75,7 @@ public class NcdMessageSource extends Source {
 		super(container, name);
 		messageSent = false;
 		
+		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
 		filenameParam = new StringParameter(this, "filenameParam");
 		detectorParam = new StringParameter(this, "detectorParam");
 		processingParam = new StringParameter(this, "processingParam");
@@ -89,6 +92,7 @@ public class NcdMessageSource extends Source {
 		}
 		ReentrantLock lock = null;
 		try {
+			dimension  = ((IntToken) dimensionParam.getToken()).intValue();
 			filename = ((StringToken) filenameParam.getToken()).stringValue();
 			detector = ((StringToken) detectorParam.getToken()).stringValue();
 			processing = ((StringToken) processingParam.getToken()).stringValue();
@@ -146,6 +150,7 @@ public class NcdMessageSource extends Source {
 			}
 			
 			NcdProcessingObject msg = new NcdProcessingObject(
+					dimension,
 					entryGroupID,
 					processingGroupID,
 					detectorGroupID,
