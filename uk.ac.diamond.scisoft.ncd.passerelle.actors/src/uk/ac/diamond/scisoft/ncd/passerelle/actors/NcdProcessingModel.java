@@ -289,14 +289,14 @@ public class NcdProcessingModel {
 	
 	private void preprocessBackgroundData(String filename) throws HDF5Exception {
 
-		long[] bgFrames = readDataShape(bgDetector, bgFile);
+		long[] bgFrames = readDataShape(detector, bgFile);
 		long[] frames = readDataShape(detector, filename);
 
 		if (frames != null && bgFrames != null) {
 			if (!Arrays.equals(bgFrames, frames)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
 				int bgRank = bgFrames.length;
-				for (int i = (bgRank - dimension - 1); i >= 0; i--) {
+				for (int i = (bgRank - 1); i >= 0; i--) {
 					int fi = i - bgRank + frames.length;
 					if ((bgFrames[i] != 1) && (fi < 0 || (bgFrames[i] != frames[fi]))) {
 						bgAverageIndices.add(i + 1);

@@ -134,14 +134,17 @@ public class NcdMessageSource extends Source {
 			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
 			inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
 			
-			boolean hasProcessing = H5.H5Lexists(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
-			if (hasProcessing) {
-				processingGroupID = H5.H5Gopen(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
-			} else {
-				if (!readOnly) {
-					processingGroupID = NcdNexusUtils.makegroup(entryGroupID, processing, Nexus.INST);
+			if (processing != null && !processing.isEmpty()) {
+				boolean hasProcessing = H5.H5Lexists(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
+				if (hasProcessing) {
+					processingGroupID = H5.H5Gopen(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
+				} else {
+					if (!readOnly) {
+						processingGroupID = NcdNexusUtils.makegroup(entryGroupID, processing, Nexus.INST);
+					}
 				}
 			}
+			
 			boolean hasErrors = H5.H5Lexists(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 			if (hasErrors) {
 				inputErrorsID = H5.H5Dopen(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
