@@ -22,7 +22,7 @@ import javax.measure.unit.SI;
 import org.eclipse.swt.widgets.Composite;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 
 public class WaxsQAxisCalibration extends NcdQAxisCalibration {

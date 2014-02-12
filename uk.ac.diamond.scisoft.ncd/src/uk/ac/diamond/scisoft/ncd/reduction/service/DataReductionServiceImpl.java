@@ -37,6 +37,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.hdf5.HierarchicalDataFactory;
 import org.dawb.hdf5.IHierarchicalDataFile;
+import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
@@ -54,13 +55,16 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
-import uk.ac.diamond.scisoft.ncd.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdProcessingModel;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
-import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
 
 /**
  * Class to be available internally only. The IDataReductionService can be 
@@ -76,11 +80,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	
 	@Override
 	public IDataReductionContext createContext() {
-		DataReductionContext context   = new DataReductionContext();
-		LazyNcdProcessing processing   = new LazyNcdProcessing();
-		LazyNcdProcessing bgProcessing = new LazyNcdProcessing();
-		NcdReductionFlags flags        = new NcdReductionFlags();
-		NcdDetectors      ncdDetectors = new NcdDetectors();
+		DataReductionContext context    = new DataReductionContext();
+		IDataReductionProcess processing   = new NcdProcessingModel();
+		IDataReductionProcess bgProcessing = new NcdProcessingModel();
+		NcdReductionFlags  flags        = new NcdReductionFlags();
+		NcdDetectors       ncdDetectors = new NcdDetectors();
 		context.setProcessing(processing);
 		context.setBgProcessing(bgProcessing);
 		context.setFlags(flags);
@@ -91,8 +95,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	@Override
 	public void configure(IDataReductionContext context) {
 		
-		LazyNcdProcessing processing   = context.getProcessing();
-		LazyNcdProcessing bgProcessing = context.getBgProcessing();
+		IDataReductionProcess processing = context.getProcessing();
+		IDataReductionProcess bgProcessing = context.getBgProcessing();
 		NcdReductionFlags flags        = context.getFlags();
 		NcdDetectors      ncdDetectors = context.getNcdDetectors();
 		 
@@ -101,7 +105,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		readDataReductionOptions(context, flags, processing);
 
 		processing.setFlags(flags);
-		processing.setNcdDetectors(ncdDetectors);
 
 		if (flags.isEnableBackground()) {
 			
@@ -114,7 +117,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 			bgFlags.setEnableBackground(false);
 			bgProcessing.setFlags(bgFlags);
-			bgProcessing.setNcdDetectors(bgDetectors);
 
 			SliceInput bgSliceInput = context.getBgSliceInput();
 			Integer bgFirstFrame    = bgSliceInput.getStartFrame();
@@ -141,8 +143,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	public IStatus process(String rawFilePath, IDataReductionContext context, IProgressMonitor monitor) throws Exception {
 		
 	
-		LazyNcdProcessing processing   = context.getProcessing();
-		LazyNcdProcessing bgProcessing = context.getBgProcessing();
+		IDataReductionProcess processing = context.getProcessing();
+		IDataReductionProcess bgProcessing = context.getBgProcessing();
 		NcdReductionFlags flags        = context.getFlags();
 		NcdDetectors      ncdDetectors = context.getNcdDetectors();
 
@@ -153,15 +155,23 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		boolean enableWaxs = flags.isEnableWaxs();
 		boolean enableSaxs = flags.isEnableSaxs();
 		
-		String detectorWaxs=null, detectorSaxs=null;
-		int dimWaxs=0, dimSaxs=0;
+		DiffractionDetector detectorWaxs = null;
+		DiffractionDetector detectorSaxs = null;
 		if (enableWaxs) {
-			detectorWaxs = context.getWaxsDetectorName();
-			dimWaxs = ncdDetectors.getDimWaxs();
+			detectorWaxs = new DiffractionDetector();
+			String detectorWaxsName = context.getWaxsDetectorName();
+			Amount<Length> pxSize = ncdDetectors.getPxWaxs();
+			detectorWaxs.setDetectorName(detectorWaxsName);
+			detectorWaxs.setxPixelSize(null);
+			detectorWaxs.setyPixelSize(pxSize);
 		}
 		if (enableSaxs) {
-			detectorSaxs = context.getSaxsDetectorName();
-			dimSaxs = ncdDetectors.getDimSaxs();
+			detectorSaxs = new DiffractionDetector();
+			String detectorSaxsName = context.getSaxsDetectorName();
+			Amount<Length> pxSize = ncdDetectors.getPxSaxs();
+			detectorSaxs.setDetectorName(detectorSaxsName);
+			detectorSaxs.setxPixelSize(pxSize);
+			detectorSaxs.setyPixelSize(pxSize);
 		}
 		
 		final String bgPath = context.getBgPath();
@@ -185,34 +195,12 @@ public class DataReductionServiceImpl implements IDataReductionService {
 				bgFilename = createResultsFile(context, bgName, bgPath, "background");
 				dawbWriter = HierarchicalDataFactory.getWriter(bgFilename);
 				if (enableWaxs && bgFilename != null) {
-					try {
-						bgProcessing.configure(detectorWaxs, dimWaxs, bgFilename, monitor);
-						bgProcessing.execute(monitor);
-					} catch (HDF5Exception e) {
-						logger.error("SCISOFT NCD: Error caught during backgrond WAXS data reduction", e);
-						throw e;
-					} finally {
-						try {
-							bgProcessing.complete();
-						} catch (Exception ex) {
-							logger.error("SCISOFT NCD: Failed to close background results file", ex);
-						}
-					}
+						bgProcessing.setNcdDetector(detectorWaxs);
+						bgProcessing.execute(bgFilename, monitor);
 				}
 				if (enableSaxs && bgFilename != null) {
-					try {
-						bgProcessing.configure(detectorSaxs, dimSaxs, bgFilename, monitor);
-						bgProcessing.execute(monitor);
-					} catch (HDF5Exception e) {
-						logger.error("SCISOFT NCD: Error caught during backgrond SAXS data reduction", e);
-						throw e;
-					} finally {
-						try {
-							bgProcessing.complete();
-						} catch (Exception ex) {
-							logger.error("SCISOFT NCD: Failed to close background results file", ex);
-						}
-					}
+						bgProcessing.setNcdDetector(detectorSaxs);
+						bgProcessing.execute(bgFilename, monitor);
 				}
 				processing.setBgFile(bgFilename);
 
@@ -248,52 +236,30 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		IHierarchicalDataFile dawbOutputReader = null;
 		IHierarchicalDataFile dawbOutputWriter = null;
-		IHierarchicalDataFile dawbBgReader     = null;
+		IHierarchicalDataFile dawbBgWriter     = null;
 		try {
 			dawbOutputReader = HierarchicalDataFactory.getReader(inputfilePath);
 			final String filename = createResultsFile(context, inputfileName, inputfilePath, "results");
 			context.setResultsFile(filename);
 			dawbOutputWriter = HierarchicalDataFactory.getWriter(filename);
 			if (context.getBgName() != null) {
-				dawbBgReader = HierarchicalDataFactory.getReader(context.getBgName());
+				dawbBgWriter = HierarchicalDataFactory.getWriter(context.getBgName());
 			}
 
-			if (enableWaxs) {
-				processing.setBgDetector(detectorWaxs+"_result");
-				try {
-					processing.configure(detectorWaxs, dimWaxs, filename, monitor);
-					processing.execute(monitor);
-				} catch (HDF5Exception e) {
-					logger.error("SCISOFT NCD: Error caught during input WAXS data reduction", e);
-					throw e;
-				} finally {
-					try {
-						processing.complete();
-					} catch (Exception ex) {
-						logger.error("SCISOFT NCD: Failed to close NCD data reduction result file", ex);
-					} 
-				}
+			if (enableWaxs && detectorWaxs != null) {
+				processing.setBgDetector(detectorWaxs.getDetectorName()+"_result");
+				processing.setNcdDetector(detectorWaxs);
+				processing.execute(filename, monitor);
 			}
 
 			if (monitor.isCanceled()) {
 				return Status.CANCEL_STATUS;
 			}
 
-			if (enableSaxs) {
-				processing.setBgDetector(detectorSaxs+"_result");
-				try {
-					processing.configure(detectorSaxs, dimSaxs, filename, monitor);
-					processing.execute(monitor);
-				} catch (HDF5Exception e) {
-					logger.error("SCISOFT NCD: Error caught during input SAXS data reduction", e);
-					throw e;
-				} finally {
-					try {
-						processing.complete();
-					} catch (Exception ex) {
-						logger.error("SCISOFT NCD: Failed to close NCD data reduction result file", ex);
-					} 
-				}
+			if (enableSaxs && detectorSaxs != null) {
+				processing.setBgDetector(detectorSaxs.getDetectorName() + "_result");
+				processing.setNcdDetector(detectorSaxs);
+				processing.execute(filename, monitor);
 			}
 
 			if (monitor.isCanceled()) {
@@ -318,8 +284,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 					logger.error("SCISOFT NCD: Error closing NCD data reduction result file", ex);
 				} finally {
 					try {
-						if (dawbBgReader != null) {
-							dawbBgReader.close();
+						if (dawbBgWriter != null) {
+							dawbBgWriter.close();
 						}
 					} catch (Exception ex) {
 						logger.error("SCISOFT NCD: Error closing background processing results file", ex);
@@ -558,7 +524,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 	
-	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, LazyNcdProcessing processing) {
+	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, IDataReductionProcess bgProcessing) {
 
 		String workingDir = context.getWorkingDir();
 		if (workingDir == null || workingDir.isEmpty()) {
@@ -637,8 +603,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (context.isEnableMask()) {
 			BooleanDataset mask = context.getMask();
 			if (mask != null) {
-				processing.setMask(new BooleanDataset(mask));
-				processing.setEnableMask(true);
+				bgProcessing.setMask(new BooleanDataset(mask));
+				bgProcessing.setEnableMask(true);
 			} else {
 				throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
 			}
@@ -653,34 +619,34 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			if ((sym != SectorROI.NONE) && (sym != SectorROI.FULL)) {
 				tmpSector.setCombineSymmetry(true);
 			}
-			processing.setIntSector(tmpSector);
+			bgProcessing.setIntSector(tmpSector);
 		}
 
 		CalibrationResultsBean crb = context.getCalibrationResults();
-		processing.setCrb(crb);
+		bgProcessing.setCrb(crb);
 		Double valEnergy = context.getEnergy();
 		if (valEnergy != null) {
 			Amount<Energy> energy = Amount.valueOf(context.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT));
-			processing.setEnergy(energy);
+			bgProcessing.setEnergy(energy);
 		}
 		
 		
-		processing.setBgFile(bgFile);
+		bgProcessing.setBgFile(bgFile);
 		if (absScaling != null) {
 			if (thickness != null) {
-				processing.setAbsScaling(absScaling / thickness);
+				bgProcessing.setAbsScaling(absScaling / thickness);
 			} else {
-				processing.setAbsScaling(absScaling);
+				bgProcessing.setAbsScaling(absScaling);
 			}
 		}
-		processing.setBgScaling(bgScaling);
-		processing.setDrFile(drFile);
-		processing.setFirstFrame(firstFrame);
-		processing.setLastFrame(lastFrame);
-		processing.setFrameSelection(frameSelection);
-		processing.setGridAverageSelection(gridAverage);
-		processing.setCalibration(context.getCalibrationName());
-		processing.setNormChannel(normChannel);
+		bgProcessing.setBgScaling(bgScaling);
+		bgProcessing.setDrFile(drFile);
+		bgProcessing.setFirstFrame(firstFrame);
+		bgProcessing.setLastFrame(lastFrame);
+		bgProcessing.setFrameSelection(frameSelection);
+		bgProcessing.setGridAverageSelection(gridAverage);
+		bgProcessing.setCalibration(context.getCalibrationName());
+		bgProcessing.setNormChannel(normChannel);
 	}
 
 	

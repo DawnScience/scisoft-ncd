@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.data.xml;
+package uk.ac.diamond.scisoft.ncd.core.data.xml;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;

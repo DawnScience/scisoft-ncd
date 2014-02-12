@@ -71,11 +71,11 @@ import uk.ac.diamond.scisoft.analysis.monitor.IMonitor;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
-import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionContext;
-import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionService;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.util.ptolemy.IAvailableChoices;

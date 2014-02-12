@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.data;
+package uk.ac.diamond.scisoft.ncd.core.data;
 
 import javax.measure.quantity.Length;
 import javax.xml.bind.annotation.XmlAccessorType;
@@ -24,7 +24,7 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.ncd.data.xml.PxSizeXmlAdapter;
+import uk.ac.diamond.scisoft.ncd.core.data.xml.PxSizeXmlAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 

@@ -73,9 +73,10 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegration
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
-public class NcdProcessingModel {
+public class NcdProcessingModel implements IDataReductionProcess {
 
 	private boolean enableMask;
 	private int normChannel;
@@ -168,54 +169,67 @@ public class NcdProcessingModel {
 		
 	}
 
+	@Override
 	public void setBgScaling(Double bgScaling) {
 		this.bgScaling = bgScaling;
 	}
 
+	@Override
 	public void setBgDetector(String bgDetector) {
 		this.bgDetector = bgDetector;
 	}
 
+	@Override
 	public void setBgFile(String bgFile) {
 		this.bgFile = bgFile;
 	}
 
+	@Override
 	public void setDrFile(String drFile) {
 		this.drFile = drFile;
 	}
 
+	@Override
 	public void setAbsScaling(Double absScaling) {
 		this.absScaling = absScaling;
 	}
 	
+	@Override
 	public void setNormChannel(int normChannel) {
 		this.normChannel = normChannel;
 	}
 
+	@Override
 	public void setCalibration(String calibration) {
 		this.calibration = calibration;
 	}
 
+	@Override
 	public void setIntSector(SectorROI intSector) {
 		this.intSector = intSector;
 	}
 
+	@Override
 	public void setEnableMask(boolean enableMask) {
 		this.enableMask = enableMask;
 	}
 
+	@Override
 	public void setMask(BooleanDataset mask) {
 		this.mask = mask;
 	}
 
+	@Override
 	public void setCrb(CalibrationResultsBean crb) {
 		this.crb = crb;
 	}
 
+	@Override
 	public void setFlags(NcdReductionFlags flags) {
 		this.flags = new NcdReductionFlags(flags);
 	}
 
+	@Override
 	public void setNcdDetector(DiffractionDetector ncdDetector) {
 		this.detector = ncdDetector.getDetectorName();
 		if (ncdDetector.getxPixelSize() != null && ncdDetector.getPixelSize() != null) {
@@ -226,22 +240,27 @@ public class NcdProcessingModel {
 		this.pxSize = ncdDetector.getPixelSize();
 	}
 
+	@Override
 	public void setFirstFrame(Integer firstFrame) {
 		this.firstFrame = firstFrame;
 	}
 
+	@Override
 	public void setLastFrame(Integer lastFrame) {
 		this.lastFrame = lastFrame;
 	}
 
+	@Override
 	public void setFrameSelection(String frameSelection) {
 		this.frameSelection = frameSelection;
 	}
 
+	@Override
 	public void setGridAverageSelection(String gridAverage) {
 		this.gridAverage = gridAverage;
 	}
 
+	@Override
 	public void setEnergy(Amount<Energy> energy) {
 		this.energy = energy;
 	}
@@ -403,6 +422,7 @@ public class NcdProcessingModel {
 		
 	}
 
+	@Override
 	public void execute(String filename, IProgressMonitor monitor) {
 
 		NcdAbstractDataForkJoinTransformer selection;

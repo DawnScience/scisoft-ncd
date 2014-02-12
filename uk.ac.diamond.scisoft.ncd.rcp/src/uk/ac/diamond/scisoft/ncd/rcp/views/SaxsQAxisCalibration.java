@@ -71,7 +71,7 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;

@@ -56,7 +56,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;

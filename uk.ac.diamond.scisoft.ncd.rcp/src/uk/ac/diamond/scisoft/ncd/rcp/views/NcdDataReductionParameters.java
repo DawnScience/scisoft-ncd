@@ -53,7 +53,7 @@ import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 
-import uk.ac.diamond.scisoft.ncd.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;

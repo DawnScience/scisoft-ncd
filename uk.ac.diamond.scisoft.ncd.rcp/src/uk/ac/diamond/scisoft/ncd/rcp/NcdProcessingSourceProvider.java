@@ -25,12 +25,11 @@ import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.ncd.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.data.xml.EnergyXmlAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)

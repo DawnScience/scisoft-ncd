@@ -14,16 +14,15 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.reduction.service;
+package uk.ac.diamond.scisoft.ncd.core.service;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
-import uk.ac.diamond.scisoft.ncd.data.SliceInput;
-import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 
 /**
  * Contains information to run data reduction algorithm from anywhere.
@@ -193,13 +192,13 @@ public interface IDataReductionContext {
 
 	void setSaxsDetectorName(String saxsDetectorName);
 
-	public LazyNcdProcessing getProcessing();
+	public IDataReductionProcess getProcessing();
 
-	public void setProcessing(LazyNcdProcessing processing);
+	public void setProcessing(IDataReductionProcess processing);
 
-	public LazyNcdProcessing getBgProcessing();
+	public IDataReductionProcess getBgProcessing();
 
-	public void setBgProcessing(LazyNcdProcessing bgProcessing);
+	public void setBgProcessing(IDataReductionProcess bgProcessing);
 
 	public NcdReductionFlags getFlags();
 
