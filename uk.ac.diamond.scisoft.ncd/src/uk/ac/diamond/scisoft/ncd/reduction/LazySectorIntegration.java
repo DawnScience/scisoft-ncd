@@ -61,7 +61,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
 	
-	private int sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
+	public int sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
+	public long[] secFrames;
 
 	public static String name = "SectorIntegration";
 
@@ -125,7 +126,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		double[] radii = intSector.getRadii();
 		double dpp = intSector.getDpp();
 		int secRank = frames.length - dim + 1;
-		long[] secFrames = Arrays.copyOf(frames, secRank);
+		secFrames = Arrays.copyOf(frames, secRank);
 		secFrames[secRank - 1] = intRadii[1] - intRadii[0] + 1;
 		sec_data_id = NcdNexusUtils.makedata(sec_group_id, "data", typeFloat, secFrames, true, "counts");
 		sec_errors_id = NcdNexusUtils.makedata(sec_group_id, "errors", typeDouble, secFrames, false, "counts");

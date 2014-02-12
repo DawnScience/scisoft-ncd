@@ -34,7 +34,6 @@ import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.io.FilenameUtils;
-import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.dawb.hdf5.Nexus;
@@ -58,7 +57,6 @@ import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
-import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -364,8 +362,6 @@ public class LazyNcdProcessing {
 			lazyDetectorResponse.configure(dimension, frames, entry_group_id, processing_group_id);
 		}
 	    
-		secRank = rank - dim + 1;
-		secFrames = Arrays.copyOf(frames, secRank);
 		lazySectorIntegration = new LazySectorIntegration();
 		if(flags.isEnableSector() && dim == 2) {
 			intSector.setAverageArea(false);
@@ -380,7 +376,14 @@ public class LazyNcdProcessing {
 				lazySectorIntegration.setCameraLength(cameraLength);
 				lazySectorIntegration.setEnergy(energy);
 			}
+			lazySectorIntegration.setCalculateRadial(flags.isEnableRadial());
+			lazySectorIntegration.setCalculateAzimuthal(flags.isEnableAzimuthal());
+			lazySectorIntegration.setFast(flags.isEnableFastintegration());
 			lazySectorIntegration.configure(dimension, frames, processing_group_id);
+			
+			secRank = rank - dim + 1;
+			secFrames = lazySectorIntegration.secFrames;
+			dimension = 1;
 		}
 		
 		lazyNormalisation = new LazyNormalisation();
@@ -457,8 +460,6 @@ public class LazyNcdProcessing {
 			
 			while (iter.hasNext()) {
 				
-				sliceParams.setStart(iter.getPos());
-
 				DataReductionJob sectorJob = new DataReductionJob("Sector Integration") {
 
 					@Override
@@ -489,13 +490,7 @@ public class LazyNcdProcessing {
 
 							jobmonitor.setTaskName(monitorFile + " : Performing sector integration");
 							
-							LazySectorIntegration tmpLazySectorIntegration = new LazySectorIntegration();
-							tmpLazySectorIntegration.setIntSector(intSector);
-							tmpLazySectorIntegration.setCalculateRadial(flags.isEnableRadial());
-							tmpLazySectorIntegration.setCalculateAzimuthal(flags.isEnableAzimuthal());
-							tmpLazySectorIntegration.setFast(flags.isEnableFastintegration());
-							tmpLazySectorIntegration.setMask(mask);
-							data = tmpLazySectorIntegration.execute(dim, data, currentSliceParams, lock)[1];
+							data = lazySectorIntegration.execute(dim, data, currentSliceParams, lock)[1];
 						} catch (Exception e) {
 							e.printStackTrace();
 							return Status.CANCEL_STATUS;
@@ -507,6 +502,7 @@ public class LazyNcdProcessing {
 				
 				sectorJob.tmp_ids = new DataSliceIdentifiers(input_ids);
 				sectorJob.tmp_errors_ids = new DataSliceIdentifiers(input_errors_ids);
+				sliceParams.setStart(iter.getPos());
 				sectorJob.currentSliceParams = new SliceSettings(sliceParams);
 				sectorJobList.add(sectorJob);
 				
@@ -560,15 +556,14 @@ public class LazyNcdProcessing {
 			IntegerDataset idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {1}, new int[] {1});
 			
-			input_ids.setIDs(sec_group_id, sec_data_id);
-			input_errors_ids.setIDs(sec_group_id, sec_errors_id);
+			input_ids.setIDs(lazySectorIntegration.sec_group_id, lazySectorIntegration.sec_data_id);
+			input_errors_ids.setIDs(lazySectorIntegration.sec_group_id, lazySectorIntegration.sec_errors_id);
 		}
 
 		ArrayList<DataReductionJob> processingJobList = new ArrayList<DataReductionJob>();
 		ArrayList<DataReductionJob> runningJobList = new ArrayList<DataReductionJob>();
 		
 		while (iter.hasNext()) {
-			sliceParams.setStart(iter.getPos());
 
 			DataReductionJob processingJob = new DataReductionJob("Data Reduction") {
 
@@ -606,13 +601,15 @@ public class LazyNcdProcessing {
 							data = lazyNormalisation.execute(dim, data, currentSliceParams, lock);
 						}
 
-						if (flags.isEnableBackground() && final_bgFrames_int != null) {
+						if (flags.isEnableBackground()) {
 							jobmonitor.setTaskName(monitorFile + " : Subtracting background");
 
-							int bgSliceSize = Math.min(finalSliceSize, final_bgFrames_int[finalSliceDim]);
+							long[] bgFrames = lazyBackgroundSubtraction.bgFrames; 
+							int[] bgFrames_int = lazyBackgroundSubtraction.bgFrames_int;
+							int bgSliceSize = Math.min(finalSliceSize, bgFrames_int [finalSliceDim]);
 							int[] bgStart = new int[finalSliceDim + 1];
 							for (int i = 0; i <= finalSliceDim; i++) {
-								bgStart[i] = Math.min(currentSliceParams.getStart()[i], final_bgFrames_int[i] - 1);
+								bgStart[i] = Math.min(currentSliceParams.getStart()[i], bgFrames_int[i] - 1);
 							}
 							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
 							bgSliceParams.setStart(bgStart);
@@ -640,7 +637,9 @@ public class LazyNcdProcessing {
 
 						if (flags.isEnableInvariant()) {
 							jobmonitor.setTaskName(monitorFile + " : Calculating invariant");
-							lazyInvariant.execute(dim, data, currentSliceParams, lock);
+							SliceSettings invSliceParam = new SliceSettings(lazyInvariant.invFrames, finalSliceDim, finalSliceSize);
+							invSliceParam.setStart(Arrays.copyOf(currentSliceParams.getStart(), finalSliceDim + 1));
+							lazyInvariant.execute(dim, data, invSliceParam, lock);
 						}
 					} catch (Exception e) {
 						e.printStackTrace();
@@ -653,7 +652,12 @@ public class LazyNcdProcessing {
 			
 			processingJob.tmp_ids = new DataSliceIdentifiers(input_ids);
 			processingJob.tmp_errors_ids = new DataSliceIdentifiers(input_errors_ids);
+			sliceParams.setStart(iter.getPos());
 			processingJob.currentSliceParams = new SliceSettings(sliceParams);
+			if (flags.isEnableBackground()) {
+				processingJob.tmp_bgIds = new DataSliceIdentifiers(lazyBackgroundSubtraction.bgIds);
+				processingJob.tmp_errors_bgIds = new DataSliceIdentifiers(lazyBackgroundSubtraction.bgErrorsIds);
+			}
 			processingJobList.add(processingJob);
 		}
 
@@ -693,11 +697,15 @@ public class LazyNcdProcessing {
 		
 		monitor.done();
 		
-		if (!processingJobList.isEmpty()) {
-			DataReductionJob tmpJob = processingJobList.get(0);
-			input_ids = new DataSliceIdentifiers(tmpJob.tmp_ids);
-			input_errors_ids = new DataSliceIdentifiers(tmpJob.tmp_errors_ids);
-			sliceParams = new SliceSettings(tmpJob.currentSliceParams);
+		if (flags.isEnableBackground()) {
+			input_ids.setIDs(lazyBackgroundSubtraction.bg_group_id, lazyBackgroundSubtraction.bg_data_id);
+			input_errors_ids.setIDs(lazyBackgroundSubtraction.bg_group_id, lazyBackgroundSubtraction.bg_errors_id);
+		} else if (flags.isEnableNormalisation()) {
+			input_ids.setIDs(lazyNormalisation.norm_group_id, lazyNormalisation.norm_data_id);
+			input_errors_ids.setIDs(lazyNormalisation.norm_group_id, lazyNormalisation.norm_errors_id);
+		} else if (flags.isEnableDetectorResponse() && !flags.isEnableSector()) {
+			input_ids.setIDs(lazyDetectorResponse.dr_group_id, lazyDetectorResponse.dr_data_id);
+			input_errors_ids.setIDs(lazyDetectorResponse.dr_group_id, lazyDetectorResponse.dr_errors_id);
 		}
 		
 		if(flags.isEnableAverage()) {

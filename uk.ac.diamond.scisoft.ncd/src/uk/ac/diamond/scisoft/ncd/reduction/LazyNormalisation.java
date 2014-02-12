@@ -45,7 +45,7 @@ public class LazyNormalisation extends LazyDataReduction {
 	public static String name = "Normalisation";
 	
 	private int calibration_group_id, input_calibration_id;
-	private int norm_group_id, norm_data_id, norm_errors_id;
+	public int norm_group_id, norm_data_id, norm_errors_id;
 	private DataSliceIdentifiers calibration_ids;
 
 	// Normalisation data shapes

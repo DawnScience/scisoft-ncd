@@ -44,7 +44,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 	
 	public static String name = "DetectorResponse";
 
-	private int dr_group_id, dr_data_id, dr_errors_id;
+	public int dr_group_id, dr_data_id, dr_errors_id;
 	
 	public void setDrFile(String drFile) {
 		this.drFile = drFile;

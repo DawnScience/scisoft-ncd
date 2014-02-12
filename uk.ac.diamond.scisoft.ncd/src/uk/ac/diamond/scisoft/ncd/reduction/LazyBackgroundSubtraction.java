@@ -47,15 +47,15 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 	
 	public static String name = "BackgroundSubtraction";
 	
-	private int bg_group_id, bg_data_id, bg_errors_id;
+	public int bg_group_id, bg_data_id, bg_errors_id;
 	private int background_file_handle, background_entry_group_id, background_detector_group_id;
 	private int background_input_data_id, background_input_errors_id;
 	
 	// Background data shapes
-	private long[] bgFrames;
-	private int[] bgFrames_int;
+	public long[] bgFrames;
+	public int[] bgFrames_int;
 	
-	private DataSliceIdentifiers bgIds, bgErrorsIds;
+	public DataSliceIdentifiers bgIds, bgErrorsIds;
 
 	public void setBgFile(String bgFile) {
 		this.bgFile = bgFile;
@@ -118,7 +118,6 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 	}
 		
 	public void preprocess(int dim, long[] frames, int frameBatch) throws HDF5Exception {
-		final int[] final_bgFrames_int;
 		if (bgFrames != null) {
 			if (!Arrays.equals(bgFrames, frames)) {
 				ArrayList<Integer> bgAverageIndices = new ArrayList<Integer>();
@@ -146,13 +145,10 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 					bgFrames_int = (int[]) ConvertUtils.convert(bgFrames, int[].class);
 				}
 			}
-			final_bgFrames_int = Arrays.copyOf(bgFrames_int, bgFrames_int.length);
 			
 			// Make link to the background dataset and store background filename
 			H5.H5Lcreate_external(bgFile, "/entry1/" + bgDetector +  "/data", bg_group_id, "background", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 			H5.H5Lcreate_external(bgFile, "/entry1/" + bgDetector +  "/errors", bg_group_id, "background_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-		} else {
-			final_bgFrames_int = null;
 		}
 	}
 	

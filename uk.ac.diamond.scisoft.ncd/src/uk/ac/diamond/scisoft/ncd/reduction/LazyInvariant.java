@@ -41,11 +41,13 @@ public class LazyInvariant extends LazyDataReduction {
 	public static String name = "Invariant";
 	
 	private int inv_group_id, inv_data_id, inv_errors_id;
+
+	public long[] invFrames;
 	
 	public void configure(int dim, long[] frames, int entry_group_id, int processing_group_id) throws HDF5Exception {
 	    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, Nexus.DETECT);
 		int type = HDF5Constants.H5T_NATIVE_FLOAT;
-		long[] invFrames = Arrays.copyOf(frames, frames.length - dim);
+		invFrames = Arrays.copyOf(frames, frames.length - dim);
 		inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invFrames, true, "counts");
 	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		inv_errors_id = NcdNexusUtils.makedata(inv_group_id, "errors", type, invFrames, true, "counts");
