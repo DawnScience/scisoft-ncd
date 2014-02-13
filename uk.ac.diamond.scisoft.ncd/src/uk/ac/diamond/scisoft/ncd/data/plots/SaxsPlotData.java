@@ -34,10 +34,11 @@ import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.ISaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyDataReduction;
 
-public abstract class SaxsPlotData extends LazyDataReduction {
+public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlotData {
 
 	protected String groupName, dataName, variableName;
 	
@@ -188,12 +189,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		
 	}
 	
-	public abstract double getDataValue(int idx, IDataset axis, IDataset data);
-	public abstract double getDataError(int idx, IDataset axis, IDataset data);
-
-	public abstract double getAxisValue(int idx, IDataset axis);
-	public abstract double getAxisError(int idx, IDataset axis);
-
+	@Override
 	public AbstractDataset getSaxsPlotDataset(IDataset data, IDataset axis) {
 		AbstractDataset tmpData = AbstractDataset.zeros(data.getShape(), AbstractDataset.FLOAT32);
 		boolean hasErrors = false;
@@ -218,6 +214,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		return tmpData;
 	}
 
+	@Override
 	public AbstractDataset getSaxsPlotAxis(IDataset axis) {
 		AbstractDataset tmpAxis = AbstractDataset.zeros(axis.getShape(), AbstractDataset.FLOAT32);
 		boolean hasErrors = false;

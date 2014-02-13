@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.utils;
+package uk.ac.diamond.scisoft.ncd.core.data;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -24,13 +24,13 @@ import org.apache.commons.math3.util.Pair;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
-import uk.ac.diamond.scisoft.ncd.data.plots.DebyeBuechePlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.GuinierPlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.KratkyPlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.LogLogPlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.PorodPlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.SaxsPlotData;
-import uk.ac.diamond.scisoft.ncd.data.plots.ZimmPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.DebyeBuechePlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.KratkyPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.LogLogPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.ZimmPlotData;
 
 public enum SaxsAnalysisPlotType {
 
@@ -57,6 +57,10 @@ public enum SaxsAnalysisPlotType {
 		return name;
 	}
 
+	public String getGroupName() {
+		return name.replaceAll("[\\W ]", "");
+	}
+
 	public Pair<String, String> getAxisNames() {
 		return axisNames;
 	}
@@ -70,38 +74,13 @@ public enum SaxsAnalysisPlotType {
 	
 	/**
 	 * Process the maths in place for the passed in arguments.
+	 * We keep the maths separate from the UI. This is a good idea!
 	 * @param xTraceData
 	 * @param yTraceData
 	 */
 	public void process(AbstractDataset xTraceData, AbstractDataset yTraceData) {
-		process(xTraceData, yTraceData, this);
-	}
-
-	/**
-	 * We keep the maths separate from the UI. This is a good idea!
-	 * @param xTraceData
-	 * @param yTraceData
-	 * @param plotType
-	 */
-	private static void process(AbstractDataset xTraceData, AbstractDataset yTraceData, SaxsAnalysisPlotType plotType) {
 		
-    	SaxsPlotData plotData;
-		if (plotType.equals(SaxsAnalysisPlotType.LOGLOG_PLOT)) {
-			plotData = new LogLogPlotData();
-		} else if (plotType.equals(SaxsAnalysisPlotType.GUINIER_PLOT)) {
-			plotData = new GuinierPlotData();
-		} else if (plotType.equals(SaxsAnalysisPlotType.POROD_PLOT)) {
-			plotData = new PorodPlotData();
-		} else if (plotType.equals(SaxsAnalysisPlotType.KRATKY_PLOT)) {
-			plotData = new KratkyPlotData();
-		} else if (plotType.equals(SaxsAnalysisPlotType.ZIMM_PLOT)) {
-			plotData = new ZimmPlotData();
-		} else if (plotType.equals(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT)) {
-			plotData = new DebyeBuechePlotData();
-		} else {
-			return;
-		}
-    	
+    	SaxsPlotData plotData = getSaxsPlotDataObject();
 		IndexIterator itr = yTraceData.getIterator();
 		while (itr.hasNext()) {
 			int idx = itr.index;
@@ -148,6 +127,24 @@ public enum SaxsAnalysisPlotType {
 
 	public int[] getRgb() {
 		return rgb;
+	}
+
+	public SaxsPlotData getSaxsPlotDataObject() {
+    	SaxsPlotData plotData = null;
+		if (this.equals(SaxsAnalysisPlotType.LOGLOG_PLOT)) {
+			plotData = new LogLogPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.GUINIER_PLOT)) {
+			plotData = new GuinierPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.POROD_PLOT)) {
+			plotData = new PorodPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.KRATKY_PLOT)) {
+			plotData = new KratkyPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.ZIMM_PLOT)) {
+			plotData = new ZimmPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT)) {
+			plotData = new DebyeBuechePlotData();
+		}
+		return plotData;
 	}
 	
 }

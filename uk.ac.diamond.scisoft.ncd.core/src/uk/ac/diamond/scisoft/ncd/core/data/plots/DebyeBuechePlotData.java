@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.data.plots;
+package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import org.apache.commons.math3.util.Pair;
 
@@ -22,35 +22,32 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
-public class KratkyPlotData extends SaxsPlotData {
+public class DebyeBuechePlotData extends SaxsPlotData {
 
-	public KratkyPlotData() {
+	public DebyeBuechePlotData() {
 		super();
-		Pair<String, String> axesNames = SaxsAnalysisPlotType.KRATKY_PLOT.getAxisNames();
-		groupName = "kratky";
+		Pair<String, String> axesNames = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getAxisNames();
+		groupName = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getGroupName();
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();
 	}
 	
 	@Override
 	public double getDataValue(int idx, IDataset axis, IDataset data) {
-		return (Math.pow(axis.getDouble(idx), 2) * data.getDouble(idx));
+		return Math.pow(data.getDouble(idx), -0.5);
 	}
 	
 	@Override
 	public double getAxisValue(int idx, IDataset axis) {
-		return axis.getDouble(idx);
+		return Math.pow(axis.getDouble(idx), 2);
 	}
 
 	@Override
 	public double getDataError(int idx, IDataset axis, IDataset data) {
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors() && axis instanceof IErrorDataset
-				&& ((IErrorDataset) axis).hasErrors()) {
+		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
 			double val = data.getDouble(idx);
 			double err = ((IErrorDataset) data).getError().getDouble(idx);
-			double axval = axis.getDouble(idx);
-			double axerr = ((IErrorDataset) axis).getError().getDouble(idx);
-			return Math.sqrt(Math.pow(2.0*axval*val*axerr, 2.0) + Math.pow(axval*axval*err, 2.0));
+			return Math.pow(val, -1.5) * err / 2.0;
 		}
 		return Double.NaN;
 	}
@@ -58,7 +55,9 @@ public class KratkyPlotData extends SaxsPlotData {
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
-			return ((IErrorDataset) axis).getError().getDouble(idx);
+			double val = axis.getDouble(idx);
+			double err = ((IErrorDataset) axis).getError().getDouble(idx);
+			return 2.0 * val * err;
 		}
 		return Double.NaN;
 	}

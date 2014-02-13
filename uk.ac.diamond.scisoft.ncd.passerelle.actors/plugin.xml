@@ -63,6 +63,12 @@
             id="uk.ac.diamond.scisoft.ncd.passerelle.actors.core.ncdprocessingobjecttransformer"
             name="Dataset Extract">
       </actor>
+      <actor
+            class="uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJoinTransformer"
+            group="uk.ac.diamond.scisoft.ncd.actors"
+            id="uk.ac.diamond.scisoft.ncd.passerelle.actors.saxsplot"
+            name="SAXS Plot">
+      </actor>
    </extension>
 
 </plugin>

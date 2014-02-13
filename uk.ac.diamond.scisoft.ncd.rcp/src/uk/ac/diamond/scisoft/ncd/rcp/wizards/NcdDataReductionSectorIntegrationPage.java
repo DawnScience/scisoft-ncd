@@ -29,9 +29,9 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReductionPage {
 

@@ -12,8 +12,7 @@ Export-Package: uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.hdf5,
  uk.ac.diamond.scisoft.ncd.preferences,
  uk.ac.diamond.scisoft.ncd.reduction,
- uk.ac.diamond.scisoft.ncd.reduction.service,
- uk.ac.diamond.scisoft.ncd.utils
+ uk.ac.diamond.scisoft.ncd.reduction.service
 Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  org.apache.commons.beanutils;bundle-version="[1.9.1,1.9.2)",
  org.apache.commons.math3;bundle-version="[3.2.0,3.3.0)",

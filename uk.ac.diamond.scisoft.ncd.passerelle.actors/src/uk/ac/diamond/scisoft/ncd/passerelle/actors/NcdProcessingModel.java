@@ -39,11 +39,13 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.ObjectToken;
+import ptolemy.data.StringToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 
 import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.general.DevNullActor;
 import com.isencia.passerelle.actor.v5.ActorContext;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
 import com.isencia.passerelle.actor.v5.ProcessResponse;
@@ -69,9 +71,11 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtrac
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -432,6 +436,12 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		NcdAbstractDataForkJoinTransformer backgroundSubtraction;
 		NcdAbstractDataForkJoinTransformer invariant;
 		NcdAbstractDataForkJoinTransformer average;
+		NcdAbstractDataForkJoinTransformer loglogPlot;
+		NcdAbstractDataForkJoinTransformer guinierPlot;
+		NcdAbstractDataForkJoinTransformer porodPlot;
+		NcdAbstractDataForkJoinTransformer kratkyPlot;
+		NcdAbstractDataForkJoinTransformer zimmPlot;
+		NcdAbstractDataForkJoinTransformer debyebuechePlot;
 		
 		try {
 			configure(filename);
@@ -555,9 +565,18 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				average = new NcdMessageForwarder(flow, "Average");
 			}
 			
+			loglogPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT.getName(), flags.isEnableLogLogPlot());
+			guinierPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT.getName(), flags.isEnableGuinierPlot());
+			porodPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT.getName(), flags.isEnablePorodPlot());
+			kratkyPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT.getName(), flags.isEnableKratkyPlot());
+			zimmPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT.getName(), flags.isEnableZimmPlot());
+			debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getName(), flags.isEnableDebyeBuechePlot());
+		    
 			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 			props.put("MessageSink.detectorParam", detector);
 
+			DevNullActor nullActor = new DevNullActor(flow, "Null");
+			
 			flow.connect(source.output, selection.input);
 			flow.connect(selection.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
@@ -565,7 +584,21 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(normalisation.output, backgroundSubtraction.input);
 			flow.connect(backgroundSubtraction.output, invariant.input);
 			flow.connect(backgroundSubtraction.output, average.input);
+			flow.connect(average.output, loglogPlot.input);
+			flow.connect(average.output, guinierPlot.input);
+			flow.connect(average.output, porodPlot.input);
+			flow.connect(average.output, kratkyPlot.input);
+			flow.connect(average.output, zimmPlot.input);
+			flow.connect(average.output, debyebuechePlot.input);
+			
 			flow.connect(average.output, sink.input);
+			flow.connect(invariant.output, nullActor.input);
+			flow.connect(loglogPlot.output, nullActor.input);
+			flow.connect(guinierPlot.output, nullActor.input);
+			flow.connect(porodPlot.output, nullActor.input);
+			flow.connect(kratkyPlot.output, nullActor.input);
+			flow.connect(zimmPlot.output, nullActor.input);
+			flow.connect(debyebuechePlot.output, nullActor.input);
 
 			flowMgr.executeBlockingLocally(flow, props);
 
@@ -582,5 +615,17 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		} catch (HDF5Exception e) {
 			throw new RuntimeException(e);
 		}
+	}
+
+	private NcdAbstractDataForkJoinTransformer addSaxsPlotActor(CompositeEntity flow, String name, boolean enable)
+			throws NameDuplicationException, IllegalActionException {
+		NcdAbstractDataForkJoinTransformer saxsPlot;
+		if (enable) {
+			saxsPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, name);
+			((NcdSaxsPlotDataForkJoinTransformer) saxsPlot).plotTypeParam.setToken(new StringToken(name));
+		} else {
+			saxsPlot = new NcdMessageForwarder(flow, name);
+		}
+		return saxsPlot;
 	}
 }

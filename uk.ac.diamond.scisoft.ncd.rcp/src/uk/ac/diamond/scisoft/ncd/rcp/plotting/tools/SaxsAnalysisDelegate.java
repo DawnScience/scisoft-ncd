@@ -43,11 +43,11 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 /**
- * Deligates plotting and maths to a single place which can be used on more than one part.
+ * Delegates plotting and maths to a single place which can be used on more than one part.
  */
 class SaxsAnalysisDelegate {
 	

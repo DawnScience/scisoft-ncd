@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.data.plots;
+package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import org.apache.commons.math3.util.Pair;
 
@@ -27,7 +27,7 @@ public class KratkyPlotData extends SaxsPlotData {
 	public KratkyPlotData() {
 		super();
 		Pair<String, String> axesNames = SaxsAnalysisPlotType.KRATKY_PLOT.getAxisNames();
-		groupName = "kratky";
+		groupName = SaxsAnalysisPlotType.KRATKY_PLOT.getGroupName();
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();
 	}

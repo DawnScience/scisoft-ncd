@@ -36,6 +36,8 @@ public class SliceSettings {
 
 	public SliceSettings(long[] frames, int sliceDim, int sliceSize) {
 		this.frames = Arrays.copyOf(frames, frames.length);
+		this.start = new int[frames.length];
+		Arrays.fill(this.start, 0);
 		this.sliceDim = sliceDim;
 		this.sliceSize = sliceSize;
 	}
