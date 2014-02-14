@@ -123,7 +123,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			DataSliceIdentifiers axisErrorsIDs = new DataSliceIdentifiers();
 			axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 			axisErrorsIDs.setSlice(axisSliceParams);
-			AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisIDs);
+			AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
 			inputAxis.setError(inputAxisErrors);
 		}
 		
@@ -183,12 +183,12 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			currentSliceParams.setStart(startPos);
 
 			try {
-				DataSliceIdentifiers sector_id = new DataSliceIdentifiers();
-				sector_id.setIDs(resultGroupID, resultDataID);
-				sector_id.setSlice(currentSliceParams);
-				DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers();
-				err_sector_id.setIDs(resultGroupID, resultErrorsID);
-				err_sector_id.setSlice(currentSliceParams);
+				DataSliceIdentifiers dataIDs = new DataSliceIdentifiers();
+				dataIDs.setIDs(resultGroupID, resultDataID);
+				dataIDs.setSlice(currentSliceParams);
+				DataSliceIdentifiers errorIDs = new DataSliceIdentifiers();
+				errorIDs.setIDs(resultGroupID, resultErrorsID);
+				errorIDs.setSlice(currentSliceParams);
 
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
@@ -242,9 +242,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					}
 				lock.lock();
 				if (saxsPlotData != null) {
-					writeResults(sector_id, saxsPlotData, dataShape, dimension);
+					writeResults(dataIDs, saxsPlotData, dataShape, dimension);
 					if (saxsPlotData.hasErrors()) {
-						writeResults(err_sector_id, saxsPlotData.getError(), dataShape, dimension);
+						writeResults(errorIDs, saxsPlotData.getError(), dataShape, dimension);
 					}
 				}
 			} catch (HDF5LibraryException e) {

@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.actors.forkjoin.test;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -42,6 +43,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ptolemy.data.ObjectToken;
+import ptolemy.data.StringToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -53,10 +55,13 @@ import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAbstractDataForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 
 import com.isencia.passerelle.actor.ProcessingException;
@@ -223,13 +228,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						int result_data_id = content.getInputDataID();
 						int result_errors_id = content.getInputErrorsID();
 						
+						lock.lock();
 						DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
 						result_ids.setIDs(result_group_id, result_data_id);
 						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
 						result_error_ids.setIDs(result_group_id, result_errors_id);
-						
-						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
 						
 						int azimuthal_data_id = H5.H5Dopen(result_group_id, "azimuth", HDF5Constants.H5P_DEFAULT);
 						int azimuthal_errors_id = H5.H5Dopen(result_group_id, "azimuth_errors", HDF5Constants.H5P_DEFAULT);
@@ -239,8 +242,12 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						DataSliceIdentifiers azimuthal_error_ids = new DataSliceIdentifiers();
 						azimuthal_error_ids.setIDs(result_group_id, azimuthal_errors_id);
 						
+						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						
 						AbstractDataset azData = NcdNexusUtils.sliceInputData(azSlice, azimuthal_ids);
 						AbstractDataset azErrors = NcdNexusUtils.sliceInputData(azSlice, azimuthal_error_ids);
+						lock.unlock();
 						
 						for (int h = 0; h < shape[0]; h++)
 						  for (int g = 0; g < shape[1]; g++)
@@ -271,12 +278,98 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 							}
 					}
 				} catch (MessageException e) {
+					fail(e.getMessage());
 					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
 							message, e);
 				} catch (HDF5LibraryException e) {
+					fail(e.getMessage());
 					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
 							message, e);
 				} catch (HDF5Exception e) {
+					fail(e.getMessage());
+					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
+							message, e);
+				}
+			}
+		}
+	}
+
+	private class NcdSaxsPlotMessageSink extends Sink {
+		
+		protected SaxsAnalysisPlotType plotType;
+
+		public NcdSaxsPlotMessageSink(CompositeEntity container, String name) throws NameDuplicationException,
+				IllegalActionException {
+			super(container, name);
+		}
+
+		@Override
+		protected void sendMessage(ManagedMessage message) throws ProcessingException {
+			if (message != null) {
+				try {
+					
+					SliceSettings slice = new SliceSettings(radialShape, 0, (int) radialShape[0]);
+					long[] axisShape = new long[] { radialShape[radialShape.length - 1] };
+					SliceSettings axisSlice = new SliceSettings(axisShape, 0, (int) axisShape[0]);
+
+					Object obj = message.getBodyContent();
+					if (obj instanceof NcdProcessingObject) {
+						NcdProcessingObject content = (NcdProcessingObject) obj;
+						int result_group_id = content.getInputGroupID();
+						int result_data_id = content.getInputDataID();
+						int result_errors_id = content.getInputErrorsID();
+						int axis_data_id = content.getInputAxisDataID();
+						int axis_errors_id = content.getInputAxisErrorsID();
+						
+						lock.lock();
+						DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
+						result_ids.setIDs(result_group_id, result_data_id);
+						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
+						result_error_ids.setIDs(result_group_id, result_errors_id);
+						DataSliceIdentifiers axis_ids = new DataSliceIdentifiers();
+						axis_ids.setIDs(result_group_id, axis_data_id);
+						DataSliceIdentifiers axis_error_ids = new DataSliceIdentifiers();
+						axis_error_ids.setIDs(result_group_id, axis_errors_id);
+						
+						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						AbstractDataset axisData = NcdNexusUtils.sliceInputData(axisSlice, axis_ids);
+						AbstractDataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axis_error_ids);
+						lock.unlock();
+						
+						axisData.setError(axisErrors);
+						
+						for (int h = 0; h < shape[0]; h++)
+						  for (int g = 0; g < shape[1]; g++)
+							for (int k = 0; k < shape[2]; k++) {
+								int[] startImage = new int[] {h, g, k, 0, 0};
+								int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
+								AbstractDataset image = data.getSlice(startImage, stopImage, null).squeeze();
+								AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
+								image.setErrorBuffer(errimage);
+								intSector.setAverageArea(true);
+								AbstractDataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
+								AbstractDataset resultData = plotType.getSaxsPlotDataObject().getSaxsPlotDataset(intResult[0], axisData);
+								for (int i = 0; i < outData.getShape()[3]; i++) {
+										float value = outData.getFloat(h, g, k, i);
+										double error = outErrors.getDouble(h, g, k, i);
+										float expected = resultData.getFloat(i);
+										double expectederror = Math.sqrt(((AbstractDataset) resultData.getErrorBuffer()).getDouble(i));
+										assertEquals(String.format("Test %s SAXS Plot data for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expected, value, 1e-6*expected);
+										assertEquals(String.format("Test %s SAXS Plot error for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expectederror, error, 1e-6*expectederror);
+								}
+							}
+					}
+				} catch (MessageException e) {
+					fail(e.getMessage());
+					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
+							message, e);
+				} catch (HDF5LibraryException e) {
+					fail(e.getMessage());
+					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
+							message, e);
+				} catch (HDF5Exception e) {
+					fail(e.getMessage());
 					throw new ProcessingException(ErrorCode.MSG_DELIVERY_FAILURE, "Error processing msg", this,
 							message, e);
 				}
@@ -285,15 +378,46 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 	}
 
 	@Test
-	public void testNcdSectorIntegrationForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
+	public void testNcdSectorIntegrationSaxsPlotDataForkJoinTransformer() throws FlowAlreadyExecutingException, PasserelleException,
 			IllegalActionException, NameDuplicationException {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 		NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
+		NcdAbstractDataForkJoinTransformer loglogPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT.getName());
+		NcdAbstractDataForkJoinTransformer guinierPlot     = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT.getName());
+		NcdAbstractDataForkJoinTransformer porodPlot       = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT.getName());              
+		NcdAbstractDataForkJoinTransformer kratkyPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT.getName());            
+		NcdAbstractDataForkJoinTransformer zimmPlot        = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT.getName());                
+		NcdAbstractDataForkJoinTransformer debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getName());
 		NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
+		NcdSaxsPlotMessageSink loglogPlotSink = new NcdSaxsPlotMessageSink(flow, "loglogPlotSink");
+		NcdSaxsPlotMessageSink guinierPlotSink = new NcdSaxsPlotMessageSink(flow, "guinierPlotSink");
+		NcdSaxsPlotMessageSink porodPlotSink = new NcdSaxsPlotMessageSink(flow, "porodPlotSink");
+		NcdSaxsPlotMessageSink kratkyPlotSink = new NcdSaxsPlotMessageSink(flow, "kratkyPlotSink");
+		NcdSaxsPlotMessageSink zimmPlotSink = new NcdSaxsPlotMessageSink(flow, "zimmPlotSink");
+		NcdSaxsPlotMessageSink debyebuechePlotSink = new NcdSaxsPlotMessageSink(flow, "debyebuechePlotSink");
 
+		loglogPlotSink.plotType = SaxsAnalysisPlotType.LOGLOG_PLOT;
+		guinierPlotSink.plotType = SaxsAnalysisPlotType.GUINIER_PLOT;
+		porodPlotSink.plotType = SaxsAnalysisPlotType.POROD_PLOT;
+		kratkyPlotSink.plotType = SaxsAnalysisPlotType.KRATKY_PLOT;
+		zimmPlotSink.plotType = SaxsAnalysisPlotType.ZIMM_PLOT;
+		debyebuechePlotSink.plotType = SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT;
+		
 		flow.connect(source.output, sectorIntegration.input);
 		flow.connect(sectorIntegration.output, sink.input);
+		flow.connect(sectorIntegration.output, loglogPlot.input);
+		flow.connect(sectorIntegration.output, guinierPlot.input);
+		flow.connect(sectorIntegration.output, porodPlot.input);
+		flow.connect(sectorIntegration.output, kratkyPlot.input);
+		flow.connect(sectorIntegration.output, zimmPlot.input);
+		flow.connect(sectorIntegration.output, debyebuechePlot.input);
+		flow.connect(loglogPlot.output, loglogPlotSink.input);
+		flow.connect(guinierPlot.output, guinierPlotSink.input);
+		flow.connect(porodPlot.output, porodPlotSink.input);
+		flow.connect(kratkyPlot.output, kratkyPlotSink.input);
+		flow.connect(zimmPlot.output, zimmPlotSink.input);
+		flow.connect(debyebuechePlot.output, debyebuechePlotSink.input);
 		
 		intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
 
@@ -318,6 +442,14 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		flowMgr.executeBlockingLocally(flow, props);
 	}
 	
+	private NcdAbstractDataForkJoinTransformer addSaxsPlotActor(CompositeEntity flow, String name)
+			throws NameDuplicationException, IllegalActionException {
+		NcdAbstractDataForkJoinTransformer saxsPlot;
+		saxsPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, name);
+		((NcdSaxsPlotDataForkJoinTransformer) saxsPlot).plotTypeParam.setToken(new StringToken(name));
+		return saxsPlot;
+	}
+
 	@AfterClass
 	public static void removeTmpFiles() throws Exception {
 		//Clear scratch directory 

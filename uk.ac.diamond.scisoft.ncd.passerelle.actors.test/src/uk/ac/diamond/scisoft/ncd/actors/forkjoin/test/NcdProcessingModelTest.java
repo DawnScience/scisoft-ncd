@@ -51,7 +51,9 @@ import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdProcessingModel;
@@ -155,6 +157,12 @@ public class NcdProcessingModelTest {
 		flags.setEnableAverage(true);
 		flags.setEnableSaxs(true);
 		flags.setEnableWaxs(false);
+		flags.setEnableLogLogPlot(true);
+		flags.setEnableGuinierPlot(true);
+		flags.setEnablePorodPlot(true);
+		flags.setEnableKratkyPlot(true);
+		flags.setEnableZimmPlot(true);
+		flags.setEnableDebyeBuechePlot(true);
 
 		DiffractionDetector ncdDetector = new DiffractionDetector();
 		ncdDetector.setDetectorName(detector);
@@ -476,6 +484,78 @@ public class NcdProcessingModelTest {
 			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
 			assertEquals(String.format("Test average for index %d", i), valResult, valData, acc);
 			assertEquals(String.format("Test average error for index %d", i), valResultError, valDataError, accerr);
+		}
+	}
+	
+	@Test
+	public void checkLogLogPlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.LOGLOG_PLOT);
+	}
+	
+	@Test
+	public void checkGuinierPlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.GUINIER_PLOT);
+	}
+	
+	@Test
+	public void checkPorodPlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.POROD_PLOT);
+	}
+	
+	@Test
+	public void checkKratkyPlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.KRATKY_PLOT);
+	}
+	
+	@Test
+	public void checkZimmPlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.ZIMM_PLOT);
+	}
+	
+	@Test
+	public void checkDebyeBuechePlot() throws HDF5Exception {
+		checkSaxsPlot(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT);
+	}
+	
+	private void checkSaxsPlot(SaxsAnalysisPlotType plotType) throws HDF5Exception {
+
+		SaxsPlotData plotObject = plotType.getSaxsPlotDataObject();
+	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyAverageName);
+	    DataSliceIdentifiers data_id = ids[0];
+	    DataSliceIdentifiers input_errors_id = ids[1];
+	    SliceSettings dataSlice = new SliceSettings(framesAve, 1, 1);
+		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
+		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
+		data.setError(dataErrors);
+	    
+	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, plotType.getGroupName());
+	    DataSliceIdentifiers result_id = array_id[0];
+	    DataSliceIdentifiers result_error_id = array_id[1];
+	    SliceSettings resultSlice = new SliceSettings(framesAve, 1, 1);
+		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id).squeeze();
+		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id).squeeze();
+
+		int axis_id = H5.H5Dopen(data_id.datagroup_id, "q", HDF5Constants.H5P_DEFAULT);
+		int axis_errors_id = H5.H5Dopen(data_id.datagroup_id, "q_errors", HDF5Constants.H5P_DEFAULT);
+		DataSliceIdentifiers axisIDs = new DataSliceIdentifiers();
+		axisIDs.setIDs(data_id.datagroup_id, axis_id);
+		DataSliceIdentifiers axisErrorIDs = new DataSliceIdentifiers();
+		axisErrorIDs.setIDs(data_id.datagroup_id, axis_errors_id);
+		
+	    SliceSettings axisSlice = new SliceSettings(new long[] {framesAve[framesAve.length - 1]}, 0, (int) framesAve[framesAve.length - 1]);
+		AbstractDataset axis = NcdNexusUtils.sliceInputData(axisSlice, axisIDs);
+		AbstractDataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axisErrorIDs);
+		axis.setError(axisErrors);
+		
+		for (int i = 0; i < intPoints; i++) {
+			double valResult = result.getDouble(i);
+			double valResultError = resultErrors.getDouble(i);
+			double valData = plotObject.getDataValue(i, axis, data);
+			double valDataError = plotObject.getDataError(i, axis, data);
+			double acc = Math.max(1e-6*Math.abs(Math.sqrt(valResult*valResult + valData*valData)), 1e-10);
+			double accerr = Math.max(1e-6*Math.abs(Math.sqrt(valResultError*valResultError + valDataError*valDataError)), 1e-10);
+			assertEquals(String.format("Test %s SAXS Plot data for index %d", plotType.getName(), i), valResult, valData, acc);
+			assertEquals(String.format("Test %s SAXS Plot error for index %d", plotType.getName(), i), valResultError, valDataError, accerr);
 		}
 	}
 	
