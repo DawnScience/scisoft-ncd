@@ -61,7 +61,6 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 	private static final long serialVersionUID = 5494752725472250946L;
 
-
 	private String calibration;
 	private Double absScaling;
 	private int normChannel;
@@ -140,6 +139,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	
 	private class NormalisationTask extends RecursiveAction {
 
+		private static final long serialVersionUID = 5266823189518140464L;
+		
 		private boolean forkTask;
 		private int[] pos;
 

@@ -62,6 +62,8 @@ import com.isencia.passerelle.message.MessageException;
  */
 public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
+	private static final long serialVersionUID = 2085171025175844254L;
+
 	public Port bgInput;
 
 	private Double bgScaling;
@@ -133,6 +135,8 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 
 	private class BackgroundSubtractionTask extends RecursiveAction {
 
+		private static final long serialVersionUID = -4104769967692484959L;
+		
 		private boolean forkTask;
 		private int[] pos;
 

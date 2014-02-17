@@ -24,7 +24,7 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 
 public class NcdProcessingObject extends DataMessageComponent {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -3338750892085718124L;
 	
 	private static final String DIMENSION = "dimension";
 	private static final String ENTRY_GROUP_ID = "entryGroupID";

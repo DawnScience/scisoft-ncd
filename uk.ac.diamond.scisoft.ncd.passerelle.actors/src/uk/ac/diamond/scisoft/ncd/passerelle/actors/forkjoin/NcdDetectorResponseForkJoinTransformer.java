@@ -54,6 +54,8 @@ import com.isencia.passerelle.core.ErrorCode;
  */
 public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
+	private static final long serialVersionUID = 5818690296954190264L;
+
 	public Parameter detectorResponseParam;
 
 	private AbstractDataset drData;
@@ -92,6 +94,8 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 
 	private class DetectorResponseTask extends RecursiveAction {
 
+		private static final long serialVersionUID = -8663334134891578246L;
+		
 		private boolean forkTask;
 		private int[] pos;
 

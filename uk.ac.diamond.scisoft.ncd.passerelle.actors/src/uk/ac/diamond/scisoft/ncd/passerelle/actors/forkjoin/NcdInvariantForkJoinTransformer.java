@@ -51,6 +51,8 @@ import com.isencia.passerelle.actor.InitializationException;
  */
 public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
+	private static final long serialVersionUID = 5836823100154893276L;
+
 	public NcdInvariantForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
 		super(container, name);
@@ -76,6 +78,10 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	
 	private class InvariantTask extends RecursiveAction {
 
+		/**
+		 * 
+		 */
+		private static final long serialVersionUID = -3706726892055486185L;
 		private boolean forkTask;
 		private int[] pos;
 

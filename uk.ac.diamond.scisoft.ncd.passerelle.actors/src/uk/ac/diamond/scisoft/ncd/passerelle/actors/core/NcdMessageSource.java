@@ -51,6 +51,8 @@ import com.isencia.passerelle.message.MessageException;
 public class NcdMessageSource extends Source {
 
 
+	private static final long serialVersionUID = 5280820508271420584L;
+	
 	private boolean messageSent;
 	private String filename;
 	private String detector;

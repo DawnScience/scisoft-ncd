@@ -63,6 +63,8 @@ import com.isencia.passerelle.message.MessageException;
  */
 public class NcdProcessingObjectTransformer extends Actor {
 
+	private static final long serialVersionUID = -3361012226565001162L;
+	
 	private String format, datasetName;
 	private int dimension;
 	public StringParameter datasetNameParam, formatParam;

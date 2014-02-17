@@ -124,6 +124,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	 */
 	private class NcdMessageForwarder extends NcdAbstractDataForkJoinTransformer {
 
+		private static final long serialVersionUID = -8957295090985150203L;
+
 		public NcdMessageForwarder(CompositeEntity container, String name) throws IllegalActionException,
 				NameDuplicationException {
 			super(container, name);

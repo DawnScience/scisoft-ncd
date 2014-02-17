@@ -36,6 +36,8 @@ import com.isencia.passerelle.message.MessageException;
 
 public class NcdMessageSink extends Sink {
 
+	private static final long serialVersionUID = 3041949805554006209L;
+	
 	public StringParameter detectorParam;
 	private int entryGroupID;
 	private int inputDataID;

@@ -56,6 +56,8 @@ import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
  */
 public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
+	private static final long serialVersionUID = -6724571888549033948L;
+
 	private SaxsPlotData plotData;
 
 	private static List<String> SAXS_PLOT_TYPES;
@@ -141,6 +143,8 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	
 	private class SaxsPlotTask extends RecursiveAction {
 
+		private static final long serialVersionUID = 2182736294600190488L;
+		
 		private boolean forkTask;
 		private int[] pos;
 

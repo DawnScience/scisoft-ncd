@@ -25,7 +25,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 
 public class NcdProcessingSliceObject extends DataMessageComponent {
 
-	private static final long serialVersionUID = 1L;
+	private static final long serialVersionUID = -7243460468886418789L;
 	
 	private static final String DATA = "data";
 	private static final String AXIS = "axis";

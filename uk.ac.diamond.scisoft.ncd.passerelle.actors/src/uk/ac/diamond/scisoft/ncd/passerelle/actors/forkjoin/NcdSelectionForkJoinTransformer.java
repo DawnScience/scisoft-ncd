@@ -52,6 +52,8 @@ import com.isencia.passerelle.core.ErrorCode;
  */
 public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
+	private static final long serialVersionUID = -5655747807538747688L;
+
 	private String format;
 
 	public StringParameter formatParam;
@@ -96,6 +98,8 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	}
 
 	private class SelectionTask extends RecursiveAction {
+
+		private static final long serialVersionUID = 2174001369762740761L;
 
 		@Override
 		protected void compute() {
