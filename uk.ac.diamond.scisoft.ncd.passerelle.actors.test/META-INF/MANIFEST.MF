@@ -1,0 +1,14 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: NCD Actor Tests
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.passerelle.actors.test
+Bundle-Version: 2.1.0.qualifier
+Fragment-Host: uk.ac.diamond.scisoft.ncd.passerelle.actors;bundle-version="[2.1.0.qualifier,2.2.0)"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Import-Package: org.junit;version="4.10.0"
+Require-Bundle: org.apache.commons.io;bundle-version="[2.4.0,2.5.0)",
+ ch.qos.logback.classic;bundle-version="[1.1.0,1.2.0)",
+ ch.qos.logback.core;bundle-version="[1.1.0,1.2.0)",
+ jcl.over.slf4j;bundle-version="[1.7.6,1.7.7)",
+ org.dawb.common.services;bundle-version="1.2.0",
+ org.dawnsci.persistence;bundle-version="1.2.0"

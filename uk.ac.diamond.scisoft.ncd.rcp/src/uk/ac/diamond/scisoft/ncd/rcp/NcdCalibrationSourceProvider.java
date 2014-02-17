@@ -33,9 +33,9 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationPeak;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.data.xml.CalibrationResultsXmlAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)

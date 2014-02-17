@@ -23,8 +23,8 @@ import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.reduction.service.DataReductionServiceImpl;
-import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionService;
 
 public class Activator implements BundleActivator {
 

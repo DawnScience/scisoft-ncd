@@ -20,7 +20,7 @@ import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class PorodPlotData extends SaxsPlotData {
 

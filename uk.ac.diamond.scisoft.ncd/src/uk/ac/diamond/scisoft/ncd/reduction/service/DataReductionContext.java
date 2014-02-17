@@ -18,12 +18,13 @@ package uk.ac.diamond.scisoft.ncd.reduction.service;
 
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.data.NcdDetectorSettings;
-import uk.ac.diamond.scisoft.ncd.data.SliceInput;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdDetectors;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.reduction.LazyNcdProcessing;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
 
 /**
  * Class holds data (from xml file or source providers) which is
@@ -40,8 +41,7 @@ class DataReductionContext implements IDataReductionContext {
 	
 	private BooleanDataset    mask;
 	private SectorROI         sector;
-	private LazyNcdProcessing processing;
-	private LazyNcdProcessing bgProcessing;
+	private IDataReductionProcess processing, bgProcessing;
 	private NcdReductionFlags flags;
 	private NcdDetectors      ncdDetectors;
 	
@@ -541,22 +541,22 @@ class DataReductionContext implements IDataReductionContext {
 	}
 
 	@Override
-	public LazyNcdProcessing getProcessing() {
+	public IDataReductionProcess getProcessing() {
 		return processing;
 	}
 
 	@Override
-	public void setProcessing(LazyNcdProcessing processing) {
+	public void setProcessing(IDataReductionProcess processing) {
 		this.processing = processing;
 	}
 
 	@Override
-	public LazyNcdProcessing getBgProcessing() {
+	public IDataReductionProcess getBgProcessing() {
 		return bgProcessing;
 	}
 
 	@Override
-	public void setBgProcessing(LazyNcdProcessing bgProcessing) {
+	public void setBgProcessing(IDataReductionProcess bgProcessing) {
 		this.bgProcessing = bgProcessing;
 	}
 

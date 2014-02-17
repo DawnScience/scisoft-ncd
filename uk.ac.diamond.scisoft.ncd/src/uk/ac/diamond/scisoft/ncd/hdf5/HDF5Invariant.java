@@ -29,7 +29,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.ncd.Invariant;
+import uk.ac.diamond.scisoft.ncd.core.Invariant;
 
 /**
  * calculates the total intensity in each frame

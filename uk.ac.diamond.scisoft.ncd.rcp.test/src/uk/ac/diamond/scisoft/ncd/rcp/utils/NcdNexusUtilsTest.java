@@ -41,10 +41,10 @@ import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public class NcdNexusUtilsTest {
 

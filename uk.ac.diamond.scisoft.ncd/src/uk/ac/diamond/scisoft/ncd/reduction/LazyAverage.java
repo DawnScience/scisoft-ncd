@@ -34,9 +34,9 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public class LazyAverage extends LazyDataReduction {
 
@@ -69,9 +69,9 @@ public class LazyAverage extends LazyDataReduction {
 		this.monitor = monitor;
 	}
 
-	public void configure(int dimmension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
+	public void configure(int dimension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
 		
-		dim = dimmension;
+		dim = dimension;
 		frames_int = inputFrames;
 		frames = (long[]) ConvertUtils.convert(frames_int, long[].class);
 		
@@ -85,8 +85,8 @@ public class LazyAverage extends LazyDataReduction {
 		
 	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve.length, framesAve, true, "counts");
-		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve.length, framesAve, true, "counts");
+		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve, true, "counts");
+		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve, true, "counts");
 		H5.H5Tclose(type);
 		
 		sliceDim = 0;

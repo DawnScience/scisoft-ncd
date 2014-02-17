@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
-import uk.ac.diamond.scisoft.ncd.Normalisation;
+import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 
 public class HDF5Normalisation extends HDF5ReductionDetector {
 

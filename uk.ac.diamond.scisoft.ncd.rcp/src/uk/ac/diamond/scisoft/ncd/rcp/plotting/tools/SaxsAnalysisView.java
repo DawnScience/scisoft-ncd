@@ -28,7 +28,7 @@ import org.eclipse.swt.widgets.Display;
 import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.part.ViewPart;
 
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 /**
  * This view statically follows the part with the plot it is interested in

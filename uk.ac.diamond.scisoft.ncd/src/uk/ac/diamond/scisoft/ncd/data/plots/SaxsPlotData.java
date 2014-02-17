@@ -32,26 +32,27 @@ import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
-import uk.ac.diamond.scisoft.ncd.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.ISaxsPlotData;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.reduction.LazyDataReduction;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
 
-public abstract class SaxsPlotData extends LazyDataReduction {
+public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlotData {
 
 	protected String groupName, dataName, variableName;
 	
 	public void execute(int entry_group_id, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
 		
-		long[] frames = NcdNexusUtils.getIdsDatasetShape(input_ids);
+		long[] frames = NcdNexusUtils.getIdsDatasetShape(input_ids.dataspace_id);
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
 	    int group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
 	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-	    int data_id = NcdNexusUtils.makedata(group_id, "data", type, frames.length, frames, true, "a.u.");
+	    int data_id = NcdNexusUtils.makedata(group_id, "data", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 	    type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
-	    int errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames.length, frames, true, "a.u.");
+	    int errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 		
     	SliceSettings sliceSettings = new SliceSettings(frames, frames.length - 2, 1);
@@ -137,7 +138,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape.length, axisShape,
+		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
@@ -172,8 +173,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		H5.H5Dclose(qaxis_id);
 		
 		if (qaxisNew.hasErrors()) {
-			int qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape.length, axisShape,
-				false, units);
+			int qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape, false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
 			type_id = H5.H5Dget_type(qaxis_error_id);
@@ -189,12 +189,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		
 	}
 	
-	public abstract double getDataValue(int idx, IDataset axis, IDataset data);
-	public abstract double getDataError(int idx, IDataset axis, IDataset data);
-
-	public abstract double getAxisValue(int idx, IDataset axis);
-	public abstract double getAxisError(int idx, IDataset axis);
-
+	@Override
 	public AbstractDataset getSaxsPlotDataset(IDataset data, IDataset axis) {
 		AbstractDataset tmpData = AbstractDataset.zeros(data.getShape(), AbstractDataset.FLOAT32);
 		boolean hasErrors = false;
@@ -219,6 +214,7 @@ public abstract class SaxsPlotData extends LazyDataReduction {
 		return tmpData;
 	}
 
+	@Override
 	public AbstractDataset getSaxsPlotAxis(IDataset axis) {
 		AbstractDataset tmpAxis = AbstractDataset.zeros(axis.getShape(), AbstractDataset.FLOAT32);
 		boolean hasErrors = false;

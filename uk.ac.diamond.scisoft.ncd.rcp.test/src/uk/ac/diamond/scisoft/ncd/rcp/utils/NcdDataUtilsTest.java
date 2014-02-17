@@ -19,10 +19,11 @@ package uk.ac.diamond.scisoft.ncd.rcp.utils;
 import java.util.ArrayList;
 
 import static org.junit.Assert.assertArrayEquals;
+
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.ncd.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 
 public class NcdDataUtilsTest {
 	

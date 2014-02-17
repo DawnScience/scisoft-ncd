@@ -16,6 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.reduction;
 
+import java.util.Arrays;
+
 import javax.measure.unit.Unit;
 import javax.measure.unit.UnitFormat;
 
@@ -28,16 +30,14 @@ import org.apache.commons.beanutils.ConvertUtils;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
-import uk.ac.diamond.scisoft.ncd.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 
 	protected AbstractDataset qaxis;
 	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
-	protected String calibration;
-	protected int normChannel;
 	protected AbstractDataset mask;
 
 	public LazyDataReduction() {
@@ -45,14 +45,6 @@ public abstract class LazyDataReduction {
 	
 	public void setDetector(String detector) {
 		this.detector = detector;
-	}
-
-	public void setCalibration(String calibration) {
-		this.calibration = calibration;
-	}
-
-	public void setNormChannel(int normChannel) {
-		this.normChannel = normChannel;
 	}
 
 	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
@@ -64,12 +56,12 @@ public abstract class LazyDataReduction {
 		this.mask = mask;
 	}
 
-	public void writeQaxisData(int dim, int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	public void writeQaxisData(int dim, int datagroup_id) throws HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape.length, qaxisShape, new int[] { dim },
+		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, new int[] { dim },
 				1, units);
 
 		int filespace_id = H5.H5Dget_space(qaxis_id);
@@ -85,7 +77,7 @@ public abstract class LazyDataReduction {
 		
 		if (qaxis.hasErrors()) {
 			long[] qaxisShapeError = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
-			int qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError.length, qaxisShapeError,
+			int qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError,
 				false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
@@ -106,7 +98,7 @@ public abstract class LazyDataReduction {
 		String detType = DetectorTypes.REDUCTION_DETECTOR;
 		int type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(type, detType.length());
-		int metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, 1, new long[] {1});
+		int metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, new long[] {1});
 		
 		int filespace_id = H5.H5Dget_space(metadata_id);
 		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
@@ -117,5 +109,22 @@ public abstract class LazyDataReduction {
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);
 		H5.H5Dclose(metadata_id);
+	}
+	
+	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+		
+		int dataRank = data.getRank();
+		int[] dataShape = data.getShape();
+		if (dataRank > (dimension + 1)) {
+			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
+			int totalFrames = 1;
+			for (int val : frameArray) {
+				totalFrames *= val;
+			}
+			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
+			newShape[0] = totalFrames;
+			return data.reshape(newShape);
+		}
+		return data;
 	}
 }

@@ -29,7 +29,7 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 
 public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsXmlAdapter.CalibrationDataList, CalibrationResultsBean> {
 	

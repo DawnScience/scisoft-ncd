@@ -63,15 +63,15 @@ import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
-import uk.ac.diamond.scisoft.ncd.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
-import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionContext;
-import uk.ac.diamond.scisoft.ncd.reduction.service.IDataReductionService;
 
 public class DataReductionHandler extends AbstractHandler {
 
@@ -85,9 +85,11 @@ public class DataReductionHandler extends AbstractHandler {
 
 		@Override
 		public void run(IProgressMonitor monitor) {
-
-			monitor.beginTask("Running NCD data reduction", context.getWorkAmount() * selObjects.length);
-
+			
+			int work = context.getWorkAmount();
+			monitor.beginTask("Running NCD data reduction", work * (selObjects.length + 1));
+			monitor.worked(work);
+			
 			// Process each file 
 			for (int i = 0; i < selObjects.length; i++) {
 				final String inputfilePath;
@@ -101,7 +103,9 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 
 				try {
+					monitor.setTaskName("Processing : " + inputfilePath);
 					IStatus status = service.process(inputfilePath, context, monitor);
+					monitor.worked(work);
 					if (status.getSeverity() == IStatus.CANCEL) {
 						monitor.done();
 						return;

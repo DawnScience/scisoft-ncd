@@ -34,8 +34,8 @@ import org.eclipse.swt.widgets.Control;
 import org.eclipse.ui.IViewReference;
 import org.eclipse.ui.IWorkbenchPage;
 
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.utils.SaxsAnalysisPlotType;
 
 
 public class SaxsAnalysisTool extends AbstractToolPage {
