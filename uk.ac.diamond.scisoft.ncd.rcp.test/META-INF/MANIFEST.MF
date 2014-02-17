@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
 Bundle-ManifestVersion: 2
-Bundle-Name: SDA NCD data reduction tests
+Bundle-Name: NCD data reduction tests
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.rcp.test
-Bundle-Version: 2.1.0.qualifier
-Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="2.1.0"
+Bundle-Version: 3.0.0.qualifier
+Fragment-Host: uk.ac.diamond.scisoft.ncd.rcp;bundle-version="[3.0.0,3.1.0)"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Require-Bundle: org.apache.commons.beanutils;bundle-version="[1.9.1,1.9.2)",
  ncsa.hdf;bundle-version="2.8.0"
