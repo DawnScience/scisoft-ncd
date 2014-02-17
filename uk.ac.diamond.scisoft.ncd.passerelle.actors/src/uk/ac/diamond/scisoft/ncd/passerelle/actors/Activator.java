@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2014 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd;
+package uk.ac.diamond.scisoft.ncd.passerelle.actors;
 
 import java.util.Hashtable;
 
@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
-import uk.ac.diamond.scisoft.ncd.reduction.service.DataReductionServiceImpl;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.service.DataReductionServiceImpl;
 
 public class Activator implements BundleActivator {
 
@@ -34,7 +34,7 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext bundleContext) throws Exception {
 		logger.debug("Starting {}", bundleContext.getBundle().getSymbolicName());
 		Hashtable<String, String> props = new Hashtable<String, String>(1);
-		props.put("description", "A service used to convert hdf5 files");
+		props.put("description", "A service used to convert run NCD data reduction");
 		bundleContext.registerService(IDataReductionService.class, new DataReductionServiceImpl(), props);
 	}
 
