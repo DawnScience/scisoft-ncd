@@ -47,11 +47,11 @@ public class NcdDataReductionWizardHandler extends AbstractHandler {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection(ProjectExplorer.VIEW_ID);
-		if (sel == null) {
+		if (sel == null || sel.isEmpty()) {
 			sel = (IStructuredSelection)page.getSelection(Activator.FILEVIEW_ID);
 		}
-		if (sel == null) {
-			String msg = "Please select NeXus files to process in Project Explorer view before running NCD Data Reduction";
+		if (sel == null || sel.isEmpty()) {
+			String msg = "Please select NeXus files to process in Project Explorer view before starting NCD Data Reduction Wizard.";
 			Status status = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, msg);
 			StatusManager.getManager().handle(status, StatusManager.BLOCK | StatusManager.SHOW);
 			return null;

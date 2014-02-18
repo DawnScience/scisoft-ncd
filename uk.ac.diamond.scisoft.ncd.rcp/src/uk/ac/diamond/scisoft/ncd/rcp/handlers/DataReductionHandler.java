@@ -132,11 +132,11 @@ public class DataReductionHandler extends AbstractHandler {
 		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
 		IStructuredSelection sel = (IStructuredSelection)page.getSelection(ProjectExplorer.VIEW_ID);
-		if (sel == null) {
+		if (sel == null || sel.isEmpty()) {
 			sel = (IStructuredSelection)page.getSelection(Activator.FILEVIEW_ID);
 		}
 				
-		if (sel != null) {
+		if (sel != null && !sel.isEmpty()) {
 			
 			try {
 				// We get the data reduction service using OSGI
@@ -213,7 +213,7 @@ public class DataReductionHandler extends AbstractHandler {
 			ncdJob.schedule();
 			}
 		} else {
-			String msg = "Please select NeXus files to process in Project Explorer view before running NCD Data Reduction";
+			String msg = "Please select NeXus files to process in Project Explorer view before running NCD Data Reduction.";
 			Status status = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, msg);
 			StatusManager.getManager().handle(status, StatusManager.BLOCK | StatusManager.SHOW);
 		}
