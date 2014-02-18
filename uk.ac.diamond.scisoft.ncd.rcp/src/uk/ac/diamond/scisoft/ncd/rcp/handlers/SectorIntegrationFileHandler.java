@@ -59,7 +59,7 @@ import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.ILoaderService;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class SectorIntegrationFileHandler extends AbstractHandler {
@@ -159,7 +159,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 	
 	private IStatus errorDialog(String msg, Exception e) {
 		logger.error(msg, e);
-		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
+		Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
 		return null;
 	}

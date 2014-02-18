@@ -56,7 +56,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class DetectorMaskFileHandler extends AbstractHandler {
@@ -161,7 +161,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 	private IStatus errorDialog(Exception e) {
 		String msg = "Error loading detector mask!";
 		logger.error(msg, e);
-		Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, e);
+		Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, msg, e);
 		StatusManager.getManager().handle(status, StatusManager.SHOW);
 		return null;
 	}

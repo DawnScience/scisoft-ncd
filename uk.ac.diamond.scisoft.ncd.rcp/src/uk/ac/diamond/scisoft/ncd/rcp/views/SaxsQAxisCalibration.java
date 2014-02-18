@@ -75,7 +75,6 @@ import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 
 public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 	
@@ -212,7 +211,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 				peaksSourceProvider.putPeaks(peaks);
 			}
 		} catch (Exception e) {
-			Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, e.getMessage());
+			Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, e.getMessage());
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
 		}
@@ -346,7 +345,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 					try {
 						if (newPeaks.size() < 2) {
 							logger.error("SCISOFT NCD: Error running q-axis calibration procedure");
-							Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID,
+							Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID,
 									"Insuffcient number of calibration peaks.");
 							ErrorDialog.openError(PlatformUI.getWorkbench().getActiveWorkbenchWindow().getShell(),
 									"Q-axis calibration error", "Error running q-axis calibration procedure.", status);

@@ -21,6 +21,8 @@ import java.util.Map;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
+import org.eclipse.core.runtime.IStatus;
+import org.eclipse.core.runtime.Status;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.jface.wizard.WizardDialog;
@@ -29,9 +31,12 @@ import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.IHandlerService;
+import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.eclipse.ui.statushandlers.StatusManager;
 
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.wizards.NcdDataReductionWizard;
 
@@ -41,29 +46,36 @@ public class NcdDataReductionWizardHandler extends AbstractHandler {
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
-		IStructuredSelection sel = (IStructuredSelection)page.getSelection();
-
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
-		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		if (sel != null) {
-			Map<String, NcdDetectorSettings> ncdDetectors = ncdDetectorSourceProvider.getNcdDetectors(); 
-				if (ncdDetectors == null || ncdDetectors.isEmpty()) {
-					//run the detector information command
-					IHandlerService handlerService = (IHandlerService) window.getService(IHandlerService.class);
-					try {
-						handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo", null);
-					} catch (Exception ex) {
-						MessageDialog dialog = new MessageDialog(window.getShell(), "Error", null, 
-								"Error:"+ex.toString(), MessageDialog.ERROR,
-								new String[] { "OK" }, 0);
-						dialog.open();
-					}
-			}
-			
-			WizardDialog wizardDialog = new WizardDialog(Display.getDefault().getActiveShell(), new NcdDataReductionWizard());
-			wizardDialog.open();
+		IStructuredSelection sel = (IStructuredSelection)page.getSelection(ProjectExplorer.VIEW_ID);
+		if (sel == null) {
+			sel = (IStructuredSelection)page.getSelection(Activator.FILEVIEW_ID);
+		}
+		if (sel == null) {
+			String msg = "Please select NeXus files to process in Project Explorer view before running NCD Data Reduction";
+			Status status = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, msg);
+			StatusManager.getManager().handle(status, StatusManager.BLOCK | StatusManager.SHOW);
+			return null;
 		}
 
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service
+				.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		Map<String, NcdDetectorSettings> ncdDetectors = ncdDetectorSourceProvider.getNcdDetectors();
+		if (ncdDetectors == null || ncdDetectors.isEmpty()) {
+			// run the detector information command
+			IHandlerService handlerService = (IHandlerService) window.getService(IHandlerService.class);
+			try {
+				handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.readDetectorInfo", null);
+			} catch (Exception ex) {
+				MessageDialog dialog = new MessageDialog(window.getShell(), "Error", null, "Error:" + ex.toString(),
+						MessageDialog.ERROR, new String[] { "OK" }, 0);
+				dialog.open();
+			}
+		}
+
+		WizardDialog wizardDialog = new WizardDialog(Display.getDefault().getActiveShell(),
+				new NcdDataReductionWizard());
+		wizardDialog.open();
 
 		return null;
 	}

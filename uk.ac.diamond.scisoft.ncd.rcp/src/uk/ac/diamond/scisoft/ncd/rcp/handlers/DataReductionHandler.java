@@ -50,13 +50,13 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
+import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.Activator;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
@@ -68,8 +68,8 @@ import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdPerspective;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
@@ -112,9 +112,9 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 				} catch (Exception e) {
 					String msg = "SCISOFT NCD: Error running NCD data reduction process";
-					MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
+					MultiStatus mStatus = new MultiStatus(Activator.PLUGIN_ID, IStatus.ERROR, msg, e);
 					for (StackTraceElement ste : e.getStackTrace()) {
-						mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
+						mStatus.add(new Status(IStatus.ERROR, Activator.PLUGIN_ID, ste.toString()));
 					}
 					StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
 					logger.error(msg, e);
@@ -131,7 +131,10 @@ public class DataReductionHandler extends AbstractHandler {
 
 		final IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		IWorkbenchPage page = window.getActivePage();
-		final IStructuredSelection sel = (IStructuredSelection)page.getSelection();
+		IStructuredSelection sel = (IStructuredSelection)page.getSelection(ProjectExplorer.VIEW_ID);
+		if (sel == null) {
+			sel = (IStructuredSelection)page.getSelection(Activator.FILEVIEW_ID);
+		}
 				
 		if (sel != null) {
 			
@@ -150,9 +153,9 @@ public class DataReductionHandler extends AbstractHandler {
 			} catch (Exception e) {
 				String msg = "SCISOFT NCD: Error reading data reduction parameters";
 				logger.error(msg, e);
-				MultiStatus mStatus = new MultiStatus(NcdPerspective.PLUGIN_ID, IStatus.ERROR, msg, e);
+				MultiStatus mStatus = new MultiStatus(Activator.PLUGIN_ID, IStatus.ERROR, msg, e);
 				for (StackTraceElement ste : e.getStackTrace()) {
-					mStatus.add(new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, ste.toString()));
+					mStatus.add(new Status(IStatus.ERROR, Activator.PLUGIN_ID, ste.toString()));
 				}
 				StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
 				return Boolean.FALSE;
@@ -183,14 +186,14 @@ public class DataReductionHandler extends AbstractHandler {
 					Throwable cause = ex.getCause();
 					String msg = "NCD Data Reduction has failed";
 					logger.error(msg, cause);
-					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, cause);
+					Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, msg, cause);
 					StatusManager.getManager().handle(status, StatusManager.BLOCK|StatusManager.SHOW);
 					return Boolean.FALSE;
 				} catch (InterruptedException ex) {
 					Throwable cause = ex.getCause();
 					String msg = "NCD Data Reduction was interrupted";
 					logger.error(msg, cause);
-					Status status = new Status(IStatus.ERROR, NcdPerspective.PLUGIN_ID, msg, cause);
+					Status status = new Status(IStatus.ERROR, Activator.PLUGIN_ID, msg, cause);
 					StatusManager.getManager().handle(status, StatusManager.BLOCK|StatusManager.SHOW);
 					return Boolean.FALSE;
 				}
@@ -209,6 +212,10 @@ public class DataReductionHandler extends AbstractHandler {
 			ncdJob.setUser(true);
 			ncdJob.schedule();
 			}
+		} else {
+			String msg = "Please select NeXus files to process in Project Explorer view before running NCD Data Reduction";
+			Status status = new Status(IStatus.CANCEL, Activator.PLUGIN_ID, msg);
+			StatusManager.getManager().handle(status, StatusManager.BLOCK | StatusManager.SHOW);
 		}
 		return Boolean.TRUE;
 	}

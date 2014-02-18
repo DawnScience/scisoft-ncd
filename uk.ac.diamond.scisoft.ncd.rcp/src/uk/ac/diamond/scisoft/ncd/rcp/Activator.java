@@ -19,28 +19,42 @@ package uk.ac.diamond.scisoft.ncd.rcp;
 import org.eclipse.jface.resource.ImageDescriptor;
 import org.eclipse.ui.plugin.AbstractUIPlugin;
 import org.osgi.framework.BundleContext;
+import org.osgi.framework.FrameworkUtil;
+import org.osgi.framework.ServiceReference;
 
 public class Activator extends AbstractUIPlugin {
 
 	private static Activator plugin;
+	private static BundleContext context;
+
+	// Currently defined in uk.ac.diamond.sda.navigator.views class 
+	public static final String FILEVIEW_ID = "uk.ac.diamond.sda.navigator.views.FileView";
+	public static final String PLUGIN_ID = FrameworkUtil.getBundle(Activator.class).getSymbolicName();
 
 	@Override
-	public void start(BundleContext context) throws Exception {
-		super.start(context);
+	public void start(BundleContext c) throws Exception {
+		super.start(c);
 		plugin = this;
- 
+		context = c;
 	}
 	
 	@Override 
-	public void stop(BundleContext context) throws Exception {
+	public void stop(BundleContext c) throws Exception {
 		plugin = null;
-		super.stop(context);
+		super.stop(c);
 	}
 
 	public static Activator getDefault() {
 		return plugin;
 	}
 
+	public static Object getService(final Class<?> serviceClass) {
+		if (context == null) return null;
+		ServiceReference<?> ref = context.getServiceReference(serviceClass);
+		if (ref==null) return null;
+		return context.getService(ref);
+	}
+	
 	public static ImageDescriptor getImageDescriptor(String iconPath) {
 		return imageDescriptorFromPlugin("uk.ac.diamond.scisoft.ncd.rcp", iconPath);
 	}

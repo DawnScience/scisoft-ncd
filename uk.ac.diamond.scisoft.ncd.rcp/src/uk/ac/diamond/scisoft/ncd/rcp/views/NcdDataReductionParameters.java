@@ -50,12 +50,14 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.forms.events.ExpansionAdapter;
 import org.eclipse.ui.forms.events.ExpansionEvent;
 import org.eclipse.ui.forms.widgets.ExpandableComposite;
+import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
+import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
@@ -70,6 +72,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
 	private Text bgFile, drFile, bgScale, sampleThickness, absScale;
 
+	private Button runDataReduction, runDataReductionWizard;
 	private Text location;
 	
 	private Button browse;
@@ -517,6 +520,40 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					ncdAverageSourceProvider.setEnableAverage(aveButton.getSelection());
 				}
 			});
+			
+			runDataReduction = new Button(g, SWT.NONE);
+			runDataReduction.setLayoutData(new GridData(SWT.FILL, SWT.LEFT, false, true));
+			runDataReduction.setText("   RUN   ");
+			runDataReduction.setImage(Activator.getImageDescriptor("icons/ncd_icon.png").createImage());
+			runDataReduction.setToolTipText("Run NCD data reduction pipeline");
+			runDataReduction.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.process.button", null);
+					} catch (Exception ex) {
+						throw new RuntimeException(ex);
+					}
+				}
+			});
+			
+			runDataReductionWizard = new Button(g, SWT.NONE);
+			runDataReductionWizard.setLayoutData(new GridData(SWT.FILL, SWT.LEFT, false, true));
+			runDataReductionWizard.setText("Start Wizard");
+			runDataReductionWizard.setToolTipText("Start NCD data reduction wizard");
+			runDataReductionWizard.setImage(Activator.getImageDescriptor("icons/new_wiz.gif").createImage());
+			runDataReductionWizard.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					IHandlerService handlerService = (IHandlerService) PlatformUI.getWorkbench().getActiveWorkbenchWindow().getService(IHandlerService.class);
+					try {
+						handlerService.executeCommand("uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizardButton", null);
+					} catch (Exception ex) {
+						throw new RuntimeException(ex);
+					}
+				}
+			});
 		}
 
 		{
@@ -531,8 +568,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
 			location.setToolTipText("Location of NCD data reduction results directory");
 			String tmpWorkigDir = ncdWorkingDirSourceProvider.getWorkingDir();
-			if (tmpWorkigDir != null)
+			if (tmpWorkigDir != null) {
 				location.setText(tmpWorkigDir);
+			}
 			location.addModifyListener(new ModifyListener() {
 				
 				@Override

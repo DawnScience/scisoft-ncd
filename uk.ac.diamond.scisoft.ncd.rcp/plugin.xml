@@ -153,6 +153,11 @@
             name="Run Data Reduction">
       </command>
       <command
+            defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.DataReductionHandler"
+            id="uk.ac.diamond.scisoft.ncd.rcp.process.button"
+            name="Run Data Reduction Button">
+      </command>
+      <command
             id="uk.ac.diamond.scisoft.ncd.rcp.setBackgroundSubtractionFile"
             name="Select Background Subtraction File">
       </command>
@@ -179,6 +184,11 @@
       <command
             id="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizard"
             name="NCD Data Reduction Wizard">
+      </command>
+      <command
+            defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdDataReductionWizardHandler"
+            id="uk.ac.diamond.scisoft.ncd.rcp.openNcdDataReductionWizardButton"
+            name="NCD Data Reduction Wizard Button">
       </command>
       <command
             defaultHandler="uk.ac.diamond.scisoft.ncd.rcp.handlers.DataReductionHandler"

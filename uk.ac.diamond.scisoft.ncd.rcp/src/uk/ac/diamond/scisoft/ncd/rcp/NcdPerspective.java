@@ -23,7 +23,6 @@ import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
 import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.preferences.ScopedPreferenceStore;
-import org.osgi.framework.FrameworkUtil;
 
 import uk.ac.diamond.scisoft.analysis.rcp.views.DatasetInspectorView;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
@@ -33,8 +32,6 @@ import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
 
 public class NcdPerspective implements IPerspectiveFactory {
 	
-	public static final String PLUGIN_ID = FrameworkUtil.getBundle(NcdPerspective.class).getSymbolicName();
-	
 	/**
 	 * String used elsewhere, do not change
 	 */
@@ -43,9 +40,6 @@ public class NcdPerspective implements IPerspectiveFactory {
 	static final String ToolsFolder_ID = "org.dawb.workbench.plotting.views.toolFoleder";
 	static final String ToolPageView2D_ID = "org.dawb.workbench.plotting.views.toolPageView.2D";
 	
-	// Currently defined in uk.ac.diamond.sda.navigator.views class 
-	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
-
 	@Override
 	public void createInitialLayout(IPageLayout layout) {
 
@@ -54,7 +48,7 @@ public class NcdPerspective implements IPerspectiveFactory {
 		projectFolderLayout.addView(explorer);
 		if (layout.getViewLayout(explorer) != null)
 			layout.getViewLayout(explorer).setCloseable(false);
-		projectFolderLayout.addView(FileView_ID);
+		projectFolderLayout.addView(Activator.FILEVIEW_ID);
 
 		IFolderLayout toolsFolderLayout = layout.createFolder(ToolsFolder_ID, IPageLayout.RIGHT, 0.65f, IPageLayout.ID_EDITOR_AREA);
 		toolsFolderLayout.addView(ToolPageView2D_ID);
