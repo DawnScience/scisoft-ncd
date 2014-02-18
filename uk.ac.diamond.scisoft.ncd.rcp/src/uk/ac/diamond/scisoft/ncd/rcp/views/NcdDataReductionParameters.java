@@ -25,6 +25,13 @@ import org.apache.commons.math3.util.Pair;
 import org.apache.commons.validator.routines.IntegerValidator;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetAdapter;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -576,13 +583,33 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				@Override
 				public void modifyText(ModifyEvent e) {
 					File dir = new File(location.getText());
-					if (dir.exists()) {
+					if (dir.exists() && dir.isDirectory()) {
 						inputDirectory = dir.getPath();
 						ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 					} else {
 						ncdWorkingDirSourceProvider.setWorkingDir(null);
 					}
 				}
+			});
+			
+			DropTarget dt = new DropTarget(location, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
+			dt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
+			dt.addDropListener(new DropTargetAdapter() {
+				@Override
+				public void drop(DropTargetEvent event) {
+					Object data = event.data;
+					if (data instanceof String[]) {
+						String[] stringData = (String[]) data;
+						if (stringData.length > 0) {
+							File dir = new File(stringData[0]);
+							if (dir.exists() && dir.isDirectory()) {
+								location.setText(dir.getAbsolutePath());
+								location.notifyListeners(SWT.Modify, null);
+							}
+						}
+					}
+				}
+				
 			});
 
 			browse = new Button(g, SWT.NONE);
@@ -845,6 +872,26 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 
+			DropTarget bgdt = new DropTarget(bgFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
+			bgdt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
+			bgdt.addDropListener(new DropTargetAdapter() {
+				@Override
+				public void drop(DropTargetEvent event) {
+					Object data = event.data;
+					if (data instanceof String[]) {
+						String[] stringData = (String[]) data;
+						if (stringData.length > 0) {
+							File file = new File(stringData[0]);
+							if (file.exists() && file.isFile()) {
+								bgFile.setText(file.getAbsolutePath());
+								bgFile.notifyListeners(SWT.Modify, null);
+							}
+						}
+					}
+				}
+				
+			});
+
 			browseBg = new Button(g, SWT.NONE);
 			browseBg.setText("...");
 			browseBg.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
@@ -899,6 +946,26 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					else
 						ncdDrFileSourceProvider.setDrFile(null);
 				}
+			});
+
+			DropTarget drdt = new DropTarget(drFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
+			drdt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
+			drdt.addDropListener(new DropTargetAdapter() {
+				@Override
+				public void drop(DropTargetEvent event) {
+					Object data = event.data;
+					if (data instanceof String[]) {
+						String[] stringData = (String[]) data;
+						if (stringData.length > 0) {
+							File file = new File(stringData[0]);
+							if (file.exists() && file.isFile()) {
+								drFile.setText(file.getAbsolutePath());
+								drFile.notifyListeners(SWT.Modify, null);
+							}
+						}
+					}
+				}
+				
 			});
 
 			browseDr = new Button(g, SWT.NONE);
