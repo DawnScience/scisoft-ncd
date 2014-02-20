@@ -26,6 +26,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
@@ -71,6 +72,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 
+	private int linkFileID = -1;
 	private int calibrationGroupID, inputCalibrationID;
 
 	private DataSliceIdentifiers calibrationIDs;
@@ -110,7 +112,21 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 		super.configureActorParameters();
 		
 		calibrationGroupID = H5.H5Gopen(entryGroupID, calibration, HDF5Constants.H5P_DEFAULT);
-		inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
+		H5L_info_t linkInfo = H5.H5Lget_info(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
+		if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
+			String[] buff = new String[(int) linkInfo.address_val_size];
+			H5.H5Lget_val(calibrationGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+			if (buff[0] != null && buff[1] != null) {
+				String linkData = buff[0];
+				String linkFilename = buff[1];
+				linkFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+				inputCalibrationID = H5.H5Dopen(linkFileID, linkData, HDF5Constants.H5P_DEFAULT);
+			} else {
+				throw new HDF5Exception("Invalid external link data for Normalisation dataset.");
+			}
+		} else {
+			inputCalibrationID = H5.H5Dopen(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
+		}
 		calibrationIDs = new DataSliceIdentifiers();
 		calibrationIDs.setIDs(calibrationGroupID, inputCalibrationID);
 
@@ -299,7 +315,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 		try {
 			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 					inputCalibrationID,
-					calibrationGroupID));
+					calibrationGroupID,
+					linkFileID));
 
 			NcdNexusUtils.closeH5idList(identifiers);
 		} catch (HDF5LibraryException e) {

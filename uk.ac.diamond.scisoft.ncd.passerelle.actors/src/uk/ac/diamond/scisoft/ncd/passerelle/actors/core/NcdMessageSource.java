@@ -29,6 +29,7 @@ import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 import ptolemy.data.BooleanToken;
 import ptolemy.data.IntToken;
 import ptolemy.data.ObjectToken;
@@ -63,6 +64,8 @@ public class NcdMessageSource extends Source {
 	
 	private int dimension = -1;
 	private int nxsFileID = -1;
+	private int linkFileID = -1;
+	private int linkErrorsFileID = -1;
 	private int entryGroupID = -1;
 	private int processingGroupID = -1;
 	private int detectorGroupID = -1;
@@ -134,7 +137,6 @@ public class NcdMessageSource extends Source {
 			nxsFileID = H5.H5Fopen(filename, readOnly ? HDF5Constants.H5F_ACC_RDONLY : HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 			entryGroupID = H5.H5Gopen(nxsFileID, "entry1", HDF5Constants.H5P_DEFAULT);
 			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
-			inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
 			
 			if (processing != null && !processing.isEmpty()) {
 				boolean hasProcessing = H5.H5Lexists(entryGroupID, processing, HDF5Constants.H5P_DEFAULT);
@@ -147,9 +149,42 @@ public class NcdMessageSource extends Source {
 				}
 			}
 			
+			{
+				H5L_info_t linkInfo = H5.H5Lget_info(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+				if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
+					String[] buff = new String[(int) linkInfo.address_val_size];
+					H5.H5Lget_val(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+					if (buff[0] != null && buff[1] != null) {
+						String linkData = buff[0];
+						String linkFilename = buff[1];
+						linkFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+						inputDataID = H5.H5Dopen(linkFileID, linkData, HDF5Constants.H5P_DEFAULT);
+					} else {
+						throw new HDF5Exception("Invalid external link data for input dataset.");
+					}
+				} else {
+					inputDataID = H5.H5Dopen(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+				}
+			}
+
 			boolean hasErrors = H5.H5Lexists(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 			if (hasErrors) {
-				inputErrorsID = H5.H5Dopen(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
+				H5L_info_t linkInfo = H5.H5Lget_info(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
+				if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
+					String[] buff = new String[(int) linkInfo.address_val_size];
+					H5.H5Lget_val(detectorGroupID, "errors", buff, HDF5Constants.H5P_DEFAULT);
+					if (buff[0] != null && buff[1] != null) {
+						String linkData = buff[0];
+						String linkFilename = buff[1];
+						linkErrorsFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY,
+								HDF5Constants.H5P_DEFAULT);
+						inputErrorsID = H5.H5Dopen(linkErrorsFileID, linkData, HDF5Constants.H5P_DEFAULT);
+					} else {
+						throw new HDF5Exception("Invalid external link data for input errors dataset.");
+					}
+				} else {
+					inputErrorsID = H5.H5Dopen(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
+				}
 			} else {
 				getLogger().info("Input dataset with error estimates wasn't found");
 			}
@@ -198,7 +233,9 @@ public class NcdMessageSource extends Source {
 					detectorGroupID,
 					processingGroupID,
 					entryGroupID,
-					nxsFileID));
+					nxsFileID,
+					linkErrorsFileID,
+					linkFileID));
 
 			NcdNexusUtils.closeH5idList(identifiers);
 		} catch (HDF5LibraryException e) {
