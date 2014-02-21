@@ -60,7 +60,6 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
 
 /**
@@ -405,20 +404,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				}
 			}
 		}
-	}
-
-	@Override
-	protected void doWrapUp() throws TerminationException {
-		try {
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
-					resultAxisDataID,
-					resultAxisErrorsID));
-
-			NcdNexusUtils.closeH5idList(identifiers);
-		} catch (HDF5LibraryException e) {
-			getLogger().info("Error closing NeXus handle identifier", e);
-		}
-		super.doWrapUp();
 	}
 
 	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)

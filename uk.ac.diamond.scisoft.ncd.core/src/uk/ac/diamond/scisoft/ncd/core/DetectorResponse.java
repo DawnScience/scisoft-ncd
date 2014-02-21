@@ -43,7 +43,7 @@ public class DetectorResponse {
 	public Object[] process(Serializable buffer, Serializable error, int frames, final int[] dimensions) {
 		
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
-		float[] parenterror = (float[]) ConvertUtils.convert(error, float[].class);
+		double[] parenterror = (double[]) ConvertUtils.convert(error, double[].class);
 		
 		float[] mydata = new float[parentdata.length];
 		double[] myerror = new double[parenterror.length];
@@ -61,7 +61,7 @@ public class DetectorResponse {
 		for (int i = 0; i < frames; i++) {
 			for (int j = 0; j < dataLength; j++) {
 				mydata[i * dataLength + j] = new Float(responseBuffer[j] * parentdata[i * dataLength + j]);
-				myerror[i * dataLength + j] = new Float(responseBuffer[j] * responseBuffer[j] * parenterror[i * dataLength + j]);
+				myerror[i * dataLength + j] = new Double(responseBuffer[j] * responseBuffer[j] * parenterror[i * dataLength + j]);
 			}
 		}
 		

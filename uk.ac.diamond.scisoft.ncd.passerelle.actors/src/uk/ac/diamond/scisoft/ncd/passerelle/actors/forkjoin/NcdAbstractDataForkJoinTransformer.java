@@ -149,6 +149,8 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 					resultDataID,
 					resultErrorsID,
+					resultAxisDataID,
+					resultAxisErrorsID,
 					resultGroupID));
 
 			NcdNexusUtils.closeH5idList(identifiers);
@@ -181,13 +183,21 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		}
 		long[] resultFrames = getResultDataShape();
 		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		int type = getResultDataType();
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "counts");
-		type = HDF5Constants.H5T_NATIVE_DOUBLE;
+		type = getResultErrorsType();
 		resultErrorsID = NcdNexusUtils.makedata(resultGroupID, "errors", type, resultFrames, true, "counts");
 		
 	}
 
+	protected int getResultDataType() throws HDF5LibraryException {
+		return H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
+	}
+	
+	protected int getResultErrorsType() throws HDF5LibraryException {
+		return H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
+	}
+	
 	protected long[] getResultDataShape() {
 		return Arrays.copyOf(frames, frames.length);
 	}

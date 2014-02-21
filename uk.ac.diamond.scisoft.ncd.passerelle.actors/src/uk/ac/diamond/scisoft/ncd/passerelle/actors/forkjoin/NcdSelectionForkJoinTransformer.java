@@ -86,6 +86,32 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	}
 
 	@Override
+	protected int getResultDataType() throws HDF5LibraryException {
+		if (inputDataID > 0) {
+			try {
+				int typeID = H5.H5Dget_type(inputDataID);
+				return H5.H5Tcopy(typeID);
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Setting default results dataset type", e);
+			}
+		}
+		return HDF5Constants.H5T_NATIVE_FLOAT;
+	}
+	
+	@Override
+	protected int getResultErrorsType() throws HDF5LibraryException {
+		if (inputErrorsID > 0) {
+			try {
+				int typeID = H5.H5Dget_type(inputErrorsID);
+				return H5.H5Tcopy(typeID);
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Setting default result errors dataset type", e);
+			}
+		}
+		return HDF5Constants.H5T_NATIVE_DOUBLE;
+	}
+	
+	@Override
 	protected long[] getResultDataShape() {
 		selectedShape = Arrays.copyOf(frames, frames.length - dimension);
 		indexList = NcdDataUtils.createSliceList(format, (int[]) ConvertUtils.convert(selectedShape, int[].class));
