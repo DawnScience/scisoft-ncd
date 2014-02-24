@@ -25,8 +25,8 @@ import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
-import org.apache.commons.math3.optimization.PointValuePair;
-import org.apache.commons.math3.optimization.SimplePointChecker;
+import org.apache.commons.math3.optim.PointValuePair;
+import org.apache.commons.math3.optim.SimplePointChecker;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IRegion;
