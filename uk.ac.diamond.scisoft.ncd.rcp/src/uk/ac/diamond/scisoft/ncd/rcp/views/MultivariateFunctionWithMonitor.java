@@ -20,11 +20,15 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.apache.commons.math3.optimization.ConvergenceChecker;
-import org.apache.commons.math3.optimization.GoalType;
-import org.apache.commons.math3.optimization.PointValuePair;
-import org.apache.commons.math3.optimization.SimplePointChecker;
-import org.apache.commons.math3.optimization.direct.CMAESOptimizer;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.InitialGuess;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.PointValuePair;
+import org.apache.commons.math3.optim.SimpleBounds;
+import org.apache.commons.math3.optim.SimplePointChecker;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.Well19937a;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -201,9 +205,22 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 				function.setInitPeaks(initPeaks);
 				function.setMonitor(monitor);
 
-				CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(cmaesLambda, cmaesInputSigma, cmaesMaxIterations,
-						0.0, true, 0, cmaesCheckFeasableCount, new Well19937a(), false, cmaesChecker);
-				PointValuePair res = beamPosOptimizer.optimize(cmaesMaxIterations, function, GoalType.MAXIMIZE, startPosition);
+				CMAESOptimizer beamPosOptimizer = new CMAESOptimizer(
+						cmaesMaxIterations,
+						0.0,
+						true,
+						0,
+						cmaesCheckFeasableCount,
+						new Well19937a(),
+						false,
+						cmaesChecker);
+				final PointValuePair res = beamPosOptimizer.optimize(new MaxEval(cmaesMaxIterations),
+						new ObjectiveFunction(function),
+						GoalType.MAXIMIZE,
+						new CMAESOptimizer.PopulationSize(cmaesLambda),
+						new CMAESOptimizer.Sigma(cmaesInputSigma),
+						SimpleBounds.unbounded(2),
+						new InitialGuess(startPosition));
 				final double[] newBeamPos = res.getPoint();
 				logger.info("Optimiser terminated at beam position ({}, {}) with the value {}", new Object[] { newBeamPos[0], newBeamPos[1], res.getValue() });
 				// Run calculation with optimised beam center to update UI 
