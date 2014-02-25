@@ -138,19 +138,19 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				}
 			}
 
-			gradient = (Amount<ScatteringVectorOverDistance>) readAmountObject(gradientParam,
-					ScatteringVectorOverDistance.UNIT);
-			intercept = (Amount<ScatteringVector>) readAmountObject(interceptParam, ScatteringVector.UNIT);
-			cameraLength = (Amount<Length>) readAmountObject(cameraLengthParam, Length.UNIT);
-			energy = (Amount<Energy>) readAmountObject(energyParam, Energy.UNIT);
-			pxSize = (Amount<Length>) readAmountObject(pxSizeParam, Length.UNIT);
+			gradient = readAmountObject(gradientParam, ScatteringVectorOverDistance.UNIT).
+					to(ScatteringVectorOverDistance.UNIT);
+			intercept = readAmountObject(interceptParam, ScatteringVector.UNIT).to(ScatteringVector.UNIT);
+			cameraLength = readAmountObject(cameraLengthParam, Length.UNIT).to(Length.UNIT);
+			energy = readAmountObject(energyParam, Energy.UNIT).to(Energy.UNIT);
+			pxSize = readAmountObject(pxSizeParam, Length.UNIT).to(Length.UNIT);
 			
 			Object obj = ((ObjectToken) axisUnitParam.getToken()).getValue();
 			if (obj != null) {
 				if (obj instanceof Unit<?>) {
 					Unit<?> unit = (Unit<?>) obj;
 					if (unit.isCompatible(ScatteringVector.UNIT)) {
-						axisUnit = (Unit<ScatteringVector>) unit;
+						axisUnit = unit.asType(ScatteringVector.class);
 					}
 				} else {
 					String msg = axisUnitParam.getName() + ": Invalid input parameter";
