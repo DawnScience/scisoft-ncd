@@ -140,23 +140,23 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 			Amount<?> amount = readAmountObject(gradientParam, ScatteringVectorOverDistance.UNIT);
 			if (amount != null) {
-				gradient = 	amount.to(ScatteringVectorOverDistance.UNIT);
+				gradient = 	amount.to(amount.getUnit().asType(ScatteringVectorOverDistance.class));
 			}
 			amount = readAmountObject(interceptParam, ScatteringVector.UNIT);
 			if (amount != null) {
-				intercept = amount.to(ScatteringVector.UNIT);
+				intercept = amount.to(amount.getUnit().asType(ScatteringVector.class));
 			}
 			amount = readAmountObject(cameraLengthParam, Length.UNIT);
 			if (amount != null) {
-				cameraLength = amount.to(Length.UNIT);
+				cameraLength = amount.to(amount.getUnit().asType(Length.class));
 			}
 			amount = readAmountObject(energyParam, Energy.UNIT);
 			if (amount != null) {
-				energy = amount.to(Energy.UNIT);
+				energy = amount.to(amount.getUnit().asType(Energy.class));
 			}
 			amount = readAmountObject(pxSizeParam, Length.UNIT);
 			if (amount != null) {
-				pxSize = amount.to(Length.UNIT);
+				pxSize = amount.to(amount.getUnit().asType(Length.class));
 			}
 			
 			Object obj = ((ObjectToken) axisUnitParam.getToken()).getValue();
