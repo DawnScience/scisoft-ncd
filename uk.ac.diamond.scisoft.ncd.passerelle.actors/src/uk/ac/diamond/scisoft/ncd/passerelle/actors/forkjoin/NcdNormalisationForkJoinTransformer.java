@@ -84,7 +84,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 		dataName = "Normalisation";
 		
 		calibrationParam = new StringParameter(this, "calibrationParam");
-		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(0.0));
+		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(Double.NaN));
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));
 		
 	}
@@ -225,7 +225,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				
 				Normalisation nm = new Normalisation();
 				nm.setCalibChannel(normChannel);
-				if (absScaling != null) {
+				if (absScaling != null && !absScaling.isNaN()) {
 					nm.setNormvalue(absScaling);
 				}
 				int[] dataShape = inputData.getShape();

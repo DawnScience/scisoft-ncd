@@ -83,7 +83,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		
 		dataName = "BackgroundSubtraction";
 
-		bgScalingParam = new Parameter(this, "bgScalingParam", new DoubleToken());
+		bgScalingParam = new Parameter(this, "bgScalingParam", new DoubleToken(Double.NaN));
 	}
 
 	@Override
@@ -235,7 +235,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				}
 				lock.unlock();
 				
-				if (bgScaling != null) {
+				if (bgScaling != null && !bgScaling.isNaN()) {
 					bgData.imultiply(bgScaling);
 					AbstractDataset bgErrors = ((AbstractDataset) bgData.getErrorBuffer()).clone();
 					bgErrors.imultiply(bgScaling * bgScaling);

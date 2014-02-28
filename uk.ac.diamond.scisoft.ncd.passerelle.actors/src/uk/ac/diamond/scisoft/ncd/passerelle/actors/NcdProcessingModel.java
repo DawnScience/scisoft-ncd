@@ -527,6 +527,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction");
 				if (bgScaling != null) {
 					props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
+				} else {
+					props.put("BackgroundSubtraction.bgScalingParam", Double.toString(Double.NaN));
 				}
 				
 				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
