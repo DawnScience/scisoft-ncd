@@ -25,18 +25,22 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.jscience.physics.amount.Amount;
+import org.jscience.physics.amount.Constants;
 
 import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
@@ -61,7 +65,11 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistan
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
+import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
+import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
+import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
@@ -335,6 +343,51 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	}
 
 	private void configure(String filename) throws HDF5LibraryException, HDF5Exception {
+		IDiffractionMetadata dm = null;
+		{
+			int detectorGroupID = -1;
+			int entryGroupID = -1;
+			int fileID = -1;
+			try {
+				int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
+				fileID = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+				H5.H5Pclose(fapl);
+
+				entryGroupID = H5.H5Gopen(fileID, "entry1", HDF5Constants.H5P_DEFAULT);
+				detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
+
+				H5L_info_t link_info = H5.H5Lget_info(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
+				long[] frames = readDataShape(detector, filename);
+				int[] shape = new int[] { (int) frames[frames.length - 2], (int) frames[frames.length - 1] };
+				if (link_info.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
+					String[] buff = new String[(int) link_info.address_val_size];
+					H5.H5Lget_val(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+					if (buff[1] != null) {
+						NexusDiffractionMetaReader nexusDiffReader = new NexusDiffractionMetaReader(buff[1]);
+						dm = nexusDiffReader.getDiffractionMetadataFromNexus(shape);
+						if (!nexusDiffReader
+								.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.BEAM_CENTRE)
+								|| !nexusDiffReader
+										.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.ENERGY)
+								|| !nexusDiffReader
+										.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.DISTANCE)
+								|| !nexusDiffReader
+										.isMetadataEntryRead(NexusDiffractionMetaReader.DiffractionMetaValue.PIXEL_SIZE)) {
+							dm = null;
+						}
+					}
+				}
+			} finally {
+				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+						detectorGroupID,
+						entryGroupID,
+						fileID));
+
+				NcdNexusUtils.closeH5idList(identifiers);
+			}
+		}
+
 		if (crb != null && crb.containsKey(detector)) {
 			if (slope == null) {
 				slope = crb.getGradient(detector);
@@ -350,6 +403,18 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			}
 		}
 		
+		// If calibration bean is empty, we will estimate gradient and intercept values from diffraction metadata
+		if ((slope == null || intercept == null) && dm != null) {
+			DetectorProperties detectorProperties = dm.getDetector2DProperties();
+			DiffractionCrystalEnvironment crystalEnvironment = dm.getDiffractionCrystalEnvironment();
+			qaxisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+			cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
+			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
+			energy = Constants.ℎ.times(Constants.c).divide(wv).to(SI.KILO(NonSI.ELECTRON_VOLT));
+			slope = wv.inverse().times(2.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxSize.getUnit()).asType(ScatteringVectorOverDistance.class));
+			intercept = Amount.valueOf(0.0, qaxisUnit);
+		}
+				
 		if (firstFrame != null || lastFrame != null) {
 			long[] frames = readDataShape(detector, filename);
 			frameSelection = StringUtils.leftPad("", frames.length - dimension - 1, ";");
