@@ -76,6 +76,7 @@ import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
+import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.util.ptolemy.IAvailableChoices;
@@ -219,7 +220,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		final String path = getPath(persistenceParam, cache);
 		
 		final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
-		final IPersistentFile     pfile    = pservice.createPersistentFile(path);
+		final IPersistentFile     pfile    = pservice.getPersistentFile(path);
 		try {
 		
 			final IDataset mask = pfile.getMask(maskName.getExpression(), new IMonitor.Stub());
@@ -238,7 +239,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 			final String path = getPath(persistenceParam, null);
 			if (path==null) return new String[]{"Please define a persistence file first."};
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
-			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
+			final IPersistentFile     pfile    = pservice.getPersistentFile(path);
 			try {
 				
 				Collection<String> maskNames = pfile.getMaskNames(new IMonitor.Stub());
@@ -259,7 +260,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 			final String path = getPath(persistenceParam, null);
 			if (path==null) return new String[]{"Please define a persistence file first."};
 			final IPersistenceService pservice = (IPersistenceService)Activator.getService(IPersistenceService.class);
-			final IPersistentFile     pfile    = pservice.createPersistentFile(path);
+			final IPersistentFile     pfile    = pservice.getPersistentFile(path);
 			try {
 				
 				Collection<String> roiNames = pfile.getROINames(new IMonitor.Stub());
@@ -311,6 +312,14 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		context.setDetWaxsInfo(calibration.getNcdDetectors().get(context.getWaxsDetectorName()));
 		context.setDetSaxsInfo(calibration.getNcdDetectors().get(context.getSaxsDetectorName()));
 		context.setScalerData(calibration.getNcdDetectors().get(context.getCalibrationName()));
+	
+		SaxsPlotsSourceProvider saxsPlots = adapter.getSaxsPlotsSourceProvider();
+		context.setEnableLogLogPlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.LOGLOG_STATE));
+		context.setEnableGuinierPlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.GUINIER_STATE));
+		context.setEnablePorodPlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.POROD_STATE));
+		context.setEnableKratkyPlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.KRATKY_STATE));
+		context.setEnableZimmPlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.ZIMM_STATE));
+		context.setEnableDebyeBuechePlot((Boolean) saxsPlots.getCurrentState().get(SaxsPlotsSourceProvider.DEBYE_BUECHE_STATE));
 		
 		CalibrationResultsBean crb = (CalibrationResultsBean) calibration.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		context.setCalibrationResults(crb);
