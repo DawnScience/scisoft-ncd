@@ -100,4 +100,12 @@
             </entry>
         </ncdDetectors>
     </ncdCalibrationSourceProvider>
+    <saxsPlotsSourceProvider>
+        <enableDebyeBueche>true</enableDebyeBueche>
+        <enableGuinier>true</enableGuinier>
+        <enableKratky>true</enableKratky>
+        <enableLogLog>true</enableLogLog>
+        <enablePorod>true</enablePorod>
+        <enableZimm>true</enableZimm>
+    </saxsPlotsSourceProvider>
 </data_reduction_parameters>
