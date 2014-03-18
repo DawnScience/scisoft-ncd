@@ -116,6 +116,13 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			readDataReductionOptions(context, bgFlags, bgProcessing);
 
 			bgFlags.setEnableBackground(false);
+			bgFlags.setEnableInvariant(false);
+			bgFlags.setEnableLogLogPlot(false);
+			bgFlags.setEnableGuinierPlot(false);
+			bgFlags.setEnablePorodPlot(false);
+			bgFlags.setEnableKratkyPlot(false);
+			bgFlags.setEnableZimmPlot(false);
+			bgFlags.setEnableDebyeBuechePlot(false);
 			bgProcessing.setFlags(bgFlags);
 
 			SliceInput bgSliceInput = context.getBgSliceInput();
