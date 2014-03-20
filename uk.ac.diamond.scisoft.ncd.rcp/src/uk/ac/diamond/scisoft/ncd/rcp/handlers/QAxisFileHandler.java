@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 import java.io.File;
 import java.text.ParsePosition;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
@@ -272,8 +273,9 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (lockedMeta == null) {
 					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
 					if (nodeLink != null) {
-						int[] datashape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getShape();
-						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(datashape));
+						int[] dataShape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getShape();
+						int[] imageShape = Arrays.copyOfRange(dataShape, Math.max(dataShape.length - 2, 0), dataShape.length);
+						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(imageShape));
 					} else {
 						logger.info("SCISOFT NCD: Couldn't read calibration image shape for configuring diffraction metadata");
 						return null;
