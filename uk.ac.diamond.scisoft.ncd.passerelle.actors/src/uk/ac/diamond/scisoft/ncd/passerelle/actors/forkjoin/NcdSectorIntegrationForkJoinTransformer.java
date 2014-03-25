@@ -60,6 +60,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
 
 /**
@@ -91,6 +92,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	public ROIParameter sectorROIParam;
 	
 	private int azimuthalDataID, azimuthalErrorsID;
+	private int azimuthalAxisID;
 
 	public NcdSectorIntegrationForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -205,14 +207,15 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	@Override
 	protected void configureActorParameters() throws HDF5Exception {
 		super.configureActorParameters();
-
-		long[] azFrames = getAzimuthalDataShape();
-		int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
-		int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
-		azimuthalDataID = NcdNexusUtils.makedata(resultGroupID, "azimuth", typeFloat, azFrames, false, "counts");
-		azimuthalErrorsID = NcdNexusUtils.makedata(resultGroupID, "azimuth_errors", typeDouble, azFrames, false,
-				"counts");
-
+		
+		if (doAzimuthal) {
+			long[] azFrames = getAzimuthalDataShape();
+			int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
+			int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
+			azimuthalDataID = NcdNexusUtils.makedata(resultGroupID, "azimuth", typeFloat, azFrames, false, "counts");
+			azimuthalErrorsID = NcdNexusUtils.makedata(resultGroupID, "azimuth_errors", typeDouble, azFrames, false,
+					"counts");
+		}
 	}
 
 	@Override
@@ -241,6 +244,22 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		long[] azFrames = Arrays.copyOf(frames, azRank);
 		azFrames[azRank - 1] = areaDataShape[areaDataRank - 1];
 		return azFrames;
+	}
+
+	private AbstractDataset calculateAzimuthalAxisDataset() {
+		
+		final AbstractDataset xi;
+		
+		long[] azShape = getAzimuthalDataShape(); 
+		int azSize = (int) azShape[azShape.length - 1];
+		if (intSector.getSymmetry() != SectorROI.FULL) {
+			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(1), azSize, AbstractDataset.FLOAT64);
+		} else {
+			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(0) + 360., azSize, AbstractDataset.FLOAT64);
+		}
+		xi.setName("degrees");
+		
+		return xi;
 	}
 
 	private AbstractDataset calculateQaxisDataset() {
@@ -304,20 +323,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			currentSliceParams.setStart(startPos);
 
 			try {
-				DataSliceIdentifiers sector_id = new DataSliceIdentifiers();
-				sector_id.setIDs(resultGroupID, resultDataID);
-				sector_id.setSlice(currentSliceParams);
-				DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers();
-				err_sector_id.setIDs(resultGroupID, resultErrorsID);
-				err_sector_id.setSlice(currentSliceParams);
-
-				DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers();
-				azimuth_id.setIDs(resultGroupID, azimuthalDataID);
-				azimuth_id.setSlice(currentSliceParams);
-				DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers();
-				err_azimuth_id.setIDs(resultGroupID, azimuthalErrorsID);
-				err_azimuth_id.setSlice(currentSliceParams);
-
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 				tmp_ids.setSlice(currentSliceParams);
@@ -397,12 +402,26 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				}
 				lock.lock();
 				if (doAzimuthal && myazdata != null) {
+					DataSliceIdentifiers azimuth_id = new DataSliceIdentifiers();
+					azimuth_id.setIDs(resultGroupID, azimuthalDataID);
+					azimuth_id.setSlice(currentSliceParams);
+					DataSliceIdentifiers err_azimuth_id = new DataSliceIdentifiers();
+					err_azimuth_id.setIDs(resultGroupID, azimuthalErrorsID);
+					err_azimuth_id.setSlice(currentSliceParams);
+					
 					writeResults(azimuth_id, myazdata, dataShape, dimension);
 					if (myazdata.hasErrors()) {
 						writeResults(err_azimuth_id, myazdata.getError(), dataShape, dimension);
 					}
 				}
 				if (doRadial && myraddata != null) {
+					DataSliceIdentifiers sector_id = new DataSliceIdentifiers();
+					sector_id.setIDs(resultGroupID, resultDataID);
+					sector_id.setSlice(currentSliceParams);
+					DataSliceIdentifiers err_sector_id = new DataSliceIdentifiers();
+					err_sector_id.setIDs(resultGroupID, resultErrorsID);
+					err_sector_id.setSlice(currentSliceParams);
+					
 					writeResults(sector_id, myraddata, dataShape, dimension);
 					if (myraddata.hasErrors()) {
 						writeResults(err_sector_id, myraddata.getError(), dataShape, dimension);
@@ -489,6 +508,31 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			H5.H5Tclose(type_id);
 		}
 		
+		if (doAzimuthal) {
+			writeAzimuthalAxisData();
+		}		
+	}
+	
+	private void writeAzimuthalAxisData() throws HDF5Exception {
+		AbstractDataset azAxis = calculateAzimuthalAxisDataset();
+		long[] azAxisShape = (long[]) ConvertUtils.convert(azAxis.getShape(), long[].class);
+		
+		String units = azAxis.getName();
+		String axisName = "direction"; 
+		int[] azAxisRank = new int[] { azAxis.getRank() };
+		azimuthalAxisID = NcdNexusUtils.makeaxis(resultGroupID, axisName, HDF5Constants.H5T_NATIVE_DOUBLE, azAxisShape, azAxisRank,
+				1, units);
+
+		int filespace_id = H5.H5Dget_space(azimuthalAxisID);
+		int type_id = H5.H5Dget_type(azimuthalAxisID);
+		int memspace_id = H5.H5Screate_simple(azAxis.getRank(), azAxisShape, null);
+		H5.H5Sselect_all(filespace_id);
+		H5.H5Dwrite(azimuthalAxisID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, azAxis.getBuffer());
+		
+		H5.H5Sclose(filespace_id);
+		H5.H5Sclose(memspace_id);
+		H5.H5Tclose(type_id);		
+		H5.H5Dclose(azimuthalAxisID);
 	}
 	
 	@Override
@@ -682,4 +726,20 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Gclose(qcalibration_id);
 	}
 
+	@Override
+	protected void doWrapUp() throws TerminationException {
+		if (doAzimuthal) {
+			try {
+				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+						azimuthalDataID,
+						azimuthalErrorsID));
+
+				NcdNexusUtils.closeH5idList(identifiers);
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Error closing NeXus handle identifier", e);
+			}
+		}
+		super.doWrapUp();
+	}
+	
 }
