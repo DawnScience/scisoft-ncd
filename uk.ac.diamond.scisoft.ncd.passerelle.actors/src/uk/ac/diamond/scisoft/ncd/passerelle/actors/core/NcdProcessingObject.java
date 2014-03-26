@@ -18,9 +18,10 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import org.dawb.passerelle.common.message.DataMessageComponent;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+
+import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 
 public class NcdProcessingObject extends DataMessageComponent {
 
