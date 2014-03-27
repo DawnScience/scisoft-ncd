@@ -131,6 +131,37 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		bgFrames = new long[rank];
 		H5.H5Sget_simple_extent_dims(bgDataSpaceID, bgFrames, null);
 		NcdNexusUtils.closeH5id(bgDataSpaceID);
+		
+		String[] name = new String[] {""};
+		long nameSize = H5.H5Iget_name(bgDataID, name, 1L) + 1;
+		H5.H5Iget_name(bgDataID, name, nameSize);
+		String bgDatasetName = name[0];
+		
+		name = new String[] {""};
+		nameSize = H5.H5Iget_name(bgErrorsID, name, 1L) + 1;
+		H5.H5Iget_name(bgErrorsID, name, nameSize);
+		String bgErrorsName = name[0];
+		
+		String bgFileName = H5.H5Fget_name(bgDataID);
+		
+		// Store background filename used in data reduction
+		int strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		H5.H5Tset_size(strType, bgFileName.length());
+		int metadataID = NcdNexusUtils.makedata(resultGroupID, "background_filename", strType, new long[] {1});
+		
+		int filespaceID = H5.H5Dget_space(metadataID);
+		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespaceID);
+		H5.H5Dwrite(metadataID, strType, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, bgFileName.getBytes());
+		
+		H5.H5Sclose(filespaceID);
+		H5.H5Sclose(memspaceID);
+		H5.H5Tclose(strType);
+		H5.H5Dclose(metadataID);
+		
+		// Make link to the background dataset and store background filename
+		H5.H5Lcreate_external(bgFileName, bgDatasetName, resultGroupID, "background", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		H5.H5Lcreate_external(bgFileName, bgErrorsName, resultGroupID, "background_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 	}
 
 	private class BackgroundSubtractionTask extends RecursiveAction {
