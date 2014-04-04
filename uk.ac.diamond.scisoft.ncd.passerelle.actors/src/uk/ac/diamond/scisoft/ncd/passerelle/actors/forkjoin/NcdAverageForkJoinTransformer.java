@@ -35,13 +35,20 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
+import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.v5.ProcessRequest;
 import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.core.Port;
+import com.isencia.passerelle.core.PortFactory;
+import com.isencia.passerelle.core.PortMode;
+import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.message.MessageException;
 
 /**
  * Actor for averaging scattering data
@@ -60,10 +67,15 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 
 	private int sliceDim, sliceSize;
 
+	public Port selectionInput;
+	private AbstractDataset selectionData;
+
 	public NcdAverageForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
 		super(container, name);
 
+		selectionInput = PortFactory.getInstance().createInputPort(this, "selectionInput", PortMode.PULL, DataMessageComponent.class);
+		
 		dataName = "Average";
 		
 		gridAverageParam = new StringParameter(this, "gridAverageParam");
@@ -74,7 +86,6 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 		super.doInitialize();
 		try {
 			
-			
 			gridAverage = ((StringToken) gridAverageParam.getToken()).stringValue();
 			
 			task = new AverageTask();
@@ -83,6 +94,21 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
 					this, e);
 		}
+	}
+
+	@Override
+	protected void readAdditionalPorts(ProcessRequest request) throws MessageException {
+		ManagedMessage receivedMsg = request.getMessage(selectionInput);
+
+		DataMessageComponent receivedObject = (DataMessageComponent) receivedMsg.getBodyContent();
+		if (receivedObject.getList().keySet().contains("selection")) {
+			Object obj = receivedObject.getList("selection");
+			if (obj instanceof AbstractDataset) {
+				selectionData = (AbstractDataset) obj;
+				return;
+			}
+		}
+		throw new MessageException(ErrorCode.ACTOR_EXECUTION_FATAL, "Invalid selection dataset", receivedMsg, null);
 	}
 
 	@Override
@@ -108,6 +134,11 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 					}
 				}
 			}
+		}
+		
+		int[] gridShape = (int[]) ConvertUtils.convert(Arrays.copyOf(frames, frames.length - dimension), int[].class);
+		if (!Arrays.equals(selectionData.getShape(), gridShape)) {
+			selectionData = AbstractDataset.ones(gridShape, AbstractDataset.INT);
 		}
 	}
 	
@@ -191,8 +222,13 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 				int totalFrames = 0;
 		    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
 				while (data_iter.hasNext()) {
+					int[] tmpPos = data_iter.getPos();
 					
-					sliceSettings.setStart(data_iter.getPos());
+					int[] gridPos = Arrays.copyOf(tmpPos, tmpPos.length - dimension);
+					if (!selectionData.getBoolean(gridPos)) {
+						continue;
+					}
+					sliceSettings.setStart(tmpPos);
 					AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
 					AbstractDataset errors_slice;
 					if (hasErrors) {

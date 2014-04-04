@@ -28,6 +28,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.lang.StringUtils;
+import org.dawb.passerelle.common.actors.AbstractDataMessageSource;
+import org.dawb.passerelle.common.message.MessageUtils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -38,6 +40,8 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
@@ -45,6 +49,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
+import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Sink;
 import com.isencia.passerelle.core.ErrorCode;
@@ -76,6 +81,54 @@ public class NcdAverageForkJoinTransformerTest {
 	private static Flow flow;
 	private static FlowManager flowMgr;
 
+	/**
+	 * Dummy message forwarder actor.
+	 * Intended as a stub for disabled data reduction stages
+	 *
+	 */
+	private class NcdDummySelectionSource extends AbstractDataMessageSource {
+		
+		private static final long serialVersionUID = 1L;
+
+		private boolean messageSent;
+
+		public NcdDummySelectionSource(CompositeEntity container, String name) throws NameDuplicationException,
+				IllegalActionException {
+			super(container, name);
+		}
+
+		@Override
+		protected void doInitialize() throws InitializationException {
+			super.doInitialize();
+			messageSent = false;
+		}
+
+		@Override
+		protected ManagedMessage getDataMessage() throws ProcessingException {
+			if (messageSent) {
+				return null;
+			}
+			
+			DataMessageComponent despatch = new DataMessageComponent();
+			despatch.addList("selection", new BooleanDataset());
+        
+			try {
+				ManagedMessage msg = MessageUtils.getDataMessage(despatch, null);
+				return msg;
+			} catch (Exception e) {
+				throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, "Cannnot send dummy selection dataset", this, null);
+			} finally {
+				messageSent = true;
+			}
+		}
+
+		@Override
+		protected boolean mustWaitForTrigger() {
+			// TODO Auto-generated method stub
+			return false;
+		}
+	}
+	
 	@BeforeClass
 	public static void setUp() throws Exception {
 		flow = new Flow("unit test", null);
@@ -239,9 +292,11 @@ public class NcdAverageForkJoinTransformerTest {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 		NcdAverageForkJoinTransformer average = new NcdAverageForkJoinTransformer(flow, "Average");
+		NcdDummySelectionSource dummySelection = new NcdDummySelectionSource(flow, "SelectionString");
 		NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 
 		flow.connect(source.output, average.input);
+		flow.connect(dummySelection.output,average.selectionInput);
 		flow.connect(average.output, sink.input);
 
 		source.lockParam.setToken(new ObjectToken(lock));
