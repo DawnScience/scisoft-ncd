@@ -266,9 +266,9 @@ public class NcdProcessingObjectTransformerTest {
 		props.put("MessageSource.detectorParam", testDatasetName);
 		String processingName = StringUtils.join(new String[] {testDatasetName, "processing"},  "_");
 		props.put("MessageSource.processingParam", processingName);
+		props.put("MessageSource.dimensionParam", "1");
 		props.put("MessageSource.readOnlyParam", "true");
 		
-		props.put("Export.dimensionParam", "2");
 		props.put("Export.datasetNameParam", testDatasetName);
 		props.put("Export.formatParam", frameSelection);
 

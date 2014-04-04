@@ -30,9 +30,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 
-import ptolemy.data.IntToken;
 import ptolemy.data.StringToken;
-import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -68,7 +66,6 @@ public class NcdProcessingObjectTransformer extends Actor {
 	private String format, datasetName;
 	private int dimension;
 	public StringParameter datasetNameParam, formatParam;
-	private Parameter dimensionParam;
 
 	private int[] selectedShape;
 	private ArrayList<int[]> indexList;
@@ -92,7 +89,6 @@ public class NcdProcessingObjectTransformer extends Actor {
 		input = PortFactory.getInstance().createInputPort(this, "input", NcdProcessingObject.class);
 		output = PortFactory.getInstance().createOutputPort(this, "result");
 		
-		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
 		formatParam = new StringParameter(this, "formatParam");
 		datasetNameParam = new StringParameter(this, "datasetNameParam");
 	}
@@ -104,7 +100,6 @@ public class NcdProcessingObjectTransformer extends Actor {
 
 			format = ((StringToken) formatParam.getToken()).stringValue();
 			datasetName = ((StringToken) datasetNameParam.getToken()).stringValue();
-			dimension = ((IntToken) dimensionParam.getToken()).intValue();
 			
 		} catch (Exception e) {
 			throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Error initializing my actor",
