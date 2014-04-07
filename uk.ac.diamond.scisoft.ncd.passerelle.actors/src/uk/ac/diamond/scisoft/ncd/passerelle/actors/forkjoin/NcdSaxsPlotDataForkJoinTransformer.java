@@ -36,10 +36,12 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -73,6 +75,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	private AbstractDataset inputAxis;
 	private String inputAxisUnit;
 	private long[] axisShape;
+	
+	private int q4AxisDataID = -1;
+	private int q4AxisErrorsID = -1;
 	
 	public NcdSaxsPlotDataForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -342,6 +347,86 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			H5.H5Tclose(type_id);
 		}
 		
+		// TODO: need to redesign SAXS plot interface to support multiple axis
+		if (plotData instanceof PorodPlotData) {
+			AbstractDataset q4Axis = axisNew.clone().ipower(4);
+			setq4AxisErrors(axisNew, q4Axis);
+			
+			String variableName = plotData.getVariableName() + "^4";
+			q4AxisDataID = NcdNexusUtils.makeaxis(resultGroupID, variableName, HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
+					new int[] { axisNew.getRank() }, 0, inputAxisUnit);
+
+			filespace_id = H5.H5Dget_space(q4AxisDataID);
+			type_id = H5.H5Dget_type(q4AxisDataID);
+			memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
+			H5.H5Sselect_all(filespace_id);
+			H5.H5Dwrite(q4AxisDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, q4Axis.getBuffer());
+			
+			// add long_name attribute
+			{
+				int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+				int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				H5.H5Tset_size(attrtype_id, variableName.getBytes().length);
+				
+				int attr_id = H5.H5Acreate(q4AxisDataID, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+						HDF5Constants.H5P_DEFAULT);
+				if (attr_id < 0) {
+					throw new HDF5Exception("H5 putattr write error: can't create attribute");
+				}
+				int write_id = H5.H5Awrite(attr_id, attrtype_id, variableName.getBytes());
+				if (write_id < 0) {
+					throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
+				}
+				H5.H5Aclose(attr_id);
+				H5.H5Sclose(attrspace_id);
+				H5.H5Tclose(attrtype_id);
+			}
+			
+			H5.H5Sclose(filespace_id);
+			H5.H5Sclose(memspace_id);
+			H5.H5Tclose(type_id);
+			
+			if (axisNew.hasErrors()) {
+				q4AxisErrorsID = NcdNexusUtils.makedata(resultGroupID, variableName + "_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape, false, inputAxisUnit);
+			
+				filespace_id = H5.H5Dget_space(q4AxisErrorsID);
+				type_id = H5.H5Dget_type(q4AxisErrorsID);
+				memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
+				H5.H5Sselect_all(filespace_id);
+				H5.H5Dwrite(q4AxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, q4Axis.getError().getBuffer());
+			
+				H5.H5Sclose(filespace_id);
+				H5.H5Sclose(memspace_id);
+				H5.H5Tclose(type_id);
+			}
+		}
+		
+	}
+
+	private void setq4AxisErrors(AbstractDataset axisNew, AbstractDataset q4Axis) {
+		
+		AbstractDataset errors = AbstractDataset.zeros(q4Axis, AbstractDataset.FLOAT64);
+		
+		// Calculate std. deviation for q^4 values
+		IndexIterator itr = q4Axis.getIterator(true);
+		while (itr.hasNext()) {
+			int[] idx = itr.getPos();
+			double mu = axisNew.getDouble(idx);
+			double s = axisNew.getError(idx);
+			
+			double s2 = s * s;
+			double s4 = s2 * s2;
+			double s6 = s4 * s2;
+			double s8 = s4 * s4;
+			
+			double mu2 = mu * mu;
+			double mu4 = mu2 * mu2;
+			double mu6 = mu4 * mu2;
+			
+			double val = 14*mu6*s2 + 168*mu4*s4 + 372*mu2*s6 + 96*s8;
+			errors.set(val, idx);
+		}
+		q4Axis.setErrorBuffer(errors);
 	}	
 
 }
