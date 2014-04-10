@@ -16,10 +16,19 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
+import org.apache.commons.math3.special.Erf;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 
 public class FilterData extends SaxsStatsData {
+	
+	private double confidenceInterval;
+
+	public FilterData() {
+		super();
+		this.confidenceInterval = SaxsAnalysisStatsParameters.SAXS_FILTERING_CI;
+	}
 
 	@Override
 	public AbstractDataset getStatsData() {
@@ -27,7 +36,10 @@ public class FilterData extends SaxsStatsData {
 			int[] shape = referenceData.getShape();
 			double mean = (Double) referenceData.mean(true);
 			double dev = (Double) referenceData.stdDeviation();
-			dev *= 1.0;
+			if (confidenceInterval > 1 || confidenceInterval <= 0) {
+				confidenceInterval = SaxsAnalysisStatsParameters.SAXS_FILTERING_CI;
+			}
+			dev *= Math.sqrt(2.0) * Erf.erfInv(2.0 * confidenceInterval - 1);
 			
 			AbstractDataset result = AbstractDataset.ones(shape, AbstractDataset.INT); 
 			IndexIterator itr = result.getIterator(true);
@@ -41,6 +53,10 @@ public class FilterData extends SaxsStatsData {
 			return result; 
 		}
 		return null;
+	}
+
+	public void setConfigenceInterval(double saxsFilteringCI) {
+		this.confidenceInterval = saxsFilteringCI;
 	}
 
 }
