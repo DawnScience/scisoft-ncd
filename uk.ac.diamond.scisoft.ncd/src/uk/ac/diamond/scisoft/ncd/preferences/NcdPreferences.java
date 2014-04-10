@@ -74,6 +74,11 @@ public class NcdPreferences {
 	public static final String CMAESmaxiteration = "CMAESmaxiteration";
 	public static final String CMAESchecker = "CMAESchecker";
 	
+	public static final String SAXS_SELECTION_ALGORITHM = "saxsselection.algorithm";
+	public static final String DBSCANClusterer_EPSILON = "saxsselection.DBSCANClusterer.epsilon";
+	public static final String DBSCANClusterer_MINPOINTS = "saxsselection.DBSCANClusterer.minpoints";
+	public static final String SAXS_FILTERING_CI = "saxsselection.saxsfiltering.ci";
+	
 	public static final String NCD_REDUCTION_MODAL = "ncd.reduction.modal";
 	
 	public static final String NCD_ALLOWSELECTIONOFPATHS = "ncd.allow.selection.of.paths";

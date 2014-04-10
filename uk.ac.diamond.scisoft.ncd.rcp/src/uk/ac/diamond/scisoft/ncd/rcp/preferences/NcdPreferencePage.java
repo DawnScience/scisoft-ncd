@@ -17,8 +17,10 @@
 package uk.ac.diamond.scisoft.ncd.rcp.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
+import org.eclipse.jface.preference.ComboFieldEditor;
 import org.eclipse.jface.preference.FieldEditorPreferencePage;
 import org.eclipse.jface.preference.IntegerFieldEditor;
+import org.eclipse.jface.preference.StringFieldEditor;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.ControlAdapter;
@@ -31,6 +33,8 @@ import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
+
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
@@ -83,6 +87,25 @@ public class NcdPreferencePage  extends FieldEditorPreferencePage implements IWo
 			addField(new IntegerFieldEditor(NcdPreferences.CMAESsigma, "Initial search volume", gc));
 			addField(new IntegerFieldEditor(NcdPreferences.CMAESmaxiteration, "Maximal number of iterations", gc));
 			addField(new IntegerFieldEditor(NcdPreferences.CMAESchecker, "Convergence order", gc));
+		}
+		{
+			Group g = new Group(c, SWT.BORDER);
+			g.setLayout(new GridLayout(1, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			g.setText("Outlier detection clustering settings");
+			
+			final Composite gc = new Composite(g,  SWT.NONE);
+			gc.setLayout(new GridLayout(4, false));
+			gc.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
+			
+			String[][] saxsAlgorithms = new String[2][1];
+			saxsAlgorithms[0] = new String[] {"Confidence Interval", SaxsAnalysisStats.DATA_FILTER.getName()};
+			saxsAlgorithms[1] = new String[] {"Clustering", SaxsAnalysisStats.CLUSTERING_FILTER.getName()};
+			
+			addField(new ComboFieldEditor(NcdPreferences.SAXS_SELECTION_ALGORITHM, "Saxs data filtering algorithm", saxsAlgorithms , gc));
+			addField(new StringFieldEditor(NcdPreferences.DBSCANClusterer_EPSILON, "Radius of the neighborhood", gc));
+			addField(new IntegerFieldEditor(NcdPreferences.DBSCANClusterer_MINPOINTS, "Minimum number of points in a cluster", gc));
+			addField(new StringFieldEditor(NcdPreferences.SAXS_FILTERING_CI, "Configence interval", gc));
 		}
 		
 		sc.setContent(c);

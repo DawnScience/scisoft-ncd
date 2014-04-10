@@ -91,7 +91,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegration
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
-import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -126,6 +126,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	
 	private String gridAverage, bgGridAverage;
 	private boolean enableBgAverage;
+	
+	private SaxsAnalysisStatsParameters saxsAnalysisStatsParameters;
 	
 	private static FlowManager flowMgr;
 	
@@ -333,6 +335,11 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	@Override
 	public void setEnergy(Amount<Energy> energy) {
 		this.energy = energy;
+	}
+	
+	@Override
+	public void setSaxsAnalysisStatsParameters(SaxsAnalysisStatsParameters saxsAnalysisStatsParameters) {
+		this.saxsAnalysisStatsParameters = saxsAnalysisStatsParameters;
 	}
 	
 	private long[] readDataShape(String detector, String filename) throws HDF5Exception {
@@ -702,7 +709,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				props.put("Average.gridAverageParam", gridAverage);
 				if (invariant instanceof NcdInvariantForkJoinTransformer) {
 					NcdSaxsDataStatsForkJoinTransformer filter = new NcdSaxsDataStatsForkJoinTransformer(flow, "DataFilter");
-					filter.statTypeParam.setToken(new StringToken(SaxsAnalysisStats.DATA_FILTER.getName()));
+					filter.statTypeParam.setToken(new ObjectToken(saxsAnalysisStatsParameters));
 					
 					NcdProcessingObjectTransformer exportFilter = new NcdProcessingObjectTransformer(flow, "ExportFilter");
 					props.put("ExportFilter.datasetNameParam", "selection");

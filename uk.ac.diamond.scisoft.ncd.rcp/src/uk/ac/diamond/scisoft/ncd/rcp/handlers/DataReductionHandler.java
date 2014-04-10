@@ -26,6 +26,7 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IRegion;
@@ -64,6 +65,8 @@ import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
@@ -380,6 +383,23 @@ public class DataReductionHandler extends AbstractHandler {
 		if (energy != null) {
 			context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 		}
+		
+		String saxsSelectionAlgorithm = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_SELECTION_ALGORITHM);
+		String strDBSCANClustererEps = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.DBSCANClusterer_EPSILON);
+		int dbSCANClustererMinPoints = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.DBSCANClusterer_MINPOINTS);
+		String strSaxsFilteringCI = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_FILTERING_CI);
+		
+		SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
+		saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));
+		if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+			saxsAnalysisStatParams.setDbSCANClustererEpsilon(Double.valueOf(strDBSCANClustererEps));
+		}
+		saxsAnalysisStatParams.setDbSCANClustererMinPoints(dbSCANClustererMinPoints);
+		if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+			saxsAnalysisStatParams.setSaxsFilteringCI(Double.valueOf(strSaxsFilteringCI));
+		}
+		context.setSaxsAnalysisStatParameters(saxsAnalysisStatParams);
+		
 	}
 	
 	private boolean isCalibrationResultsBean(IDataReductionContext context) {

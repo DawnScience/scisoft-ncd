@@ -26,8 +26,8 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
-import org.eclipse.swt.SWT;
-
+import ptolemy.data.ObjectToken;
+import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -35,7 +35,10 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.ClusterOutlierRemoval;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.FilterData;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsStatsData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -43,7 +46,6 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
 
 /**
  * Actor for calculating processed SAXS data statistics
@@ -63,7 +65,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 		}
 	}
 	
-	public StringChoiceParameter statTypeParam;
+	public Parameter statTypeParam;
 
 	public NcdSaxsDataStatsForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -71,7 +73,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 
 		dataName = "SaxsPlot";
 		
-		statTypeParam = new StringChoiceParameter(this, "statTypeParam", SAXS_STAT_TYPES, SWT.SINGLE);
+		statTypeParam = new Parameter(this, "statTypeParam");
 	}
 
 	@Override
@@ -80,10 +82,21 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 		super.doInitialize();
 
 		try {
-			String[] selectedObj = statTypeParam.getValue();
-			if (selectedObj != null && selectedObj.length == 1) {
-				SaxsAnalysisStats selectedSaxsStat = SaxsAnalysisStats.forName(selectedObj[0]);
-				statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();
+			Object token = statTypeParam.getToken();
+			if (token instanceof ObjectToken) {
+				Object obj = ((ObjectToken) token).getValue();
+				if (obj instanceof SaxsAnalysisStatsParameters) {
+					SaxsAnalysisStatsParameters params = (SaxsAnalysisStatsParameters) obj;
+					SaxsAnalysisStats selectedSaxsStat = params.getSelectionAlgorithm();
+					statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();
+					if (statsData instanceof FilterData) {
+						((FilterData)statsData).setConfigenceInterval(params.getSaxsFilteringCI());
+					}
+					if (statsData instanceof ClusterOutlierRemoval) {
+						((ClusterOutlierRemoval)statsData).setDbSCANClustererEpsilon(params.getDbSCANClustererEpsilon());
+						((ClusterOutlierRemoval)statsData).setDbSCANClustererMinPoints(params.getDbSCANClustererMinPoints());
+					}
+				}
 			}
 			
 			task = new SaxsPlotTask();

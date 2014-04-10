@@ -21,6 +21,7 @@ import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
@@ -55,6 +56,8 @@ class DataReductionContext implements IDataReductionContext {
 	private String resultsFile;
 	
 	private Double absScaling, sampleThickness, bgScaling, energy;
+	
+	private SaxsAnalysisStatsParameters saxsAnalysisStatsParameters;
 	
 	/**
 	 * This is the actual name generated with the background is written to.
@@ -341,6 +344,7 @@ class DataReductionContext implements IDataReductionContext {
 		result = prime * result + ((waxsDetectorName == null) ? 0 : waxsDetectorName.hashCode());
 		result = prime * result + workAmount;
 		result = prime * result + ((workingDir == null) ? 0 : workingDir.hashCode());
+		result = prime * result + ((saxsAnalysisStatsParameters == null) ? 0 : saxsAnalysisStatsParameters.hashCode());
 		return result;
 	}
 
@@ -476,6 +480,11 @@ class DataReductionContext implements IDataReductionContext {
 			if (other.workingDir != null)
 				return false;
 		} else if (!workingDir.equals(other.workingDir))
+			return false;
+		if (saxsAnalysisStatsParameters == null) {
+			if (other.saxsAnalysisStatsParameters != null)
+				return false;
+		} else if (!saxsAnalysisStatsParameters.equals(other.saxsAnalysisStatsParameters))
 			return false;
 		return true;
 	}
@@ -668,6 +677,16 @@ class DataReductionContext implements IDataReductionContext {
 	@Override
 	public void setEnableDebyeBuechePlot(boolean enableDebyeBuechePlot) {
 		flags.setEnableDebyeBuechePlot(enableDebyeBuechePlot);
+	}
+
+	@Override
+	public void setSaxsAnalysisStatParameters(SaxsAnalysisStatsParameters saxsAnalysisStatsParameters) {
+		this.saxsAnalysisStatsParameters = saxsAnalysisStatsParameters;
+	}
+
+	@Override
+	public SaxsAnalysisStatsParameters getSaxsAnalysisStatParameters() {
+		return saxsAnalysisStatsParameters;
 	}
 
 }

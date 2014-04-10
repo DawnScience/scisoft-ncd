@@ -531,7 +531,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 	
-	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, IDataReductionProcess bgProcessing) {
+	private void readDataReductionOptions(IDataReductionContext context, NcdReductionFlags flags, IDataReductionProcess processing) {
 
 		String workingDir = context.getWorkingDir();
 		if (workingDir == null || workingDir.isEmpty()) {
@@ -610,8 +610,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (context.isEnableMask()) {
 			BooleanDataset mask = context.getMask();
 			if (mask != null) {
-				bgProcessing.setMask(new BooleanDataset(mask));
-				bgProcessing.setEnableMask(true);
+				processing.setMask(new BooleanDataset(mask));
+				processing.setEnableMask(true);
 			} else {
 				throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
 			}
@@ -626,34 +626,36 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			if ((sym != SectorROI.NONE) && (sym != SectorROI.FULL)) {
 				tmpSector.setCombineSymmetry(true);
 			}
-			bgProcessing.setIntSector(tmpSector);
+			processing.setIntSector(tmpSector);
 		}
 
 		CalibrationResultsBean crb = context.getCalibrationResults();
-		bgProcessing.setCrb(crb);
+		processing.setCrb(crb);
 		Double valEnergy = context.getEnergy();
 		if (valEnergy != null) {
 			Amount<Energy> energy = Amount.valueOf(context.getEnergy(), SI.KILO(NonSI.ELECTRON_VOLT));
-			bgProcessing.setEnergy(energy);
+			processing.setEnergy(energy);
 		}
 		
 		
-		bgProcessing.setBgFile(bgFile);
+		processing.setBgFile(bgFile);
 		if (absScaling != null) {
 			if (thickness != null) {
-				bgProcessing.setAbsScaling(absScaling / thickness);
+				processing.setAbsScaling(absScaling / thickness);
 			} else {
-				bgProcessing.setAbsScaling(absScaling);
+				processing.setAbsScaling(absScaling);
 			}
 		}
-		bgProcessing.setBgScaling(bgScaling);
-		bgProcessing.setDrFile(drFile);
-		bgProcessing.setFirstFrame(firstFrame);
-		bgProcessing.setLastFrame(lastFrame);
-		bgProcessing.setFrameSelection(frameSelection);
-		bgProcessing.setGridAverageSelection(gridAverage);
-		bgProcessing.setCalibration(context.getCalibrationName());
-		bgProcessing.setNormChannel(normChannel);
+		processing.setBgScaling(bgScaling);
+		processing.setDrFile(drFile);
+		processing.setFirstFrame(firstFrame);
+		processing.setLastFrame(lastFrame);
+		processing.setFrameSelection(frameSelection);
+		processing.setGridAverageSelection(gridAverage);
+		processing.setCalibration(context.getCalibrationName());
+		processing.setNormChannel(normChannel);
+		
+		processing.setSaxsAnalysisStatsParameters(context.getSaxsAnalysisStatParameters());
 	}
 
 	

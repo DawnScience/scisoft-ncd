@@ -40,6 +40,7 @@ import javax.xml.xpath.XPathConstants;
 import javax.xml.xpath.XPathExpression;
 import javax.xml.xpath.XPathFactory;
 
+import org.apache.commons.lang.math.NumberUtils;
 import org.dawb.common.services.IPersistenceService;
 import org.dawb.common.services.IPersistentFile;
 import org.dawb.common.util.io.FileUtils;
@@ -71,8 +72,11 @@ import uk.ac.diamond.scisoft.analysis.monitor.IMonitor;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionContext;
 import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
@@ -326,7 +330,22 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		
 		Amount<Energy> energy = processing.getEnergy();
 		context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
-
+		
+		String saxsSelectionAlgorithm = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_SELECTION_ALGORITHM);
+		String strDBSCANClustererEps = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.DBSCANClusterer_EPSILON);
+		int dbSCANClustererMinPoints = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.DBSCANClusterer_MINPOINTS);
+		String strSaxsFilteringCI = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_FILTERING_CI);
+		
+		SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
+		saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));
+		if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+			saxsAnalysisStatParams.setDbSCANClustererEpsilon(Double.valueOf(strDBSCANClustererEps));
+		}
+		saxsAnalysisStatParams.setDbSCANClustererMinPoints(dbSCANClustererMinPoints);
+		if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+			saxsAnalysisStatParams.setSaxsFilteringCI(Double.valueOf(strSaxsFilteringCI));
+		}
+		context.setSaxsAnalysisStatParameters(saxsAnalysisStatParams);
 	}
 	
 	private NcdSourceProviderAdapter getSourceProviderAdapter(final String xmlPath) throws Exception {
