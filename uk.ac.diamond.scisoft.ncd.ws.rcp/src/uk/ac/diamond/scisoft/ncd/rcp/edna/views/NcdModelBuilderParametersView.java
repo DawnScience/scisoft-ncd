@@ -113,6 +113,7 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
+import uk.ac.diamond.scisoft.analysis.io.IDataHolder;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.roi.RectangularROI;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
@@ -804,7 +805,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 				@Override
 				protected IStatus run(IProgressMonitor monitor) {
 
-					final DataHolder holder;
+					final IDataHolder holder;
 					try {
 						holder = loadDataFile();
 						Display.getDefault().syncExec(new Runnable() {
@@ -1014,7 +1015,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		fileSelected = true;
 		captureGUIInformation();
 		modelBuildingParameters.setDataFilename(filename);
-		final DataHolder holder;
+		final IDataHolder holder;
 		try {
 			holder = loadDataFile();
 			boolean dataFileIsNxsFile = isNxsFile(modelBuildingParameters.getDataFilename());
@@ -1128,7 +1129,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		Job job = new Job("Update GUI parameters from data file") {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
-				final DataHolder holder;
+				final IDataHolder holder;
 				try {
 					holder = loadDataFile();
 				} catch (Exception e1) {
@@ -1256,20 +1257,20 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		}
 	}
 
-	private DataHolder loadDataFile() throws Exception {
-		DataHolder holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
+	private IDataHolder loadDataFile() throws Exception {
+		IDataHolder holder = LoaderFactory.getData(modelBuildingParameters.getDataFilename());
 		return holder;
 	}
 
-	private void retrieveQFromHierarchicalData(DataHolder holder) {
+	private void retrieveQFromHierarchicalData(IDataHolder holder) {
 		currentQDataset = retrieveDataFromPath(holder, currentPathToQ);
 	}
 
-	private void retrieveQFromData(DataHolder holder) {
+	private void retrieveQFromData(IDataHolder holder) {
 		currentQDataset = retrieveDataFromPath(holder, "q");
 	}
 
-	private IDataset retrieveDataFromPath(DataHolder holder, String path) {
+	private IDataset retrieveDataFromPath(IDataHolder holder, String path) {
 		ILazyDataset qDataset = holder.getLazyDataset(path);
 		if (qDataset == null) {
 			MessageDialog.openError(Display.getDefault().getActiveShell(), "No q field found", "No q field found in this data file.");
@@ -1622,7 +1623,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	}
 	private void updatePlot(String filename) throws Exception {
 		if (currentQDataset != null) {
-			DataHolder data = loadDataFile();
+			IDataHolder data = loadDataFile();
 			IDataset dataset = null;
 			if (isNxsFile(modelBuildingParameters.getDataFilename())) {
 				Map<String, ILazyDataset> map = data.toLazyMap();

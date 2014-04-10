@@ -16,8 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.handlers;
 
-import gda.analysis.io.ScanFileHolderException;
-
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
@@ -74,6 +72,7 @@ import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.ILoaderService;
+import uk.ac.diamond.scisoft.analysis.io.ScanFileHolderException;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile.XAxis;
