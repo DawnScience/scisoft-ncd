@@ -14,6 +14,7 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.core.runtime.Platform;
 import org.dawb.common.util.eclipse.BundleUtils;
 import org.dawb.common.util.io.FileUtils;
 import org.dawb.common.util.io.IFileUtils;
@@ -121,9 +122,9 @@ public class DataReductionPipelineTest {
 	public void testDataReductionPipeline1() throws Throwable {
 		
 		// Set up the locations
-		final String xmlPath  = TestUtils.getAbsolutePath(Activator.getDefault().getBundle(), "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
-		final String rawPath  = TestUtils.getAbsolutePath(Activator.getDefault().getBundle(), "test/uk/ac/diamond/scisoft/ncd/actors/test/i22-34820.nxs");
-		final String persPath = TestUtils.getAbsolutePath(Activator.getDefault().getBundle(), "test/uk/ac/diamond/scisoft/ncd/actors/test/persistence_file.nxs");
+		final String xmlPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
+		final String rawPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/i22-34820.nxs");
+		final String persPath = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/persistence_file.nxs");
 		
 		System.setProperty("xml.path",         xmlPath);
 		System.setProperty("raw.path",         rawPath);
@@ -195,7 +196,7 @@ public class DataReductionPipelineTest {
 
 	private synchronized void testFile(final String relPath, boolean requireError)  throws Throwable {
 				
-		final String afile = TestUtils.getAbsolutePath(Activator.getDefault().getBundle(), relPath);
+		final String afile = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), relPath);
 
 		final IProject workflows = ResourcesPlugin.getWorkspace().getRoot().getProject("workflows");
 		if (!workflows.exists()) {

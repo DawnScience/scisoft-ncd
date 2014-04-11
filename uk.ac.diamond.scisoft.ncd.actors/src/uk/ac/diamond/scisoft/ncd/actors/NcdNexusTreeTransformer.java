@@ -37,6 +37,8 @@ import org.dawb.passerelle.common.actors.AbstractPassModeTransformer;
 import org.dawb.passerelle.common.message.MessageUtils;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.eclipse.core.resources.IResource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.data.expr.StringParameter;
@@ -56,11 +58,8 @@ import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.TerminationException;
+import com.isencia.passerelle.resources.util.ResourceUtils;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
-import com.isencia.passerelle.workbench.util.ResourceUtils;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 
