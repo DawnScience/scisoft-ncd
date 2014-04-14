@@ -53,6 +53,7 @@ import org.dawb.passerelle.common.message.Variable;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
 import org.jscience.physics.amount.Amount;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -330,10 +331,15 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		Amount<Energy> energy = processing.getEnergy();
 		context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 		
-		String saxsSelectionAlgorithm = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_SELECTION_ALGORITHM);
-		String strDBSCANClustererEps = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.DBSCANClusterer_EPSILON);
-		int dbSCANClustererMinPoints = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.DBSCANClusterer_MINPOINTS);
-		String strSaxsFilteringCI = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_FILTERING_CI);
+		String saxsSelectionAlgorithm = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+				NcdPreferences.SAXS_SELECTION_ALGORITHM,
+				SaxsAnalysisStatsParameters.DEFAULT_SELECTION_METHOD.getName(), null);
+		String strDBSCANClustererEps = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+				NcdPreferences.DBSCANClusterer_EPSILON, Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_EPSILON), null);
+		int dbSCANClustererMinPoints = Platform.getPreferencesService().getInt("uk.ac.diamond.scisoft.ncd.rcp",
+				NcdPreferences.DBSCANClusterer_MINPOINTS, SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_MINPOINTS, null);
+		String strSaxsFilteringCI = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+				NcdPreferences.SAXS_FILTERING_CI, Double.toString(SaxsAnalysisStatsParameters.SAXS_FILTERING_CI), null);
 		
 		SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
 		saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));
