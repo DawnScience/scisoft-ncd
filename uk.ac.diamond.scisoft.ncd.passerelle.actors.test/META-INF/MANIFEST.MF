@@ -11,4 +11,5 @@ Require-Bundle: org.apache.commons.io;bundle-version="[2.4.0,2.5.0)",
  ch.qos.logback.core;bundle-version="[1.1.0,1.2.0)",
  jcl.over.slf4j;bundle-version="[1.7.6,1.7.7)",
  org.dawb.common.services;bundle-version="1.2.0",
- org.dawnsci.persistence;bundle-version="1.2.0"
+ org.dawnsci.persistence;bundle-version="1.2.0",
+ org.dawb.passerelle.common.ui;bundle-version="1.0.0"
