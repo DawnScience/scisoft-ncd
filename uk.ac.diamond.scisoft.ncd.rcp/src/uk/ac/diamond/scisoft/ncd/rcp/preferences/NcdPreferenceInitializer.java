@@ -46,6 +46,8 @@ public class NcdPreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(NcdPreferences.CMAESmaxiteration, cmaesMaxIterations);
 		store.setDefault(NcdPreferences.CMAESchecker, cmaesChecker);
 		
+		store.setDefault(NcdPreferences.SAXS_SELECTION_ALGORITHM,
+				SaxsAnalysisStatsParameters.DEFAULT_SELECTION_METHOD.getName());
 		store.setDefault(NcdPreferences.DBSCANClusterer_EPSILON,
 				Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_EPSILON));
 		store.setDefault(NcdPreferences.DBSCANClusterer_MINPOINTS,

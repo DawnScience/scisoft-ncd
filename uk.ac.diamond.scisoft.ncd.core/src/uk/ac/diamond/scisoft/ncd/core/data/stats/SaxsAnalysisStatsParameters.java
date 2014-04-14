@@ -18,7 +18,7 @@ package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
 public class SaxsAnalysisStatsParameters {
 	
-	public static final SaxsAnalysisStats DEFAULT_SELECTION_METHOD = SaxsAnalysisStats.DATA_FILTER;
+	public static final SaxsAnalysisStats DEFAULT_SELECTION_METHOD = SaxsAnalysisStats.IDENTITY_FILTER;
 	public static final double DBSCAN_CLUSTERER_EPSILON = 0.1;
 	public static final int DBSCAN_CLUSTERER_MINPOINTS = 1;	
 	public static final double SAXS_FILTERING_CI = 0.95;

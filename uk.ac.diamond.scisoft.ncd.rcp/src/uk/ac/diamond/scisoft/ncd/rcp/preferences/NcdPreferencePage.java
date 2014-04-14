@@ -98,14 +98,16 @@ public class NcdPreferencePage  extends FieldEditorPreferencePage implements IWo
 			gc.setLayout(new GridLayout(4, false));
 			gc.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 			
-			String[][] saxsAlgorithms = new String[2][1];
-			saxsAlgorithms[0] = new String[] {"Confidence Interval", SaxsAnalysisStats.DATA_FILTER.getName()};
-			saxsAlgorithms[1] = new String[] {"Clustering", SaxsAnalysisStats.CLUSTERING_FILTER.getName()};
-			
+			int numAlgorithms = SaxsAnalysisStats.values().length;
+			String[][] saxsAlgorithms = new String[numAlgorithms][1];
+			for (int i = 0; i < numAlgorithms; i++) {
+				String name = SaxsAnalysisStats.values()[i].getName();
+				saxsAlgorithms[i] = new String[] {name, name};
+			}
 			addField(new ComboFieldEditor(NcdPreferences.SAXS_SELECTION_ALGORITHM, "Saxs data filtering algorithm", saxsAlgorithms , gc));
 			addField(new StringFieldEditor(NcdPreferences.DBSCANClusterer_EPSILON, "Radius of the neighborhood", gc));
 			addField(new IntegerFieldEditor(NcdPreferences.DBSCANClusterer_MINPOINTS, "Minimum number of points in a cluster", gc));
-			addField(new StringFieldEditor(NcdPreferences.SAXS_FILTERING_CI, "Configence interval", gc));
+			addField(new StringFieldEditor(NcdPreferences.SAXS_FILTERING_CI, "Confidence interval", gc));
 		}
 		
 		sc.setContent(c);

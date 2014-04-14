@@ -18,6 +18,7 @@ package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
 public enum SaxsAnalysisStats {
 
+	IDENTITY_FILTER("None"),
 	DATA_FILTER("Data Filter"),
 	CLUSTERING_FILTER("Clustering Filter");
 		
@@ -40,6 +41,9 @@ public enum SaxsAnalysisStats {
 	
 	public SaxsStatsData getSaxsAnalysisStatsObject() {
     	SaxsStatsData statsData = null;
+		if (this.equals(SaxsAnalysisStats.IDENTITY_FILTER)) {
+			statsData = new FilterData();
+		}
 		if (this.equals(SaxsAnalysisStats.DATA_FILTER)) {
 			statsData = new FilterData();
 		}
