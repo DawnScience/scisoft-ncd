@@ -53,7 +53,6 @@ import org.dawb.passerelle.common.message.Variable;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.eclipse.core.resources.IResource;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.swt.SWT;
 import org.jscience.physics.amount.Amount;
 import org.w3c.dom.Document;
 import org.w3c.dom.NodeList;
@@ -83,10 +82,10 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
 import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.resources.util.ResourceUtils;
 import com.isencia.passerelle.util.ptolemy.IAvailableChoices;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
 import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
-import com.isencia.passerelle.workbench.util.ResourceUtils;
 
 public class NcdDataReductionTransformer extends AbstractDataMessageTransformer {
 
@@ -134,7 +133,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 			public String[] getChoices() {
 				return getMaskNames();
 			}
-		}, SWT.SINGLE);
+		}, 1 << 2 /**SWT.SINGLE**/);
 		registerConfigurableParameter(maskName);
 		
 		sectorName = new StringChoiceParameter(this, "Sector Name", new IAvailableChoices.Stub() {		
@@ -142,7 +141,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 			public String[] getChoices() {
 				return getRoiNames();
 			}
-		}, SWT.SINGLE);
+		}, 1 << 2 /**SWT.SINGLE**/);
 		registerConfigurableParameter(sectorName);
 		
 		rawFilePath = new StringParameter(this, "Raw file");
