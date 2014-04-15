@@ -86,6 +86,26 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	}
 
 	@Override
+	protected void configureActorParameters() throws HDF5Exception {
+		super.configureActorParameters();
+		
+		// Store selection format string
+		int strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		H5.H5Tset_size(strType, format.length());
+		int metadataID = NcdNexusUtils.makedata(resultGroupID, "selection", strType, new long[] {1});
+		
+		int filespaceID = H5.H5Dget_space(metadataID);
+		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		H5.H5Sselect_all(filespaceID);
+		H5.H5Dwrite(metadataID, strType, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, format.getBytes());
+		
+		H5.H5Sclose(filespaceID);
+		H5.H5Sclose(memspaceID);
+		H5.H5Tclose(strType);
+		H5.H5Dclose(metadataID);
+	}
+	
+	@Override
 	protected int getResultDataType() throws HDF5LibraryException {
 		if (inputDataID > 0) {
 			try {
