@@ -169,6 +169,8 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 	private IDataReductionService service;
 	private IDataReductionContext context;
 
+	private String currentXmlPath, currentPersistencePath;
+	
 	@Override
 	protected DataMessageComponent getTransformedMessage(List<DataMessageComponent> cache) throws ProcessingException {
 		
@@ -192,14 +194,22 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 
 	private void createServiceConnectionIfRequired(List<DataMessageComponent> cache) throws ProcessingException {
 		
-        if (service!=null) return; // We have already created and setup the service.
-        
+        String xmlPath = getPath(xmlPathParam, cache);
+        String persistencePath = getPath(persistenceParam, cache);
+		if (service != null && xmlPath != null && persistencePath != null &&
+				xmlPath.equals(currentXmlPath) &&
+				persistencePath.equals(currentPersistencePath)) {
+			return; // We have already created and setup the service.
+		}
+		
         service = (IDataReductionService)Activator.getService(IDataReductionService.class);
         if (service == null) throw createDataMessageException("Cannot find IDataReductionService using activator!", new Exception());
         
+        currentXmlPath = xmlPath;
+        currentPersistencePath = persistencePath;
+        
         try {
 	        context = service.createContext();
-	        String xmlPath = getPath(xmlPathParam, cache);
 	        if (outputPathParam.getExpression()!=null && !"".equals(outputPathParam.getExpression())) {
 	    		final String outputDir =  getPath(outputPathParam, cache);
 	        	xmlPath = substituteOutputPath(xmlPath, outputDir);
