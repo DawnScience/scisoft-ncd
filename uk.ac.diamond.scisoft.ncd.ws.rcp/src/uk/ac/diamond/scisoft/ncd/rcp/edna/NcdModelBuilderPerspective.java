@@ -9,7 +9,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.edna.views.NcdModelBuilderParametersView;
 
 public class NcdModelBuilderPerspective implements IPerspectiveFactory {
 
-	public static final String ID = "uk.ac.diamond.scisoft.ncd.ws.rcp.ncdmodelbuilderperspective";
+	public static final String ID = "uk.ac.diamond.scisoft.ncd.ws.rcp.NcdModelBuilderPerspective";
 	static final String ProjectFolder_ID = "uk.ac.diamond.scisoft.ncd.rcp.projectfolder";
 	// Currently defined in uk.ac.diamond.sda.navigator.views class 
 	static final String FileView_ID = "uk.ac.diamond.sda.navigator.views.FileView";
