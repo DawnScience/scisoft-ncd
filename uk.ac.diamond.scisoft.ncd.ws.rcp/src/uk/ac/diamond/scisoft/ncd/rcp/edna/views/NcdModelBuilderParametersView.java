@@ -111,7 +111,6 @@ import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
-import uk.ac.diamond.scisoft.analysis.io.DataHolder;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.io.IDataHolder;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
@@ -1649,7 +1648,14 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 				if (lineTrace == null) {
 					lineTrace = qIntensityPlot.createLineTrace("data");
 				}
-				lineTrace.setData(currentQDataset, dataset);
+				Slice dataSlice;
+				if (dataset.getShape().length == 2 && dataset.getShape()[1]>1) {
+					dataSlice = new Slice(0,1);
+				}
+				else {
+					dataSlice = new Slice();
+				}
+				lineTrace.setData(currentQDataset, dataset.getSlice(dataSlice).squeeze());
 				qIntensityPlot.addTrace(lineTrace);
 				qIntensityPlot.repaint(true);
 			}
