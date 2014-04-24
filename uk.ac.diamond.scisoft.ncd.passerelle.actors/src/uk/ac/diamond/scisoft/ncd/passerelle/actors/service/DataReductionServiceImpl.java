@@ -169,7 +169,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			String detectorWaxsName = context.getWaxsDetectorName();
 			Amount<Length> pxSize = ncdDetectors.getPxWaxs();
 			detectorWaxs.setDetectorName(detectorWaxsName);
-			detectorWaxs.setxPixelSize(null);
+			int dim = ncdDetectors.getDimWaxs();
+			detectorWaxs.setxPixelSize(dim == 1 ? null : pxSize);
 			detectorWaxs.setyPixelSize(pxSize);
 		}
 		if (enableSaxs) {
@@ -177,7 +178,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			String detectorSaxsName = context.getSaxsDetectorName();
 			Amount<Length> pxSize = ncdDetectors.getPxSaxs();
 			detectorSaxs.setDetectorName(detectorSaxsName);
-			detectorSaxs.setxPixelSize(pxSize);
+			int dim = ncdDetectors.getDimSaxs();
+			detectorSaxs.setxPixelSize(dim == 1 ? null : pxSize);
 			detectorSaxs.setyPixelSize(pxSize);
 		}
 		
