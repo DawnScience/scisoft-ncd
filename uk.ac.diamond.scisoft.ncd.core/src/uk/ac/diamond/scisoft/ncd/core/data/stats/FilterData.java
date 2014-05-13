@@ -46,7 +46,8 @@ public class FilterData extends SaxsStatsData {
 			while (itr.hasNext()) {
 				int[] pos = itr.getPos();
 				double val = referenceData.getDouble(pos); 
-				if (Math.abs(val - mean) > dev) {
+				if (Double.isInfinite(val) || Double.isNaN(val) ||
+						(Math.abs(val - mean) > dev)) {
 					result.set(0, pos);
 				}
 			}
