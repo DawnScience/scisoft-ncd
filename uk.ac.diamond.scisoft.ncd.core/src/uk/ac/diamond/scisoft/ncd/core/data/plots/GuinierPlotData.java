@@ -44,13 +44,11 @@ import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class GuinierPlotData extends SaxsPlotData {
 
-	private int cmaesLambda = 5;
-	private int cmaesMaxIterations = 1000;
-	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-4);
+	private int cmaesLambda = 500;
+	private int cmaesMaxIterations = 100000;
+	private int cmaesCheckFeasableCount = 100;
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
 	
-	private Amount<Dimensionless> I0, Rg;
-
 	private class GuinierLineFitFunction implements MultivariateFunction {
 
 		private AbstractDataset guinierData;
@@ -87,7 +85,7 @@ public class GuinierPlotData extends SaxsPlotData {
 			double intercept = regression.getIntercept();
 			double I0 = Math.exp(intercept);
 			double Rg = Math.sqrt(-3.0*slope);
-			if (Rg * pos[0] > Math.PI) {
+			if (Rg * pos[1] > 1.5  && Rg * pos[1] < 0.5) {
 				return -Double.MAX_VALUE;
 			}
 			//System.out.println("	Slope : " + Double.toString(slope) + "	Intercept : " + Double.toString(intercept));
@@ -248,9 +246,8 @@ public class GuinierPlotData extends SaxsPlotData {
 					new InitialGuess(startPosition));
 			
 			function.value(res.getPoint());
-			I0 = Amount.valueOf(function.regression.getIntercept(), function.regression.getInterceptStdErr(), Dimensionless.UNIT);
-			Amount<Dimensionless> slope = Amount.valueOf(function.regression.getSlope(), function.regression.getSlopeConfidenceInterval(), Dimensionless.UNIT);
-			Rg = slope.times(-3.0).sqrt().to(Dimensionless.UNIT);
+			Amount<Dimensionless> I0 = getI0(function.regression);
+			Amount<Dimensionless> Rg = getRg(function.regression);
 			
 			System.out.println("Final Result");
 			String msg = StringUtils.join(new String[] {
@@ -268,18 +265,19 @@ public class GuinierPlotData extends SaxsPlotData {
 					" : ");
 			System.out.println(msg);
 		} catch (MaxCountExceededException e) {
-			I0 = Amount.valueOf(Double.NaN, Dimensionless.UNIT);
-			Rg = Amount.valueOf(Double.NaN, Dimensionless.UNIT);
 			return null;
 		}
 		return function.regression;
 	}
 
-	public Amount<Dimensionless> getI0() {
+	public Amount<Dimensionless> getI0(SimpleRegression regression) {
+		Amount<Dimensionless> I0 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
 		return I0.copy();
 	}
 
-	public Amount<Dimensionless> getRg() {
+	public Amount<Dimensionless> getRg(SimpleRegression regression) {
+		Amount<Dimensionless> slope = Amount.valueOf(regression.getSlope(), regression.getSlopeConfidenceInterval(), Dimensionless.UNIT);
+		Amount<Dimensionless> Rg = slope.times(-3.0).sqrt().to(Dimensionless.UNIT);
 		return Rg.copy();
 	}
 	

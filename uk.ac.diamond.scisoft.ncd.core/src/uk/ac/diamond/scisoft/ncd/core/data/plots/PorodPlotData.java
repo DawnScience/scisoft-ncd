@@ -44,12 +44,10 @@ import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class PorodPlotData extends SaxsPlotData {
 
-	private int cmaesLambda = 5;
-	private int cmaesMaxIterations = 1000;
-	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-4);
-	
-	private Amount<Dimensionless> c4;
+	private int cmaesLambda = 500;
+	private int cmaesMaxIterations = 100000;
+	private int cmaesCheckFeasableCount = 100;
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
 	
 	private class PorodLineFitFunction implements MultivariateFunction {
 
@@ -76,8 +74,8 @@ public class PorodPlotData extends SaxsPlotData {
 			
 			regression.clear();
 			for (int i = idxMin; i < idxMax; i++) {
-				double dataVal = porodData.getDouble(i);
 				double axisVal = porodAxis.getDouble(i);
+				double dataVal = porodData.getDouble(i);
 				regression.addData(axisVal, dataVal);
 			}
 
@@ -172,7 +170,7 @@ public class PorodPlotData extends SaxsPlotData {
 			
 			function.value(res.getPoint());
 			double slope = function.regression.getSlope();
-			c4 = Amount.valueOf(function.regression.getIntercept(), function.regression.getInterceptStdErr(), Dimensionless.UNIT);
+			Amount<Dimensionless> c4 = getC4(function.regression);
 			
 			System.out.println("Final Result");
 			String msg = StringUtils.join(new String[] {
@@ -191,23 +189,23 @@ public class PorodPlotData extends SaxsPlotData {
 					" : ");
 			System.out.println(msg);
 		} catch (MaxCountExceededException e) {
-			c4 = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
 			return null;
 		}
 		return function.regression;
 	}
 	
-	public Amount<Dimensionless> getC4() {
-		return c4;
+	public Amount<Dimensionless> getC4(SimpleRegression regression) {
+		Amount<Dimensionless> c4 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
+		return c4.copy();
 	}
 
-	public AbstractDataset getFitData(AbstractDataset axis) {
+	public AbstractDataset getFitData(AbstractDataset axis, SimpleRegression regression) {
 		AbstractDataset porodAxis = getSaxsPlotAxis(axis);
 		AbstractDataset result = AbstractDataset.zeros(porodAxis.getShape(), AbstractDataset.FLOAT32);
 		AbstractDataset errors = AbstractDataset.zeros(porodAxis.getShape(), AbstractDataset.FLOAT64);
 		for (int i = 0; i < porodAxis.getSize(); i++) {
 			Amount<Dimensionless> q = Amount.valueOf(axis.getDouble(i), axis.getError(i), Dimensionless.UNIT); 
-			Amount<Dimensionless> res = c4.divide(q.pow(4)).to(Dimensionless.UNIT);
+			Amount<Dimensionless> res = getC4(regression).divide(q.pow(4)).to(Dimensionless.UNIT);
 			result.set(res.getEstimatedValue(), i);
 			errors.set(res.getAbsoluteError(), i);
 		}
