@@ -28,19 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.apache.commons.math3.exception.MaxCountExceededException;
-import org.apache.commons.math3.optim.ConvergenceChecker;
-import org.apache.commons.math3.optim.InitialGuess;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.PointValuePair;
-import org.apache.commons.math3.optim.SimpleBounds;
-import org.apache.commons.math3.optim.SimplePointChecker;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
-import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -48,9 +36,8 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
-import uk.ac.diamond.scisoft.ncd.core.Invariant;
+import uk.ac.diamond.scisoft.ncd.core.SaxsInvariant;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -72,12 +59,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	private AbstractDataset inputAxis;
 	private long[] axisShape;
 
-	private int cmaesLambda = 5;
-	private int cmaesMaxIterations = 10000;
-	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1e-4);
-
-	private int rgDataID, porodDataID, porodErrorsID;
+	private int porodDataID, porodErrorsID;
 	
 	public NcdInvariantForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -103,52 +85,6 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		return 1;
 	}
 	
-	private class PorodLineFitFunction implements MultivariateFunction {
-
-		private IDataset porodData;
-		private IDataset porodAxis;
-		
-		public PorodLineFitFunction(IDataset data, IDataset axis) {
-			super();
-			this.porodData = data;
-			this.porodAxis = axis;
-		}
-
-		@Override
-		public double value(double[] params) {
-			double solvation = params[0];
-			double correlation = params[1];
-			double exponent = params[2];
-
-			double rms = 0.0;
-			for (int i = 0; i < porodAxis.getSize(); i++) {
-				double dataVal = porodData.getDouble(i);
-				double axisVal = porodAxis.getDouble(i);
-				double func = solvation / (1.0 + Math.pow(axisVal * correlation,  exponent));
-				rms += Math.pow(dataVal - func, 2);
-			}
-
-			String msg = StringUtils.join(new String[] {
-					"	solvation ",
-					Double.toString(solvation),
-					"	correlation ",
-					Double.toString(correlation),
-					"	exponent ",
-					Double.toString(exponent)
-					},
-					" : ");
-			//System.out.println(msg);
-			msg = StringUtils.join(new String[] {
-					"RMS",
-					Double.toString(-Math.log(rms))
-					},
-					" : ");
-			//System.out.println(msg);
-			return -Math.log(rms);
-		}
-		
-	}
-
 	@Override
 	protected void configureActorParameters() throws HDF5Exception {
 		super.configureActorParameters();
@@ -175,88 +111,10 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			}
 
 			int type = HDF5Constants.H5T_NATIVE_FLOAT;
-			rgDataID = NcdNexusUtils.makedata(resultGroupID, "fit", type, frames, false, "N/A");
 			porodDataID = NcdNexusUtils.makedata(resultGroupID, "porod_fit", type, frames, false, "N/A");
 			type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			porodErrorsID = NcdNexusUtils.makedata(resultGroupID, "porod_fit_errors", type, frames, false, "N/A");
 		}
-	}
-	
-	public double[] getPorodPlotParameters(IDataset data, IDataset axis) {
-		CMAESOptimizer optimizer = new CMAESOptimizer(
-				cmaesMaxIterations,
-				0.0,
-				true,
-				0,
-				cmaesCheckFeasableCount,
-				new Well19937a(),
-				false,
-				cmaesChecker);
-		PorodLineFitFunction function = new PorodLineFitFunction(data, axis);
-
-		int dataSize = axis.getSize();
-		double qMax = axis.getDouble(dataSize - 1);
-		double i0 = Math.abs(data.getDouble(0)); 
-		double[] startPosition = new double[] { i0, 1.0 / qMax, 4.0 };
-		double[] cmaesInputSigma = new double[] { 0.1 * i0 , 0.1 / qMax, 0.1};
-		double[] lb = new double[] { 0.0, 0.0, 0.0};
-		double[] ub = new double[] { Double.MAX_VALUE, Double.MAX_VALUE, 10.0};
-		try {
-			final PointValuePair res = optimizer.optimize(new MaxEval(cmaesMaxIterations),
-					new ObjectiveFunction(function),
-					GoalType.MAXIMIZE,
-					new CMAESOptimizer.PopulationSize(cmaesLambda),
-					new CMAESOptimizer.Sigma(cmaesInputSigma),
-					new SimpleBounds(lb, ub),
-					new InitialGuess(startPosition));
-
-			double[] params = res.getPoint();
-			double solvation = params[0];
-			double correlation = params[1];
-			double exponent = params[2];
-			
-			double rms = Math.exp(-function.value(params));
-			
-			System.out.println();
-			System.out.println("Final Result");
-			String msg = StringUtils.join(new String[] {
-					"	solvation ",
-					Double.toString(solvation),
-					"	correlation ",
-					Double.toString(correlation),
-					"	exponent ",
-					Double.toString(exponent)
-					},
-					" : ");
-			System.out.println(msg);
-			msg = StringUtils.join(new String[] {
-					"RMS",
-					Double.toString(rms)
-					},
-					" : ");
-			System.out.println(msg);
-			System.out.println();
-			return params;
-			
-		} catch (MaxCountExceededException e) {
-			getLogger().info("Maximum iteration count reached.");
-		}
-		return null;
-	}
-	
-	public AbstractDataset getFitData(double[] params, IDataset axis) {
-		double solvation = params[0];
-		double correlation = params[1];
-		double exponent = params[2];
-		
-		AbstractDataset result = AbstractDataset.zeros(axis.getShape(), AbstractDataset.FLOAT32);
-		for (int i = 0; i < axis.getSize(); i++) {
-			double axisVal = axis.getDouble(i);
-			double func = solvation / (1.0 + Math.pow(axisVal * correlation,  exponent));
-			result.set(func, i);
-		}
-		
-		return result;
 	}
 	
 	private class InvariantTask extends RecursiveAction {
@@ -329,14 +187,16 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				}
 				lock.unlock();
 
-				Invariant inv = new Invariant();
+				if (inputAxis != null) {
+					AbstractDataset axis = inputAxis.clone().squeeze();
+				SaxsInvariant inv = new SaxsInvariant();
 
 				int[] dataShape = Arrays.copyOf(inputData.getShape(), inputData.getRank() - dimension);
 				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(),
 						dimension);
 
-				Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
+				Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
@@ -385,31 +245,24 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					throw new HDF5Exception("Failed to write Invariant error data into the results file");
 				}
 				
-				if (inputAxis != null) {
-					AbstractDataset axis = inputAxis.clone().squeeze();
-					double[] params = getPorodPlotParameters(data.squeeze(), axis);
 					int[] rgDataShape = Arrays.copyOf(dataShape, dataShape.length + 1);
 					rgDataShape[rgDataShape.length - 1] = data.getSize();
 					
-					DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
-					rgDataIDs.setIDs(resultGroupID, rgDataID);
-					rgDataIDs.setSlice(sliceData);
-					AbstractDataset tmpDataset = getFitData(params, axis);
-					writeResults(rgDataIDs, tmpDataset, rgDataShape, 1);
-					
 					PorodPlotData plotData = (PorodPlotData) SaxsAnalysisPlotType.POROD_PLOT.getSaxsPlotDataObject();
-					plotData.getPorodPlotParameters(data, axis);
-					AbstractDataset tmpPorodDataset = plotData.getFitData(axis);
-					
-					DataSliceIdentifiers porodDataIDs = new DataSliceIdentifiers();
-					porodDataIDs.setIDs(resultGroupID, porodDataID);
-					porodDataIDs.setSlice(sliceData);
-					writeResults(porodDataIDs, tmpPorodDataset, rgDataShape, 1);
-					
-					DataSliceIdentifiers porodErrorsIDs = new DataSliceIdentifiers();
-					porodErrorsIDs.setIDs(resultGroupID, porodErrorsID);
-					porodErrorsIDs.setSlice(sliceData);
-					writeResults(porodErrorsIDs, tmpPorodDataset.getError(), rgDataShape, 1);
+					SimpleRegression regression = plotData.getPorodPlotParameters(data.squeeze(), axis);
+					if (regression != null) {
+						AbstractDataset tmpPorodDataset = plotData.getFitData(axis, regression);
+						
+						DataSliceIdentifiers porodDataIDs = new DataSliceIdentifiers();
+						porodDataIDs.setIDs(resultGroupID, porodDataID);
+						porodDataIDs.setSlice(sliceData);
+						writeResults(porodDataIDs, tmpPorodDataset, rgDataShape, 1);
+						
+						DataSliceIdentifiers porodErrorsIDs = new DataSliceIdentifiers();
+						porodErrorsIDs.setIDs(resultGroupID, porodErrorsID);
+						porodErrorsIDs.setSlice(sliceData);
+						writeResults(porodErrorsIDs, tmpPorodDataset.getError(), rgDataShape, 1);
+					}
 				}
 			} catch (HDF5LibraryException e) {
 				throw new RuntimeException(e);
