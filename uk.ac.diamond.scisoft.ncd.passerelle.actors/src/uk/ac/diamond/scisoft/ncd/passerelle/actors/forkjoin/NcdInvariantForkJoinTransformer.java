@@ -37,6 +37,7 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
+import uk.ac.diamond.scisoft.ncd.core.Invariant;
 import uk.ac.diamond.scisoft.ncd.core.SaxsInvariant;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -187,16 +188,22 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				}
 				lock.unlock();
 
-				if (inputAxis != null) {
-					AbstractDataset axis = inputAxis.clone().squeeze();
-				SaxsInvariant inv = new SaxsInvariant();
-
 				int[] dataShape = Arrays.copyOf(inputData.getShape(), inputData.getRank() - dimension);
 				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(),
 						dimension);
-
-				Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
+				
+				Object[] myobj;
+				AbstractDataset axis = null;
+				
+				if (inputAxis != null) {
+					axis = inputAxis.clone().squeeze();
+					SaxsInvariant inv = new SaxsInvariant();
+					myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
+				} else {
+					Invariant inv = new Invariant();
+					myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
+				}
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
@@ -245,6 +252,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					throw new HDF5Exception("Failed to write Invariant error data into the results file");
 				}
 				
+				if (axis != null) {
 					int[] rgDataShape = Arrays.copyOf(dataShape, dataShape.length + 1);
 					rgDataShape[rgDataShape.length - 1] = data.getSize();
 					

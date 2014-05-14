@@ -54,6 +54,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.NcdProcessingModel;
@@ -112,6 +113,8 @@ public class NcdProcessingModelTest {
 			null,
 			meanCameraLength,
 			axisUnit.inverse().asType(Length.class));
+	
+	private static SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
 	
 	@BeforeClass
 	public static void setUp() throws Exception {
@@ -194,6 +197,7 @@ public class NcdProcessingModelTest {
 		testClass.setIntSector(intSector);
 		testClass.setMask(mask);
 		testClass.setNcdDetector(ncdDetector);
+		testClass.setSaxsAnalysisStatsParameters(saxsAnalysisStatParams);
 
 		testbgClass = new NcdProcessingModel();
 		testbgClass.setDrFile(drFile);
@@ -205,6 +209,7 @@ public class NcdProcessingModelTest {
 		testbgClass.setNormChannel(normChannel);
 		testbgClass.setCrb(crb);
 		testbgClass.setEnableMask(enableMask);
+		testbgClass.setSaxsAnalysisStatsParameters(saxsAnalysisStatParams);
 		
 		flags.setEnableBackground(false);
 		flags.setEnableInvariant(false);

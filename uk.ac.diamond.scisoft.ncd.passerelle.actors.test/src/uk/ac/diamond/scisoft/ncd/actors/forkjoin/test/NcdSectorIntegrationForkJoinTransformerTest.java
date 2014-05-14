@@ -383,12 +383,12 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 
 		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
 		NcdSectorIntegrationForkJoinTransformer sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
-		NcdAbstractDataForkJoinTransformer loglogPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT.getName());
-		NcdAbstractDataForkJoinTransformer guinierPlot     = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT.getName());
-		NcdAbstractDataForkJoinTransformer porodPlot       = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT.getName());              
-		NcdAbstractDataForkJoinTransformer kratkyPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT.getName());            
-		NcdAbstractDataForkJoinTransformer zimmPlot        = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT.getName());                
-		NcdAbstractDataForkJoinTransformer debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT.getName());
+		NcdAbstractDataForkJoinTransformer loglogPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT);
+		NcdAbstractDataForkJoinTransformer guinierPlot     = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT);
+		NcdAbstractDataForkJoinTransformer porodPlot       = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT);              
+		NcdAbstractDataForkJoinTransformer kratkyPlot      = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT);            
+		NcdAbstractDataForkJoinTransformer zimmPlot        = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT);                
+		NcdAbstractDataForkJoinTransformer debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT);
 		NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
 		NcdSaxsPlotMessageSink loglogPlotSink = new NcdSaxsPlotMessageSink(flow, "loglogPlotSink");
 		NcdSaxsPlotMessageSink guinierPlotSink = new NcdSaxsPlotMessageSink(flow, "guinierPlotSink");
@@ -442,11 +442,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		flowMgr.executeBlockingLocally(flow, props);
 	}
 	
-	private NcdAbstractDataForkJoinTransformer addSaxsPlotActor(CompositeEntity flow, String name)
+	private NcdAbstractDataForkJoinTransformer addSaxsPlotActor(CompositeEntity flow, SaxsAnalysisPlotType plotType)
 			throws NameDuplicationException, IllegalActionException {
 		NcdAbstractDataForkJoinTransformer saxsPlot;
-		saxsPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, name);
-		((NcdSaxsPlotDataForkJoinTransformer) saxsPlot).plotTypeParam.setToken(new StringToken(name));
+		saxsPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, plotType.getGroupName());
+		((NcdSaxsPlotDataForkJoinTransformer) saxsPlot).plotTypeParam.setToken(new StringToken(plotType.getName()));
 		return saxsPlot;
 	}
 
