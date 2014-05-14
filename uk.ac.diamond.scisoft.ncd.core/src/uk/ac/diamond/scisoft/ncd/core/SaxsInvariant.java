@@ -83,7 +83,16 @@ public class SaxsInvariant {
 			Amount<Dimensionless> c4 = porodPlotData.getC4(regression);
 
 			result += (float) (c4.getEstimatedValue() / myaxis[myaxis.length - 1]);
-			return new Object[] { new float[] { result }, new double[] { Double.NaN } };
+			
+			double error = 0.0;
+			for (int i = 0; i < myaxis.length; i++) {
+				int idx1 = Math.max(0, i - 1);
+				int idx2 = Math.min(myaxis.length - 1, i + 1);
+				error += Math.pow((myaxis[idx2] - myaxis[idx1]), 2) * myerrors[i] / 4.0;
+			}
+			error += Math.pow(c4.getAbsoluteError() / myaxis[myaxis.length - 1], 2);
+			
+			return new Object[] { new float[] { result }, new double[] {error} };
 		} catch (TooManyEvaluationsException e) {
 			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
 		} catch (MaxCountExceededException e) {
