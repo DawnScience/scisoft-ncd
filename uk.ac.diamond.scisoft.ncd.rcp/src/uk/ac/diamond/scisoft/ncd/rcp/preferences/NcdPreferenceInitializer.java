@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.preferences;
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
@@ -44,5 +45,14 @@ public class NcdPreferenceInitializer extends AbstractPreferenceInitializer {
 		store.setDefault(NcdPreferences.CMAESsigma, cmaesInputSigma);
 		store.setDefault(NcdPreferences.CMAESmaxiteration, cmaesMaxIterations);
 		store.setDefault(NcdPreferences.CMAESchecker, cmaesChecker);
+		
+		store.setDefault(NcdPreferences.SAXS_SELECTION_ALGORITHM,
+				SaxsAnalysisStatsParameters.DEFAULT_SELECTION_METHOD.getName());
+		store.setDefault(NcdPreferences.DBSCANClusterer_EPSILON,
+				Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_EPSILON));
+		store.setDefault(NcdPreferences.DBSCANClusterer_MINPOINTS,
+				Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_MINPOINTS));
+		store.setDefault(NcdPreferences.SAXS_FILTERING_CI,
+				Double.toString(SaxsAnalysisStatsParameters.SAXS_FILTERING_CI));
 	}
 }

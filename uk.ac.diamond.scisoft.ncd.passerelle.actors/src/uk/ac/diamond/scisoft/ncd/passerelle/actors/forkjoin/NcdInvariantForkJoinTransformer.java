@@ -28,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -36,9 +37,11 @@ import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
-import uk.ac.diamond.scisoft.ncd.core.Invariant;
+import uk.ac.diamond.scisoft.ncd.core.SaxsInvariant;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
@@ -53,6 +56,11 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 
 	private static final long serialVersionUID = 5836823100154893276L;
 
+	private AbstractDataset inputAxis;
+	private long[] axisShape;
+
+	private int porodDataID, porodErrorsID;
+	
 	public NcdInvariantForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
 		super(container, name);
@@ -64,6 +72,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	protected void doInitialize() throws InitializationException {
 		super.doInitialize();
 		task = new InvariantTask(true, null);
+		inputAxis = null;
 	}
 
 	@Override
@@ -74,6 +83,38 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	@Override
 	protected int getResultDimension() {
 		return 1;
+	}
+	
+	@Override
+	protected void configureActorParameters() throws HDF5Exception {
+		super.configureActorParameters();
+		
+		if (inputAxisDataID != -1) {
+			int spaceID = H5.H5Dget_space(inputAxisDataID);
+			int rank = H5.H5Sget_simple_extent_ndims(spaceID);
+			axisShape = new long[rank];
+			H5.H5Sget_simple_extent_dims(spaceID, axisShape, null);
+			NcdNexusUtils.closeH5id(spaceID);
+
+			DataSliceIdentifiers axisIDs = new DataSliceIdentifiers();
+			axisIDs.setIDs(inputGroupID, inputAxisDataID);
+			SliceSettings axisSliceParams = new SliceSettings(axisShape, 0, (int) axisShape[0]);
+			axisIDs.setSlice(axisSliceParams);
+			inputAxis = NcdNexusUtils.sliceInputData(axisSliceParams, axisIDs);
+
+			if (inputAxisErrorsID > 0) {
+				DataSliceIdentifiers axisErrorsIDs = new DataSliceIdentifiers();
+				axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
+				axisErrorsIDs.setSlice(axisSliceParams);
+				AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
+				inputAxis.setError(inputAxisErrors);
+			}
+
+			int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			porodDataID = NcdNexusUtils.makedata(resultGroupID, "porod_fit", type, frames, false, "N/A");
+			type = HDF5Constants.H5T_NATIVE_DOUBLE;
+			porodErrorsID = NcdNexusUtils.makedata(resultGroupID, "porod_fit_errors", type, frames, false, "N/A");
+		}
 	}
 	
 	private class InvariantTask extends RecursiveAction {
@@ -146,14 +187,16 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				}
 				lock.unlock();
 
-				Invariant inv = new Invariant();
+				if (inputAxis != null) {
+					AbstractDataset axis = inputAxis.clone().squeeze();
+				SaxsInvariant inv = new SaxsInvariant();
 
 				int[] dataShape = Arrays.copyOf(inputData.getShape(), inputData.getRank() - dimension);
 				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(),
 						dimension);
 
-				Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
+				Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
@@ -201,6 +244,26 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write Invariant error data into the results file");
 				}
+				
+					int[] rgDataShape = Arrays.copyOf(dataShape, dataShape.length + 1);
+					rgDataShape[rgDataShape.length - 1] = data.getSize();
+					
+					PorodPlotData plotData = (PorodPlotData) SaxsAnalysisPlotType.POROD_PLOT.getSaxsPlotDataObject();
+					SimpleRegression regression = plotData.getPorodPlotParameters(data.squeeze(), axis);
+					if (regression != null) {
+						AbstractDataset tmpPorodDataset = plotData.getFitData(axis, regression);
+						
+						DataSliceIdentifiers porodDataIDs = new DataSliceIdentifiers();
+						porodDataIDs.setIDs(resultGroupID, porodDataID);
+						porodDataIDs.setSlice(sliceData);
+						writeResults(porodDataIDs, tmpPorodDataset, rgDataShape, 1);
+						
+						DataSliceIdentifiers porodErrorsIDs = new DataSliceIdentifiers();
+						porodErrorsIDs.setIDs(resultGroupID, porodErrorsID);
+						porodErrorsIDs.setSlice(sliceData);
+						writeResults(porodErrorsIDs, tmpPorodDataset.getError(), rgDataShape, 1);
+					}
+				}
 			} catch (HDF5LibraryException e) {
 				throw new RuntimeException(e);
 			} catch (HDF5Exception e) {
@@ -217,4 +280,40 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			}
 		}
 	}
+	
+	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
+			throws HDF5Exception {
+
+		int resRank = dataShape.length - dim + 1;
+		int integralLength = data.getShape()[data.getRank() - 1];
+
+		long[] resStart = Arrays.copyOf(dataIDs.start, resRank);
+		long[] resCount = Arrays.copyOf(dataIDs.count, resRank);
+		long[] resBlock = Arrays.copyOf(dataIDs.block, resRank);
+		resBlock[resRank - 1] = integralLength;
+
+		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
+		if (selectID < 0) {
+			throw new HDF5Exception("Error allocating space for writing SAXS plot data");
+		}
+		int writeID = H5.H5Dwrite(dataIDs.dataset_id, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, data.getBuffer());
+		if (writeID < 0) {
+			throw new HDF5Exception("Error writing SAXS plot data");
+		}
+		H5.H5Sclose(filespaceID);
+		H5.H5Sclose(memspaceID);
+		H5.H5Tclose(typeID);
+	}
+	
+	@Override
+	protected void writeAxisData() throws HDF5Exception {
+		if (inputAxis == null) {
+			resultAxisDataID = -1;
+			resultAxisErrorsID = -1;
+		}
+	}
+	
 }

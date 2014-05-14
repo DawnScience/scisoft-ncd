@@ -23,12 +23,13 @@ import uk.ac.diamond.scisoft.ncd.core.preferences.NcdDetectors;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 
 /**
  * Contains information to run data reduction algorithm from anywhere.
  * 
  * Interface used to hide any details of implementation from outside world. 
- * Currently there are none but since eclipse tools give extaction of interface
+ * Currently there are none but since eclipse tools give extraction of interface
  * for free, we only expose an interface to the world in the service.
  */
 public interface IDataReductionContext {
@@ -231,4 +232,14 @@ public interface IDataReductionContext {
 	 */
 	void setBgName(String bgName);
 
+	/**
+	 * Get parameters of algorithms used for analysis of processing data quality
+	 * @return params
+	 */
+	SaxsAnalysisStatsParameters getSaxsAnalysisStatParameters();
+	
+	/**
+	 * Set parameters of algorithms used for analysis of processing data quality
+	 */
+	void setSaxsAnalysisStatParameters(SaxsAnalysisStatsParameters params);
 }

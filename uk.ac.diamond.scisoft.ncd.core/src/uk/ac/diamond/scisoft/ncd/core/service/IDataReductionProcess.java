@@ -25,6 +25,7 @@ import org.jscience.physics.amount.Amount;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
 
 public interface IDataReductionProcess {
@@ -67,4 +68,6 @@ public interface IDataReductionProcess {
 
 	void setNormChannel(int normChannel);
 
+	void setSaxsAnalysisStatsParameters(SaxsAnalysisStatsParameters saxsAnalysisStatsParameters);
+	
 }

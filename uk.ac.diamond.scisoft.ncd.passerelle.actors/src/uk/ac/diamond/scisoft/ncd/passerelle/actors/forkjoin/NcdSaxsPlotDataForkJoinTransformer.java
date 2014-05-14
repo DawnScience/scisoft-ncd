@@ -22,13 +22,17 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
 
+import javax.measure.quantity.Dimensionless;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.eclipse.swt.SWT;
+import org.jscience.physics.amount.Amount;
 
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -41,13 +45,22 @@ import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.LogLogPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 
 import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.TerminationException;
+import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.core.Port;
+import com.isencia.passerelle.core.PortFactory;
+import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.message.MessageException;
 import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
 
 /**
@@ -75,17 +88,29 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	private AbstractDataset inputAxis;
 	private String inputAxisUnit;
 	private long[] axisShape;
+
+	private int rgDataID;
+	private int rgErrorsID;
+
+	private int guinierFitDataID, loglogFitDataID;
 	
 	private int q4AxisDataID = -1;
 	private int q4AxisErrorsID = -1;
+
+	public Port portRg;
 	
 	public NcdSaxsPlotDataForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
 		dataName = "SaxsPlot";
+		
+		guinierFitDataID = -1;
+		loglogFitDataID = -1;
 
 		plotTypeParam = new StringChoiceParameter(this, "plotTypeParam", SAXS_PLOT_TYPES, SWT.SINGLE);
+		
+		portRg = PortFactory.getInstance().createOutputPort(this, "Rg");
 	}
 
 	@Override
@@ -98,7 +123,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			if (selectedObj != null && selectedObj.length == 1) {
 				SaxsAnalysisPlotType selectedSaxsPlot = SaxsAnalysisPlotType.forName(selectedObj[0]);
 				plotData = selectedSaxsPlot.getSaxsPlotDataObject();
-				dataName = plotData.getGroupName();
+				dataName = getName();
 			}
 			inputAxisUnit = "N/A";
 			task = new SaxsPlotTask(true, null);
@@ -143,8 +168,32 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		}
 		H5.H5Tclose(typeID);
 		H5.H5Aclose(attrID);
+		
+		if (plotData instanceof LogLogPlotData) {
+			createLogLogFitPlotDataset();
+		}
+		if (plotData instanceof GuinierPlotData) {
+			createGuinierPlotDataset();
+		}
 	}
 	
+	private void createGuinierPlotDataset() throws HDF5Exception {
+		long[] resultFrames = Arrays.copyOf(frames, frames.length - dimension);
+		int type = HDF5Constants.H5T_NATIVE_DOUBLE;
+		rgDataID = NcdNexusUtils.makedata(resultGroupID, "Rg", type, resultFrames, false, inputAxisUnit);
+		rgErrorsID = NcdNexusUtils.makedata(resultGroupID, "Rg_errors", type, resultFrames, false, inputAxisUnit);
+		
+		long[] resultFitFrames = Arrays.copyOf(frames, frames.length);
+		type = HDF5Constants.H5T_NATIVE_FLOAT;
+		guinierFitDataID = NcdNexusUtils.makedata(resultGroupID, "fit", type, resultFitFrames, false, inputAxisUnit);
+	}
+
+	private void createLogLogFitPlotDataset() throws HDF5Exception {
+		long[] resultFrames = Arrays.copyOf(frames, frames.length);
+		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		loglogFitDataID = NcdNexusUtils.makedata(resultGroupID, "fit", type, resultFrames, false, inputAxisUnit);
+	}
+
 	private class SaxsPlotTask extends RecursiveAction {
 
 		private static final long serialVersionUID = 2182736294600190488L;
@@ -181,6 +230,14 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					Iterator<SaxsPlotTask> taskItr = taskArray.iterator();
 					while (taskItr.hasNext()) {
 						taskItr.next().join();
+					}
+					// check for errors
+					taskItr = taskArray.iterator();
+					while (taskItr.hasNext()) {
+						SaxsPlotTask tmpTask = taskItr.next(); 
+						if (tmpTask.isCompletedAbnormally()) {
+							completeExceptionally(tmpTask.getException());
+						}
 					}
 				}
 				return;
@@ -234,31 +291,71 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				AbstractDataset axis = inputAxis.clone();
 				AbstractDataset mydata = plotData.getSaxsPlotDataset(data.squeeze(), axis.squeeze());
 				int resLength = dataShape.length - dimension + 1;
-					saxsPlotData = DatasetUtils.cast(mydata, AbstractDataset.FLOAT32);
-					if (saxsPlotData != null) {
-						if (saxsPlotData.hasErrors()) {
-							saxsPlotErrors = DatasetUtils.cast((AbstractDataset) mydata.getErrorBuffer(),
-									AbstractDataset.FLOAT64);
-						}
-						int[] resRadShape = Arrays.copyOf(dataShape, resLength);
-						resRadShape[resLength - 1] = saxsPlotData.getShape()[saxsPlotData.getRank() - 1];
-						saxsPlotData = saxsPlotData.reshape(resRadShape);
-						if (saxsPlotErrors != null) {
-							saxsPlotErrors = saxsPlotErrors.reshape(resRadShape);
-							saxsPlotData.setErrorBuffer(saxsPlotErrors);
-						}
+				saxsPlotData = DatasetUtils.cast(mydata, AbstractDataset.FLOAT32);
+				if (saxsPlotData != null) {
+					if (saxsPlotData.hasErrors()) {
+						saxsPlotErrors = DatasetUtils.cast((AbstractDataset) mydata.getErrorBuffer(), AbstractDataset.FLOAT64);
 					}
-				lock.lock();
+					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
+					resRadShape[resLength - 1] = saxsPlotData.getShape()[saxsPlotData.getRank() - 1];
+					saxsPlotData = saxsPlotData.reshape(resRadShape);
+					if (saxsPlotErrors != null) {
+						saxsPlotErrors = saxsPlotErrors.reshape(resRadShape);
+						saxsPlotData.setErrorBuffer(saxsPlotErrors);
+					}
+				}
 				if (saxsPlotData != null) {
 					writeResults(dataIDs, saxsPlotData, dataShape, dimension);
 					if (saxsPlotData.hasErrors()) {
 						writeResults(errorIDs, saxsPlotData.getError(), dataShape, dimension);
 					}
+
+					if (plotData instanceof GuinierPlotData) {
+						GuinierPlotData guinierPlotData = (GuinierPlotData) plotData;
+						SimpleRegression regression = guinierPlotData.getGuinierPlotParameters(data.squeeze(), axis.squeeze());
+						if (regression != null) {
+							Amount<Dimensionless> Rg = guinierPlotData.getRg(regression);
+							int[] rgDataShape = Arrays.copyOf(dataShape, dataShape.length - dimension);
+
+							DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
+							rgDataIDs.setIDs(resultGroupID, rgDataID);
+							rgDataIDs.setSlice(currentSliceParams);
+							AbstractDataset tmpDataset = new DoubleDataset(new double[] { Rg.getEstimatedValue() },
+									new int[] { 1 });
+							writeResults(rgDataIDs, tmpDataset, rgDataShape, 1);
+
+							DataSliceIdentifiers rgErrorsIDs = new DataSliceIdentifiers();
+							rgErrorsIDs.setIDs(resultGroupID, rgErrorsID);
+							rgErrorsIDs.setSlice(currentSliceParams);
+							tmpDataset = new DoubleDataset(new double[] { Rg.getAbsoluteError() }, new int[] { 1 });
+							writeResults(rgErrorsIDs, tmpDataset, rgDataShape, 1);
+
+							rgDataIDs = new DataSliceIdentifiers();
+							rgDataIDs.setIDs(resultGroupID, guinierFitDataID);
+							rgDataIDs.setSlice(currentSliceParams);
+							tmpDataset = guinierPlotData.getFitData(regression, axis);
+							writeResults(rgDataIDs, tmpDataset, dataShape, 1);
+						}
+					}
+					if (plotData instanceof PorodPlotData) {
+						PorodPlotData porodPlotData = (PorodPlotData) plotData;
+						porodPlotData.getPorodPlotParameters(data.squeeze(), axis.squeeze());
+					}
+					if (plotData instanceof LogLogPlotData) {
+						LogLogPlotData loglogPlotData = (LogLogPlotData) plotData;
+						double[] params = loglogPlotData.getPorodPlotParameters(data.squeeze(), axis.squeeze());
+
+						DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
+						rgDataIDs.setIDs(resultGroupID, loglogFitDataID);
+						rgDataIDs.setSlice(currentSliceParams);
+						AbstractDataset tmpDataset = loglogPlotData.getFitData(params, axis);
+						writeResults(rgDataIDs, tmpDataset, dataShape, 1);
+					}
 				}
 			} catch (HDF5LibraryException e) {
-				throw new RuntimeException(e);
+				completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				throw new RuntimeException(e);
+				completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();
@@ -278,6 +375,8 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		long[] resBlock = Arrays.copyOf(dataIDs.block, resRank);
 		resBlock[resRank - 1] = integralLength;
 
+		lock.lock();
+		
 		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
 		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
 		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
@@ -292,8 +391,30 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		H5.H5Sclose(filespaceID);
 		H5.H5Sclose(memspaceID);
 		H5.H5Tclose(typeID);
+		
+		lock.unlock();
 	}
 	
+	@Override
+	protected void writeAdditionalPorts(ManagedMessage receivedMsg, ProcessResponse response) throws MessageException {
+		if (plotData instanceof GuinierPlotData) {
+			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
+			NcdProcessingObject obj = new NcdProcessingObject(
+					1,
+					entryGroupID,
+					processingGroupID,
+					resultGroupID,
+					rgDataID,
+					rgErrorsID,
+					-1,
+					-1,
+					lock,
+					monitor);
+			outputMsg.setBodyContent(obj, "application/octet-stream");
+			response.addOutputMessage(portRg, outputMsg);
+		}
+	}
+
 	@Override
 	protected void writeAxisData() throws HDF5LibraryException, HDF5Exception {
 		
@@ -427,6 +548,24 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			errors.set(val, idx);
 		}
 		q4Axis.setErrorBuffer(errors);
-	}	
+	}
+	
+	@Override
+	protected void doWrapUp() throws TerminationException {
+		if (plotData instanceof GuinierPlotData) {
+			try {
+				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+						rgDataID,
+						rgErrorsID,
+						guinierFitDataID,
+						loglogFitDataID));
 
+				NcdNexusUtils.closeH5idList(identifiers);
+			} catch (HDF5LibraryException e) {
+				getLogger().info("Error closing NeXus handle identifier", e);
+			}
+		}
+		super.doWrapUp();
+	}
+	
 }

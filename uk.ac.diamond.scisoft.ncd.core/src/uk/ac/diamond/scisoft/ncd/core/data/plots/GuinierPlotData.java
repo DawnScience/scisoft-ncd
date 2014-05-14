@@ -16,13 +16,95 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import org.apache.commons.math3.util.Pair;
+import javax.measure.quantity.Dimensionless;
 
+import org.apache.commons.lang.ArrayUtils;
+import org.apache.commons.lang.StringUtils;
+import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.math3.exception.MaxCountExceededException;
+import org.apache.commons.math3.optim.ConvergenceChecker;
+import org.apache.commons.math3.optim.InitialGuess;
+import org.apache.commons.math3.optim.MaxEval;
+import org.apache.commons.math3.optim.PointValuePair;
+import org.apache.commons.math3.optim.SimpleBounds;
+import org.apache.commons.math3.optim.SimplePointChecker;
+import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
+import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
+import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
+import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.apache.commons.math3.util.Pair;
+import org.jscience.physics.amount.Amount;
+
+import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class GuinierPlotData extends SaxsPlotData {
+
+	private int cmaesLambda = 500;
+	private int cmaesMaxIterations = 100000;
+	private int cmaesCheckFeasableCount = 100;
+	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
+	
+	private class GuinierLineFitFunction implements MultivariateFunction {
+
+		private AbstractDataset guinierData;
+		private AbstractDataset guinierAxis;
+		private SimpleRegression regression;
+		
+		private static final int MIN_POINTS = 50;
+
+		public GuinierLineFitFunction(AbstractDataset guinierData, AbstractDataset guinierAxis) {
+			super();
+			this.guinierData = guinierData;
+			this.guinierAxis = guinierAxis;
+			regression = new SimpleRegression();
+		}
+
+		@Override
+		public double value(double[] pos) {
+			int idxMin = DatasetUtils.findIndexGreaterThanOrEqualTo(guinierAxis, pos[0]);
+			int idxMax = DatasetUtils.findIndexGreaterThanOrEqualTo(guinierAxis, pos[1]);
+			if ((idxMax - idxMin) < MIN_POINTS) {
+				return -Double.MAX_VALUE;
+			}
+			
+			regression.clear();
+			for (int i = idxMin; i < idxMax; i++) {
+				double dataVal = guinierData.getDouble(i);
+				double axisVal = guinierAxis.getDouble(i);
+				regression.addData(axisVal, dataVal);
+			}
+
+			regression.regress();
+			double r = regression.getR();
+			double slope = regression.getSlope();
+			double intercept = regression.getIntercept();
+			double I0 = Math.exp(intercept);
+			double Rg = Math.sqrt(-3.0*slope);
+			if (Rg * pos[1] > 1.5  && Rg * pos[1] < 0.5) {
+				return -Double.MAX_VALUE;
+			}
+			//System.out.println("	Slope : " + Double.toString(slope) + "	Intercept : " + Double.toString(intercept));
+			//System.out.println("	I(0) : " + Double.toString(I0) + "	Rg : " + Double.toString(Rg));
+			//String msg = StringUtils.join(new String[] {
+			//		"Slice",
+			//		ArrayUtils.toString(pos),
+			//		ArrayUtils.toString(new int[] {idxMin, idxMax}),
+			//		"R", Double.toString(r)
+			//		},
+			//		" : ");
+			//System.out.println(msg);
+			if (Double.isNaN(slope) || Double.isNaN(intercept) || Double.isNaN(r)) {
+				return -Double.MAX_VALUE;
+			}
+			return -Math.log(1.0 + r);
+		}
+		
+	}
 
 	public GuinierPlotData() {
 		super();
@@ -61,4 +143,153 @@ public class GuinierPlotData extends SaxsPlotData {
 		}
 		return Double.NaN;
 	}
+	
+	public SimpleRegression getGuinierPlotParameters(IDataset data, IDataset axis) {
+		AbstractDataset guinierData = getSaxsPlotDataset(data, axis);
+		AbstractDataset guinierAxis = getSaxsPlotAxis(axis);
+/*		int sliceSize = data.getSize() / 10;
+		int[] step = new int[] {sliceSize};
+		IndexIterator dataSliceIter = guinierData.getSliceIterator(null, null, null);
+		IndexIterator axisSliceIter = guinierAxis.getSliceIterator(null, null, null);
+		// Iterate over data slices
+		int[] minPosition = new int[] {-1};
+		double minError = Double.MAX_VALUE;
+		double slope = Double.NaN;
+		double intercept = Double.NaN;
+		Map<DoublePoint, Double> clusterInputMap = new HashMap<DoublePoint, Double>();
+		while (dataSliceIter.hasNext() && axisSliceIter.hasNext()) {
+			SimpleRegression regression = new SimpleRegression();
+			int[] pos = dataSliceIter.getPos();
+			// Iterate over data values for linear regression
+			IndexIterator dataIter = new SliceIterator(
+					guinierData.getShape(),
+					guinierData.getSize(),
+					pos, step);
+			pos = axisSliceIter.getPos();
+			IndexIterator axisIter = new SliceIterator(
+					guinierAxis.getShape(),
+					guinierAxis.getSize(),
+					pos, step);
+			int points = 0;
+			while (dataIter.hasNext() && axisIter.hasNext()) {
+				double dataVal = guinierData.getDouble(dataIter.getPos());
+				double axisVal = guinierAxis.getDouble(axisIter.getPos());
+				regression.addData(axisVal, dataVal);
+				points++;
+			}
+			if (points == sliceSize) {
+				regression.regress();
+				double err = regression.getMeanSquareError();
+				if (err < minError) {
+					minError = err;
+					minPosition = Arrays.copyOf(pos, pos.length);
+					slope = regression.getSlope();
+					intercept = regression.getIntercept();
+					double I0 = Math.exp(intercept);
+					double Rg = Math.sqrt(-3.0*slope);
+					System.out.println("    Min Pos : " + Arrays.toString(minPosition));
+					System.out.println("	Min Error : " + Double.toString(minError));
+					System.out.println("	Slope : " + Double.toString(slope) + "	Intercept : " + Double.toString(intercept));
+					System.out.println("	I(0) : " + Double.toString(I0) + "	Rg : " + Double.toString(Rg));
+					clusterInputMap.put(new DoublePoint(minPosition), minError);
+				}
+			} else {
+				break;
+			}
+		}
+		
+		DBSCANClusterer<DoublePoint> clusterer = new DBSCANClusterer<DoublePoint>(5, 5);
+		List<Cluster<DoublePoint>> clusterResults = clusterer.cluster(clusterInputMap.keySet());
+
+		// output the clusters
+		for (int i = 0; i < clusterResults.size(); i++) {
+		    System.out.println("Cluster " + i);
+			double[] minPoint = null;
+			double minVal = Double.MAX_VALUE;
+		    for (DoublePoint point : clusterResults.get(i).getPoints()) {
+		        System.out.println(Arrays.toString(point.getPoint()));
+		        Double val = clusterInputMap.get(point);
+		        if (val < minVal) {
+		        	minVal = val;
+		        	minPoint = Arrays.copyOf(point.getPoint(), point.getPoint().length);
+		        }
+		        minVal = (val < minVal ? val : minVal);
+		    }
+	        System.out.println("Min cluster point : " + Arrays.toString(minPoint));
+	        System.out.println("Min cluster value : " + Double.toString(minVal));
+		    System.out.println();
+		}
+		
+*/		CMAESOptimizer optimizer = new CMAESOptimizer(
+				cmaesMaxIterations,
+				0.0,
+				true,
+				0,
+				cmaesCheckFeasableCount,
+				new Well19937a(),
+				false,
+				cmaesChecker);
+		GuinierLineFitFunction function = new GuinierLineFitFunction(guinierData, guinierAxis);
+
+		double q0 = guinierAxis.getDouble(0);
+		double qMin = guinierAxis.getDouble(guinierAxis.getSize() / 10);
+		double qMax = guinierAxis.getDouble(guinierAxis.getSize() - 1);
+		double[] startPosition= new double[] { guinierAxis.getDouble(0), guinierAxis.getDouble(GuinierLineFitFunction.MIN_POINTS) };
+		double[] cmaesInputSigma = new double[] { qMin * 0.1, qMax * 0.1 };
+		try {
+			final PointValuePair res = optimizer.optimize(new MaxEval(cmaesMaxIterations),
+					new ObjectiveFunction(function),
+					GoalType.MAXIMIZE,
+					new CMAESOptimizer.PopulationSize(cmaesLambda),
+					new CMAESOptimizer.Sigma(cmaesInputSigma),
+					new SimpleBounds(new double[] { q0, q0 }, new double[] { qMin, qMax }),
+					new InitialGuess(startPosition));
+			
+			function.value(res.getPoint());
+			Amount<Dimensionless> I0 = getI0(function.regression);
+			Amount<Dimensionless> Rg = getRg(function.regression);
+			
+			System.out.println("Final Result");
+			String msg = StringUtils.join(new String[] {
+					"	I(0) ",
+					I0.toString(),
+					"	Rg ",
+					Rg.toString()},
+					" : ");
+			System.out.println(msg);
+			msg = StringUtils.join(new String[] {
+					"Slice",
+					ArrayUtils.toString(res.getPoint()),
+					"R", Double.toString(function.regression.getR())
+					},
+					" : ");
+			System.out.println(msg);
+		} catch (MaxCountExceededException e) {
+			return null;
+		}
+		return function.regression;
+	}
+
+	public Amount<Dimensionless> getI0(SimpleRegression regression) {
+		Amount<Dimensionless> I0 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
+		return I0.copy();
+	}
+
+	public Amount<Dimensionless> getRg(SimpleRegression regression) {
+		Amount<Dimensionless> slope = Amount.valueOf(regression.getSlope(), regression.getSlopeConfidenceInterval(), Dimensionless.UNIT);
+		Amount<Dimensionless> Rg = slope.times(-3.0).sqrt().to(Dimensionless.UNIT);
+		return Rg.copy();
+	}
+	
+	public AbstractDataset getFitData(SimpleRegression regression, IDataset axis) {
+		AbstractDataset guinierAxis = getSaxsPlotAxis(axis);
+		AbstractDataset result = AbstractDataset.zeros(guinierAxis.getShape(), AbstractDataset.FLOAT32);
+		for (int i = 0; i < guinierAxis.getSize(); i++) {
+			result.set(regression.predict(guinierAxis.getDouble(i)), i);
+		}
+		
+		return result;
+	}
+	
+	
 }
