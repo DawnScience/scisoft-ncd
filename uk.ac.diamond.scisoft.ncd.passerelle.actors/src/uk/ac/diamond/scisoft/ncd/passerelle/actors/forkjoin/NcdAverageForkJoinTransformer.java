@@ -33,6 +33,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
@@ -210,8 +211,8 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 				IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);
 				
 				int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dimension, framesAve_int.length);
-				AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT32);
-				AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, AbstractDataset.FLOAT64);
+				AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT32);
+				AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT64);
 				try {
 				DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
 				input_ids.setIDs(inputGroupID, inputDataID);

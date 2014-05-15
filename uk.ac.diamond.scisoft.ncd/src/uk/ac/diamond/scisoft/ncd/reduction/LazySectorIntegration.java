@@ -40,6 +40,7 @@ import org.jscience.physics.amount.Amount;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -141,7 +142,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		az_errors_id = NcdNexusUtils.makedata(sec_group_id, "azimuth_errors", typeDouble, azFrames, false, "counts");
 		
 		int[] areaShape = (int[]) ConvertUtils.convert(Arrays.copyOfRange(frames, frames.length - dim, frames.length), int[].class); 
-		areaData = ROIProfile.area(areaShape, AbstractDataset.FLOAT32, mask, intSector, calculateRadial, calculateAzimuthal, fast);
+		areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, mask, intSector, calculateRadial, calculateAzimuthal, fast);
 		
 		if (qaxis != null) {
 			writeQaxisData(secRank, sec_group_id);
@@ -185,10 +186,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], mask);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
-				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
+						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -202,10 +203,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 				}
 			}
 			if (calculateRadial) {
-				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
+						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
@@ -389,7 +390,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		int type = H5.H5Dget_type(mask_id);
 		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, AbstractDataset.INT8)).getBuffer());
+		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, Dataset.INT8)).getBuffer());
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);

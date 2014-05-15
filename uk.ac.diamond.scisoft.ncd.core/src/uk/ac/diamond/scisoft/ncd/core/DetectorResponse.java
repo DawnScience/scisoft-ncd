@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 
 public class DetectorResponse {
@@ -36,7 +37,7 @@ public class DetectorResponse {
 	}
 
 	public void setResponse(AbstractDataset response) {
-		this.response = (FloatDataset) response.cast(AbstractDataset.FLOAT32).squeeze();
+		this.response = (FloatDataset) response.cast(Dataset.FLOAT32).squeeze();
 	}
 
 	

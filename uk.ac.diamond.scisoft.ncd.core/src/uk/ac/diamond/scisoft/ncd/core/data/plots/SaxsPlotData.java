@@ -17,6 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -39,11 +40,11 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 
 	@Override
 	public AbstractDataset getSaxsPlotDataset(IDataset data, IDataset axis) {
-		AbstractDataset tmpData = AbstractDataset.zeros(data.getShape(), AbstractDataset.FLOAT32);
+		AbstractDataset tmpData = AbstractDataset.zeros(data.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		AbstractDataset tmpErrors = null;
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
-			tmpErrors = AbstractDataset.zeros(data.getShape(), AbstractDataset.FLOAT32);
+			tmpErrors = AbstractDataset.zeros(data.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
 		IndexIterator itr = tmpData.getIterator();
@@ -64,11 +65,11 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 
 	@Override
 	public AbstractDataset getSaxsPlotAxis(IDataset axis) {
-		AbstractDataset tmpAxis = AbstractDataset.zeros(axis.getShape(), AbstractDataset.FLOAT32);
+		AbstractDataset tmpAxis = AbstractDataset.zeros(axis.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		AbstractDataset tmpAxisErrors = null;
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
-			tmpAxisErrors = AbstractDataset.zeros(axis.getShape(), AbstractDataset.FLOAT32);
+			tmpAxisErrors = AbstractDataset.zeros(axis.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
 		IndexIterator itr = tmpAxis.getIterator();

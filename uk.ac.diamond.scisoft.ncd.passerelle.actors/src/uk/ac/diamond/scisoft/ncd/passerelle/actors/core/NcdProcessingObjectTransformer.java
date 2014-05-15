@@ -36,6 +36,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -138,11 +139,11 @@ public class NcdProcessingObjectTransformer extends Actor {
 			
 			MultidimensionalCounter frameCounter = new MultidimensionalCounter(selectedShape);
 			Iterator iter = frameCounter.iterator();
-			AbstractDataset data = AbstractDataset.zeros(resultShape, AbstractDataset.FLOAT32);
+			AbstractDataset data = AbstractDataset.zeros(resultShape, Dataset.FLOAT32);
 			data.setName(datasetName);
 			AbstractDataset errors = null;
 			if (hasErrors) {
-				errors = AbstractDataset.zeros(resultShape, AbstractDataset.FLOAT64);
+				errors = AbstractDataset.zeros(resultShape, Dataset.FLOAT64);
 			}
 			while (iter.hasNext()) {
 				iter.next();

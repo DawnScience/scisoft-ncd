@@ -49,6 +49,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
@@ -94,7 +95,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				}
 				
 				mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
-				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, AbstractDataset.BOOL);
+				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, Dataset.BOOL);
 				final BooleanDataset savedMask = MaskingTool.getSavedMask();
 
 				Job maskingJob = new Job("Loading Detector Mask") {

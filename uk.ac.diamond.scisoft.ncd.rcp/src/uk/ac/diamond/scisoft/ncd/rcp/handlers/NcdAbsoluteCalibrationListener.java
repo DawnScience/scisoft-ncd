@@ -58,6 +58,7 @@ import org.jscience.physics.amount.Amount;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -277,7 +278,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						}
 						AbstractDataset imageIntDataset = (AbstractDataset) node.getDataset().getSlice(start, stop, null).clone()
 								.squeeze();
-						imageDataset = DatasetUtils.cast(imageIntDataset, AbstractDataset.FLOAT32);
+						imageDataset = DatasetUtils.cast(imageIntDataset, Dataset.FLOAT32);
 						imageDataset.idivide(norm);
 
 						mask = MaskingTool.getSavedMask();

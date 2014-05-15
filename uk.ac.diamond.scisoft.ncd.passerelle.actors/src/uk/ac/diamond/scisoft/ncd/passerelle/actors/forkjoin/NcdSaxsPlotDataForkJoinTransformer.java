@@ -38,6 +38,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -526,7 +527,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 	private void setq4AxisErrors(AbstractDataset axisNew, AbstractDataset q4Axis) {
 		
-		AbstractDataset errors = AbstractDataset.zeros(q4Axis, AbstractDataset.FLOAT64);
+		AbstractDataset errors = AbstractDataset.zeros(q4Axis, Dataset.FLOAT64);
 		
 		// Calculate std. deviation for q^4 values
 		IndexIterator itr = q4Axis.getIterator(true);

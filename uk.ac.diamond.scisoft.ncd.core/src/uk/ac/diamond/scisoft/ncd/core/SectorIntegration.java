@@ -20,6 +20,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Maths;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
@@ -117,7 +118,7 @@ public class SectorIntegration {
 					}
 					radset.resize(new int[] { 1, radrange });
 					if (myraderrors == null) {
-						myraderrors = (DoubleDataset) AbstractDataset.zeros(myraddata, AbstractDataset.FLOAT64);
+						myraderrors = (DoubleDataset) AbstractDataset.zeros(myraddata, Dataset.FLOAT64);
 					}
 					myraderrors.setSlice(raderr, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
 				}
@@ -140,7 +141,7 @@ public class SectorIntegration {
 						azerr = Maths.dividez(azerr, areaDataSq[1]);
 					}
 					if (myazerrors == null) {
-						myazerrors = (DoubleDataset) AbstractDataset.zeros(myazdata, AbstractDataset.FLOAT64);
+						myazerrors = (DoubleDataset) AbstractDataset.zeros(myazdata, Dataset.FLOAT64);
 					}
 					myazerrors.setSlice(azerr, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
 				}

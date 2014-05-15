@@ -49,6 +49,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
@@ -885,8 +886,8 @@ public class LazyNcdProcessing {
 		
 		if (slope != null && intercept != null) {
 			int numPoints = (int) secFrames[secFrames.length - 1];
-			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
-			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
+			qaxis = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			if (dim == 1) {
 				Amount<Length> pxWaxs = ncdDetectors.getPxWaxs();
 				for (int i = 0; i < numPoints; i++) {

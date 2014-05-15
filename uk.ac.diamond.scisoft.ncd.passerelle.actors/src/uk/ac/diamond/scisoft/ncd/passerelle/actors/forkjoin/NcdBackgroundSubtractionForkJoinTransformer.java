@@ -35,6 +35,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
@@ -261,7 +262,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					bgData.setError(bgErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
-					DoubleDataset bgErrors = (DoubleDataset) DatasetUtils.cast(bgData.clone(), AbstractDataset.FLOAT64);
+					DoubleDataset bgErrors = (DoubleDataset) DatasetUtils.cast(bgData.clone(), Dataset.FLOAT64);
 					bgData.setErrorBuffer(bgErrors);
 				}
 				lock.unlock();

@@ -23,6 +23,7 @@ import static org.junit.Assert.assertArrayEquals;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 
 public class NcdDataUtilsTest {
@@ -77,8 +78,8 @@ public class NcdDataUtilsTest {
 	
 	@Test
 	public void matchDataDimensionsTest() {
-		data1 = AbstractDataset.ones(shape1, AbstractDataset.INT32);
-		data2 = AbstractDataset.ones(shape2, AbstractDataset.INT32);
+		data1 = AbstractDataset.ones(shape1, Dataset.INT32);
+		data2 = AbstractDataset.ones(shape2, Dataset.INT32);
 		
 		AbstractDataset[] newDatasets = NcdDataUtils.matchDataDimensions(data1, data2);
 		

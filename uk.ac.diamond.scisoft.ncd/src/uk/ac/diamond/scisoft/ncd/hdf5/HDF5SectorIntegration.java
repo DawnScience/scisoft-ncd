@@ -27,6 +27,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
@@ -134,10 +135,10 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
-				myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), AbstractDataset.FLOAT64);
+						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -151,10 +152,10 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				}
 			}
 			if (calculateRadial) {
-				myraddata =  DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), AbstractDataset.FLOAT64);
+						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];

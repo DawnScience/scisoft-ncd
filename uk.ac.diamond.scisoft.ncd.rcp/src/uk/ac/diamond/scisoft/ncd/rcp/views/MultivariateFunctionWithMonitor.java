@@ -39,6 +39,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.CompositeFunction;
@@ -128,7 +129,7 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		SectorROI tmpRoi = new SectorROI(beamxy[0], beamxy[1], sroi.getRadius(0), sroi.getRadius(1), sroi.getAngle(0), sroi.getAngle(1), 1.0, true, sroi.getSymmetry());
 		AbstractDataset[] intresult = ROIProfile.sector(dataset, mask, tmpRoi, true, false, true);
 		AbstractDataset axis = DatasetUtils.linSpace(tmpRoi.getRadius(0), tmpRoi.getRadius(1),
-				intresult[0].getSize(), AbstractDataset.INT32);
+				intresult[0].getSize(), Dataset.INT32);
 		double error = 0.0;
 		for (int idx = 0; idx < initPeaks.size(); idx++) {
 			IPeak peak = initPeaks.get(idx);

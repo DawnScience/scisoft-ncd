@@ -63,6 +63,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -229,7 +230,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		Amount<Length> px = getPixel();
 		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
-		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), AbstractDataset.FLOAT32);
+		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), Dataset.FLOAT32);
 		xAxis.imultiply(px.getEstimatedValue());
 		AbstractDataset qvalues = calibrationFunction.calculateValues(xAxis);
 		

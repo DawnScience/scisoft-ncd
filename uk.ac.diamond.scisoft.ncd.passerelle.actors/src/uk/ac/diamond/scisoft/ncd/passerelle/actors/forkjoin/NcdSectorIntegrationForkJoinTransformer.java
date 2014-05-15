@@ -47,6 +47,7 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -222,7 +223,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	protected long[] getResultDataShape() {
 		int[] areaShape = (int[]) ConvertUtils.convert(
 				Arrays.copyOfRange(frames, frames.length - dimension, frames.length), int[].class);
-		areaData = ROIProfile.area(areaShape, AbstractDataset.FLOAT32, mask, intSector, doRadial, doAzimuthal, doFast);
+		areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, mask, intSector, doRadial, doAzimuthal, doFast);
 		
 		int areaDataRank = areaData[0].getRank();
 		int[] areaDataShape = areaData[0].getShape();
@@ -253,9 +254,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		long[] azShape = getAzimuthalDataShape(); 
 		int azSize = (int) azShape[azShape.length - 1];
 		if (intSector.getSymmetry() != SectorROI.FULL) {
-			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(1), azSize, AbstractDataset.FLOAT64);
+			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(1), azSize, Dataset.FLOAT64);
 		} else {
-			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(0) + 360., azSize, AbstractDataset.FLOAT64);
+			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(0) + 360., azSize, Dataset.FLOAT64);
 		}
 		xi.setName("degrees");
 		
@@ -270,8 +271,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		long[] secFrames = getResultDataShape();
 		int numPoints = (int) secFrames[secFrames.length - 1];
 		if (gradient != null &&	intercept != null && pxSize != null &&	axisUnit != null) {
-			qaxis = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
-			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, AbstractDataset.FLOAT32);
+			qaxis = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			double d2bs = intSector.getRadii()[0];
 			for (int i = 0; i < numPoints; i++) {
 				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
@@ -367,11 +368,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				AbstractDataset[] mydata = sec.process(data, data.getShape()[0], mask);
 				int resLength = dataShape.length - dimension + 1;
 				if (doAzimuthal) {
-					myazdata = DatasetUtils.cast(mydata[0], AbstractDataset.FLOAT32);
+					myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 					if (myazdata != null) {
 						if (myazdata.hasErrors()) {
 							myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(),
-									AbstractDataset.FLOAT64);
+									Dataset.FLOAT64);
 						}
 
 						int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -385,11 +386,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					}
 				}
 				if (doRadial) {
-					myraddata = DatasetUtils.cast(mydata[1], AbstractDataset.FLOAT32);
+					myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 					if (myraddata != null) {
 						if (myraddata.hasErrors()) {
 							myraderrors = DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(),
-									AbstractDataset.FLOAT64);
+									Dataset.FLOAT64);
 						}
 						int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 						resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
@@ -664,7 +665,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		int type = H5.H5Dget_type(mask_id);
 		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, AbstractDataset.INT8)).getBuffer());
+		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, Dataset.INT8)).getBuffer());
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
