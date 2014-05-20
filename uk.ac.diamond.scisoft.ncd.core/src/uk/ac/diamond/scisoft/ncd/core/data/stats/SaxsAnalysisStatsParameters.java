@@ -21,7 +21,8 @@ public class SaxsAnalysisStatsParameters {
 	public static final SaxsAnalysisStats DEFAULT_SELECTION_METHOD = SaxsAnalysisStats.IDENTITY_FILTER;
 	public static final double DBSCAN_CLUSTERER_EPSILON = 0.1;
 	public static final int DBSCAN_CLUSTERER_MINPOINTS = 1;	
-	public static final double SAXS_FILTERING_CI = 0.95;
+	public static final double SAXS_FILTERING_CI = 0.999;
+	public static final int SAXS_FILTERING_MINPOINTS = 3;
 	
 	private SaxsAnalysisStats selectionAlgorithm;
 	private double dbSCANClustererEpsilon;

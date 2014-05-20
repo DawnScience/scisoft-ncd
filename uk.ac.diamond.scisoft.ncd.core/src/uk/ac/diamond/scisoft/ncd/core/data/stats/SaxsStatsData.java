@@ -23,7 +23,10 @@ public abstract class SaxsStatsData {
 	AbstractDataset referenceData;
 
 	public void setReferenceData(AbstractDataset referenceData) {
-		this.referenceData = referenceData.clone();
+		this.referenceData = referenceData.clone().squeeze();
+		if (this.referenceData.getRank() > 1) {
+			throw new IllegalArgumentException("Only 1D datasets can be analysed.");
+		}
 	}
 	
 	public abstract AbstractDataset getStatsData();
