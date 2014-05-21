@@ -16,7 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import org.apache.commons.math3.distribution.NormalDistribution;
 import org.apache.commons.math3.special.Erf;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
@@ -26,10 +25,12 @@ import uk.ac.diamond.scisoft.analysis.dataset.Slice;
 public class FilterData extends SaxsStatsData {
 	
 	private double confidenceInterval;
+	private AndersonDarlingNormalityTest test;
 
 	public FilterData() {
 		super();
 		this.confidenceInterval = SaxsAnalysisStatsParameters.SAXS_FILTERING_CI;
+		this.test = new AndersonDarlingNormalityTest("2.5%");
 	}
 
 	@Override
@@ -45,12 +46,12 @@ public class FilterData extends SaxsStatsData {
 				AbstractDataset data = referenceData.getSlice(new Slice(0, i));
 				AbstractDataset dataErrors = errors.getSlice(new Slice(0, i));
 				
-				boolean test = testAndersonDarling(data, dataErrors);
+				boolean accept = test.acceptNullHypothesis(data, dataErrors);
 				
-				if (test) {
+				if (accept) {
 					lastIdxTrue = i;
 				}
-				result.set(test, i);
+				result.set(accept, i);
 			}
 			
 			for (int i = 0; i <= lastIdxTrue; i++) {
@@ -79,31 +80,6 @@ public class FilterData extends SaxsStatsData {
 			return result;
 		}
 		return null;
-	}
-
-	private boolean testAndersonDarling(AbstractDataset data, AbstractDataset errors) {
-		AbstractDataset sortedData = data.clone().sort(null);
-		double mean = (Double) data.mean(true);
-		int size = data.getSize();
-		double std = Math.max((Double) errors.mean(true), (Double) data.stdDeviation());
-		
-		// Critical values  for following significance levels:
-		//  15%    10%    5%    2.5%     1%
-		// 0.576, 0.656, 0.787, 0.918, 1.092
-		double criticalValue = 0.918;
-		double thres = criticalValue / (1.0 + 4.0 / size - 25.0 / size / size);
-		
-		NormalDistribution norm = new NormalDistribution(mean, std);
-		double sum = 0.0;
-		for (int i = 0; i < size; i++) { 
-			double val1 = sortedData.getDouble(i);
-			double val2 = sortedData.getDouble(size - 1 - i);
-			double cdf1 = norm.cumulativeProbability(val1);
-			double cdf2 = norm.cumulativeProbability(val2);
-			sum += (2 * i + 1) * (Math.log(cdf1) + Math.log(1.0 - cdf2));
-		}
-		double A2 = -size - sum / size;
-		return (A2 < 0 ? true : (Math.sqrt(A2) < thres));
 	}
 
 	public void setConfigenceInterval(double saxsFilteringCI) {
