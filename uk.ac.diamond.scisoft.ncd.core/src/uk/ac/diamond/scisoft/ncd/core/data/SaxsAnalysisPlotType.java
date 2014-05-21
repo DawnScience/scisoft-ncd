@@ -23,10 +23,12 @@ import org.apache.commons.math3.util.Pair;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.DebyeBuechePlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.KratkyPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.LogNormPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.LogLogPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
@@ -35,12 +37,13 @@ import uk.ac.diamond.scisoft.ncd.core.data.plots.ZimmPlotData;
 public enum SaxsAnalysisPlotType {
 
 
-	LOGLOG_PLOT("Log/Log Plot",  new Pair<String, String>("log\u2081\u2080(q)", "log\u2081\u2080(I)"), new int[]{0,0,255}),
-	GUINIER_PLOT("Guinier Plot", new Pair<String, String>("q\u00b2", "ln(I)"), new int[]{255,0,0}),
-	POROD_PLOT("Porod Plot",     new Pair<String, String>("q", "Iq\u2074"),    new int[]{204, 0, 204}),
-	KRATKY_PLOT("Kratky Plot",   new Pair<String, String>("q", "Iq\u00b2"),    new int[]{204, 0, 0}),
-	ZIMM_PLOT("Zimm Plot",       new Pair<String, String>("q\u00b2", "1/I"),   new int[]{0, 153, 51}),
-	DEBYE_BUECHE_PLOT("Debye-Bueche Plot",  new Pair<String, String>("q\u00b2", "1/\u221AI"), new int[]{102, 0, 102});
+	LOGNORM_PLOT("Log/Norm Plot",           new Pair<String, String>("q", "log\u2081\u2080(I)"),                  new int[]{0,0,255}),
+	LOGLOG_PLOT("Log/Log Plot",             new Pair<String, String>("log\u2081\u2080(q)", "log\u2081\u2080(I)"), new int[]{0,0,255}),
+	GUINIER_PLOT("Guinier Plot",            new Pair<String, String>("q\u00b2", "ln(I)"),                         new int[]{255,0,0}),
+	POROD_PLOT("Porod Plot",                new Pair<String, String>("q", "Iq\u2074"),                            new int[]{204, 0, 204}),
+	KRATKY_PLOT("Kratky Plot",              new Pair<String, String>("q", "Iq\u00b2"),                            new int[]{204, 0, 0}),
+	ZIMM_PLOT("Zimm Plot",                  new Pair<String, String>("q\u00b2", "1/I"),                           new int[]{0, 153, 51}),
+	DEBYE_BUECHE_PLOT("Debye-Bueche Plot",  new Pair<String, String>("q\u00b2", "1/\u221AI"),                     new int[]{102, 0, 102});
 	
 	
 	private final String name;
@@ -75,13 +78,17 @@ public enum SaxsAnalysisPlotType {
 	/**
 	 * Process the maths in place for the passed in arguments.
 	 * We keep the maths separate from the UI. This is a good idea!
-	 * @param xTraceData
-	 * @param yTraceData
+	 * @param xTraceDataSrc
+	 * @param yTraceDataSrc
 	 */
-	public void process(AbstractDataset xTraceData, AbstractDataset yTraceData) {
+	public IDataset[] process(AbstractDataset xTraceDataSrc, AbstractDataset yTraceDataSrc) {
 		
     	SaxsPlotData plotData = getSaxsPlotDataObject();
-		IndexIterator itr = yTraceData.getIterator();
+    	
+    	AbstractDataset yTraceData = yTraceDataSrc.clone();
+		AbstractDataset xTraceData = xTraceDataSrc.clone();
+    	
+		IndexIterator itr = yTraceData.getIterator();		
 		while (itr.hasNext()) {
 			int idx = itr.index;
 			double val = plotData.getDataValue(idx, xTraceData, yTraceData);
@@ -102,8 +109,8 @@ public enum SaxsAnalysisPlotType {
 			}
 			xTraceData.set(val, idx);
 		}
+		return new IDataset[]{xTraceData, yTraceData};
 	}
-
 	/**
 	 * Gets a regex which matches any of the names
 	 * @return regex string
@@ -131,7 +138,9 @@ public enum SaxsAnalysisPlotType {
 
 	public SaxsPlotData getSaxsPlotDataObject() {
     	SaxsPlotData plotData = null;
-		if (this.equals(SaxsAnalysisPlotType.LOGLOG_PLOT)) {
+		if (this.equals(SaxsAnalysisPlotType.LOGNORM_PLOT)) {
+			plotData = new LogNormPlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.LOGLOG_PLOT)) {  
 			plotData = new LogLogPlotData();
 		} else if (this.equals(SaxsAnalysisPlotType.GUINIER_PLOT)) {
 			plotData = new GuinierPlotData();
