@@ -261,10 +261,10 @@ public class QAxisFileHandler extends AbstractHandler {
 						plotSystem.removeRegion(sector);
 					}
 					sector = plotSystem.createRegion(NcdQAxisCalibration.SECTOR_NAME, RegionType.SECTOR);
-					sector.setROI(roiData.copy());
 					sector.setUserRegion(true);
 					sector.setVisible(true);
 					plotSystem.addRegion(sector);
+					sector.setROI(roiData.copy());
 				}
 				
 				// update locked diffraction metadata in Diffraction tool
