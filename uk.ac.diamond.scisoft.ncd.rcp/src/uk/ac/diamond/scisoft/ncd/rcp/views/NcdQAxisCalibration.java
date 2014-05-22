@@ -353,10 +353,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					if (plotSystem != null) {
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.createRegion(SECTOR_NAME, RegionType.SECTOR);
+						sector.setROI(roiData.copy());
 						sector.setUserRegion(true);
 						sector.setVisible(true);
 						plotSystem.addRegion(sector);
-						sector.setROI(roiData.copy());
 					}
 				} catch (Exception e) {
 					logger.error("SCISOFT NCD Q-Axis Calibration: cannot restore GUI bean information", e);
