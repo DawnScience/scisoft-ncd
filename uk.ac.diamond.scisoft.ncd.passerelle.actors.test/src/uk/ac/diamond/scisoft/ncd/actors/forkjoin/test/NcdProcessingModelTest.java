@@ -415,7 +415,6 @@ public class NcdProcessingModelTest {
 		}
 	}
 	
-	@Test
 	public void checkInvariant() throws HDF5Exception {
 	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyBackgroundSubtractionName);
 	    DataSliceIdentifiers data_id = ids[0];

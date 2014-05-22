@@ -42,7 +42,7 @@ public enum SaxsAnalysisStats {
 	public SaxsStatsData getSaxsAnalysisStatsObject() {
     	SaxsStatsData statsData = null;
 		if (this.equals(SaxsAnalysisStats.IDENTITY_FILTER)) {
-			statsData = new FilterData();
+			statsData = new IdentityFilter();
 		}
 		if (this.equals(SaxsAnalysisStats.DATA_FILTER)) {
 			statsData = new FilterData();
