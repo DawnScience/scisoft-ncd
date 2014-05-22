@@ -40,6 +40,7 @@ import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.TestUtils;
@@ -415,6 +416,8 @@ public class NcdProcessingModelTest {
 		}
 	}
 	
+	@Ignore("This test needs an acurate q-axis data following changes implementing true SAXS invariant.")
+	@Test
 	public void checkInvariant() throws HDF5Exception {
 	    DataSliceIdentifiers[] ids = readResultsIds(filename, detectorOut, LazyBackgroundSubtractionName);
 	    DataSliceIdentifiers data_id = ids[0];
