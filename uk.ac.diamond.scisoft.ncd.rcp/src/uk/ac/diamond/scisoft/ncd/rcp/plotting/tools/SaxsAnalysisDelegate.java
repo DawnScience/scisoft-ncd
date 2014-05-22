@@ -166,16 +166,16 @@ class SaxsAnalysisDelegate {
 				}
 
 				try {
-				    this.pt.process(xTraceData, yTraceData.squeeze());
+				    IDataset[] saxsPlotTraces = this.pt.process(xTraceData, yTraceData.squeeze());
+					ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
+					tr.setData(saxsPlotTraces[0], saxsPlotTraces[1]);
+					tr.setTraceColor(lineTrace.getTraceColor());
+					tr.setErrorBarColor(lineTrace.getErrorBarColor());
+					saxsPlottingSystem.addTrace(tr);
 				} catch (Throwable ne) {
 					logger.error("Cannot process "+yTraceData.getName(), ne);
 					continue;
 				}
-				ILineTrace tr = saxsPlottingSystem.createLineTrace(lineTrace.getName());
-				tr.setData(xTraceData, yTraceData);
-				tr.setTraceColor(lineTrace.getTraceColor());
-				tr.setErrorBarColor(lineTrace.getErrorBarColor());
-				saxsPlottingSystem.addTrace(tr);
 				saxsPlottingSystem.repaint();
 			}
 
