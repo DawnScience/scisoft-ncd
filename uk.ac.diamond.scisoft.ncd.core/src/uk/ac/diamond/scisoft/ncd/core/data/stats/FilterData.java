@@ -16,64 +16,145 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import org.apache.commons.math3.special.Erf;
+import java.util.ArrayList;
+import java.util.List;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
+import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.Slice;
+import uk.ac.diamond.scisoft.analysis.dataset.Stats;
+import uk.ac.diamond.scisoft.analysis.dataset.function.DatasetToDatasetFunction;
 
 public class FilterData extends SaxsStatsData {
 	
+	private class QuantileFilter implements DatasetToDatasetFunction {
+		
+		private double  lowQuant = 0.25;
+		private double highQuant = 0.75;
+		
+		public QuantileFilter() {
+		}
+		
+		@Override
+		public List<AbstractDataset> value(IDataset... datasets) {
+			
+			if (datasets.length == 0)
+				return null;
+
+			List<AbstractDataset> result = new ArrayList<AbstractDataset>();
+			
+			for (IDataset idataset : datasets) {
+				AbstractDataset dataset = DatasetUtils.convertToAbstractDataset(idataset);
+				final int dt = dataset.getDtype();
+				final int is = dataset.getElementsPerItem();
+				final int[] ishape = dataset.getShape();
+				
+				if (ishape.length > 1)
+					throw new IllegalArgumentException("Only 1D input datasets are supported");
+				
+				AbstractDataset filtered = AbstractDataset.zeros(is , ishape, dt);
+				
+				final PositionIterator iterPos = filtered.getPositionIterator();
+				final int[] pos = iterPos.getPos();
+				final int size = dataset.getSize();
+				final int[] start = new int[1];
+				final int[] stop = new int[1];
+				final int[] step = new int[] {1};
+				List<Double> resList = new ArrayList<Double>(); 
+				while (iterPos.hasNext()) {
+					int idx = pos[0];
+					start[0] = Math.max(idx - filterWindow, 0);
+					stop[0] = Math.min(idx + filterWindow + 1, size); // exclusive
+					AbstractDataset slice = dataset.getSlice(start, stop, step);
+					double lowQ = Stats.quantile(slice, lowQuant);
+					double highQ = Stats.quantile(slice, highQuant);
+					Double mean = (highQ + lowQ) / 2.0;
+					Double dev =  (highQ - lowQ) / 2.0;
+					Double val = dataset.getDouble(idx);
+					if (Math.abs(val - mean) < devSigma*dev) {
+						resList.add(val);
+					}
+				}
+				if (!resList.isEmpty()) {
+					filtered = AbstractDataset.createFromList(resList);
+					result.add(filtered);
+				}
+			}
+			return result;
+		}
+	}
+	
 	private double confidenceInterval;
-	private AndersonDarlingNormalityTest test;
+	private int filterWindow = 10;
+	private double devSigma = 10.0;
 
 	public FilterData() {
 		super();
 		this.confidenceInterval = SaxsAnalysisStatsParameters.SAXS_FILTERING_CI;
-		this.test = new AndersonDarlingNormalityTest("2.5%");
 	}
 
 	@Override
 	public AbstractDataset getStatsData() {
 		int datasize = referenceData.getSize();
 		AbstractDataset result = AbstractDataset.ones(new int[] { datasize }, AbstractDataset.INT);
-		AbstractDataset errors = referenceData.getError();
-		
 		if (referenceData != null) {
-			// Find data slice that passes normality test
-			int lastIdxTrue = 0;
-			for (int i = SaxsAnalysisStatsParameters.SAXS_FILTERING_MINPOINTS; i < datasize; i++) {
-				AbstractDataset data = referenceData.getSlice(new Slice(0, i));
-				AbstractDataset dataErrors = errors.getSlice(new Slice(0, i));
-				
-				boolean accept = test.acceptNullHypothesis(data, dataErrors);
-				
-				if (accept) {
-					lastIdxTrue = i;
-				}
-				result.set(accept, i);
+			result.imultiply(getStatsData(referenceData));
+			result.imultiply(getStatsData(referenceData.getError()));
+		}
+		return result;
+	}
+	
+	private AbstractDataset getStatsData(AbstractDataset inputData) {
+		if (inputData != null) {
+			int datasize = inputData.getSize();
+			AbstractDataset result = AbstractDataset.ones(new int[] { datasize }, AbstractDataset.INT);
+			if (datasize <= SaxsAnalysisStatsParameters.SAXS_FILTERING_MINPOINTS) {
+				return result;
 			}
 			
+			// Find data slice that passes normality test
+			AndersonDarlingNormalityTest test = new AndersonDarlingNormalityTest("2.5%");
+			int lastIdxTrue = 0;
+			for (int i = SaxsAnalysisStatsParameters.SAXS_FILTERING_MINPOINTS; i < datasize; i++) {
+				AbstractDataset data = inputData.getSlice(new Slice(0, i));
+				QuantileFilter outlierFilter = new QuantileFilter();
+				List<AbstractDataset> filter = outlierFilter.value(data);
+				if (filter.isEmpty()) {
+					result.set(false, i);
+				} else {
+					boolean accept = test.acceptNullHypothesis(filter.get(0));
+					if (accept) {
+						lastIdxTrue = i;
+					}
+					result.set(accept, i);
+				}
+			}
 			for (int i = 0; i <= lastIdxTrue; i++) {
 				result.set(true, i);
 			}
 			
 			// Find outliers in the selected data slice
-			AbstractDataset selectedData = referenceData.getSlice(new Slice(0, lastIdxTrue + 1));
-			AbstractDataset selectedErrors = errors.getSlice(new Slice(0, lastIdxTrue + 1));
-			double mean = (Double) selectedData.mean(true);
-			double dev = Math.max((Double) selectedData.stdDeviation(),
-					((Double) selectedErrors.mean(true)));
-			if (confidenceInterval > 1 || confidenceInterval <= 0) {
-				confidenceInterval = SaxsAnalysisStatsParameters.SAXS_FILTERING_CI;
-			}
-			dev *= Math.sqrt(2.0) * Erf.erfInv(2.0 * confidenceInterval - 1);
-
-			IndexIterator itr = result.getIterator(true);
+			AbstractDataset selectedData = inputData.getSlice(new Slice(0, lastIdxTrue + 1));
+			IndexIterator itr = selectedData.getIterator(true);
+			final int[] start = new int[1];
+			final int[] stop = new int[1];
+			final int[] step = new int[] {1};
+			final int size = selectedData.getSize();
 			while (itr.hasNext()) {
 				int[] pos = itr.getPos();
-				double val = referenceData.getDouble(pos);
-				if (Double.isInfinite(val) || Double.isNaN(val) || (Math.abs(val - mean) > dev)) {
+				int idx = pos[0];
+				start[0] = Math.max(idx - filterWindow, 0);
+				stop[0] = Math.min(idx + filterWindow + 1, size); // exclusive
+				AbstractDataset slice = inputData.getSlice(start, stop, step);
+				double q14 = Stats.quantile(slice, 0.25);
+				double q34 = Stats.quantile(slice, 0.75);
+				Double mean = (q34 + q14) / 2.0;
+				Double dev =  (q34 - q14) / 2.0;
+				Double val = inputData.getDouble(idx);
+				if (Double.isInfinite(val) || Double.isNaN(val) || Math.abs(val - mean) > devSigma*dev) {
 					result.set(0, pos);
 				}
 			}

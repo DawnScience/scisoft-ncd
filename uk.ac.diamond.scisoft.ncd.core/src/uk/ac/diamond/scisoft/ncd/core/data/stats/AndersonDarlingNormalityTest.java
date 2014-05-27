@@ -65,25 +65,29 @@ public class AndersonDarlingNormalityTest {
 		return criticalValuesMap.keySet();
 	}
 	
-	public boolean acceptNullHypothesis(AbstractDataset data, AbstractDataset errors) {
+	public boolean acceptNullHypothesis(AbstractDataset data) {
 		AbstractDataset sortedData = data.clone().sort(null);
 		double mean = (Double) data.mean(true);
 		int size = data.getSize();
-		double std = Math.max((Double) errors.mean(true), (Double) data.stdDeviation());
+		double std = (Double) data.stdDeviation();
+		//double std = Math.min((Double) errors.mean(true), (Double) data.stdDeviation());
+		//double std = (Double) errors.mean(true);
 		
 		double thres = criticalValue / (1.0 + 4.0 / size - 25.0 / size / size);
-		
-		NormalDistribution norm = new NormalDistribution(mean, std);
-		double sum = 0.0;
-		for (int i = 0; i < size; i++) { 
-			double val1 = sortedData.getDouble(i);
-			double val2 = sortedData.getDouble(size - 1 - i);
-			double cdf1 = norm.cumulativeProbability(val1);
-			double cdf2 = norm.cumulativeProbability(val2);
-			sum += (2 * i + 1) * (Math.log(cdf1) + Math.log(1.0 - cdf2));
+		if (std > 0) {
+			NormalDistribution norm = new NormalDistribution(mean, std);
+			double sum = 0.0;
+			for (int i = 0; i < size; i++) {
+				double val1 = sortedData.getDouble(i);
+				double val2 = sortedData.getDouble(size - 1 - i);
+				double cdf1 = norm.cumulativeProbability(val1);
+				double cdf2 = norm.cumulativeProbability(val2);
+				sum += (2 * i + 1) * (Math.log(cdf1) + Math.log(1.0 - cdf2));
+			}
+			double A2 = -size - sum / size;
+			return (A2 < 0 ? true : (Math.sqrt(A2) < thres));
 		}
-		double A2 = -size - sum / size;
-		return (A2 < 0 ? true : (Math.sqrt(A2) < thres));
+		return true;
 	}
 
 }

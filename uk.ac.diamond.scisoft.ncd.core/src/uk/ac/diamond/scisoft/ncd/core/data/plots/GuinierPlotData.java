@@ -16,6 +16,9 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -31,23 +34,31 @@ import org.apache.commons.math3.optim.SimplePointChecker;
 import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
+import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
+import org.apache.commons.math3.util.Precision;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
+import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Slice;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.AndersonDarlingNormalityTest;
 
 public class GuinierPlotData extends SaxsPlotData {
 
 	private int cmaesLambda = 500;
 	private int cmaesMaxIterations = 100000;
 	private int cmaesCheckFeasableCount = 100;
-	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
+	
+	private AndersonDarlingNormalityTest test;
 	
 	private class GuinierLineFitFunction implements MultivariateFunction {
 
@@ -83,6 +94,21 @@ public class GuinierPlotData extends SaxsPlotData {
 			double r = regression.getR();
 			double slope = regression.getSlope();
 			double intercept = regression.getIntercept();
+			
+			// Test residual values for normality
+			//AbstractDataset testData = new FloatDataset(new int[] {idxMax - idxMin});
+			//for (int i = idxMin; i < idxMax; i++) {
+			//	double dataVal = guinierData.getDouble(i);
+			//	double axisVal = guinierAxis.getDouble(i);
+			//	double calc = regression.predict(axisVal);
+			//	testData.set(dataVal - calc, i - idxMin);
+			//}
+			//AbstractDataset testErrors = guinierData.getError().getSlice(new Slice(idxMin, idxMax));
+			//boolean accept = test.acceptNullHypothesis(testData, testErrors);
+			//if (!accept) {
+			//	return -Double.MAX_VALUE;
+			//}
+					
 			double I0 = Math.exp(intercept);
 			double Rg = Math.sqrt(-3.0*slope);
 			if (Rg * pos[1] > 1.5  && Rg * pos[1] < 0.5) {
@@ -112,6 +138,7 @@ public class GuinierPlotData extends SaxsPlotData {
 		groupName = SaxsAnalysisPlotType.GUINIER_PLOT.getGroupName();
 		variableName = axesNames.getFirst();
 		dataName = axesNames.getSecond();
+		test = new AndersonDarlingNormalityTest("5%");
 	}
 	
 	@Override
@@ -144,7 +171,7 @@ public class GuinierPlotData extends SaxsPlotData {
 		return Double.NaN;
 	}
 	
-	public SimpleRegression getGuinierPlotParameters(IDataset data, IDataset axis) {
+	public Object[] getGuinierPlotParameters(IDataset data, IDataset axis) {
 		AbstractDataset guinierData = getSaxsPlotDataset(data, axis);
 		AbstractDataset guinierAxis = getSaxsPlotAxis(axis);
 /*		int sliceSize = data.getSize() / 10;
@@ -220,17 +247,22 @@ public class GuinierPlotData extends SaxsPlotData {
 		    System.out.println();
 		}
 		
-*/		CMAESOptimizer optimizer = new CMAESOptimizer(
+*/		ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
+		RandomDataGenerator rnd = new RandomDataGenerator();
+		CMAESOptimizer optimizer = new CMAESOptimizer(
 				cmaesMaxIterations,
 				0.0,
 				true,
 				0,
 				cmaesCheckFeasableCount,
-				new Well19937a(),
+				rnd.getRandomGenerator(),
 				false,
 				cmaesChecker);
 		GuinierLineFitFunction function = new GuinierLineFitFunction(guinierData, guinierAxis);
 
+		Amount<Dimensionless> I0 = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
+		Amount<Dimensionless> Rg = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
+		
 		double q0 = guinierAxis.getDouble(0);
 		double qMin = guinierAxis.getDouble(guinierAxis.getSize() / 10);
 		double qMax = guinierAxis.getDouble(guinierAxis.getSize() - 1);
@@ -246,8 +278,8 @@ public class GuinierPlotData extends SaxsPlotData {
 					new InitialGuess(startPosition));
 			
 			function.value(res.getPoint());
-			Amount<Dimensionless> I0 = getI0(function.regression);
-			Amount<Dimensionless> Rg = getRg(function.regression);
+			I0 = getI0(function.regression);
+			Rg = getRg(function.regression);
 			
 			System.out.println("Final Result");
 			String msg = StringUtils.join(new String[] {
@@ -264,19 +296,86 @@ public class GuinierPlotData extends SaxsPlotData {
 					},
 					" : ");
 			System.out.println(msg);
+			
+/*			// Run Monte-Carlo simulation to generate error estimates Rg values 
+			//double finalR = function.regression.getR();
+			int maxSample = 10000;
+			int minSample = 10;
+			int totalSample = 100000;
+			int counter = 0;
+			int totalCounter = 0;
+			GuinierLineFitFunction mcFunction = new GuinierLineFitFunction(guinierData, guinierAxis);
+			DescriptiveStatistics statsR = new DescriptiveStatistics();
+			List<Pair<Double, Amount<Dimensionless>>> listI0 = new ArrayList<Pair<Double,Amount<Dimensionless>>>();
+			List<Pair<Double, Amount<Dimensionless>>> listRg = new ArrayList<Pair<Double,Amount<Dimensionless>>>();
+			while ((counter < maxSample && totalCounter < totalSample)
+					|| (counter < minSample && totalCounter >= totalSample)) {
+				double q1 = rnd.nextUniform(q0, qMin);
+				double q2 = rnd.nextUniform(q0, qMax);
+				if (!(q2 > q1)) {
+					continue;
+				}
+				totalCounter++;
+ 				mcFunction.value(new double[] {q1, q2});
+ 				double tmpR = Math.abs(mcFunction.regression.getR());
+ 				//boolean equalsR = Precision.equalsWithRelativeTolerance(tmpR, finalR, 0.1); 
+ 				if (!(Double.isNaN(tmpR) || Double.isInfinite(tmpR))) {
+ 					statsR.addValue(tmpR);
+ 					Amount<Dimensionless> tmpI0 = getI0(mcFunction.regression);
+ 					Amount<Dimensionless> tmpRg = getRg(mcFunction.regression);
+ 	 				if (Double.isNaN(tmpI0.getEstimatedValue()) || Double.isInfinite(tmpI0.getEstimatedValue()) ||
+ 	 						Double.isNaN(tmpRg.getEstimatedValue()) || Double.isInfinite(tmpRg.getEstimatedValue())) {
+ 	 					continue;
+ 	 				}
+ 					listI0.add(new Pair<Double, Amount<Dimensionless>>(tmpR, tmpI0));
+ 					listRg.add(new Pair<Double, Amount<Dimensionless>>(tmpR, tmpRg));
+ 					counter++;
+ 				}
+			}
+			
+			double threshold = statsR.getPercentile(90);
+			//double threshold = 0.95*statsR.getMax();
+			SummaryStatistics statsI0 = new SummaryStatistics();
+			SummaryStatistics statsRg = new SummaryStatistics();
+			for (Pair<Double, Amount<Dimensionless>> tmpVal : listRg) {
+				if (tmpVal.getFirst() > threshold) {
+ 					statsRg.addValue(tmpVal.getSecond().getEstimatedValue());
+				}
+			}
+			for (Pair<Double, Amount<Dimensionless>> tmpVal : listI0) {
+				if (tmpVal.getFirst() > threshold) {
+ 					statsI0.addValue(tmpVal.getSecond().getEstimatedValue());
+				}
+			}
+			
+			double meanI0 = statsI0.getMean();
+			double stdI0 = statsI0.getStandardDeviation();
+			I0 = Amount.valueOf(meanI0, stdI0, Dimensionless.UNIT);
+			
+			double meanRg = statsRg.getMean();
+			double stdRg = statsRg.getStandardDeviation();
+			Rg = Amount.valueOf(meanRg, stdRg, Dimensionless.UNIT);
+			
+			String msg = StringUtils.join(new String[] {
+					"Monte-Carlo Rg", Rg.toString()
+					},
+					" : ");
+			System.out.println(msg);
+*/			
 		} catch (MaxCountExceededException e) {
+			System.out.println("Maximum countes exceeded");
 			return null;
 		}
-		return function.regression;
+		return new Object[] {I0, Rg};
 	}
 
-	public Amount<Dimensionless> getI0(SimpleRegression regression) {
+	private Amount<Dimensionless> getI0(SimpleRegression regression) {
 		Amount<Dimensionless> I0 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
 		return I0.copy();
 	}
 
-	public Amount<Dimensionless> getRg(SimpleRegression regression) {
-		Amount<Dimensionless> slope = Amount.valueOf(regression.getSlope(), regression.getSlopeConfidenceInterval(), Dimensionless.UNIT);
+	private Amount<Dimensionless> getRg(SimpleRegression regression) {
+		Amount<Dimensionless> slope = Amount.valueOf(regression.getSlope(), regression.getSlopeStdErr(), Dimensionless.UNIT);
 		Amount<Dimensionless> Rg = slope.times(-3.0).sqrt().to(Dimensionless.UNIT);
 		return Rg.copy();
 	}
