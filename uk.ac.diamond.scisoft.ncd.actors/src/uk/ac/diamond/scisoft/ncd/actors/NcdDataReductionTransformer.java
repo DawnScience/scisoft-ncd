@@ -90,9 +90,6 @@ import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
 
 public class NcdDataReductionTransformer extends AbstractDataMessageTransformer {
 
-	/**
-	 * 
-	 */
 	private static final long serialVersionUID = -5124463707332206927L;
 	
 	private ResourceParameter     xmlPathParam, persistenceParam, outputPathParam;

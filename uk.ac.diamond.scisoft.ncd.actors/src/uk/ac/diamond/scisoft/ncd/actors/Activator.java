@@ -44,7 +44,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext context) throws Exception {
 		//super.start(context);
-		this.context = context;
+		Activator.context = context;
 		plugin = this;
 	}
 
@@ -54,7 +54,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void stop(BundleContext context) throws Exception {
 		plugin = null;
-		this.context = null;
+		Activator.context = null;
 		//super.stop(context);
 	}
 

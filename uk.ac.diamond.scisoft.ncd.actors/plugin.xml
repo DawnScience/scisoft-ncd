@@ -19,6 +19,13 @@
             name="I22 Nexus Writer">
       </actor>
       <actor
+            class="uk.ac.diamond.scisoft.ncd.actors.AsciiOutputTransformer"
+            group="org.dawb.passerelle.actors.actorgroup.io"
+            icon="icons/ncd_icon.png"
+            id="uk.ac.diamond.scisoft.ncd.actors.asciiexport"
+            name="SAS ASCII">
+      </actor>
+      <actor
             class="uk.ac.diamond.scisoft.ncd.actors.NcdDataReductionTransformer"
             group="uk.ac.diamond.scisoft.ncd.actors"
             icon="icons/ncd_reduction.png"
@@ -26,5 +33,4 @@
             name="Data Reduction">
       </actor>
    </extension>
-
 </plugin>

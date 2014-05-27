@@ -63,6 +63,7 @@ import com.isencia.passerelle.util.ptolemy.ResourceParameter;
 
 public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 
+	private static final Logger logger = LoggerFactory.getLogger(NcdNexusTreeTransformer.class);
 	private static final long serialVersionUID = 1312885325541751197L;
 
 	private Parameter         detectorName;
@@ -85,7 +86,6 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		
 		memoryManagementParam.setVisibility(Settable.NONE);
 		dataSetNaming.setVisibility(Settable.NONE);
-
 	}
 
 	@Override
@@ -94,7 +94,6 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	}
 
 	public void attributeChanged(Attribute attribute) throws IllegalActionException {
-
 		if (attribute == detectorName) {
 			detector = detectorName.getExpression();
 		}
@@ -224,17 +223,6 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		H5.H5Gclose(link_group_id);
 		H5.H5Gclose(entry_group_id);
 		H5.H5Fclose(nxsfile_handle);
-	}
-
-	private static final Logger logger = LoggerFactory.getLogger(NcdNexusTreeTransformer.class);
-	
-	private boolean isUnsignedShort(IntegerDataset id) {
-		try {
-			return "true".equals(id.getMetadata().getMetaValue("unsigned.short.data"));
-		} catch (Exception e) {
-			logger.error("Cannot read meta data!");
-			return false;
-		}
 	}
 
 	private int makegroup(int handle, String name, String nxclass) throws NullPointerException, HDF5Exception {
