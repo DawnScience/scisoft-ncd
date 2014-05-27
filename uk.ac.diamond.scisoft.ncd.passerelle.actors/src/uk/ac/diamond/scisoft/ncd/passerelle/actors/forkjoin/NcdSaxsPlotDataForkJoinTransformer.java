@@ -313,9 +313,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 					if (plotData instanceof GuinierPlotData) {
 						GuinierPlotData guinierPlotData = (GuinierPlotData) plotData;
-						SimpleRegression regression = guinierPlotData.getGuinierPlotParameters(data.squeeze(), axis.squeeze());
-						if (regression != null) {
-							Amount<Dimensionless> Rg = guinierPlotData.getRg(regression);
+						Object[] params = guinierPlotData.getGuinierPlotParameters(data.squeeze(), axis.squeeze());
+						if (params != null) {
+							Amount<Dimensionless> Rg = (Amount<Dimensionless>) params[1];
 							int[] rgDataShape = Arrays.copyOf(dataShape, dataShape.length - dimension);
 
 							DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
@@ -331,11 +331,11 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							tmpDataset = new DoubleDataset(new double[] { Rg.getAbsoluteError() }, new int[] { 1 });
 							writeResults(rgErrorsIDs, tmpDataset, rgDataShape, 1);
 
-							rgDataIDs = new DataSliceIdentifiers();
-							rgDataIDs.setIDs(resultGroupID, guinierFitDataID);
-							rgDataIDs.setSlice(currentSliceParams);
-							tmpDataset = guinierPlotData.getFitData(regression, axis);
-							writeResults(rgDataIDs, tmpDataset, dataShape, 1);
+							//rgDataIDs = new DataSliceIdentifiers();
+							//rgDataIDs.setIDs(resultGroupID, guinierFitDataID);
+							//rgDataIDs.setSlice(currentSliceParams);
+							//tmpDataset = guinierPlotData.getFitData(regression, axis);
+							//writeResults(rgDataIDs, tmpDataset, dataShape, 1);
 						}
 					}
 					if (plotData instanceof PorodPlotData) {

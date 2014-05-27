@@ -54,8 +54,6 @@ import com.isencia.passerelle.core.ErrorCode;
  */
 public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoinTransformer {
 
-	private SaxsStatsData statsData;
-
 	private static List<String> SAXS_STAT_TYPES;
 	static {
 		SaxsAnalysisStats[] saxsStatTypes = SaxsAnalysisStats.values();
@@ -66,7 +64,8 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 	}
 	
 	public Parameter statTypeParam;
-
+	private SaxsAnalysisStatsParameters statType;
+	
 	public NcdSaxsDataStatsForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
@@ -86,16 +85,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 			if (token instanceof ObjectToken) {
 				Object obj = ((ObjectToken) token).getValue();
 				if (obj instanceof SaxsAnalysisStatsParameters) {
-					SaxsAnalysisStatsParameters params = (SaxsAnalysisStatsParameters) obj;
-					SaxsAnalysisStats selectedSaxsStat = params.getSelectionAlgorithm();
-					statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();
-					if (statsData instanceof FilterData) {
-						((FilterData)statsData).setConfigenceInterval(params.getSaxsFilteringCI());
-					}
-					if (statsData instanceof ClusterOutlierRemoval) {
-						((ClusterOutlierRemoval)statsData).setDbSCANClustererEpsilon(params.getDbSCANClustererEpsilon());
-						((ClusterOutlierRemoval)statsData).setDbSCANClustererMinPoints(params.getDbSCANClustererMinPoints());
-					}
+					statType = (SaxsAnalysisStatsParameters) obj;
 				}
 			}
 			
@@ -175,6 +165,16 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 					data.setErrorBuffer(errors);
 				}
 				
+				SaxsAnalysisStats selectedSaxsStat = statType.getSelectionAlgorithm();
+				SaxsStatsData statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();
+				if (statsData instanceof FilterData) {
+					((FilterData)statsData).setConfigenceInterval(statType.getSaxsFilteringCI());
+				}
+				if (statsData instanceof ClusterOutlierRemoval) {
+					((ClusterOutlierRemoval)statsData).setDbSCANClustererEpsilon(statType.getDbSCANClustererEpsilon());
+					((ClusterOutlierRemoval)statsData).setDbSCANClustererMinPoints(statType.getDbSCANClustererMinPoints());
+				}
+
 				statsData.setReferenceData(data);
 				AbstractDataset mydata = statsData.getStatsData();
 				
