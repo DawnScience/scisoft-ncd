@@ -31,7 +31,6 @@ import org.dawb.passerelle.common.message.MessageUtils;
 import org.dawb.passerelle.common.message.Variable;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.dawnsci.conversion.converters.CustomNCDConverter;
-import org.eclipse.core.resources.IResource;
 
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
@@ -78,9 +77,7 @@ public class AsciiOutputTransformer extends AbstractDataMessageTransformer {
 	@Override
 	public List<IVariable> getOutputVariables() {
 		final List<IVariable> ret = super.getOutputVariables();
-		ret.add(new Variable(outputFileParam.getExpression(),
-				VARIABLE_TYPE.PATH, "<path to exported ascii data>",
-				String.class));
+		ret.add(new Variable(outputFileParam.getExpression(), VARIABLE_TYPE.PATH, "<path to exported ascii data>", String.class));
 		return ret;
 	}
 
@@ -96,17 +93,22 @@ public class AsciiOutputTransformer extends AbstractDataMessageTransformer {
 
 			final DataMessageComponent ret = MessageUtils.mergeAll(cache);
 
-			IConversionService service = (IConversionService) ServiceManager
-					.getService(IConversionService.class);
+			IConversionService service = (IConversionService) ServiceManager.getService(IConversionService.class);
 
 			IConversionContext context = service.open(rawPath);
 			context.setConversionScheme(ConversionScheme.CUSTOM_NCD);
 			context.setOutputPath(new File(rawPath).getParent());
-			context.setDatasetNames(Arrays
-					.asList(new String[] { "/entry1/detector_processing/Average/data" }));
-			context.setAxisDatasetName("/entry1/detector_processing/Average/q");
-			context.setUserObject(CustomNCDConverter.SAS_FORMAT.ATSAS);
+			context.setDatasetNames(Arrays.asList(new String[] { thedata }));
+			context.setAxisDatasetName(theaxis);
 			context.addSliceDimension(0, "all");
+
+			if ("XML".equalsIgnoreCase(thetype) || "CANSAS".equalsIgnoreCase(thetype))
+				context.setUserObject(CustomNCDConverter.SAS_FORMAT.CANSAS);
+			else if ("ATSAS".equalsIgnoreCase(thetype))
+				context.setUserObject(CustomNCDConverter.SAS_FORMAT.ATSAS);
+			else 
+				context.setUserObject(CustomNCDConverter.SAS_FORMAT.ASCII);
+			
 			service.process(context);
 
 			String filename = null;
