@@ -365,7 +365,7 @@ public class GuinierPlotData extends SaxsPlotData {
 			System.out.println(msg);
 */			
 		} catch (MaxCountExceededException e) {
-			System.out.println("Maximum countes exceeded");
+			System.out.println("Maximum counts exceeded");
 			return null;
 		}
 		return new Object[] {I0, Rg, qvals[0], qvals[1]};

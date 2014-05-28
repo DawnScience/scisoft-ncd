@@ -30,7 +30,6 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.eclipse.swt.SWT;
 import org.jscience.physics.amount.Amount;
 
@@ -90,16 +89,19 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	private String inputAxisUnit;
 	private long[] axisShape;
 
-	private int rgDataID;
-	private int rgErrorsID;
-	private int rgRangeDataID;
+	private int rgDataID = -1;
+	private int rgErrorsID = -1;
+	private int rgRangeDataID = -1;
+	private int I0DataID = -1;
+	private int I0ErrorsID = -1;
 
-	private int guinierFitDataID, loglogFitDataID;
+	private int guinierFitDataID = -1;
+	private int loglogFitDataID = -1;
 	
 	private int q4AxisDataID = -1;
 	private int q4AxisErrorsID = -1;
 
-	public Port portRg, portRgRange;
+	public Port portRg, portRgRange, portI0;
 	
 	public NcdSaxsPlotDataForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -107,13 +109,11 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 		dataName = "SaxsPlot";
 		
-		guinierFitDataID = -1;
-		loglogFitDataID = -1;
-
 		plotTypeParam = new StringChoiceParameter(this, "plotTypeParam", SAXS_PLOT_TYPES, SWT.SINGLE);
 		
 		portRg = PortFactory.getInstance().createOutputPort(this, "Rg");
 		portRgRange = PortFactory.getInstance().createOutputPort(this, "Rg_range");
+		portI0 = PortFactory.getInstance().createOutputPort(this, "I0");
 	}
 
 	@Override
@@ -188,6 +188,8 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		rgDataID = NcdNexusUtils.makedata(resultGroupID, "Rg", type, resultFrames, false, inputAxisUnit);
 		rgErrorsID = NcdNexusUtils.makedata(resultGroupID, "Rg_errors", type, resultFrames, false, inputAxisUnit);
 		rgRangeDataID = NcdNexusUtils.makedata(resultGroupID, "Rg_range", type, rgRangeFrames, false, inputAxisUnit);
+		I0DataID = NcdNexusUtils.makedata(resultGroupID, "I0", type, resultFrames, false, inputAxisUnit);
+		I0ErrorsID = NcdNexusUtils.makedata(resultGroupID, "I0_errors", type, resultFrames, false, inputAxisUnit);
 		
 		long[] resultFitFrames = Arrays.copyOf(frames, frames.length);
 		type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -345,6 +347,20 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							AbstractDataset qRangeDataset = new DoubleDataset(rgRange, new int[] { 2 });
 							writeResults(rgRangeDataIDs, qRangeDataset, rgRangeDataShape, 1);
 
+							Amount<Dimensionless> I0 = (Amount<Dimensionless>) params[0];
+							DataSliceIdentifiers I0DataIDs = new DataSliceIdentifiers();
+							I0DataIDs.setIDs(resultGroupID, I0DataID);
+							I0DataIDs.setSlice(currentSliceParams);
+							tmpDataset = new DoubleDataset(new double[] { I0.getEstimatedValue() },
+									new int[] { 1 });
+							writeResults(I0DataIDs, tmpDataset, rgDataShape, 1);
+
+							DataSliceIdentifiers I0ErrorsIDs = new DataSliceIdentifiers();
+							I0ErrorsIDs.setIDs(resultGroupID, I0ErrorsID);
+							I0ErrorsIDs.setSlice(currentSliceParams);
+							tmpDataset = new DoubleDataset(new double[] { I0.getAbsoluteError() }, new int[] { 1 });
+							writeResults(I0ErrorsIDs, tmpDataset, rgDataShape, 1);
+							
 							//rgDataIDs = new DataSliceIdentifiers();
 							//rgDataIDs.setIDs(resultGroupID, guinierFitDataID);
 							//rgDataIDs.setSlice(currentSliceParams);
@@ -442,6 +458,21 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					monitor);
 			rgRangeOutputMsg.setBodyContent(rgRangeObj, "application/octet-stream");
 			response.addOutputMessage(portRgRange, rgRangeOutputMsg);
+			
+			ManagedMessage I0OutputMsg = createMessageFromCauses(receivedMsg);
+			NcdProcessingObject I0Obj = new NcdProcessingObject(
+					1,
+					entryGroupID,
+					processingGroupID,
+					resultGroupID,
+					I0DataID,
+					I0ErrorsID,
+					-1,
+					-1,
+					lock,
+					monitor);
+			I0OutputMsg.setBodyContent(I0Obj, "application/octet-stream");
+			response.addOutputMessage(portI0, I0OutputMsg);
 		}
 	}
 
@@ -588,6 +619,8 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 						rgDataID,
 						rgErrorsID,
 						rgRangeDataID,
+						I0DataID,
+						I0ErrorsID,
 						guinierFitDataID,
 						loglogFitDataID));
 
