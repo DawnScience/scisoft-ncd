@@ -92,13 +92,14 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 	private int rgDataID;
 	private int rgErrorsID;
+	private int rgRangeDataID;
 
 	private int guinierFitDataID, loglogFitDataID;
 	
 	private int q4AxisDataID = -1;
 	private int q4AxisErrorsID = -1;
 
-	public Port portRg;
+	public Port portRg, portRgRange;
 	
 	public NcdSaxsPlotDataForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -112,6 +113,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		plotTypeParam = new StringChoiceParameter(this, "plotTypeParam", SAXS_PLOT_TYPES, SWT.SINGLE);
 		
 		portRg = PortFactory.getInstance().createOutputPort(this, "Rg");
+		portRgRange = PortFactory.getInstance().createOutputPort(this, "Rg_range");
 	}
 
 	@Override
@@ -180,9 +182,12 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	
 	private void createGuinierPlotDataset() throws HDF5Exception {
 		long[] resultFrames = Arrays.copyOf(frames, frames.length - dimension);
+		long[] rgRangeFrames = Arrays.copyOf(frames, frames.length - dimension + 1);
+		rgRangeFrames[rgRangeFrames.length - 1] = 2;
 		int type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		rgDataID = NcdNexusUtils.makedata(resultGroupID, "Rg", type, resultFrames, false, inputAxisUnit);
 		rgErrorsID = NcdNexusUtils.makedata(resultGroupID, "Rg_errors", type, resultFrames, false, inputAxisUnit);
+		rgRangeDataID = NcdNexusUtils.makedata(resultGroupID, "Rg_range", type, rgRangeFrames, false, inputAxisUnit);
 		
 		long[] resultFitFrames = Arrays.copyOf(frames, frames.length);
 		type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -330,6 +335,15 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							rgErrorsIDs.setSlice(currentSliceParams);
 							tmpDataset = new DoubleDataset(new double[] { Rg.getAbsoluteError() }, new int[] { 1 });
 							writeResults(rgErrorsIDs, tmpDataset, rgDataShape, 1);
+							
+							double[] rgRange = new double[] {(double) params[2], (double) params[3]};
+							int[] rgRangeDataShape = Arrays.copyOf(dataShape, dataShape.length - dimension + 1);
+							rgRangeDataShape[rgRangeDataShape.length - 1] = 2;
+							DataSliceIdentifiers rgRangeDataIDs = new DataSliceIdentifiers();
+							rgRangeDataIDs.setIDs(resultGroupID, rgRangeDataID);
+							rgRangeDataIDs.setSlice(currentSliceParams);
+							AbstractDataset qRangeDataset = new DoubleDataset(rgRange, new int[] { 2 });
+							writeResults(rgRangeDataIDs, qRangeDataset, rgRangeDataShape, 1);
 
 							//rgDataIDs = new DataSliceIdentifiers();
 							//rgDataIDs.setIDs(resultGroupID, guinierFitDataID);
@@ -413,6 +427,21 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					monitor);
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(portRg, outputMsg);
+			
+			ManagedMessage rgRangeOutputMsg = createMessageFromCauses(receivedMsg);
+			NcdProcessingObject rgRangeObj = new NcdProcessingObject(
+					1,
+					entryGroupID,
+					processingGroupID,
+					resultGroupID,
+					rgRangeDataID,
+					-1,
+					-1,
+					-1,
+					lock,
+					monitor);
+			rgRangeOutputMsg.setBodyContent(rgRangeObj, "application/octet-stream");
+			response.addOutputMessage(portRgRange, rgRangeOutputMsg);
 		}
 	}
 
@@ -558,6 +587,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 						rgDataID,
 						rgErrorsID,
+						rgRangeDataID,
 						guinierFitDataID,
 						loglogFitDataID));
 

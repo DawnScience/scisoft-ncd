@@ -262,6 +262,7 @@ public class GuinierPlotData extends SaxsPlotData {
 
 		Amount<Dimensionless> I0 = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
 		Amount<Dimensionless> Rg = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
+		double[] qvals = new double[] {Double.NaN, Double.NaN};
 		
 		double q0 = guinierAxis.getDouble(0);
 		double qMin = guinierAxis.getDouble(guinierAxis.getSize() / 10);
@@ -277,7 +278,8 @@ public class GuinierPlotData extends SaxsPlotData {
 					new SimpleBounds(new double[] { q0, q0 }, new double[] { qMin, qMax }),
 					new InitialGuess(startPosition));
 			
-			function.value(res.getPoint());
+			qvals = res.getPoint();
+			function.value(qvals);
 			I0 = getI0(function.regression);
 			Rg = getRg(function.regression);
 			
@@ -366,7 +368,7 @@ public class GuinierPlotData extends SaxsPlotData {
 			System.out.println("Maximum countes exceeded");
 			return null;
 		}
-		return new Object[] {I0, Rg};
+		return new Object[] {I0, Rg, qvals[0], qvals[1]};
 	}
 
 	private Amount<Dimensionless> getI0(SimpleRegression regression) {
