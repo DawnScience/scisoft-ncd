@@ -265,10 +265,10 @@ public class GuinierPlotData extends SaxsPlotData {
 		double[] qvals = new double[] {Double.NaN, Double.NaN};
 		
 		double q0 = guinierAxis.getDouble(0);
-		double qMin = guinierAxis.getDouble(guinierAxis.getSize() / 10);
+		double qMin = guinierAxis.getDouble(1);
 		double qMax = guinierAxis.getDouble(guinierAxis.getSize() - 1);
 		double[] startPosition= new double[] { guinierAxis.getDouble(0), guinierAxis.getDouble(GuinierLineFitFunction.MIN_POINTS) };
-		double[] cmaesInputSigma = new double[] { qMin * 0.1, qMax * 0.1 };
+		double[] cmaesInputSigma = new double[] { (qMin - q0) * 0.1, qMax * 0.1 };
 		try {
 			final PointValuePair res = optimizer.optimize(new MaxEval(cmaesMaxIterations),
 					new ObjectiveFunction(function),
