@@ -16,7 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.views;
 
+import java.io.File;
 import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -28,6 +31,13 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.dnd.DND;
+import org.eclipse.swt.dnd.DropTarget;
+import org.eclipse.swt.dnd.DropTargetAdapter;
+import org.eclipse.swt.dnd.DropTargetEvent;
+import org.eclipse.swt.dnd.FileTransfer;
+import org.eclipse.swt.dnd.TextTransfer;
+import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
@@ -36,6 +46,7 @@ import org.eclipse.swt.layout.FillLayout;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
+import org.eclipse.swt.widgets.Combo;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -49,7 +60,6 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
@@ -67,8 +77,11 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private static final String RESULTS_PLOT_NAME = "Absolute Calibration Plot";
 	
 	private IPlottingSystem plottingSystem;
+	private Combo standard;
 	private Text sampleThickness;
-	private Label absScale, absOffset, selectedFile;
+	private Label absScale, absOffset;
+
+	private Text selectedFile, selectedEmptyCellFile;
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 	private Button runCalibratioin, clearCalibratioin;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
@@ -77,7 +90,14 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private static final Logger logger = LoggerFactory.getLogger(AbsoluteIntensityCalibration.class);
 
 	private IMemento memento;
-	
+
+	private static List<String> calibrants;
+	static {
+		calibrants = new ArrayList<String>(2);
+		calibrants.add("Glassy Carbon");
+		calibrants.add("Water");
+	}
+
 	private final class FileSelectionListener implements ISelectionListener {
 		@Override
 		public void selectionChanged(IWorkbenchPart part, ISelection selection) {
@@ -99,6 +119,22 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 
 	private FileSelectionListener fileSelectionListener;
 
+	private String getDataFileName() {
+		File tmpFile = new File(selectedFile.getText());
+		if (tmpFile.exists()) {
+			return tmpFile.getAbsolutePath();
+		}
+		return null;
+	}
+	
+	private String getEmptyCellFileName() {
+		File tmpFile = new File(selectedEmptyCellFile.getText());
+		if (tmpFile.exists()) {
+			return tmpFile.getAbsolutePath();
+		}
+		return null;
+	}
+	
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
 		if (NumberUtils.isNumber(input)) {
@@ -140,10 +176,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
 		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
 		
-		fileSelectionListener = new FileSelectionListener();
-		ISelectionService selectionService = getViewSite().getWorkbenchWindow().getSelectionService();
-		selectionService.addPostSelectionListener(fileSelectionListener);
-
 		Composite c = new Composite(parent, SWT.NONE);
 		c.setLayout(new GridLayout(2, false));
 		c.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
@@ -153,24 +185,99 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			g.setLayout(new GridLayout(2, false));
 			g.setLayoutData(new GridData(SWT.LEFT, SWT.TOP, false, true));
 			
-			Label fileLabel = new Label(g, SWT.NONE);
-			fileLabel.setText("Selected Calibrant File");
-			fileLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
-			selectedFile = new Label(g, SWT.NONE);
-			selectedFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			selectedFile.setToolTipText("Select calibrant file name");
-			ISelection selection = selectionService.getSelection(ProjectExplorer.VIEW_ID);
-			if (selection instanceof IStructuredSelection
-					&& ((IStructuredSelection) selection).toList().size() == 1
-					&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
+			Label standardLabel = new Label(g, SWT.NONE);
+			standardLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false));
+			standardLabel.setText("Calibration Standard");
 
-				final Object sel = ((IStructuredSelection) selection).getFirstElement();
-				if (sel instanceof IFile) {
-					selectedFile.setText(((IFile) sel).getName());
-				}
-			} else {
-				selectedFile.setText("");
+			standard = new Combo(g, SWT.NONE);
+			standard.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			for (String calibrant : calibrants) {
+				standard.add(calibrant);
 			}
+			standard.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					int idx = standard.getSelectionIndex();
+					if (idx >= 0) {
+						String sel = standard.getItem(idx);
+						absoluteCalibrationListener.setCalibrant(sel);
+					}
+				}
+			});
+			standard.select(0);
+
+			Label fileLabel = new Label(g, SWT.NONE);
+			fileLabel.setText("Calibrant File");
+			fileLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			selectedFile = new Text(g, SWT.BORDER);
+			selectedFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			selectedFile.setToolTipText("Specify calibrant file name");
+			selectedFile.addModifyListener(new ModifyListener() {
+				
+				@Override
+				public void modifyText(ModifyEvent e) {
+					if (absoluteCalibrationListener != null) {
+						absoluteCalibrationListener.setDataFileName(getDataFileName());
+					}
+				}
+			});
+
+			DropTarget fileDT = new DropTarget(selectedFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
+			fileDT.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
+			fileDT.addDropListener(new DropTargetAdapter() {
+				@Override
+				public void drop(DropTargetEvent event) {
+					Object data = event.data;
+					if (data instanceof String[]) {
+						String[] stringData = (String[]) data;
+						if (stringData.length > 0) {
+							File file = new File(stringData[0]);
+							if (file.exists() && file.isFile()) {
+								selectedFile.setText(file.getAbsolutePath());
+								selectedFile.notifyListeners(SWT.Modify, null);
+							}
+						}
+					}
+				}
+				
+			});
+
+			
+			Label emptyCellLabel = new Label(g, SWT.NONE);
+			emptyCellLabel.setText("Empty Cell File");
+			emptyCellLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			selectedEmptyCellFile = new Text(g, SWT.BORDER);
+			selectedEmptyCellFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			selectedEmptyCellFile.setToolTipText("Specify empty cell file name");
+			selectedEmptyCellFile.addModifyListener(new ModifyListener() {
+				
+				@Override
+				public void modifyText(ModifyEvent e) {
+					if (absoluteCalibrationListener != null) {
+						absoluteCalibrationListener.setEmptyCellFileName(getEmptyCellFileName());
+					}
+				}
+			});
+
+			DropTarget emptyDT = new DropTarget(selectedEmptyCellFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
+			emptyDT.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
+			emptyDT.addDropListener(new DropTargetAdapter() {
+				@Override
+				public void drop(DropTargetEvent event) {
+					Object data = event.data;
+					if (data instanceof String[]) {
+						String[] stringData = (String[]) data;
+						if (stringData.length > 0) {
+							File file = new File(stringData[0]);
+							if (file.exists() && file.isFile()) {
+								selectedEmptyCellFile.setText(file.getAbsolutePath());
+								selectedEmptyCellFile.notifyListeners(SWT.Modify, null);
+							}
+						}
+					}
+				}
+				
+			});
 			
 			Label sampleThicknessLabel = new Label(g, SWT.NONE);
 			sampleThicknessLabel.setText("Sample Thickness (mm)");
@@ -239,7 +346,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 								"2. Make sure that sector region is locked to beam center by pressing the\n" +
 								"   \"Lock to Metadata\" button on the toolbar of the \"Raidal Profile\" tool page.\n" +
 								"3. Apply detector mask.\n" +
-								"4. Select file with a calibrant image in the \"Project Explorer\" view.\n" + 
+								"4. Drag&Drop files with a calibrant and an empty cell image from the \"Project Explorer\" view.\n" + 
 								"5. Check that correct \"Normalisation Dataset\" is selected in \"NCD Detector Parameters\" view.\n"+
 								"   Reload detector information if you need to refresh the list of available normalisation datasets.\n"+
 								"6. Specify the selected calibrant sample thinckness in millimeters.\n" +

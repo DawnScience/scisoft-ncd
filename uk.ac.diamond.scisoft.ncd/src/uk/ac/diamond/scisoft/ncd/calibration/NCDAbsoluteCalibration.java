@@ -119,14 +119,15 @@ public class NCDAbsoluteCalibration {
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
 	}
 	
-	public void setData(List<Amount<ScatteringVector>> lstDataQ, AbstractDataset dataI, Unit<ScatteringVector> unit) {
+	public void setData(List<Amount<ScatteringVector>> lstDataQ, AbstractDataset dataI, AbstractDataset emptyI, Unit<ScatteringVector> unit) {
 		dataQ = new DoubleDataset(lstDataQ.size());
 		for (int idx = 0; idx < lstDataQ.size(); idx++) {
 			Amount<ScatteringVector> vec = lstDataQ.get(idx);
 			dataQ.set(vec.doubleValue(unit), idx);
 			
 		}
-		this.dataI = dataI;
+		this.dataI = dataI.clone();
+		this.dataI.isubtract(emptyI);
 	}
 
 	
@@ -198,6 +199,10 @@ public class NCDAbsoluteCalibration {
 	
 	public AbstractDataset getAbsQ() {
 		return absQ;
+	}
+	
+	public AbstractDataset getAbsI() {
+		return absI;
 	}
 	
 	public AbstractDataset getDataQ() {

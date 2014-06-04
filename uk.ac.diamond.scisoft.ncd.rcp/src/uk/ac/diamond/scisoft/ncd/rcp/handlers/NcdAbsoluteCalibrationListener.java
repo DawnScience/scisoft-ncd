@@ -30,27 +30,19 @@ import org.dawnsci.plotting.api.IPlottingSystem;
 import org.dawnsci.plotting.api.PlottingFactory;
 import org.dawnsci.plotting.api.region.IRegion;
 import org.dawnsci.plotting.api.region.IRegion.RegionType;
-import org.dawnsci.plotting.api.trace.IImageTrace;
 import org.dawnsci.plotting.api.trace.ILineTrace;
-import org.dawnsci.plotting.api.trace.ITrace;
 import org.dawnsci.plotting.tools.masking.MaskingTool;
-import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.FileLocator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
-import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.draw2d.ColorConstants;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.widgets.Display;
-import org.eclipse.ui.ISelectionService;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
 import org.jscience.physics.amount.Amount;
@@ -90,6 +82,10 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 
 	private String referencePlotName;
 	private String resultsPlotName;
+	private String calibrant = "Glassy Carbon";
+	private String dataFileName, emptyCellFileName;
+	
+	private static final Double I_H2O = 1.65e-2;
 	
 	public NcdAbsoluteCalibrationListener(String referencePlotName, String resultsPlotName) {
 		super();
@@ -97,20 +93,107 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		this.resultsPlotName = resultsPlotName;
 	}
 
+	public void setCalibrant(String calibrant) {
+		this.calibrant = calibrant;
+	}
+
+	public void setDataFileName(String dataFileName) {
+		this.dataFileName = dataFileName;
+	}
+
+	public void setEmptyCellFileName(String emptyCellFileName) {
+		this.emptyCellFileName = emptyCellFileName;
+	}
+
+	private AbstractDataset[] integrateInputData(ISourceProviderService service,
+			String scaler,
+			String detectorSaxs,
+			SectorROI sroi,
+			QSpace qSpace,
+			String fileName) {
+		final AbstractDataset imageDataset;
+		final BooleanDataset mask;
+		final NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		try {
+			HDF5File dataTree = new HDF5Loader(fileName).loadTree();
+			HDF5NodeLink nodeLink = dataTree.findNodeLink("/entry1/" + scaler + "/data");
+			NcdDetectorSettings scalerData = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+			Double norm = null;
+			if (nodeLink != null) {
+				Integer channel = scalerData.getNormChannel();
+				IDataset normDataset = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice();
+				final int[] normIdx = new int[normDataset.getRank()];
+				Arrays.fill(normIdx, 0);
+				normIdx[normIdx.length - 1] = channel;
+				norm = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(normIdx);
+			} else {
+				Status status = new Status(IStatus.ERROR, ID,
+						"Cannot find normalisation data. Please check normalisation dataset setting.");
+				StatusManager.getManager().handle(status, StatusManager.SHOW);
+				return null;
+			}
+
+			nodeLink = dataTree.findNodeLink("/entry1/" + detectorSaxs + "/data");
+			if (nodeLink == null) {
+				Status status = new Status(IStatus.ERROR, ID,
+						"Cannot find calibrant image data. Please check detector settings.");
+				StatusManager.getManager().handle(status, StatusManager.SHOW);
+				return null;
+			}
+
+			// Open first frame if dataset has multiple images
+			HDF5Dataset node = (HDF5Dataset) nodeLink.getDestination();
+			final int[] shape = node.getDataset().getShape();
+
+			final int[] sqShape = AbstractDataset.squeezeShape(shape, true);
+			if (sqShape.length > 2) {
+				Status status = new Status(
+						IStatus.INFO,
+						ID,
+						"WARNING: This dataset contains several frames. By default, the first frame will be loaded for absolute intensity calibration.");
+				StatusManager.getManager().handle(status, StatusManager.LOG);
+			}
+
+			final int[] start = new int[shape.length];
+			final int[] stop = Arrays.copyOf(shape, shape.length);
+			Arrays.fill(start, 0, shape.length, 0);
+			if (shape.length > 2) {
+				Arrays.fill(stop, 0, shape.length - 2, 1);
+			}
+			AbstractDataset imageIntDataset = (AbstractDataset) node.getDataset().getSlice(start, stop, null).clone()
+					.squeeze();
+			imageDataset = DatasetUtils.cast(imageIntDataset, Dataset.FLOAT32);
+			imageDataset.idivide(norm);
+
+			mask = MaskingTool.getSavedMask();
+
+			AbstractDataset[] profile = ROIProfile.sector(imageDataset, mask, sroi, true, false, false, qSpace, XAxis.Q, false);
+			AbstractDataset dataI = profile[0];
+			AbstractDataset dataQDataset = profile[4];
+			
+			return new AbstractDataset[] {dataQDataset, dataI};
+			
+		} catch (Exception ex) {
+			Status status = new Status(IStatus.ERROR, ID,
+					"Cannot load image data. Please check file selection in the Project Explorer view and detector settings.");
+			StatusManager.getManager().handle(status, StatusManager.SHOW);
+			return null;
+		}
+	}
+
 	@Override
 	public void widgetSelected(SelectionEvent e) {
 		
-		final AbstractDataset absI;
+		final AbstractDataset glassyCarbonI;
 		final List<Amount<ScatteringVector>> dataQ, absQ;
 		
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		final ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		final NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		final NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		final NcdProcessingSourceProvider ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
 		final NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		final NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
-		final NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		final NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 		
 		try {
@@ -126,7 +209,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 				double val = absQDataset.getDouble(it.index);
 				absQ.add(Amount.valueOf(val, NonSI.ANGSTROM.inverse().asType(ScatteringVector.class)));
 			}
-			absI = data.getDataset(1);
+			glassyCarbonI = data.getDataset(1);
 		} catch (IOException er) {
 			Status status = new Status(IStatus.ERROR, ID, "Could not find reference glassy carbon data", er);
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
@@ -145,10 +228,6 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		}
 		
 		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(referencePlotName);
-		
-		ISelectionService selService = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getSelectionService();
-		String pluginName = ProjectExplorer.VIEW_ID;
-		final ISelection selection = selService.getSelection(pluginName);
 		
 		final String scaler = ncdScalerSourceProvider.getScaler();
 		if (scaler == null) {
@@ -211,97 +290,18 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			@Override
 			protected IStatus run(IProgressMonitor monitor) {
 				
-				final String dataFileName;
-				final AbstractDataset imageDataset;
-				final BooleanDataset mask;
 				monitor.beginTask("Running Absolute Intensity Calibration", 2);
 				monitor.subTask("Reading calibration data...");
-				if (selection instanceof IStructuredSelection
-						&& ((IStructuredSelection) selection).toList().size() == 1
-						&& (((IStructuredSelection) selection).getFirstElement() instanceof IFile)) {
-
-					final Object sel = ((IStructuredSelection) selection).getFirstElement();
-					if (sel instanceof IFile) {
-						dataFileName = ((IFile) sel).getLocation().toString();
-					} else {
-						Status status = new Status(IStatus.ERROR, ID,
-								"Invalid file selection. Please select calibration file in Profject Explorer view.");
-						StatusManager.getManager().handle(status, StatusManager.SHOW);
-						return status;
-					}
-
-					try {
-						HDF5File dataTree = new HDF5Loader(dataFileName).loadTree();
-						HDF5NodeLink nodeLink = dataTree.findNodeLink("/entry1/" + scaler + "/data");
-						NcdDetectorSettings scalerData = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
-						Double norm = null;
-						if (nodeLink != null) {
-							Integer channel = scalerData.getNormChannel();
-							IDataset normDataset = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice();
-							final int[] normIdx = new int[normDataset.getRank()];
-							Arrays.fill(normIdx, 0);
-							normIdx[normIdx.length - 1] = channel;
-							norm = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(normIdx);
-						} else {
-							Status status = new Status(IStatus.ERROR, ID,
-									"Cannot find normalisation data. Please check normalisation dataset setting.");
-							StatusManager.getManager().handle(status, StatusManager.SHOW);
-							return status;
-						}
-
-						nodeLink = dataTree.findNodeLink("/entry1/" + detectorSaxs + "/data");
-						if (nodeLink == null) {
-							Status status = new Status(IStatus.ERROR, ID,
-									"Cannot find calibrant image data. Please check detector settings.");
-							StatusManager.getManager().handle(status, StatusManager.SHOW);
-							return status;
-						}
-
-						// Open first frame if dataset has miltiple images
-						HDF5Dataset node = (HDF5Dataset) nodeLink.getDestination();
-						final int[] shape = node.getDataset().getShape();
-
-						final int[] sqShape = AbstractDataset.squeezeShape(shape, true);
-						if (sqShape.length > 2) {
-							Status status = new Status(
-									IStatus.INFO,
-									ID,
-									"WARNING: This dataset contains several frames. By default, the first frame will be loaded for absolute intensity calibration.");
-							StatusManager.getManager().handle(status, StatusManager.LOG);
-						}
-
-						final int[] start = new int[shape.length];
-						final int[] stop = Arrays.copyOf(shape, shape.length);
-						Arrays.fill(start, 0, shape.length, 0);
-						if (shape.length > 2) {
-							Arrays.fill(stop, 0, shape.length - 2, 1);
-						}
-						AbstractDataset imageIntDataset = (AbstractDataset) node.getDataset().getSlice(start, stop, null).clone()
-								.squeeze();
-						imageDataset = DatasetUtils.cast(imageIntDataset, Dataset.FLOAT32);
-						imageDataset.idivide(norm);
-
-						mask = MaskingTool.getSavedMask();
-
-					} catch (Exception ex) {
-						Status status = new Status(IStatus.ERROR, ID,
-								"Cannot load image data. Please check file selection in the Project Explorer view and detector settings.");
-						StatusManager.getManager().handle(status, StatusManager.SHOW);
-						return status;
-					}
-				} else {
-					Status status = new Status(IStatus.ERROR, ID,
-							"Invalid file selection. Please select single file with glassy carbon data.");
-					StatusManager.getManager().handle(status, StatusManager.SHOW);
-					return status;
-					
-				}
 				monitor.worked(1);
 				
+				AbstractDataset[] sampelData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, dataFileName);
+				AbstractDataset dataQDataset = sampelData[0];
+				AbstractDataset dataI = sampelData[1];
+				
+				AbstractDataset[] emptyCellData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, emptyCellFileName);
+				AbstractDataset emptyI = emptyCellData[1];
+				
 				monitor.subTask("Calculating calibration parameters...");
-				AbstractDataset[] profile = ROIProfile.sector(imageDataset, mask, sroi, true, false, false, qSpace, XAxis.Q, false);
-				AbstractDataset dataI = profile[0];
-				AbstractDataset dataQDataset = profile[4];
 				for (int idx = 0; idx < dataQDataset.getSize(); idx++) {
 					double val = dataQDataset.getDouble(idx);
 					dataQ.add(Amount.valueOf(val, unit));
@@ -309,8 +309,14 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 				
 				final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();
 				try {
-					ncdAbsoluteCalibration.setAbsoluteData(absQ, absI, unit);
-					ncdAbsoluteCalibration.setData(dataQ, dataI, unit);
+					if (calibrant.equals("Glassy Carbon")) {
+						ncdAbsoluteCalibration.setAbsoluteData(absQ, glassyCarbonI, unit);
+					} else if (calibrant.equals("Water")) {
+						AbstractDataset tmpI = AbstractDataset.ones(dataI.getShape(), AbstractDataset.FLOAT64);
+						tmpI.imultiply(I_H2O);
+						ncdAbsoluteCalibration.setAbsoluteData(dataQ, tmpI, unit);
+					}
+					ncdAbsoluteCalibration.setData(dataQ, dataI, emptyI, unit);
 				} catch (Exception ex) {
 					Status status = new Status(IStatus.ERROR, ID, "Error setting calibration procedure", ex);
 					StatusManager.getManager().handle(status, StatusManager.SHOW);
@@ -326,7 +332,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						plottingSystemRes.clear();
 						
 						ILineTrace refTrace = plottingSystemRes.createLineTrace("Reference Glassy Carbon Profile");
-						refTrace.setData(ncdAbsoluteCalibration.getAbsQ(), absI);
+						refTrace.setData(ncdAbsoluteCalibration.getAbsQ(), ncdAbsoluteCalibration.getAbsI());
 						refTrace.setTraceColor(ColorConstants.red);
 						plottingSystemRes.addTrace(refTrace);
 						
@@ -344,15 +350,6 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						double[] polynom = ncdAbsoluteCalibration.getCalibrationPolynomial().getCoefficients();
 						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness, true);
 						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0] * thickness);
-						
-						IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(referencePlotName);
-						ITrace trace = plottingSystemRef.getTrace(dataFileName);
-						if (trace != null) {
-							plottingSystemRes.removeTrace(trace);
-						}
-						imageDataset.imultiply(polynom[1]);
-						IImageTrace imageTrace = (IImageTrace) plottingSystemRef.createPlot2D(imageDataset, null, new NullProgressMonitor());
-						imageTrace.setMask(mask);
 					}
 				});
 				monitor.done();	
