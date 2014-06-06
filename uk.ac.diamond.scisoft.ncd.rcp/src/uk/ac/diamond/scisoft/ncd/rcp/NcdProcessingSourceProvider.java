@@ -62,7 +62,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	                    
 	public static final String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
 	public static final String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
-	public static final String ABSOFFSET_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absOffset";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
 	
 	public static final String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
@@ -86,7 +85,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private String bgFile, drFile, workingDir;
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
-	private Double bgScaling, absScaling, absOffset, sampleThickness;
+	private Double bgScaling, absScaling, sampleThickness;
     @XmlElement
     @XmlJavaTypeAdapter(EnergyXmlAdapter.class)
 	private Amount<Energy> energy;
@@ -124,7 +123,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(GRIDAVERAGE_STATE, gridAverage);
 		currentState.put(BKGSCALING_STATE, bgScaling);
 		currentState.put(ABSSCALING_STATE, absScaling);
-		currentState.put(ABSOFFSET_STATE, absOffset);
 		currentState.put(SAMPLETHICKNESS_STATE, sampleThickness);
 		currentState.put(WORKINGDIR_STATE, workingDir);
 		
@@ -158,7 +156,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     GRIDAVERAGE_STATE,
 		                     BKGSCALING_STATE,
 		                     ABSSCALING_STATE,
-		                     ABSOFFSET_STATE,
 		                     SAMPLETHICKNESS_STATE,
 		                     WORKINGDIR_STATE};
 	}
@@ -291,11 +288,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		}
 	}
 
-	public void setAbsOffset(Double absOffset) {
-		this.absOffset = (absOffset != null) ? new Double(absOffset) : null;
-		fireSourceChanged(ISources.WORKBENCH, ABSOFFSET_STATE, this.absOffset);
-	}
-
 	public void setWorkingDir(String workingDir) {
 		this.workingDir = workingDir;
 		fireSourceChanged(ISources.WORKBENCH, WORKINGDIR_STATE, this.workingDir);
@@ -393,10 +385,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return absScaling;
 	}
 
-	public Double getAbsOffset() {
-		return absOffset;
-	}
-
 	public Double getSampleThickness() {
 		return sampleThickness;
 	}
@@ -432,7 +420,6 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		gridAverage            = (SliceInput) sourceState.get(GRIDAVERAGE_STATE);          
 		bgScaling              = (Double) sourceState.get(BKGSCALING_STATE);           
 		absScaling             = (Double) sourceState.get(ABSSCALING_STATE);           
-		absOffset              = (Double) sourceState.get(ABSOFFSET_STATE);            
 		sampleThickness        = (Double) sourceState.get(SAMPLETHICKNESS_STATE);      
 		workingDir             = (String) sourceState.get(WORKINGDIR_STATE);           
 		

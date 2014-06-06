@@ -97,7 +97,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
-	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdAbsOffsetSourceProvider, ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
 	
 	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
 	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
@@ -1297,8 +1297,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdSampleThicknessSourceProvider.addSourceProviderListener(this);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
-		ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
-		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
 		
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		ncdBgScaleSourceProvider.addSourceProviderListener(this);

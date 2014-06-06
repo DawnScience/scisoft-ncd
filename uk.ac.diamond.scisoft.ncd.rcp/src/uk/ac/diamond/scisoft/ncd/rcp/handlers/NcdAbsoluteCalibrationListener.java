@@ -191,7 +191,6 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		final ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		final NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		final NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
-		final NcdProcessingSourceProvider ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
 		final NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		final NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		final NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
@@ -347,9 +346,8 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						plottingSystemRes.getSelectedYAxis().setLog10(true);
 						plottingSystemRes.repaint();
 						
-						double[] polynom = ncdAbsoluteCalibration.getCalibrationPolynomial().getCoefficients();
-						ncdAbsScaleSourceProvider.setAbsScaling(polynom[1] * thickness, true);
-						ncdAbsOffsetSourceProvider.setAbsOffset(polynom[0] * thickness);
+						double absScale = ncdAbsoluteCalibration.getAbsoluteScale();
+						ncdAbsScaleSourceProvider.setAbsScaling(absScale * thickness, true);
 					}
 				});
 				monitor.done();	

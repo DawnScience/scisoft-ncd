@@ -16,28 +16,15 @@
 
 package uk.ac.diamond.scisoft.ncd.calibration;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import javax.measure.unit.Unit;
 
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.math3.analysis.MultivariateFunction;
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.interpolation.UnivariateInterpolator;
-import org.apache.commons.math3.analysis.polynomials.PolynomialFunction;
-import org.apache.commons.math3.optim.ConvergenceChecker;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
-import org.apache.commons.math3.optim.InitialGuess;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.PointValuePair;
-import org.apache.commons.math3.optim.SimpleBounds;
-import org.apache.commons.math3.optim.SimplePointChecker;
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
-import org.apache.commons.math3.random.Well19937a;
+import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -47,65 +34,21 @@ import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 
 public class NCDAbsoluteCalibration {
 	
-	private PolynomialFunction calibrationPolynomial;
+	private double absScale;
 	
 	private AbstractDataset dataI, absI, calibratedI;
 	private AbstractDataset dataQ, absQ;
 	private UnivariateFunction absInterpolate;
 	
-	private int cmaesLambda = 5;
-	private int cmaesMaxIterations = 10000000;
-	private int cmaesCheckFeasableCount = 10;
-	private ConvergenceChecker<PointValuePair> cmaesChecker;
-	
 	private double qMin, qMax;
 	
 	public NCDAbsoluteCalibration() {
-		
-		cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
 	}
 
-	public PolynomialFunction getCalibrationPolynomial() {
-		return calibrationPolynomial;
+	public double getAbsoluteScale() {
+		return absScale;
 	}
 
-	private class ResidualMultivariateFunction implements MultivariateFunction {
-		
-		private double calcError(AbstractDataset q, AbstractDataset data) {
-			double res = 0.0;
-			int values = 0;
-			for (int i = 0; i < q.getSize(); i++) {
-				double qVal = q.getDouble(i);
-				if (qVal < qMin || qVal > qMax) {
-					continue;
-				}
-				double fVal = data.getDouble(i);
-				res += Math.pow(fVal - absInterpolate.value(qVal), 2);
-				values++;
-			}
-			res = -Math.log(res / values);
-			return res;
-		}
-		
-		@Override
-		public double value(double[] p) {
-			PolynomialFunction scaler = new PolynomialFunction(p);
-			
-			ArrayList<Double> tmpData = new ArrayList<Double>();
-			for (int i = 0; i < dataI.getSize(); i++) {
-				double newDataI = scaler.value(dataI.getDouble(i));
-				tmpData.add(newDataI);
-			}
-			
-			AbstractDataset tmpDataset = new DoubleDataset(ArrayUtils.toPrimitive(tmpData.toArray(new Double[0])), tmpData.size());
-			try {
-				return calcError(dataQ, tmpDataset);
-			} catch (Exception e) {
-				return -Double.MAX_VALUE;
-			}
-		}
-	}
-	
 	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, AbstractDataset absI, Unit<ScatteringVector> unit) {
 		absQ = new DoubleDataset(lstAbsQ.size());
 		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
@@ -113,7 +56,7 @@ public class NCDAbsoluteCalibration {
 			absQ.set(vec.doubleValue(unit), idx);
 			
 		}
-		this.absI = absI;
+		this.absI = absI.clone();
 		
 		UnivariateInterpolator interpolator = new SplineInterpolator();
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
@@ -131,27 +74,6 @@ public class NCDAbsoluteCalibration {
 	}
 
 	
-	private double[] calibrate(MultivariateFunction residual, double[] initP) {
-		double[] cmaesInputSigma = new double[2];
-		Arrays.fill(cmaesInputSigma, 1e1);
-		CMAESOptimizer optimizer = new CMAESOptimizer(cmaesMaxIterations,
-				0.0,
-				true,
-				0,
-				cmaesCheckFeasableCount,
-				new Well19937a(),
-				false,
-				cmaesChecker);
-		final PointValuePair fit = optimizer.optimize(new MaxEval(cmaesMaxIterations),
-				new ObjectiveFunction(residual),
-				GoalType.MAXIMIZE,
-				new CMAESOptimizer.PopulationSize(cmaesLambda),
-				new CMAESOptimizer.Sigma(cmaesInputSigma),
-				SimpleBounds.unbounded(2),
-				new InitialGuess(initP));
-		return fit.getPoint();
-	}
-	
 	public void calibrate() {
 		qMin = Math.max(absQ.min().doubleValue(), dataQ.min().doubleValue());
 		qMax = Math.min(absQ.max().doubleValue(), dataQ.max().doubleValue());
@@ -161,36 +83,29 @@ public class NCDAbsoluteCalibration {
 		
 		int dataQStart = Math.min(dataQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMin));
 		int dataQStop = Math.min(dataQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(dataQ, qMax));
-		int absQStart = Math.min(absQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMin));
-		int absQStop = Math.min(absQ.getSize() - 1, DatasetUtils.findIndexGreaterThanOrEqualTo(absQ, qMax));
 		
-		double abs1 = absI.getDouble(absQStart); 
-		double abs2 = absI.getDouble(absQStop); 
-		double dat1 = dataI.getDouble(dataQStart); 
-		double dat2 = dataI.getDouble(dataQStop); 
-		double a = (abs1 - abs2) / (dat1 - dat2);
-		double b = (dat1*abs2 - dat2*abs1) / (dat1 - dat2);
+		SummaryStatistics stats = new SummaryStatistics();
+		for (int i = dataQStart; i <= dataQStop; i++) {
+			double qval = dataQ.getDouble(i);
+			stats.addValue(absInterpolate.value(qval) / dataI.getDouble(i));
+		}
+
+		absScale = stats.getMean();
 		
-		double[] fitInitP = new double[] {b, a};
-		ResidualMultivariateFunction residual = new ResidualMultivariateFunction();
-		double[] initP = calibrate(residual, fitInitP);
+		String msg = StringUtils.join(new String[] {
+				"scale", Double.toString(absScale)
+				},
+				" : ");
+		System.out.println(msg);
 		
-		calibrationPolynomial = new PolynomialFunction(initP);
-		
-		System.out.println("NCD Absolute Instensity Calibration Function");
-		System.out.println(calibrationPolynomial.toString());
-		residual.value(calibrationPolynomial.getCoefficients());
+		System.out.println("NCD Absolute Instensity Scaler");
+		System.out.println(Double.toString(absScale));
 		
 		calibratedData(dataI);
 	}
 	
 	public void calibratedData(AbstractDataset data) {
-		final int size = data.getSize();
-		double[] tmpData = new double[size];
-		for (int i = 0; i < size; i++) {
-			tmpData[i] = calibrationPolynomial.value(data.getDouble(i));
-		}
-		calibratedI = new DoubleDataset(tmpData, new int[] {size});
+		calibratedI = data.clone().imultiply(absScale);
 	}
 	
 	public AbstractDataset getCalibratedI() {

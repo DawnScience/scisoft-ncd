@@ -79,14 +79,13 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private IPlottingSystem plottingSystem;
 	private Combo standard;
 	private Text sampleThickness;
-	private Label absScale, absOffset;
+	private Label absScale;
 
 	private Text selectedFile, selectedEmptyCellFile;
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
 	private Button runCalibratioin, clearCalibratioin;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
-	private NcdProcessingSourceProvider ncdAbsOffsetSourceProvider;
 	private static final Logger logger = LoggerFactory.getLogger(AbsoluteIntensityCalibration.class);
 
 	private IMemento memento;
@@ -151,14 +150,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		return null;
 	}
 	
-	private Double getAbsOffset() {
-		String input = absOffset.getText();
-		if (NumberUtils.isNumber(input)) {
-			return Double.valueOf(input);
-		}
-		return null;
-	}
-	
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
 	 this.memento = memento;
@@ -171,10 +162,8 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
-		ncdAbsOffsetSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSOFFSET_STATE);
 		
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
-		ncdAbsOffsetSourceProvider.addSourceProviderListener(this);
 		
 		Composite c = new Composite(parent, SWT.NONE);
 		c.setLayout(new GridLayout(2, false));
@@ -308,13 +297,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 				absScale.setText(tmpAbsScaling.toString());
 			}
 			
-			Label absOffsetLabel = new Label(g, SWT.NONE);
-			absOffsetLabel.setText("Zero Offset");
-			absOffsetLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			absOffset = new Label(g, SWT.NONE);
-			absOffset.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			absOffset.setToolTipText("Offset value between reference and calibrated profiles. Should be close to zero.");
-			
 			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener(REEFRENCE_PLOT_NAME, RESULTS_PLOT_NAME);
 			
 			runCalibratioin = new Button(g, SWT.PUSH);
@@ -334,7 +316,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 				public void widgetSelected(SelectionEvent e) {
 					ncdSampleThicknessSourceProvider.setSampleThickness(null, true);
 					ncdAbsScaleSourceProvider.setAbsScaling(null, true);
-					ncdAbsOffsetSourceProvider.setAbsOffset(null);
 					plottingSystem.clear();
 				}
 			});
@@ -346,7 +327,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 								"2. Make sure that sector region is locked to beam center by pressing the\n" +
 								"   \"Lock to Metadata\" button on the toolbar of the \"Raidal Profile\" tool page.\n" +
 								"3. Apply detector mask.\n" +
-								"4. Drag&Drop files with a calibrant and an empty cell image from the \"Project Explorer\" view.\n" + 
+								"4. Drag&&Drop files with a calibrant and an empty cell image from the \"Project Explorer\" view.\n" + 
 								"5. Check that correct \"Normalisation Dataset\" is selected in \"NCD Detector Parameters\" view.\n"+
 								"   Reload detector information if you need to refresh the list of available normalisation datasets.\n"+
 								"6. Specify the selected calibrant sample thinckness in millimeters.\n" +
@@ -388,10 +369,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			if (absScaleVal != null) {
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScaleVal.floatValue());
 			}
-			Double absOffsetVal = getAbsOffset();
-			if (absOffsetVal != null) {
-				memento.putFloat(NcdPreferences.NCD_ABSOLUTEOFFSET, absOffsetVal.floatValue());
-			}
 		}
 	}
 		
@@ -402,12 +379,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			if (flt != null) {
 				absScale.setText(flt.toString());
 				ncdAbsScaleSourceProvider.setAbsScaling(new Double(flt), true);
-			}
-
-			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTEOFFSET);
-			if (flt != null) {
-				absOffset.setText(flt.toString());
-				ncdAbsOffsetSourceProvider.setAbsOffset(new Double(flt));
 			}
 
 			flt = memento.getFloat(NcdPreferences.NCD_SAMPLETHICKNESS);
@@ -459,17 +430,6 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			}
 		}
 		
-		if (sourceName.equals(NcdProcessingSourceProvider.ABSOFFSET_STATE)) {
-			if (sourceValue != null) {
-			    DecimalFormat sForm = new DecimalFormat("0.####E0");
-				String sourceText = sForm.format(sourceValue);
-				if (sourceText != null) {
-					absOffset.setText(sourceText);
-				}
-			} else {
-				absOffset.setText("");
-			}
-		}
 	}
 	
 	@Override
