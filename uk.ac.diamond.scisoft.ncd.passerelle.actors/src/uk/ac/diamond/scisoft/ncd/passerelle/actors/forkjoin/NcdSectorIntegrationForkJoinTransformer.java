@@ -59,10 +59,16 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.TerminationException;
+import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.core.Port;
+import com.isencia.passerelle.core.PortFactory;
+import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.message.MessageException;
 
 /**
  * Actor for performing sector integration of scattering data
@@ -95,6 +101,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	private int azimuthalDataID, azimuthalErrorsID;
 	private int azimuthalAxisID;
 
+	public Port portAzimuthal;
+
 	public NcdSectorIntegrationForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
@@ -113,6 +121,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		energyParam = new Parameter(this, "energyParam", new ObjectToken());
 		axisUnitParam = new Parameter(this, "axisUnitParam", new ObjectToken());
 		pxSizeParam = new Parameter(this, "pxSizeParam", new ObjectToken());
+		
+		portAzimuthal = PortFactory.getInstance().createOutputPort(this, "Azimuthal");
 	}
 
 	@Override
@@ -440,6 +450,26 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		}
 	}
 
+	@Override
+	protected void writeAdditionalPorts(ManagedMessage receivedMsg, ProcessResponse response) throws MessageException {
+		if (doAzimuthal) {
+			ManagedMessage outputMsg = createMessageFromCauses(receivedMsg);
+			NcdProcessingObject obj = new NcdProcessingObject(
+					1,
+					entryGroupID,
+					processingGroupID,
+					resultGroupID,
+					azimuthalDataID,
+					azimuthalErrorsID,
+					azimuthalAxisID,
+					-1,
+					lock,
+					monitor);
+			outputMsg.setBodyContent(obj, "application/octet-stream");
+			response.addOutputMessage(portAzimuthal, outputMsg);
+		}
+	}
+	
 	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
 			throws HDF5Exception {
 
