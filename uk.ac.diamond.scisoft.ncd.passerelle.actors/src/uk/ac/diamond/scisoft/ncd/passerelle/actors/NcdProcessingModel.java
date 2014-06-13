@@ -83,6 +83,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAbstractDataForkJ
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdImageStatsForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsDataStatsForkJoinTransformer;
@@ -560,6 +561,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		NcdAbstractDataForkJoinTransformer detectorResponse;
 		NcdAbstractDataForkJoinTransformer sectorIntegration;
 		NcdAbstractDataForkJoinTransformer normalisation;
+		NcdAbstractDataForkJoinTransformer imageStats;
 		NcdAbstractDataForkJoinTransformer backgroundSubtraction;
 		NcdAbstractDataForkJoinTransformer invariant;
 		NcdAbstractDataForkJoinTransformer average;
@@ -605,6 +607,14 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				((NcdDetectorResponseForkJoinTransformer) detectorResponse).detectorResponseParam.setToken(new ObjectToken(drData));
 			} else {
 				detectorResponse = new NcdMessageForwarder(flow, "DetectorResponse");
+			}
+			
+			imageStats = new NcdImageStatsForkJoinTransformer(flow, "ImageStats");
+			if (enableMask && mask != null) {
+				((NcdImageStatsForkJoinTransformer) imageStats).maskParam.setToken(new ObjectToken(mask));
+			}
+			if (intSector != null) {
+				((NcdImageStatsForkJoinTransformer) imageStats).sectorROIParam.setRoi(intSector);
 			}
 			
 			if (flags.isEnableSector()) {
@@ -733,6 +743,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(source.output, selection.input);
 			flow.connect(selection.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
+			flow.connect(detectorResponse.output, imageStats.input);
 			flow.connect(sectorIntegration.output, normalisation.input);
 			flow.connect(normalisation.output, backgroundSubtraction.input);
 			flow.connect(backgroundSubtraction.output, average.input);
@@ -745,6 +756,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(average.output, debyebuechePlot.input);
 			
 			flow.connect(average.output, sink.input);
+			flow.connect(imageStats.output, nullActor.input);
 			flow.connect(loglogPlot.output, nullActor.input);
 			flow.connect(guinierPlot.output, nullActor.input);
 			flow.connect(porodPlot.output, nullActor.input);
