@@ -83,13 +83,13 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAbstractDataForkJ
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdImageStatsForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsDataStatsForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdStandardiseForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
@@ -561,7 +561,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		NcdAbstractDataForkJoinTransformer detectorResponse;
 		NcdAbstractDataForkJoinTransformer sectorIntegration;
 		NcdAbstractDataForkJoinTransformer normalisation;
-		NcdAbstractDataForkJoinTransformer imageStats;
+		NcdAbstractDataForkJoinTransformer standardise;
 		NcdAbstractDataForkJoinTransformer backgroundSubtraction;
 		NcdAbstractDataForkJoinTransformer invariant;
 		NcdAbstractDataForkJoinTransformer average;
@@ -609,14 +609,6 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				detectorResponse = new NcdMessageForwarder(flow, "DetectorResponse");
 			}
 			
-			imageStats = new NcdImageStatsForkJoinTransformer(flow, "ImageStats");
-			if (enableMask && mask != null) {
-				((NcdImageStatsForkJoinTransformer) imageStats).maskParam.setToken(new ObjectToken(mask));
-			}
-			if (intSector != null) {
-				((NcdImageStatsForkJoinTransformer) imageStats).sectorROIParam.setRoi(intSector);
-			}
-			
 			if (flags.isEnableSector()) {
 				sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
 				props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
@@ -646,8 +638,10 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				if (enableMask && mask != null) {
 					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).maskParam.setToken(new ObjectToken(mask));
 				}
+				standardise = new NcdStandardiseForkJoinTransformer(flow, "StandardisedIntensity");
 			} else {
 				sectorIntegration = new NcdMessageForwarder(flow, "SectorIntegration");
+				standardise = new NcdMessageForwarder(flow, "StandardisedIntensity");
 			}
 			
 			if (flags.isEnableNormalisation()) {
@@ -743,8 +737,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(source.output, selection.input);
 			flow.connect(selection.output, detectorResponse.input);
 			flow.connect(detectorResponse.output, sectorIntegration.input);
-			flow.connect(detectorResponse.output, imageStats.input);
 			flow.connect(sectorIntegration.output, normalisation.input);
+			flow.connect(sectorIntegration.output, standardise.input);
 			flow.connect(normalisation.output, backgroundSubtraction.input);
 			flow.connect(backgroundSubtraction.output, average.input);
 			flow.connect(backgroundSubtraction.output, invariant.input);
@@ -756,7 +750,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(average.output, debyebuechePlot.input);
 			
 			flow.connect(average.output, sink.input);
-			flow.connect(imageStats.output, nullActor.input);
+			flow.connect(standardise.output, nullActor.input);
 			flow.connect(loglogPlot.output, nullActor.input);
 			flow.connect(guinierPlot.output, nullActor.input);
 			flow.connect(porodPlot.output, nullActor.input);
