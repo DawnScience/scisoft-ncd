@@ -572,6 +572,9 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		NcdAbstractDataForkJoinTransformer zimmPlot;
 		NcdAbstractDataForkJoinTransformer debyebuechePlot;
 		
+		NcdDummySelectionSource dummySelection;
+		NcdProcessingObjectTransformer exportFilter = null;
+		
 		try {
 			configure(filename);
 
@@ -594,6 +597,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			String processingName = StringUtils.join(new String[] {detector, PROCESSING},  "_");
 			props.put("MessageSource.processingParam", processingName);
 			props.put("MessageSource.readOnlyParam", Boolean.toString(false));
+			
+			dummySelection = new NcdDummySelectionSource(flow, "SelectionString");
 			
 			if (frameSelection != null) {
 				selection = new NcdSelectionForkJoinTransformer(flow, "Selection");
@@ -679,7 +684,6 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
 					props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
 					
-					NcdDummySelectionSource dummySelection = new NcdDummySelectionSource(flow, "BgSelectionString");
 					flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) bgAverage).selectionInput);
 				} else {
 					bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage");
@@ -715,7 +719,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					NcdSaxsDataStatsForkJoinTransformer filter = new NcdSaxsDataStatsForkJoinTransformer(flow, "DataFilter");
 					filter.statTypeParam.setToken(new ObjectToken(saxsAnalysisStatsParameters));
 					
-					NcdProcessingObjectTransformer exportFilter = new NcdProcessingObjectTransformer(flow, "ExportFilter");
+					exportFilter = new NcdProcessingObjectTransformer(flow, "ExportFilter");
 					props.put("ExportFilter.datasetNameParam", "selection");
 					
 					flow.connect(backgroundSubtraction.output, testGuinierPlot.input);
@@ -724,7 +728,6 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					flow.connect(filter.output,	exportFilter.input);
 					flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) average).selectionInput);
 				} else {
-					NcdDummySelectionSource dummySelection = new NcdDummySelectionSource(flow, "SelectionString");
 					flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) average).selectionInput);
 				}
 			} else {
@@ -758,6 +761,37 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			flow.connect(zimmPlot.output, nullActor.input);
 			flow.connect(debyebuechePlot.output, nullActor.input);
 			
+			if (flags.isEnableAzimuthal()) {
+				
+				NcdAbstractDataForkJoinTransformer normalisationAzimuthal;
+				NcdAbstractDataForkJoinTransformer averageAzimuthal;
+				
+				if (flags.isEnableNormalisation()) {
+					normalisationAzimuthal = new NcdNormalisationForkJoinTransformer(flow, "Normalisation_Azimuthal");
+					props.put("Normalisation_Azimuthal.calibrationParam", calibration);
+					props.put("Normalisation_Azimuthal.absScalingParam", Double.toString(absScaling));
+					props.put("Normalisation_Azimuthal.normChannelParam", Integer.toString(normChannel));
+				} else {
+					normalisationAzimuthal = new NcdMessageForwarder(flow, "Normalisation_Azimuthal");
+				}
+				
+				if (flags.isEnableAverage()) {
+					averageAzimuthal = new NcdAverageForkJoinTransformer(flow, "Average_Azimuthal");
+					props.put("Average_Azimuthal.gridAverageParam", gridAverage);
+					if (guinierPlot instanceof NcdSaxsPlotDataForkJoinTransformer && exportFilter != null) {
+						flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
+					} else {
+						flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
+					}
+				} else {
+					averageAzimuthal = new NcdMessageForwarder(flow, "Average_Azimuthal");
+				}
+				
+				flow.connect(((NcdSectorIntegrationForkJoinTransformer)sectorIntegration).portAzimuthal, normalisationAzimuthal.input);
+				flow.connect(normalisationAzimuthal.output, averageAzimuthal.input);
+				flow.connect(averageAzimuthal.output, nullActor.input);
+			}
+						
 			flowMgr.executeBlockingLocally(flow, props);
 
 		} catch (FlowAlreadyExecutingException e) {
