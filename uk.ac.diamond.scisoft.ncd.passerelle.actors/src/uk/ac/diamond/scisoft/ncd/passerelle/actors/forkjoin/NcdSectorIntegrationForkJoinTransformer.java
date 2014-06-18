@@ -561,7 +561,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type_id);		
-		H5.H5Dclose(azimuthalAxisID);
 	}
 	
 	@Override
@@ -761,7 +760,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			try {
 				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 						azimuthalDataID,
-						azimuthalErrorsID));
+						azimuthalErrorsID,
+						azimuthalAxisID));
 
 				NcdNexusUtils.closeH5idList(identifiers);
 			} catch (HDF5LibraryException e) {
