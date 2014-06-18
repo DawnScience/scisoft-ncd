@@ -82,8 +82,6 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 
 		bgInput = PortFactory.getInstance().createInputPort(this, "bgInput", PortMode.PULL, NcdProcessingObject.class);
 		
-		dataName = "BackgroundSubtraction";
-
 		bgScalingParam = new Parameter(this, "bgScalingParam", new DoubleToken(Double.NaN));
 	}
 

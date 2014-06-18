@@ -54,7 +54,6 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "StandardisedIntensity";
 	}
 
 	@Override

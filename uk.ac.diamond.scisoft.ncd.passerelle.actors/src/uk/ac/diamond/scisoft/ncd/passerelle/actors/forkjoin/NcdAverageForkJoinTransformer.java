@@ -77,8 +77,6 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 
 		selectionInput = PortFactory.getInstance().createInputPort(this, "selectionInput", PortMode.PULL, DataMessageComponent.class);
 		
-		dataName = "Average";
-		
 		gridAverageParam = new StringParameter(this, "gridAverageParam");
 	}
 

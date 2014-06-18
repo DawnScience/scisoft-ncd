@@ -65,8 +65,6 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			IllegalActionException {
 		super(container, name);
 
-		dataName = "Selection";
-
 		formatParam = new StringParameter(this, "formatParam");
 	}
 

@@ -107,8 +107,6 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "SaxsPlot";
-		
 		plotTypeParam = new StringChoiceParameter(this, "plotTypeParam", SAXS_PLOT_TYPES, SWT.SINGLE);
 		
 		portRg = PortFactory.getInstance().createOutputPort(this, "Rg");
@@ -126,7 +124,6 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			if (selectedObj != null && selectedObj.length == 1) {
 				SaxsAnalysisPlotType selectedSaxsPlot = SaxsAnalysisPlotType.forName(selectedObj[0]);
 				plotData = selectedSaxsPlot.getSaxsPlotDataObject();
-				dataName = getName();
 			}
 			inputAxisUnit = "N/A";
 			task = new SaxsPlotTask(true, null);

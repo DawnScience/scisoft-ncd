@@ -107,8 +107,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "SectorIntegration";
-
 		sectorROIParam = new ROIParameter(this, "sectorROIParam");
 		maskParam = new Parameter(this, "maskParam", new ObjectToken());
 		doRadialParam = new Parameter(this, "doRadialParam", new BooleanToken(true));

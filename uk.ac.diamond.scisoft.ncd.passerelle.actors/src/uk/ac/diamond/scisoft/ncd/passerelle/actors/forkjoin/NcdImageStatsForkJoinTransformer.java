@@ -88,8 +88,6 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "ImageStats";
-
 		maskParam = new Parameter(this, "maskParam", new ObjectToken());
 		sectorROIParam = new ROIParameter(this, "sectorROIParam");
 		

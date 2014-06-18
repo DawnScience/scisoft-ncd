@@ -81,8 +81,6 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			IllegalActionException {
 		super(container, name);
 
-		dataName = "Normalisation";
-		
 		calibrationParam = new StringParameter(this, "calibrationParam");
 		absScalingParam = new Parameter(this, "absScalingParam", new DoubleToken(Double.NaN));
 		normChannelParam = new Parameter(this, "normChannelParam", new IntToken(-1));

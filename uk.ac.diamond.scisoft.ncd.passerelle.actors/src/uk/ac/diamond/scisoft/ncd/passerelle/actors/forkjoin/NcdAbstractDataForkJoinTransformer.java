@@ -60,8 +60,6 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	public Port input;
 	public Port output;
 	
-	public String dataName;
-	
 	protected ReentrantLock lock;
 	protected IProgressMonitor monitor;
 	
@@ -195,7 +193,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			}
 		}
 		long[] resultFrames = getResultDataShape();
-		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
+		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, getName(), Nexus.DETECT);
 		int type = getResultDataType();
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "counts");
 		type = getResultErrorsType();

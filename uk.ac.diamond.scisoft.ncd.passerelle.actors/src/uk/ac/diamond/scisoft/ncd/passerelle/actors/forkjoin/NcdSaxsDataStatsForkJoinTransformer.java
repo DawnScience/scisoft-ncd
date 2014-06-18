@@ -70,8 +70,6 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 			throws NameDuplicationException, IllegalActionException {
 		super(container, name);
 
-		dataName = "SaxsPlot";
-		
 		statTypeParam = new Parameter(this, "statTypeParam");
 	}
 

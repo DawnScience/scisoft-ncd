@@ -66,7 +66,6 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			IllegalActionException {
 		super(container, name);
 
-		dataName = "Invariant";
 	}
 
 	@Override
