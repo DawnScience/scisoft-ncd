@@ -734,8 +734,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				average = new NcdMessageForwarder(flow, "Average");
 			}
 			
-			NcdMessageSink sink = new NcdMessageSink(flow, "MessageSink");
-			props.put("MessageSink.detectorParam", detector);
+			NcdMessageSink sink = new NcdMessageSink(flow, "result");
+			props.put("result.detectorParam", detector);
 
 			flow.connect(source.output, selection.input);
 			flow.connect(selection.output, detectorResponse.input);
@@ -764,8 +764,12 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			if (flags.isEnableAzimuthal()) {
 				
 				NcdAbstractDataForkJoinTransformer normalisationAzimuthal;
+				NcdAbstractDataForkJoinTransformer backgroundSubtractionAzimuthal;
 				NcdAbstractDataForkJoinTransformer averageAzimuthal;
 				
+				NcdMessageSink azimuthalSink = new NcdMessageSink(flow, "azimuthal");
+				props.put("azimuthal.detectorParam", detector);
+
 				if (flags.isEnableNormalisation()) {
 					normalisationAzimuthal = new NcdNormalisationForkJoinTransformer(flow, "Normalisation_Azimuthal");
 					props.put("Normalisation_Azimuthal.calibrationParam", calibration);
@@ -773,6 +777,42 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					props.put("Normalisation_Azimuthal.normChannelParam", Integer.toString(normChannel));
 				} else {
 					normalisationAzimuthal = new NcdMessageForwarder(flow, "Normalisation_Azimuthal");
+				}
+				
+				if (flags.isEnableBackground()) {
+					backgroundSubtractionAzimuthal = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction_Azimuthal");
+					if (bgScaling != null) {
+						props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(bgScaling));
+					} else {
+						props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(Double.NaN));
+					}
+					String bgAzDetector = StringUtils.join(new String[] {detector, azimuthalSink.getName()}, "_");
+					NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource_Azimuthal");
+					bgsource.lockParam.setToken(new ObjectToken(lock));
+					props.put("BackgroundMessageSource_Azimuthal.filenameParam", bgFile);
+					props.put("BackgroundMessageSource_Azimuthal.detectorParam", bgAzDetector);
+					props.put("BackgroundMessageSource_Azimuthal.dimensionParam", Integer.toString(1));
+					props.put("BackgroundMessageSource_Azimuthal.readOnlyParam", Boolean.toString(!enableBgAverage));
+					String[] bgProcessingName = StringUtils.split(filename, "_");
+					if (bgProcessingName.length > 1 && enableBgAverage) {
+						String bgProcessing = StringUtils.join(new String[] {bgAzDetector, bgProcessingName[1]}, "_");
+						props.put("BackgroundMessageSource_Azimuthal.processingParam", bgProcessing);
+					}
+				
+					NcdAbstractDataForkJoinTransformer bgAverage;
+					if (enableBgAverage) {
+						bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage_Azimuthal");
+						props.put("BackgroundAverage_Azimuthal.gridAverageParam", bgGridAverage);
+						
+						flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) bgAverage).selectionInput);
+					} else {
+						bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage_Azimuthal");
+					}
+					
+					flow.connect(bgsource.output, bgAverage.input);
+					flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtractionAzimuthal).bgInput);
+				} else {
+					backgroundSubtractionAzimuthal = new NcdMessageForwarder(flow, "BackgroundSubtraction_Azimuthal");
 				}
 				
 				if (flags.isEnableAverage()) {
@@ -788,8 +828,9 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				}
 				
 				flow.connect(((NcdSectorIntegrationForkJoinTransformer)sectorIntegration).portAzimuthal, normalisationAzimuthal.input);
-				flow.connect(normalisationAzimuthal.output, averageAzimuthal.input);
-				flow.connect(averageAzimuthal.output, nullActor.input);
+				flow.connect(normalisationAzimuthal.output, backgroundSubtractionAzimuthal.input);
+				flow.connect(backgroundSubtractionAzimuthal.output, averageAzimuthal.input);
+				flow.connect(averageAzimuthal.output, azimuthalSink.input);
 			}
 						
 			flowMgr.executeBlockingLocally(flow, props);

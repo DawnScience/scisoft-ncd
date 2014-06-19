@@ -16,6 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
+import org.apache.commons.lang.StringUtils;
 import org.dawb.hdf5.Nexus;
 
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
@@ -70,7 +71,8 @@ public class NcdMessageSink extends Sink {
 					try {
 						String detector = ((StringToken) detectorParam.getToken()).stringValue();
 						if (detector != null) {
-							outputGroupID = NcdNexusUtils.makegroup(entryGroupID, detector + "_result", Nexus.DATA);
+							String groupName = StringUtils.join(new String[] {detector, getName()}, "_");
+							outputGroupID = NcdNexusUtils.makegroup(entryGroupID, groupName, Nexus.DATA);
 							if (inputDataID > 0) {
 								NcdNexusUtils.makelink(inputDataID, outputGroupID);
 							}
