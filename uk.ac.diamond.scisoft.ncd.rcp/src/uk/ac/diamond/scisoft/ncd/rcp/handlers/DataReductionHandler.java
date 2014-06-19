@@ -144,6 +144,13 @@ public class DataReductionHandler extends AbstractHandler {
 			try {
 				// We get the data reduction service using OSGI
 				service = (IDataReductionService)Activator.getService(IDataReductionService.class);
+		        // This is a workaround for DAWNSCI-858
+		        if (service == null) {
+		        	com.isencia.passerelle.workbench.model.editor.ui.Activator.loadBundles();
+		        }
+		        if (service == null) {
+		        	throw new RuntimeException("Cannot find IDataReductionService using activator!");
+		        }
 			
 				// Get data from NcdProcessingSourceProvider's and store in IDataReductionContext
 				context = service.createContext();

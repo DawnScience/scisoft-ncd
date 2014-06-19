@@ -205,7 +205,14 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		}
 		
         service = (IDataReductionService)Activator.getService(IDataReductionService.class);
-        if (service == null) throw createDataMessageException("Cannot find IDataReductionService using activator!", new Exception());
+        
+        // This is a workaround for DAWNSCI-858
+        if (service == null) {
+        	com.isencia.passerelle.workbench.model.editor.ui.Activator.loadBundles();
+        }
+        if (service == null) {
+        	throw createDataMessageException("Cannot find IDataReductionService using activator!", new Exception());
+        }
         
         currentXmlPath = xmlPath;
         currentPersistencePath = persistencePath;
