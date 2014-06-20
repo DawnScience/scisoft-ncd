@@ -84,7 +84,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.resources.util.ResourceUtils;
-import com.isencia.passerelle.starter.Initializer;
+import com.isencia.passerelle.starter.ActorBundleInitializer;
 import com.isencia.passerelle.util.ptolemy.IAvailableChoices;
 import com.isencia.passerelle.util.ptolemy.ResourceParameter;
 import com.isencia.passerelle.util.ptolemy.StringChoiceParameter;
@@ -209,7 +209,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
         
         // This is a workaround for DAWNSCI-858
         if (service == null) {
-        	Initializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
+        	ActorBundleInitializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
         	if (initer!=null) initer.start();
         }
         if (service == null) {

@@ -76,7 +76,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
-import com.isencia.passerelle.starter.Initializer;
+import com.isencia.passerelle.starter.ActorBundleInitializer;
 
 public class DataReductionHandler extends AbstractHandler {
 
@@ -148,7 +148,7 @@ public class DataReductionHandler extends AbstractHandler {
 				service = (IDataReductionService)Activator.getService(IDataReductionService.class);
 		        // This is a workaround for DAWNSCI-858
 		        if (service == null) {
-		        	Initializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
+		        	ActorBundleInitializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
 		        	if (initer!=null) initer.start();
 		        }
 		        if (service == null) {
