@@ -76,6 +76,8 @@ import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
+import com.isencia.passerelle.starter.Initializer;
+
 public class DataReductionHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionHandler.class);
@@ -146,7 +148,8 @@ public class DataReductionHandler extends AbstractHandler {
 				service = (IDataReductionService)Activator.getService(IDataReductionService.class);
 		        // This is a workaround for DAWNSCI-858
 		        if (service == null) {
-		        	com.isencia.passerelle.workbench.model.editor.ui.Activator.loadBundles();
+		        	Initializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
+		        	if (initer!=null) initer.start();
 		        }
 		        if (service == null) {
 		        	throw new RuntimeException("Cannot find IDataReductionService using activator!");
