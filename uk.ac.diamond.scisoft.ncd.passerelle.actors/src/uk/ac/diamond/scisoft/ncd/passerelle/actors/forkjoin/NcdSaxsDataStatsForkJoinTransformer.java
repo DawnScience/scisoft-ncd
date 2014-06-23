@@ -21,11 +21,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
 
+import org.eclipse.core.runtime.OperationCanceledException;
+
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
-
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
@@ -139,6 +140,10 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 				tmp_ids.setSlice(currentSliceParams);
 
+				if (monitor.isCanceled()) {
+					throw new OperationCanceledException(getName() + " stage has been cancelled.");
+				}
+				
 				lock.lock();
 				AbstractDataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 				if (hasErrors) {
@@ -184,9 +189,11 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 					writeResults(dataIDs, saxsStatsData, dataShape);
 				}
 			} catch (HDF5LibraryException e) {
-				completeExceptionally(e);
+				task.completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				completeExceptionally(e);
+				task.completeExceptionally(e);
+			} catch (OperationCanceledException e) {
+				task.completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();

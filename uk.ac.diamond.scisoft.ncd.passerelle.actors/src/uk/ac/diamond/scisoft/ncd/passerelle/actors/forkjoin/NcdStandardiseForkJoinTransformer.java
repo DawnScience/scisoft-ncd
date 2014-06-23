@@ -28,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
@@ -91,6 +92,10 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				
 				AbstractDataset data, errors;
 				try {
+					if (monitor.isCanceled()) {
+						throw new OperationCanceledException(getName() + " stage has been cancelled.");
+					}
+					
 					long[] start = new long[frames.length];
 					long[] count = new long[frames.length];
 					long[] block = new long[frames.length];
@@ -162,9 +167,14 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						}
 					}
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
+					return;
 				} catch (HDF5Exception e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
+					return;
+				} catch (OperationCanceledException e) {
+					task.completeExceptionally(e);
+					return;
 				} finally {
 					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 							dataspace_id,
@@ -191,6 +201,10 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				errors.idivide(std);
 					
 				try {
+					if (monitor.isCanceled()) {
+						throw new OperationCanceledException(getName() + " stage has been cancelled.");
+					}
+					
 					long[] start = new long[grid.length + 1];
 					long[] count = new long[grid.length + 1];
 					long[] block = new long[grid.length + 1];
@@ -247,9 +261,14 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						throw new HDF5Exception("Failed to write standardised intensity errors into the results file");
 					}
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
+					return;
 				} catch (HDF5Exception e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
+					return;
+				} catch (OperationCanceledException e) {
+					task.completeExceptionally(e);
+					return;
 				} finally {
 					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 							dataspace_id,

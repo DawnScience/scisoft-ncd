@@ -30,6 +30,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
@@ -46,6 +47,7 @@ import com.isencia.passerelle.actor.v5.ActorContext;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
 import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.core.PasserelleException;
 import com.isencia.passerelle.core.Port;
 import com.isencia.passerelle.core.PortFactory;
 import com.isencia.passerelle.message.ManagedMessage;
@@ -112,10 +114,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 				
 				monitor.subTask("Executing task : " + getDisplayName());
 				forkJoinPool.invoke(task);
-				if (task.isCompletedAbnormally()) {
-					Throwable e = task.getException();
-					throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_FATAL, e.getMessage(), this, receivedMsg, e);
-				}
+				
 				lock.lock();
 				writeNcdMetadata();
 				lock.unlock();
@@ -140,12 +139,26 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 			outputMsg.setBodyContent(obj, "application/octet-stream");
 			response.addOutputMessage(output, outputMsg);
 		} catch (MessageException e) {
-			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_FATAL, e.getMessage(), this, receivedMsg, e);
+			throw new ProcessingException(e.getErrorCode(), e.getMessage(), this, receivedMsg, e);
 		} catch (HDF5Exception e) {
-			throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_FATAL, e.getMessage(), this, receivedMsg, e);
+			throw new ProcessingException(ErrorCode.ERROR, e.getMessage(), this, receivedMsg, e);
 		} finally {
 			if (lock != null && lock.isHeldByCurrentThread()) {
 				lock.unlock();
+			}
+			if (task != null && task.isCompletedAbnormally()) {
+				Throwable e = task.getException();
+				while (e.getCause() != null) {
+					e = e.getCause();
+				}
+				ErrorCode severity = ErrorCode.ACTOR_EXECUTION_ERROR;
+				if (e instanceof PasserelleException) {
+					severity = ((PasserelleException) e).getErrorCode();
+				}
+				if (e instanceof OperationCanceledException) {
+					severity = ErrorCode.INFO;
+				}
+				throw new ProcessingException(severity, e.getMessage(), this, receivedMsg, e);
 			}
 		}
 	}

@@ -57,11 +57,9 @@ import com.isencia.passerelle.actor.v5.ActorContext;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
 import com.isencia.passerelle.actor.v5.ProcessResponse;
 import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.core.PasserelleException;
 import com.isencia.passerelle.domain.et.ETDirector;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.model.Flow;
-import com.isencia.passerelle.model.FlowAlreadyExecutingException;
 import com.isencia.passerelle.model.FlowManager;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -555,7 +553,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	}
 
 	@Override
-	public void execute(String filename, IProgressMonitor monitor) {
+	public void execute(String filename, final IProgressMonitor monitor) throws Exception {
 
 		NcdAbstractDataForkJoinTransformer selection;
 		NcdAbstractDataForkJoinTransformer detectorResponse;
@@ -575,281 +573,264 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		NcdDummySelectionSource dummySelection;
 		NcdProcessingObjectTransformer exportFilter = null;
 		
-		try {
-			configure(filename);
+		FlowManager flowMgr = new FlowManager();
+		Flow flow = new Flow("NCD Data Reduction", null);
+		
+		ETDirector director = new ETDirector(flow, "director");
+		flow.setDirector(director);
+		
+		configure(filename);
 
-			FlowManager flowMgr = new FlowManager();
-			Flow flow = new Flow("NCD Data Reduction", null);
-			
-			ETDirector director = new ETDirector(flow, "director");
-			flow.setDirector(director);
-			
-			Map<String, String> props = new HashMap<String, String>();
+		Map<String, String> props = new HashMap<String, String>();
 
-			NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
-			source.lockParam.setToken(new ObjectToken(lock));
-			if (monitor != null) {
-				source.monitorParam.setToken(new ObjectToken(monitor));
+		NcdMessageSource source = new NcdMessageSource(flow, "MessageSource");
+		source.lockParam.setToken(new ObjectToken(lock));
+		if (monitor != null) {
+			source.monitorParam.setToken(new ObjectToken(monitor));
+		}
+		props.put("MessageSource.filenameParam", filename);
+		props.put("MessageSource.detectorParam", detector);
+		props.put("MessageSource.dimensionParam", Integer.toString(dimension));
+		String processingName = StringUtils.join(new String[] {detector, PROCESSING},  "_");
+		props.put("MessageSource.processingParam", processingName);
+		props.put("MessageSource.readOnlyParam", Boolean.toString(false));
+		
+		dummySelection = new NcdDummySelectionSource(flow, "SelectionString");
+		
+		if (frameSelection != null) {
+			selection = new NcdSelectionForkJoinTransformer(flow, "Selection");
+			props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
+		} else {
+			selection = new NcdMessageForwarder(flow, "Selection");
+		}
+		
+		if (flags.isEnableDetectorResponse()) {
+			detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow, "DetectorResponse");
+			((NcdDetectorResponseForkJoinTransformer) detectorResponse).detectorResponseParam.setToken(new ObjectToken(drData));
+		} else {
+			detectorResponse = new NcdMessageForwarder(flow, "DetectorResponse");
+		}
+		
+		if (flags.isEnableSector()) {
+			sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
+			props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
+			props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
+			props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
+			if (intSector != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).sectorROIParam.setRoi(intSector);
 			}
-			props.put("MessageSource.filenameParam", filename);
-			props.put("MessageSource.detectorParam", detector);
-			props.put("MessageSource.dimensionParam", Integer.toString(dimension));
-			String processingName = StringUtils.join(new String[] {detector, PROCESSING},  "_");
-			props.put("MessageSource.processingParam", processingName);
-			props.put("MessageSource.readOnlyParam", Boolean.toString(false));
-			
-			dummySelection = new NcdDummySelectionSource(flow, "SelectionString");
-			
-			if (frameSelection != null) {
-				selection = new NcdSelectionForkJoinTransformer(flow, "Selection");
-				props.put("Selection.formatParam", frameSelection != null ? frameSelection : "");
+			if (slope != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).gradientParam.setToken(new ObjectToken(slope));
+			}
+			if (intercept != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).interceptParam.setToken(new ObjectToken(intercept));
+			}
+			if (cameraLength != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).cameraLengthParam.setToken(new ObjectToken(cameraLength));
+			}
+			if (energy != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).energyParam.setToken(new ObjectToken(energy));
+			}
+			if (pxSize != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).pxSizeParam.setToken(new ObjectToken(pxSize));
+			}
+			if (qaxisUnit != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).axisUnitParam.setToken(new ObjectToken(qaxisUnit));
+			}
+			if (enableMask && mask != null) {
+				((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).maskParam.setToken(new ObjectToken(mask));
+			}
+			standardise = new NcdStandardiseForkJoinTransformer(flow, "StandardisedIntensity");
+		} else {
+			sectorIntegration = new NcdMessageForwarder(flow, "SectorIntegration");
+			standardise = new NcdMessageForwarder(flow, "StandardisedIntensity");
+		}
+		
+		if (flags.isEnableNormalisation()) {
+			normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
+			props.put("Normalisation.calibrationParam", calibration);
+			props.put("Normalisation.absScalingParam", Double.toString(absScaling));
+			props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+		} else {
+			normalisation = new NcdMessageForwarder(flow, "Normalisation");
+		}
+		
+		if (flags.isEnableBackground()) {
+			backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction");
+			if (bgScaling != null) {
+				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
 			} else {
-				selection = new NcdMessageForwarder(flow, "Selection");
+				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(Double.NaN));
 			}
 			
-			if (flags.isEnableDetectorResponse()) {
-				detectorResponse = new NcdDetectorResponseForkJoinTransformer(flow, "DetectorResponse");
-				((NcdDetectorResponseForkJoinTransformer) detectorResponse).detectorResponseParam.setToken(new ObjectToken(drData));
+			NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
+			bgsource.lockParam.setToken(new ObjectToken(lock));
+			props.put("BackgroundMessageSource.filenameParam", bgFile);
+			props.put("BackgroundMessageSource.detectorParam", bgDetector);
+			int bgDimension = flags.isEnableSector() ? 1 : dimension;
+			props.put("BackgroundMessageSource.dimensionParam", Integer.toString(bgDimension));
+			props.put("BackgroundMessageSource.readOnlyParam", Boolean.toString(!enableBgAverage));
+			String[] bgProcessingName = StringUtils.split(filename, "_");
+			if (bgProcessingName.length > 1 && enableBgAverage) {
+				String bgProcessing = StringUtils.join(new String[] {bgDetector, bgProcessingName[1]}, "_");
+				props.put("BackgroundMessageSource.processingParam", bgProcessing);
+			}
+		
+			NcdAbstractDataForkJoinTransformer bgAverage;
+			if (enableBgAverage) {
+				bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
+				props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
+				
+				flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) bgAverage).selectionInput);
 			} else {
-				detectorResponse = new NcdMessageForwarder(flow, "DetectorResponse");
+				bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage");
 			}
 			
-			if (flags.isEnableSector()) {
-				sectorIntegration = new NcdSectorIntegrationForkJoinTransformer(flow, "SectorIntegration");
-				props.put("SectorIntegration.doRadialParam", Boolean.toString(flags.isEnableRadial()));
-				props.put("SectorIntegration.doAzimuthalParam", Boolean.toString(flags.isEnableAzimuthal()));
-				props.put("SectorIntegration.doFastParam", Boolean.toString(flags.isEnableFastintegration()));
-				if (intSector != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).sectorROIParam.setRoi(intSector);
-				}
-				if (slope != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).gradientParam.setToken(new ObjectToken(slope));
-				}
-				if (intercept != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).interceptParam.setToken(new ObjectToken(intercept));
-				}
-				if (cameraLength != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).cameraLengthParam.setToken(new ObjectToken(cameraLength));
-				}
-				if (energy != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).energyParam.setToken(new ObjectToken(energy));
-				}
-				if (pxSize != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).pxSizeParam.setToken(new ObjectToken(pxSize));
-				}
-				if (qaxisUnit != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).axisUnitParam.setToken(new ObjectToken(qaxisUnit));
-				}
-				if (enableMask && mask != null) {
-					((NcdSectorIntegrationForkJoinTransformer) sectorIntegration).maskParam.setToken(new ObjectToken(mask));
-				}
-				standardise = new NcdStandardiseForkJoinTransformer(flow, "StandardisedIntensity");
+			flow.connect(bgsource.output, bgAverage.input);
+			flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtraction).bgInput);
+		} else {
+			backgroundSubtraction = new NcdMessageForwarder(flow, "BackgroundSubtraction");
+		}
+		
+		if (flags.isEnableInvariant()) {
+			invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
+		} else {
+			invariant = new NcdMessageForwarder(flow, "Invariant");
+		}
+		
+		loglogPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT, flags.isEnableLogLogPlot());
+		guinierPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT, flags.isEnableGuinierPlot());
+		porodPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT, flags.isEnablePorodPlot());
+		kratkyPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT, flags.isEnableKratkyPlot());
+		zimmPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT, flags.isEnableZimmPlot());
+		debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT, flags.isEnableDebyeBuechePlot());
+		
+		DevNullActor nullActor = new DevNullActor(flow, "Null");
+		
+		if (flags.isEnableAverage()) {
+			average = new NcdAverageForkJoinTransformer(flow, "Average");
+			props.put("Average.gridAverageParam", gridAverage);
+			if (guinierPlot instanceof NcdSaxsPlotDataForkJoinTransformer) {
+				NcdSaxsPlotDataForkJoinTransformer testGuinierPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, "guinierTestData");
+				testGuinierPlot.plotTypeParam.setToken(new StringToken(SaxsAnalysisPlotType.GUINIER_PLOT.getName()));
+				NcdSaxsDataStatsForkJoinTransformer filter = new NcdSaxsDataStatsForkJoinTransformer(flow, "DataFilter");
+				filter.statTypeParam.setToken(new ObjectToken(saxsAnalysisStatsParameters));
+				
+				exportFilter = new NcdProcessingObjectTransformer(flow, "ExportFilter");
+				props.put("ExportFilter.datasetNameParam", "selection");
+				
+				flow.connect(backgroundSubtraction.output, testGuinierPlot.input);
+				flow.connect(testGuinierPlot.output, nullActor.input);
+				flow.connect(testGuinierPlot.portRg, filter.input);
+				flow.connect(filter.output,	exportFilter.input);
+				flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) average).selectionInput);
 			} else {
-				sectorIntegration = new NcdMessageForwarder(flow, "SectorIntegration");
-				standardise = new NcdMessageForwarder(flow, "StandardisedIntensity");
+				flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) average).selectionInput);
 			}
+		} else {
+			average = new NcdMessageForwarder(flow, "Average");
+		}
+		
+		NcdMessageSink sink = new NcdMessageSink(flow, "result");
+		props.put("result.detectorParam", detector);
+
+		flow.connect(source.output, selection.input);
+		flow.connect(selection.output, detectorResponse.input);
+		flow.connect(detectorResponse.output, sectorIntegration.input);
+		flow.connect(sectorIntegration.output, normalisation.input);
+		flow.connect(sectorIntegration.output, standardise.input);
+		flow.connect(normalisation.output, backgroundSubtraction.input);
+		flow.connect(backgroundSubtraction.output, average.input);
+		flow.connect(backgroundSubtraction.output, invariant.input);
+		flow.connect(average.output, loglogPlot.input);
+		flow.connect(average.output, guinierPlot.input);
+		flow.connect(average.output, porodPlot.input);
+		flow.connect(average.output, kratkyPlot.input);
+		flow.connect(average.output, zimmPlot.input);
+		flow.connect(average.output, debyebuechePlot.input);
+		
+		flow.connect(average.output, sink.input);
+		flow.connect(standardise.output, nullActor.input);
+		flow.connect(loglogPlot.output, nullActor.input);
+		flow.connect(guinierPlot.output, nullActor.input);
+		flow.connect(porodPlot.output, nullActor.input);
+		flow.connect(kratkyPlot.output, nullActor.input);
+		flow.connect(zimmPlot.output, nullActor.input);
+		flow.connect(debyebuechePlot.output, nullActor.input);
+		
+		if (flags.isEnableSector() && flags.isEnableAzimuthal()) {
 			
+			NcdAbstractDataForkJoinTransformer normalisationAzimuthal;
+			NcdAbstractDataForkJoinTransformer backgroundSubtractionAzimuthal;
+			NcdAbstractDataForkJoinTransformer averageAzimuthal;
+			
+			NcdMessageSink azimuthalSink = new NcdMessageSink(flow, "azimuthal");
+			props.put("azimuthal.detectorParam", detector);
+
 			if (flags.isEnableNormalisation()) {
-				normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
-				props.put("Normalisation.calibrationParam", calibration);
-				props.put("Normalisation.absScalingParam", Double.toString(absScaling));
-				props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
+				normalisationAzimuthal = new NcdNormalisationForkJoinTransformer(flow, "Normalisation_Azimuthal");
+				props.put("Normalisation_Azimuthal.calibrationParam", calibration);
+				props.put("Normalisation_Azimuthal.absScalingParam", Double.toString(absScaling));
+				props.put("Normalisation_Azimuthal.normChannelParam", Integer.toString(normChannel));
 			} else {
-				normalisation = new NcdMessageForwarder(flow, "Normalisation");
+				normalisationAzimuthal = new NcdMessageForwarder(flow, "Normalisation_Azimuthal");
 			}
 			
 			if (flags.isEnableBackground()) {
-				backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction");
+				backgroundSubtractionAzimuthal = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction_Azimuthal");
 				if (bgScaling != null) {
-					props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
+					props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(bgScaling));
 				} else {
-					props.put("BackgroundSubtraction.bgScalingParam", Double.toString(Double.NaN));
+					props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(Double.NaN));
 				}
-				
-				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource");
+				String bgAzDetector = StringUtils.join(new String[] {detector, azimuthalSink.getName()}, "_");
+				NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource_Azimuthal");
 				bgsource.lockParam.setToken(new ObjectToken(lock));
-				props.put("BackgroundMessageSource.filenameParam", bgFile);
-				props.put("BackgroundMessageSource.detectorParam", bgDetector);
-				int bgDimension = flags.isEnableSector() ? 1 : dimension;
-				props.put("BackgroundMessageSource.dimensionParam", Integer.toString(bgDimension));
-				props.put("BackgroundMessageSource.readOnlyParam", Boolean.toString(!enableBgAverage));
+				props.put("BackgroundMessageSource_Azimuthal.filenameParam", bgFile);
+				props.put("BackgroundMessageSource_Azimuthal.detectorParam", bgAzDetector);
+				props.put("BackgroundMessageSource_Azimuthal.dimensionParam", Integer.toString(1));
+				props.put("BackgroundMessageSource_Azimuthal.readOnlyParam", Boolean.toString(!enableBgAverage));
 				String[] bgProcessingName = StringUtils.split(filename, "_");
 				if (bgProcessingName.length > 1 && enableBgAverage) {
-					String bgProcessing = StringUtils.join(new String[] {bgDetector, bgProcessingName[1]}, "_");
-					props.put("BackgroundMessageSource.processingParam", bgProcessing);
+					String bgProcessing = StringUtils.join(new String[] {bgAzDetector, bgProcessingName[1]}, "_");
+					props.put("BackgroundMessageSource_Azimuthal.processingParam", bgProcessing);
 				}
 			
 				NcdAbstractDataForkJoinTransformer bgAverage;
 				if (enableBgAverage) {
-					bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage");
-					props.put("BackgroundAverage.gridAverageParam", bgGridAverage);
+					bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage_Azimuthal");
+					props.put("BackgroundAverage_Azimuthal.gridAverageParam", bgGridAverage);
 					
 					flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) bgAverage).selectionInput);
 				} else {
-					bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage");
+					bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage_Azimuthal");
 				}
 				
 				flow.connect(bgsource.output, bgAverage.input);
-				flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtraction).bgInput);
+				flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtractionAzimuthal).bgInput);
 			} else {
-				backgroundSubtraction = new NcdMessageForwarder(flow, "BackgroundSubtraction");
+				backgroundSubtractionAzimuthal = new NcdMessageForwarder(flow, "BackgroundSubtraction_Azimuthal");
 			}
-			
-			if (flags.isEnableInvariant()) {
-				invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
-			} else {
-				invariant = new NcdMessageForwarder(flow, "Invariant");
-			}
-			
-			loglogPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.LOGLOG_PLOT, flags.isEnableLogLogPlot());
-			guinierPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.GUINIER_PLOT, flags.isEnableGuinierPlot());
-			porodPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.POROD_PLOT, flags.isEnablePorodPlot());
-			kratkyPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.KRATKY_PLOT, flags.isEnableKratkyPlot());
-			zimmPlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.ZIMM_PLOT, flags.isEnableZimmPlot());
-			debyebuechePlot = addSaxsPlotActor(flow, SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT, flags.isEnableDebyeBuechePlot());
-		    
-			DevNullActor nullActor = new DevNullActor(flow, "Null");
 			
 			if (flags.isEnableAverage()) {
-				average = new NcdAverageForkJoinTransformer(flow, "Average");
-				props.put("Average.gridAverageParam", gridAverage);
-				if (guinierPlot instanceof NcdSaxsPlotDataForkJoinTransformer) {
-					NcdSaxsPlotDataForkJoinTransformer testGuinierPlot = new NcdSaxsPlotDataForkJoinTransformer(flow, "guinierTestData");
-					testGuinierPlot.plotTypeParam.setToken(new StringToken(SaxsAnalysisPlotType.GUINIER_PLOT.getName()));
-					NcdSaxsDataStatsForkJoinTransformer filter = new NcdSaxsDataStatsForkJoinTransformer(flow, "DataFilter");
-					filter.statTypeParam.setToken(new ObjectToken(saxsAnalysisStatsParameters));
-					
-					exportFilter = new NcdProcessingObjectTransformer(flow, "ExportFilter");
-					props.put("ExportFilter.datasetNameParam", "selection");
-					
-					flow.connect(backgroundSubtraction.output, testGuinierPlot.input);
-					flow.connect(testGuinierPlot.output, nullActor.input);
-					flow.connect(testGuinierPlot.portRg, filter.input);
-					flow.connect(filter.output,	exportFilter.input);
-					flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) average).selectionInput);
+				averageAzimuthal = new NcdAverageForkJoinTransformer(flow, "Average_Azimuthal");
+				props.put("Average_Azimuthal.gridAverageParam", gridAverage);
+				if (guinierPlot instanceof NcdSaxsPlotDataForkJoinTransformer && exportFilter != null) {
+					flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
 				} else {
-					flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) average).selectionInput);
+					flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
 				}
 			} else {
-				average = new NcdMessageForwarder(flow, "Average");
+				averageAzimuthal = new NcdMessageForwarder(flow, "Average_Azimuthal");
 			}
 			
-			NcdMessageSink sink = new NcdMessageSink(flow, "result");
-			props.put("result.detectorParam", detector);
-
-			flow.connect(source.output, selection.input);
-			flow.connect(selection.output, detectorResponse.input);
-			flow.connect(detectorResponse.output, sectorIntegration.input);
-			flow.connect(sectorIntegration.output, normalisation.input);
-			flow.connect(sectorIntegration.output, standardise.input);
-			flow.connect(normalisation.output, backgroundSubtraction.input);
-			flow.connect(backgroundSubtraction.output, average.input);
-			flow.connect(backgroundSubtraction.output, invariant.input);
-			flow.connect(average.output, loglogPlot.input);
-			flow.connect(average.output, guinierPlot.input);
-			flow.connect(average.output, porodPlot.input);
-			flow.connect(average.output, kratkyPlot.input);
-			flow.connect(average.output, zimmPlot.input);
-			flow.connect(average.output, debyebuechePlot.input);
-			
-			flow.connect(average.output, sink.input);
-			flow.connect(standardise.output, nullActor.input);
-			flow.connect(loglogPlot.output, nullActor.input);
-			flow.connect(guinierPlot.output, nullActor.input);
-			flow.connect(porodPlot.output, nullActor.input);
-			flow.connect(kratkyPlot.output, nullActor.input);
-			flow.connect(zimmPlot.output, nullActor.input);
-			flow.connect(debyebuechePlot.output, nullActor.input);
-			
-			if (flags.isEnableAzimuthal()) {
-				
-				NcdAbstractDataForkJoinTransformer normalisationAzimuthal;
-				NcdAbstractDataForkJoinTransformer backgroundSubtractionAzimuthal;
-				NcdAbstractDataForkJoinTransformer averageAzimuthal;
-				
-				NcdMessageSink azimuthalSink = new NcdMessageSink(flow, "azimuthal");
-				props.put("azimuthal.detectorParam", detector);
-
-				if (flags.isEnableNormalisation()) {
-					normalisationAzimuthal = new NcdNormalisationForkJoinTransformer(flow, "Normalisation_Azimuthal");
-					props.put("Normalisation_Azimuthal.calibrationParam", calibration);
-					props.put("Normalisation_Azimuthal.absScalingParam", Double.toString(absScaling));
-					props.put("Normalisation_Azimuthal.normChannelParam", Integer.toString(normChannel));
-				} else {
-					normalisationAzimuthal = new NcdMessageForwarder(flow, "Normalisation_Azimuthal");
-				}
-				
-				if (flags.isEnableBackground()) {
-					backgroundSubtractionAzimuthal = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction_Azimuthal");
-					if (bgScaling != null) {
-						props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(bgScaling));
-					} else {
-						props.put("BackgroundSubtraction_Azimuthal.bgScalingParam", Double.toString(Double.NaN));
-					}
-					String bgAzDetector = StringUtils.join(new String[] {detector, azimuthalSink.getName()}, "_");
-					NcdMessageSource bgsource = new NcdMessageSource(flow, "BackgroundMessageSource_Azimuthal");
-					bgsource.lockParam.setToken(new ObjectToken(lock));
-					props.put("BackgroundMessageSource_Azimuthal.filenameParam", bgFile);
-					props.put("BackgroundMessageSource_Azimuthal.detectorParam", bgAzDetector);
-					props.put("BackgroundMessageSource_Azimuthal.dimensionParam", Integer.toString(1));
-					props.put("BackgroundMessageSource_Azimuthal.readOnlyParam", Boolean.toString(!enableBgAverage));
-					String[] bgProcessingName = StringUtils.split(filename, "_");
-					if (bgProcessingName.length > 1 && enableBgAverage) {
-						String bgProcessing = StringUtils.join(new String[] {bgAzDetector, bgProcessingName[1]}, "_");
-						props.put("BackgroundMessageSource_Azimuthal.processingParam", bgProcessing);
-					}
-				
-					NcdAbstractDataForkJoinTransformer bgAverage;
-					if (enableBgAverage) {
-						bgAverage = new NcdAverageForkJoinTransformer(flow, "BackgroundAverage_Azimuthal");
-						props.put("BackgroundAverage_Azimuthal.gridAverageParam", bgGridAverage);
-						
-						flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) bgAverage).selectionInput);
-					} else {
-						bgAverage = new NcdMessageForwarder(flow, "BackgroundAverage_Azimuthal");
-					}
-					
-					flow.connect(bgsource.output, bgAverage.input);
-					flow.connect(bgAverage.output, ((NcdBackgroundSubtractionForkJoinTransformer) backgroundSubtractionAzimuthal).bgInput);
-				} else {
-					backgroundSubtractionAzimuthal = new NcdMessageForwarder(flow, "BackgroundSubtraction_Azimuthal");
-				}
-				
-				if (flags.isEnableAverage()) {
-					averageAzimuthal = new NcdAverageForkJoinTransformer(flow, "Average_Azimuthal");
-					props.put("Average_Azimuthal.gridAverageParam", gridAverage);
-					if (guinierPlot instanceof NcdSaxsPlotDataForkJoinTransformer && exportFilter != null) {
-						flow.connect(exportFilter.output, ((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
-					} else {
-						flow.connect(dummySelection.output,((NcdAverageForkJoinTransformer) averageAzimuthal).selectionInput);
-					}
-				} else {
-					averageAzimuthal = new NcdMessageForwarder(flow, "Average_Azimuthal");
-				}
-				
-				flow.connect(((NcdSectorIntegrationForkJoinTransformer)sectorIntegration).portAzimuthal, normalisationAzimuthal.input);
-				flow.connect(normalisationAzimuthal.output, backgroundSubtractionAzimuthal.input);
-				flow.connect(backgroundSubtractionAzimuthal.output, averageAzimuthal.input);
-				flow.connect(averageAzimuthal.output, azimuthalSink.input);
-			}
-						
-			flowMgr.executeBlockingLocally(flow, props);
-
-		} catch (FlowAlreadyExecutingException e) {
-			throw new RuntimeException(e);
-		} catch (PasserelleException e) {
-			throw new RuntimeException(e);
-		} catch (IllegalActionException e) {
-			throw new RuntimeException(e);
-		} catch (NameDuplicationException e) {
-			throw new RuntimeException(e);
-		} catch (HDF5LibraryException e) {
-			throw new RuntimeException(e);
-		} catch (HDF5Exception e) {
-			throw new RuntimeException(e);
-		} catch (Exception e) {
-			throw new RuntimeException(e);
+			flow.connect(((NcdSectorIntegrationForkJoinTransformer)sectorIntegration).portAzimuthal, normalisationAzimuthal.input);
+			flow.connect(normalisationAzimuthal.output, backgroundSubtractionAzimuthal.input);
+			flow.connect(backgroundSubtractionAzimuthal.output, averageAzimuthal.input);
+			flow.connect(averageAzimuthal.output, azimuthalSink.input);
 		}
+					
+		flowMgr.executeBlockingErrorLocally(flow, props);		
 	}
 
 	private NcdAbstractDataForkJoinTransformer addSaxsPlotActor(CompositeEntity flow, SaxsAnalysisPlotType plotType, boolean enable)

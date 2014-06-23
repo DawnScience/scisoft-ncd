@@ -36,6 +36,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.dawb.hdf5.Nexus;
 import org.dawb.passerelle.common.parameter.roi.ROIParameter;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.BooleanToken;
@@ -332,6 +333,10 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			currentSliceParams.setStart(startPos);
 
 			try {
+				if (monitor.isCanceled()) {
+					throw new OperationCanceledException(getName() + " stage has been cancelled.");
+				}
+				
 				DataSliceIdentifiers tmp_ids = new DataSliceIdentifiers();
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 				tmp_ids.setSlice(currentSliceParams);
@@ -437,9 +442,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					}
 				}
 			} catch (HDF5LibraryException e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
+			} catch (OperationCanceledException e) {
+				task.completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();

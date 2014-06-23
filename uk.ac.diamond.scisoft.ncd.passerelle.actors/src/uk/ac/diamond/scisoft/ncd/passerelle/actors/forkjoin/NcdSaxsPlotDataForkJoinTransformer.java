@@ -30,6 +30,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.swt.SWT;
 import org.jscience.physics.amount.Amount;
 
@@ -241,7 +242,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					while (taskItr.hasNext()) {
 						SaxsPlotTask tmpTask = taskItr.next(); 
 						if (tmpTask.isCompletedAbnormally()) {
-							completeExceptionally(tmpTask.getException());
+							task.completeExceptionally(tmpTask.getException());
 						}
 					}
 				}
@@ -253,6 +254,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			currentSliceParams.setStart(startPos);
 
 			try {
+				if (monitor.isCanceled()) {
+					throw new OperationCanceledException(getName() + " stage has been cancelled.");
+				}
 				DataSliceIdentifiers dataIDs = new DataSliceIdentifiers();
 				dataIDs.setIDs(resultGroupID, resultDataID);
 				dataIDs.setSlice(currentSliceParams);
@@ -381,9 +385,11 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					}
 				}
 			} catch (HDF5LibraryException e) {
-				completeExceptionally(e);
+				task.completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				completeExceptionally(e);
+				task.completeExceptionally(e);
+			} catch (OperationCanceledException e) {
+				task.completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();

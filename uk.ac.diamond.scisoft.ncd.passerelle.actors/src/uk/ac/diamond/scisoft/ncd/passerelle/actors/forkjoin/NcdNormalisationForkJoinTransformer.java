@@ -30,6 +30,7 @@ import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
@@ -195,6 +196,10 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			int typeID = -1;
 			int memspaceID = -1;
 			try {
+				if (monitor.isCanceled()) {
+					throw new OperationCanceledException(getName() + " stage has been cancelled.");
+				}
+				
 				SliceSettings sliceData = new SliceSettings(frames, frames.length - dimension - 1, 1);
 				int[] startPos = Arrays.copyOf(pos, frames.length);
 				sliceData.setStart(startPos);
@@ -292,9 +297,11 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				}
 
 			} catch (HDF5LibraryException e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
+			} catch (OperationCanceledException e) {
+				task.completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();
@@ -302,7 +309,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				try {
 					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
 				}
 			}
 		}

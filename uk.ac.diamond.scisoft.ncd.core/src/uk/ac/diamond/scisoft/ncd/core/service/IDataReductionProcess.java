@@ -32,7 +32,7 @@ public interface IDataReductionProcess {
 
 	void setNcdDetector(DiffractionDetector detectorWaxs);
 
-	void execute(String bgFilename, IProgressMonitor monitor);
+	void execute(String bgFilename, IProgressMonitor monitor) throws Exception;
 
 	void setBgFile(String bgFilename);
 

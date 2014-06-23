@@ -41,6 +41,7 @@ import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.MultiStatus;
+import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.jface.dialogs.MessageDialog;
@@ -116,14 +117,30 @@ public class DataReductionHandler extends AbstractHandler {
 						return;
 					}
 				} catch (Exception e) {
-					String msg = "SCISOFT NCD: Error running NCD data reduction process";
-					MultiStatus mStatus = new MultiStatus(Activator.PLUGIN_ID, IStatus.ERROR, msg, e);
-					for (StackTraceElement ste : e.getStackTrace()) {
-						mStatus.add(new Status(IStatus.ERROR, Activator.PLUGIN_ID, ste.toString()));
+					Throwable th = e.getCause() != null ? e.getCause() : e;
+					while (th.getCause() != null) {
+						th = th.getCause();
 					}
-					StatusManager.getManager().handle(mStatus, StatusManager.BLOCK|StatusManager.SHOW);
-					logger.error(msg, e);
+					String msg = "SCISOFT NCD: NCD data reduction process has terminated";
+					logger.error(msg, th);
 					monitor.done();
+					
+					int status = IStatus.ERROR;
+					if (th instanceof OperationCanceledException) {
+						status = IStatus.CANCEL;
+					}
+					
+					IStatus mStatus;
+					if (status == IStatus.ERROR) {
+						mStatus = new MultiStatus(Activator.PLUGIN_ID, status, msg, th);
+						for (StackTraceElement ste : th.getStackTrace()) {
+							((MultiStatus) mStatus).add(new Status(status, Activator.PLUGIN_ID, ste.toString()));
+						}
+						StatusManager.getManager().handle(mStatus, StatusManager.BLOCK | StatusManager.SHOW);
+					} else {
+						mStatus = new Status(status, Activator.PLUGIN_ID, msg, th);
+					}
+					StatusManager.getManager().handle(mStatus, StatusManager.BLOCK | StatusManager.SHOW);
 					return;
 				}
 			}

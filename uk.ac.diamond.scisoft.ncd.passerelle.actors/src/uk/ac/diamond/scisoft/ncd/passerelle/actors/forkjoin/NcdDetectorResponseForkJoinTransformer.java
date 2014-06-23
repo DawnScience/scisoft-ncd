@@ -28,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;
@@ -135,6 +136,10 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 			int typeID = -1;
 			int memspaceID = -1;
 			try {
+				if (monitor.isCanceled()) {
+					throw new OperationCanceledException(getName() + " stage has been cancelled.");
+				}
+				
 				SliceSettings sliceData = new SliceSettings(frames, frames.length - dimension - 1, 1);
 				int[] startPos = Arrays.copyOf(pos, frames.length);
 				sliceData.setStart(startPos);
@@ -220,9 +225,11 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 					throw new HDF5Exception("Failed to write DetectorResponse error data into the results file");
 				}
 			} catch (HDF5LibraryException e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
 			} catch (HDF5Exception e) {
-				throw new RuntimeException(e);
+				task.completeExceptionally(e);
+			} catch (OperationCanceledException e) {
+				task.completeExceptionally(e);
 			} finally {
 				if (lock != null && lock.isHeldByCurrentThread()) {
 					lock.unlock();
@@ -230,7 +237,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				try {
 					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
 				}
 			}
 		}

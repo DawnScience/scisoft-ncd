@@ -26,6 +26,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.StringToken;
 import ptolemy.data.expr.StringParameter;
@@ -212,81 +213,87 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 				AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT32);
 				AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT64);
 				try {
-				DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
-				input_ids.setIDs(inputGroupID, inputDataID);
-				DataSliceIdentifiers input_errors_ids = new DataSliceIdentifiers();
-				input_errors_ids.setIDs(inputGroupID, inputErrorsID);
-				
-				// This loop iterates over chunks of data that need to be averaged for the current output image
-				int totalFrames = 0;
-		    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
-				while (data_iter.hasNext()) {
-					int[] tmpPos = data_iter.getPos();
+					DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
+					input_ids.setIDs(inputGroupID, inputDataID);
+					DataSliceIdentifiers input_errors_ids = new DataSliceIdentifiers();
+					input_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					
-					int[] gridPos = Arrays.copyOf(tmpPos, tmpPos.length - dimension);
-					if (!selectionData.getBoolean(gridPos)) {
-						continue;
-					}
-					sliceSettings.setStart(tmpPos);
-					AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
-					AbstractDataset errors_slice;
-					if (hasErrors) {
-						errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
-						errors_slice.ipower(2);
-					} else {
-						errors_slice = data_slice.clone();
-					}
-					int data_slice_rank = data_slice.getRank();
-					
-					int totalFramesBatch = 1;
-					for (int idx = (data_slice_rank - dimension - 1); idx >= sliceDim; idx--) {
-						if (ArrayUtils.contains(averageIndices, idx + 1)) {
-							totalFramesBatch *= data_slice.getShape()[idx];
-							data_slice = data_slice.sum(idx);
-							errors_slice = errors_slice.sum(idx);
+					// This loop iterates over chunks of data that need to be averaged for the current output image
+					int totalFrames = 0;
+			    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
+					while (data_iter.hasNext()) {
+						if (monitor.isCanceled()) {
+							throw new OperationCanceledException(getName() + " stage has been cancelled.");
 						}
+						
+						int[] tmpPos = data_iter.getPos();
+						
+						int[] gridPos = Arrays.copyOf(tmpPos, tmpPos.length - dimension);
+						if (!selectionData.getBoolean(gridPos)) {
+							continue;
+						}
+						sliceSettings.setStart(tmpPos);
+						AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
+						AbstractDataset errors_slice;
+						if (hasErrors) {
+							errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
+							errors_slice.ipower(2);
+						} else {
+							errors_slice = data_slice.clone();
+						}
+						int data_slice_rank = data_slice.getRank();
+						
+						int totalFramesBatch = 1;
+						for (int idx = (data_slice_rank - dimension - 1); idx >= sliceDim; idx--) {
+							if (ArrayUtils.contains(averageIndices, idx + 1)) {
+								totalFramesBatch *= data_slice.getShape()[idx];
+								data_slice = data_slice.sum(idx);
+								errors_slice = errors_slice.sum(idx);
+							}
+						}
+						totalFrames += totalFramesBatch;
+						ave_frame = ave_frame.iadd(data_slice);
+						ave_errors_frame = ave_errors_frame.iadd(errors_slice);
 					}
-					totalFrames += totalFramesBatch;
-					ave_frame = ave_frame.iadd(data_slice);
-					ave_errors_frame = ave_errors_frame.iadd(errors_slice);
-				}
-				
-				ave_frame =  ave_frame.idivide(totalFrames);
-				ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
-				
-				int filespace_id = H5.H5Dget_space(resultDataID);
-				int type_id = H5.H5Dget_type(resultDataID);
-				long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
-				long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
-				long[] ave_count_data = new long[frames.length];
-				Arrays.fill(ave_count_data, 1);
-				int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
-				
-				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
-						ave_step);
-				H5.H5Dwrite(resultDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
-						ave_frame.getBuffer());
-				
-				H5.H5Sclose(filespace_id);
-				H5.H5Sclose(memspace_id);
-				H5.H5Tclose(type_id);
-				
-				filespace_id = H5.H5Dget_space(resultErrorsID);
-				type_id = H5.H5Dget_type(resultErrorsID);
-				memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
-				
-				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
-						ave_step);
-				H5.H5Dwrite(resultErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
-						ave_errors_frame.getBuffer());
-				
-				H5.H5Sclose(filespace_id);
-				H5.H5Sclose(memspace_id);
-				H5.H5Tclose(type_id);
+					
+					ave_frame =  ave_frame.idivide(totalFrames);
+					ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
+					
+					int filespace_id = H5.H5Dget_space(resultDataID);
+					int type_id = H5.H5Dget_type(resultDataID);
+					long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
+					long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
+					long[] ave_count_data = new long[frames.length];
+					Arrays.fill(ave_count_data, 1);
+					int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+					
+					H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
+							ave_step);
+					H5.H5Dwrite(resultDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
+							ave_frame.getBuffer());
+					
+					H5.H5Sclose(filespace_id);
+					H5.H5Sclose(memspace_id);
+					H5.H5Tclose(type_id);
+					
+					filespace_id = H5.H5Dget_space(resultErrorsID);
+					type_id = H5.H5Dget_type(resultErrorsID);
+					memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+					
+					H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
+							ave_step);
+					H5.H5Dwrite(resultErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
+							ave_errors_frame.getBuffer());
+					
+					H5.H5Sclose(filespace_id);
+					H5.H5Sclose(memspace_id);
+					H5.H5Tclose(type_id);
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
 				} catch (HDF5Exception e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
+				} catch (OperationCanceledException e) {
+					task.completeExceptionally(e);
 				}
 			}
 		}

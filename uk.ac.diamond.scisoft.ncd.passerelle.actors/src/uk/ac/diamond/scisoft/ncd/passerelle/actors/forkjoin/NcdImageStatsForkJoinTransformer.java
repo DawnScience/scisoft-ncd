@@ -38,6 +38,7 @@ import org.apache.commons.math3.ml.distance.EuclideanDistance;
 import org.apache.commons.math3.stat.descriptive.rank.Percentile;
 import org.apache.commons.math3.util.Pair;
 import org.dawb.passerelle.common.parameter.roi.ROIParameter;
+import org.eclipse.core.runtime.OperationCanceledException;
 
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;
@@ -215,6 +216,10 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 				
 					AbstractDataset data;
 					try {
+						if (monitor.isCanceled()) {
+							throw new OperationCanceledException(getName() + " stage has been cancelled.");
+						}
+						
 						long[] start = new long[frames.length];
 						long[] count = new long[frames.length];
 						long[] block = new long[frames.length];
@@ -257,9 +262,14 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 							}
 						}
 					} catch (HDF5LibraryException e) {
-						throw new RuntimeException(e);
+						task.completeExceptionally(e);
+						return;
 					} catch (HDF5Exception e) {
-						throw new RuntimeException(e);
+						task.completeExceptionally(e);
+						return;
+					} catch (OperationCanceledException e) {
+						task.completeExceptionally(e);
+						return;
 					} finally {
 						List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 								dataclass_id,
@@ -321,9 +331,9 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						throw new HDF5Exception("Failed to write ImageStats data into the results file");
 					}
 				} catch (HDF5LibraryException e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
 				} catch (HDF5Exception e) {
-					throw new RuntimeException(e);
+					task.completeExceptionally(e);
 				} finally {
 					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
 							datasize_id,
