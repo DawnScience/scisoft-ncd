@@ -292,7 +292,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			qaxis.setError(qaxisErr);
 			return qaxis;
 		}
-		qaxis = DatasetUtils.indices(numPoints).squeeze();
+		qaxis = DatasetUtils.cast(DatasetUtils.indices(numPoints).squeeze(), Dataset.FLOAT32);
 		return qaxis;
 	}
 	
