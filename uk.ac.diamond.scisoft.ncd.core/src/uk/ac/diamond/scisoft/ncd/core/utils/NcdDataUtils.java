@@ -97,7 +97,7 @@ public class NcdDataUtils {
 			String tmpFormat = dimFormat[i];
 			
 			if (tmpFormat.equals("")) {
-				tmpList.add(IntegerDataset.arange(frames[i]).getData());
+				tmpList.add(IntegerDataset.createRange(frames[i]).getData());
 				continue;
 			}
 			
@@ -122,12 +122,12 @@ public class NcdDataUtils {
 				if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
 					sliceEnd = Math.min(frames[i],Integer.valueOf(lastValue) + 1);
 				
-				int[] slice = IntegerDataset.arange(sliceStart, sliceEnd, 1).getData();
+				int[] slice = IntegerDataset.createRange(sliceStart, sliceEnd, 1).getData();
 				for (int l = 0; l < slice.length; l++)
 					tmpSel.add(slice[l]);
 			}
 			if (tmpSel.isEmpty())
-				tmpList.add(IntegerDataset.arange(frames[i]).getData());
+				tmpList.add(IntegerDataset.createRange(frames[i]).getData());
 			else
 				tmpList.add(ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {})));
 		}
@@ -169,12 +169,12 @@ public class NcdDataUtils {
 			if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
 				sliceEnd = Math.min(axes,Integer.valueOf(lastValue) + 1);
 			
-			int[] slice = IntegerDataset.arange(sliceStart, sliceEnd, 1).getData();
+			int[] slice = IntegerDataset.createRange(sliceStart, sliceEnd, 1).getData();
 			for (int l = 0; l < slice.length; l++)
 				tmpSel.add(slice[l]);
 		}
 		if (tmpSel.isEmpty())
-			return IntegerDataset.arange(1, axes, 1).getData();
+			return IntegerDataset.createRange(1, axes, 1).getData();
 
 		return ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {}));
 	}
