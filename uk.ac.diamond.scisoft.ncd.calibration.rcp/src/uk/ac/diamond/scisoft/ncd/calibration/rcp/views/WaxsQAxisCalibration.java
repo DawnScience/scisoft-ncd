@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.views;
+package uk.ac.diamond.scisoft.ncd.calibration.rcp.views;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;

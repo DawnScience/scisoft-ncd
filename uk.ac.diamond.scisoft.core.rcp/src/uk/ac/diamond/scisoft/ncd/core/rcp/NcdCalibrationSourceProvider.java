@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp;
+package uk.ac.diamond.scisoft.ncd.core.rcp;
 
 import java.util.ArrayList;
 import java.util.HashMap;

@@ -45,9 +45,9 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReductionPage {
 

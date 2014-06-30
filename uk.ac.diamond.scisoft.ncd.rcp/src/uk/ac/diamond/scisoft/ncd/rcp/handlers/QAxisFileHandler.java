@@ -70,13 +70,13 @@ import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.ILoaderService;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.calibration.rcp.views.NcdQAxisCalibration;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.views.NcdQAxisCalibration;
 
 public class QAxisFileHandler extends AbstractHandler {
 

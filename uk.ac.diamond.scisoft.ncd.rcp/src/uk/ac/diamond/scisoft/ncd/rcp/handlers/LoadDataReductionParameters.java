@@ -35,10 +35,10 @@ import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdSourceProviderAdapter;
-import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdSourceProviderAdapter;
+import uk.ac.diamond.scisoft.ncd.core.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters;
 
 /**

@@ -25,9 +25,9 @@ import org.eclipse.ui.preferences.ScopedPreferenceStore;
 import org.osgi.framework.FrameworkUtil;
 
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
-import uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration;
+import uk.ac.diamond.scisoft.ncd.calibration.rcp.views.AbsoluteIntensityCalibration;
+import uk.ac.diamond.scisoft.ncd.calibration.rcp.views.SaxsQAxisCalibration;
 import uk.ac.diamond.scisoft.ncd.rcp.views.NcdDetectorParameters;
-import uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration;
 
 
 public class NcdCalibrationPerspective implements IPerspectiveFactory {

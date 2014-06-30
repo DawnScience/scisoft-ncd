@@ -7,7 +7,7 @@
  * License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.views;
+package uk.ac.diamond.scisoft.ncd.calibration.rcp.views;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,12 +70,12 @@ import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.ILoaderService;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.calibration.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
-import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
 
 public class QAxisCalibrationBase extends ViewPart implements ISourceProviderListener {
 

@@ -14,14 +14,13 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp;
+package uk.ac.diamond.scisoft.ncd.core.rcp;
 
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlRootElement;
 
 import org.eclipse.ui.ISourceProvider;
-
 
 @XmlRootElement(name = "data_reduction_parameters")
 @XmlAccessorType(XmlAccessType.FIELD)

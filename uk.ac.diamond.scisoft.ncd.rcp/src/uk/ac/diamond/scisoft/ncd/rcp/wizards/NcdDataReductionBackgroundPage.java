@@ -38,7 +38,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 
 public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage {
 

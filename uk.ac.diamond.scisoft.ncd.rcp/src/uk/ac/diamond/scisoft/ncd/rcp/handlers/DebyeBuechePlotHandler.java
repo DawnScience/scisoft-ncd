@@ -27,7 +27,7 @@ import org.eclipse.ui.commands.ICommandService;
 import org.eclipse.ui.commands.IElementUpdater;
 import org.eclipse.ui.menus.UIElement;
 
-import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.SaxsPlotsSourceProvider;
 
 public class DebyeBuechePlotHandler extends AbstractHandler implements
 		IElementUpdater {

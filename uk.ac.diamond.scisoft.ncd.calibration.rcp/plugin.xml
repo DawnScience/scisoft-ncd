@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.ui.services">
+      <sourceProvider
+            provider="uk.ac.diamond.scisoft.ncd.calibration.rcp.views.MultivariateFunctionSourceProvider">
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.beamxy"
+               priorityLevel="workbench">
+         </variable>
+         <variable
+               name="uk.ac.diamond.scisoft.ncd.rcp.peaks"
+               priorityLevel="workbench">
+         </variable>
+      </sourceProvider>
+   </extension>
+
+</plugin>

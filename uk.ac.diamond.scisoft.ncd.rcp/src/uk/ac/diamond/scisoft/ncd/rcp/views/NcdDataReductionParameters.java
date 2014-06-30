@@ -63,10 +63,10 @@ import org.eclipse.ui.services.ISourceProviderService;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.SaxsPlotsSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdProcessingSourceProvider;
-import uk.ac.diamond.scisoft.ncd.rcp.SaxsPlotsSourceProvider;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
 

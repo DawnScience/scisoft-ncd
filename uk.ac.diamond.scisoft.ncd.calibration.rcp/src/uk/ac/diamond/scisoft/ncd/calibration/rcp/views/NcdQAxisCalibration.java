@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.views;
+package uk.ac.diamond.scisoft.ncd.calibration.rcp.views;
 
 import java.text.ParsePosition;
 import java.util.ArrayList;
@@ -62,8 +62,8 @@ import uk.ac.diamond.scisoft.analysis.roi.IROI;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
-import uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationSourceProvider;
 
 public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISourceProviderListener{
 	
