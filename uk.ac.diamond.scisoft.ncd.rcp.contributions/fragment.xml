@@ -303,14 +303,14 @@
       </view>
       <view
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
-            class="uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration"
+            class="uk.ac.diamond.scisoft.ncd.calibration.rcp.views.SaxsQAxisCalibration"
             id="uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration"
             name="Saxs Q-axis Calibration"
             restorable="true">
       </view>
       <view
             category="uk.ac.diamond.scisoft.ncd.rcp.contributions.views"
-            class="uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration"
+            class="uk.ac.diamond.scisoft.ncd.calibration.rcp.views.AbsoluteIntensityCalibration"
             id="uk.ac.diamond.scisoft.ncd.rcp.views.AbsoluteIntensityCalibration"
             name="Absolute Intensity Calibration"
             restorable="true">

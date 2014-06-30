@@ -128,4 +128,18 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          version="0.0.0"
          unpack="false"/>
 
+   <plugin
+         id="uk.ac.diamond.scisoft.ncd.calibration.rcp"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
+   <plugin
+         id="uk.ac.diamond.scisoft.ncd.core.rcp"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"
+         unpack="false"/>
+
 </feature>
