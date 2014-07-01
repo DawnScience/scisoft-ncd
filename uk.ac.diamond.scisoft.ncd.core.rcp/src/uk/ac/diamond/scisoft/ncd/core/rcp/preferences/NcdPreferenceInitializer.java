@@ -14,14 +14,14 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.preferences;
+package uk.ac.diamond.scisoft.ncd.core.rcp.preferences;
 
 import org.eclipse.core.runtime.preferences.AbstractPreferenceInitializer;
 import org.eclipse.jface.preference.IPreferenceStore;
 
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
+import uk.ac.diamond.scisoft.ncd.core.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
-import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
 public class NcdPreferenceInitializer extends AbstractPreferenceInitializer {
 	

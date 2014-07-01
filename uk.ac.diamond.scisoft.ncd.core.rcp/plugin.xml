@@ -133,5 +133,19 @@
          </variable>
       </sourceProvider>
    </extension>
-
+	<extension
+       point="org.eclipse.ui.preferencePages">
+    <page
+          category="uk.ac.diamond.scisoft.analysis.rcp.preferences.root"
+          class="uk.ac.diamond.scisoft.ncd.core.rcp.preferences.NcdPreferencePage"
+          id="uk.ac.diamond.scisoft.ncd.rcp.ncdpreferencepage"
+          name="NCD Data Reduction">
+    </page>
+ 	</extension>
+ 	<extension
+       point="org.eclipse.core.runtime.preferences">
+    <initializer
+          class="uk.ac.diamond.scisoft.ncd.core.rcp.preferences.NcdPreferenceInitializer">
+    </initializer>
+ 	</extension>
 </plugin>

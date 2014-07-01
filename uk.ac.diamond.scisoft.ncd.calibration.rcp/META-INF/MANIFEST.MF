@@ -22,3 +22,5 @@ Import-Package: org.eclipse.draw2d,
 Export-Package: uk.ac.diamond.scisoft.ncd.calibration.rcp,
  uk.ac.diamond.scisoft.ncd.calibration.rcp.views
 Bundle-Vendor: Diamond. Light Source
+Bundle-ActivationPolicy: lazy
+Bundle-Activator: uk.ac.diamond.scisoft.ncd.calibration.rcp.Activator

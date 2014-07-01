@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package uk.ac.diamond.scisoft.ncd.rcp.preferences;
+package uk.ac.diamond.scisoft.ncd.core.rcp.preferences;
 
 import org.eclipse.jface.preference.BooleanFieldEditor;
 import org.eclipse.jface.preference.ComboFieldEditor;
@@ -35,8 +35,8 @@ import org.eclipse.ui.IWorkbench;
 import org.eclipse.ui.IWorkbenchPreferencePage;
 
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
-import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
 public class NcdPreferencePage  extends FieldEditorPreferencePage implements IWorkbenchPreferencePage {
 	

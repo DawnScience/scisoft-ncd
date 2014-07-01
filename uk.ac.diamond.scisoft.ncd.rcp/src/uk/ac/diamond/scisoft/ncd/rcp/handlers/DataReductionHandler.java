@@ -411,10 +411,14 @@ public class DataReductionHandler extends AbstractHandler {
 			context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 		}
 		
-		String saxsSelectionAlgorithm = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_SELECTION_ALGORITHM);
-		String strDBSCANClustererEps = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.DBSCANClusterer_EPSILON);
-		int dbSCANClustererMinPoints = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.DBSCANClusterer_MINPOINTS);
-		String strSaxsFilteringCI = Activator.getDefault().getPreferenceStore().getString(NcdPreferences.SAXS_FILTERING_CI);
+		String saxsSelectionAlgorithm = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+				.getString(NcdPreferences.SAXS_SELECTION_ALGORITHM);
+		String strDBSCANClustererEps = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+				.getString(NcdPreferences.DBSCANClusterer_EPSILON);
+		int dbSCANClustererMinPoints = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+				.getInt(NcdPreferences.DBSCANClusterer_MINPOINTS);
+		String strSaxsFilteringCI = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+				.getString(NcdPreferences.SAXS_FILTERING_CI);
 		
 		SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
 		saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));

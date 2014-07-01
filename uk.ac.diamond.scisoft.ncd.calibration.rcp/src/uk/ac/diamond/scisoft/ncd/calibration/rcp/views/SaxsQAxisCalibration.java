@@ -192,12 +192,15 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 						sroi);
 				beamOffset.addSourceProviders(service);
 
-				int cmaesLambda = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESlambda);
-				double cmaesInputSigmaPref = Activator.getDefault().getPreferenceStore()
-						.getInt(NcdPreferences.CMAESsigma);
+				int cmaesLambda = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+						.getInt(NcdPreferences.CMAESlambda);
+				double cmaesInputSigmaPref = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault()
+						.getPreferenceStore().getInt(NcdPreferences.CMAESsigma);
 				double[] cmaesInputSigma = new double[] { cmaesInputSigmaPref, cmaesInputSigmaPref };
-				int cmaesMaxIterations = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESmaxiteration);
-				int cmaesCheckerPref = Activator.getDefault().getPreferenceStore().getInt(NcdPreferences.CMAESchecker);
+				int cmaesMaxIterations = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+						.getInt(NcdPreferences.CMAESmaxiteration);
+				int cmaesCheckerPref = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
+						.getInt(NcdPreferences.CMAESchecker);
 				SimplePointChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-4, 1.0 / cmaesCheckerPref);
 				beamOffset.configureOptimizer(cmaesLambda == 0 ? null : cmaesLambda,
 								cmaesInputSigmaPref == 0 ? null	: cmaesInputSigma,
