@@ -83,6 +83,7 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtrac
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdInvariantForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdNormalisationForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdOrientationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsDataStatsForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
@@ -763,6 +764,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			NcdAbstractDataForkJoinTransformer normalisationAzimuthal;
 			NcdAbstractDataForkJoinTransformer backgroundSubtractionAzimuthal;
 			NcdAbstractDataForkJoinTransformer averageAzimuthal;
+			NcdAbstractDataForkJoinTransformer degreeOrientationAzimuthal;
 			
 			NcdMessageSink azimuthalSink = new NcdMessageSink(flow, "azimuthal");
 			props.put("azimuthal.detectorParam", detector);
@@ -824,10 +826,18 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				averageAzimuthal = new NcdMessageForwarder(flow, "Average_Azimuthal");
 			}
 			
+			if (intSector.checkSymmetry(SectorROI.FULL)) {
+				degreeOrientationAzimuthal = new NcdOrientationForkJoinTransformer(flow, "DegreeOfOrientation_Azimuthal");
+			} else {
+				degreeOrientationAzimuthal = new NcdMessageForwarder(flow, "DegreeOfOrientation_Azimuthal");
+			}
+			
 			flow.connect(((NcdSectorIntegrationForkJoinTransformer)sectorIntegration).portAzimuthal, normalisationAzimuthal.input);
 			flow.connect(normalisationAzimuthal.output, backgroundSubtractionAzimuthal.input);
 			flow.connect(backgroundSubtractionAzimuthal.output, averageAzimuthal.input);
 			flow.connect(averageAzimuthal.output, azimuthalSink.input);
+			flow.connect(averageAzimuthal.output, degreeOrientationAzimuthal.input);
+			flow.connect(degreeOrientationAzimuthal.output, nullActor.input);
 		}
 					
 		flowMgr.executeBlockingErrorLocally(flow, props);		
