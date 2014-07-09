@@ -28,6 +28,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.apache.commons.lang.ArrayUtils;
 import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.OperationCanceledException;
 
@@ -58,6 +59,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 	private long[] axisShape;
 	
 	private int angleDataID;
+	private int mapDataID;
 	
 	public NcdOrientationForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -97,8 +99,9 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "dimensionless");
 		resultErrorsID = -1;
 		
-		type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
 		angleDataID = NcdNexusUtils.makedata(resultGroupID, "orientation", type, resultFrames, true, "degree");
+		long[] mapFrames = ArrayUtils.addAll(resultFrames, new long[] {2});
+		mapDataID = NcdNexusUtils.makedata(resultGroupID, "vector_map", type, mapFrames, true, "dimensionless");
 		
 		if (inputAxisDataID != -1) {
 			int spaceID = H5.H5Dget_space(inputAxisDataID);
@@ -195,7 +198,8 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				myobj = degree.process(data.getBuffer(), axis.getBuffer(), data.getShape());
 				
 				float[] mydata = (float[]) myobj[0];
-				double[] myerrors = (double[]) myobj[1];
+				float[] myangle = (float[]) myobj[1];
+				float[] myvector = (float[]) myobj[2];
 
 				long[] frames = getResultDataShape();
 				long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
@@ -212,30 +216,59 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				Arrays.fill(count, 1);
 
 				lock.lock();
-				filespaceID = H5.H5Dget_space(resultDataID);
-				typeID = H5.H5Dget_type(resultDataID);
-				memspaceID = H5.H5Screate_simple(block.length, block, null);
-				selectID = H5
-						.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
-				if (selectID < 0) {
-					throw new HDF5Exception("Failed to allocate space fro writing Degree of Orientation data");
+				
+				{
+					filespaceID = H5.H5Dget_space(resultDataID);
+					typeID = H5.H5Dget_type(resultDataID);
+					memspaceID = H5.H5Screate_simple(block.length, block, null);
+					selectID = H5
+							.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+					if (selectID < 0) {
+						throw new HDF5Exception("Failed to allocate space fro writing Degree of Orientation data");
+					}
+					writeID = H5.H5Dwrite(resultDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
+					if (writeID < 0) {
+						throw new HDF5Exception("Failed to write Degree of Orientation data into the results file");
+					}
+					H5.H5Sclose(filespaceID);
+					H5.H5Sclose(memspaceID);
+					H5.H5Tclose(typeID);
 				}
-				writeID = H5.H5Dwrite(resultDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, mydata);
-				if (writeID < 0) {
-					throw new HDF5Exception("Failed to write Degree of Orientation data into the results file");
+				
+				{
+					filespaceID = H5.H5Dget_space(angleDataID);
+					typeID = H5.H5Dget_type(angleDataID);
+					memspaceID = H5.H5Screate_simple(block.length, block, null);
+					selectID = H5
+							.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+					if (selectID < 0) {
+						throw new HDF5Exception("Failed to allocate space fro writing Degree of Orientation angle data");
+					}
+					writeID = H5.H5Dwrite(angleDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myangle);
+					if (writeID < 0) {
+						throw new HDF5Exception("Failed to write Degree of Orientation angle data into the results file");
+					}
+					H5.H5Sclose(filespaceID);
+					H5.H5Sclose(memspaceID);
+					H5.H5Tclose(typeID);
 				}
-
-				filespaceID = H5.H5Dget_space(angleDataID);
-				typeID = H5.H5Dget_type(angleDataID);
-				memspaceID = H5.H5Screate_simple(block.length, block, null);
-				selectID = H5
-						.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
-				if (selectID < 0) {
-					throw new HDF5Exception("Failed to allocate space fro writing Degree of Orientation error data");
-				}
-				writeID = H5.H5Dwrite(angleDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myerrors);
-				if (writeID < 0) {
-					throw new HDF5Exception("Failed to write Degree of Orientation error data into the results file");
+				
+				{
+					start = ArrayUtils.addAll(start, new long[] {0});
+					block = ArrayUtils.addAll(block, new long[] {2});
+					count = ArrayUtils.addAll(count, new long[] {1});
+					filespaceID = H5.H5Dget_space(mapDataID);
+					typeID = H5.H5Dget_type(mapDataID);
+					memspaceID = H5.H5Screate_simple(block.length, block, null);
+					selectID = H5
+							.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
+					if (selectID < 0) {
+						throw new HDF5Exception("Failed to allocate space for writing Degree of Orientation vector data");
+					}
+					writeID = H5.H5Dwrite(mapDataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myvector);
+					if (writeID < 0) {
+						throw new HDF5Exception("Failed to write Degree of Orientation vector data into the results file");
+					}
 				}
 				
 			} catch (HDF5LibraryException e) {
@@ -249,7 +282,11 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					lock.unlock();
 				}
 				try {
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(
+							new ArrayList<Integer>(Arrays.asList(
+									memspaceID,
+									typeID,
+									filespaceID)));
 				} catch (HDF5LibraryException e) {
 					task.completeExceptionally(e);
 				}
@@ -268,7 +305,10 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 	@Override
 	protected void doWrapUp() throws TerminationException {
 		try {
-			NcdNexusUtils.closeH5id(angleDataID);
+			NcdNexusUtils.closeH5idList(
+					new ArrayList<Integer>(Arrays.asList(
+							angleDataID,
+							mapDataID)));
 		} catch (HDF5LibraryException e) {
 			getLogger().info("Error closing NeXus handle identifier", e);
 		}

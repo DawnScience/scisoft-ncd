@@ -78,7 +78,14 @@ public class DegreeOfOrientation {
 			float result =  (float) Math.sqrt(Math.pow(cos2mean-sin2mean, 2) - 4.0*sincosmean*sincosmean);
 			double angle = MathUtils.normalizeAngle(Math.atan2(2.0*sincosmean, cos2mean-sin2mean) / 2.0, Math.PI);
 			
-			return new Object[] { new float[] { result }, new double[] { Math.toDegrees(angle) } };
+			Object[] output = new Object[] {
+					new float[] { result },
+					new float[] { (float) Math.toDegrees(angle) },
+					new float[] { (float) (result * Math.cos(angle)),  (float) (result * Math.sin(angle))},
+					}; 
+			
+			return output;
+			
 		} catch (TooManyEvaluationsException e) {
 			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
 		} catch (MaxCountExceededException e) {
