@@ -137,11 +137,6 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		H5.H5Iget_name(bgDataID, name, nameSize);
 		String bgDatasetName = name[0];
 		
-		name = new String[] {""};
-		nameSize = H5.H5Iget_name(bgErrorsID, name, 1L) + 1;
-		H5.H5Iget_name(bgErrorsID, name, nameSize);
-		String bgErrorsName = name[0];
-		
 		String bgFileName = H5.H5Fget_name(bgDataID);
 		
 		// Store background filename used in data reduction
@@ -161,7 +156,15 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		
 		// Make link to the background dataset and store background filename
 		H5.H5Lcreate_external(bgFileName, bgDatasetName, resultGroupID, "background", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-		H5.H5Lcreate_external(bgFileName, bgErrorsName, resultGroupID, "background_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		
+		if (hasBgErrors) {
+			name = new String[] {""};
+			nameSize = H5.H5Iget_name(bgErrorsID, name, 1L) + 1;
+			H5.H5Iget_name(bgErrorsID, name, nameSize);
+			String bgErrorsName = name[0];
+			
+			H5.H5Lcreate_external(bgFileName, bgErrorsName, resultGroupID, "background_errors", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		}
 	}
 
 	private class BackgroundSubtractionTask extends RecursiveAction {
