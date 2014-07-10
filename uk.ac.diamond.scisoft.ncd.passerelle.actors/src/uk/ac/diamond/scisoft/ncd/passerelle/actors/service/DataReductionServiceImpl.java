@@ -37,6 +37,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.hdf5.HierarchicalDataFactory;
 import org.dawb.hdf5.IHierarchicalDataFile;
+import org.dawb.hdf5.Nexus;
 import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
@@ -74,9 +75,6 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 public class DataReductionServiceImpl implements IDataReductionService {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionServiceImpl.class);
-	
-	private static final String NXEntryClassName = "NXentry";
-	private static final String NXDataClassName  = "NXdata";	
 	
 	@Override
 	public IDataReductionContext createContext() {
@@ -330,11 +328,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			String dt = format.format(date);
 			putattr(fid, "file_time", dt);
 
-			entry_id = NcdNexusUtils.makegroup(fid, "entry1", NXEntryClassName);
+			entry_id = NcdNexusUtils.makegroup(fid, "entry1", Nexus.ENTRY);
 
 			final String calibration = context.getCalibrationName();
 			if (calibration != null) {
-				int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, NXDataClassName);
+				int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, Nexus.DATA);
 				H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data",
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				H5.H5Gclose(calib_id);
@@ -342,6 +340,8 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 			writeNCDMetadata(entry_id, inputfilePath);
 
+			createInstrumentNode(entry_id, inputfilePath);
+			
 			if (context.isEnableWaxs()) {
 				createDetectorNode(context.getWaxsDetectorName(), entry_id, inputfilePath);
 			}
@@ -410,9 +410,22 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 	}
 
+	private void createInstrumentNode(int entry_id, String inputfilePath) throws HDF5Exception {
+		
+		int file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		
+	    H5.H5Lcreate_external(inputfilePath, "/entry1/instrument/", entry_id, "instrument/", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+		
+		H5.H5Gclose(instrument_group_id);
+		H5.H5Gclose(entry_group_id);
+		H5.H5Fclose(file_handle);
+	}
+	
 	private void createDetectorNode(String detector, int entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
 		
-		int detector_id = NcdNexusUtils.makegroup(entry_id, detector, NXDataClassName);
+		int detector_id = NcdNexusUtils.makegroup(entry_id, detector, Nexus.DATA);
 		
 		int file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
