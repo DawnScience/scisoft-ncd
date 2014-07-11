@@ -35,6 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
+import org.dawb.common.util.eclipse.BundleUtils;
 import org.dawb.hdf5.HierarchicalDataFactory;
 import org.dawb.hdf5.IHierarchicalDataFile;
 import org.dawb.hdf5.Nexus;
@@ -379,6 +380,18 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			writeStringMetadata("/entry1/scan_command", "scan_command", entry_id, inputFileTree);
 			writeStringMetadata("/entry1/scan_identifier", "scan_identifier", entry_id, inputFileTree);
 			writeStringMetadata("/entry1/title", "title", entry_id, inputFileTree);
+			
+			String dawnVersion = BundleUtils.getDawnVersion();
+			String dawnString = (dawnVersion != null ?
+					"DAWN" + " " + dawnVersion:
+					"DAWN");
+			int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			H5.H5Tset_size(text_type, dawnString.length());
+			int text_id = NcdNexusUtils.makedata(entry_id, "program_name", text_type, new long[] {1});
+			int filespace_id = H5.H5Dget_space(text_id);
+			int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+			H5.H5Sselect_all(filespace_id);
+			H5.H5Dwrite(text_id, text_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, dawnString.getBytes());
 		} catch (Exception e) {
 			logger.warn("Couldn't open scan data file. Scan metadata won't be written into NCD processing results file",e);
 		}
