@@ -77,6 +77,10 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionServiceImpl.class);
 	
+	public DataReductionServiceImpl() {
+		System.out.println("Starting data reduction service for NCD");
+	}
+	
 	@Override
 	public IDataReductionContext createContext() {
 		DataReductionContext context    = new DataReductionContext();

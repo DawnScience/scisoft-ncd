@@ -16,15 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors;
 
-import java.util.Hashtable;
-
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.service.DataReductionServiceImpl;
 
 public class Activator implements BundleActivator {
 
@@ -32,10 +27,6 @@ public class Activator implements BundleActivator {
     
 	@Override
 	public void start(BundleContext bundleContext) throws Exception {
-		logger.debug("Starting {}", bundleContext.getBundle().getSymbolicName());
-		Hashtable<String, String> props = new Hashtable<String, String>(1);
-		props.put("description", "A service used to convert run NCD data reduction");
-		bundleContext.registerService(IDataReductionService.class, new DataReductionServiceImpl(), props);
 	}
 
 	@Override
