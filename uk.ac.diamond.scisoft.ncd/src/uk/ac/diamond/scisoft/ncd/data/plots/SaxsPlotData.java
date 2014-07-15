@@ -21,7 +21,7 @@ import java.util.Arrays;
 import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.dawb.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;

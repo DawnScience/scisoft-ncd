@@ -28,9 +28,9 @@ import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
-import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;

@@ -36,12 +36,12 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
-import org.dawb.hdf5.Nexus;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dawnsci.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 

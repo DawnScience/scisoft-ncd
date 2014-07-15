@@ -26,7 +26,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
-import org.dawb.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;

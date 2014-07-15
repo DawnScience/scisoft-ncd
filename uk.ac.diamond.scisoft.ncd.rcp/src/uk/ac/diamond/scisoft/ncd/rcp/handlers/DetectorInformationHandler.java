@@ -26,12 +26,12 @@ import javax.measure.quantity.Length;
 import javax.measure.unit.Unit;
 
 import org.apache.commons.io.FilenameUtils;
-import org.dawb.hdf5.Nexus;
-import org.dawb.hdf5.nexus.NexusUtils;
 import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.dawnsci.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf5.nexus.NexusUtils;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchPart;

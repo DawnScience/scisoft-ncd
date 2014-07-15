@@ -558,7 +558,7 @@
       </handler>
    </extension>
    <extension
-         point="org.dawnsci.plotting.api.toolPage">
+         point="org.eclipse.dawnsci.plotting.api.toolPage">
       <plotting_tool_page
             category="org.dawnsci.plotting.tools.category.Science"
             class="uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.SaxsAnalysisTool"

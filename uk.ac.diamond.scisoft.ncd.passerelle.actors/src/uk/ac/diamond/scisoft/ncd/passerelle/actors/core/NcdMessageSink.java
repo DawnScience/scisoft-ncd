@@ -17,7 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import org.apache.commons.lang.StringUtils;
-import org.dawb.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;

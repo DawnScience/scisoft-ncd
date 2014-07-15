@@ -34,9 +34,9 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.dawb.hdf5.Nexus;
 import org.dawb.passerelle.common.parameter.roi.ROIParameter;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.dawnsci.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.BooleanToken;
