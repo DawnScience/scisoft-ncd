@@ -77,8 +77,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionServiceImpl.class);
 	
-	public DataReductionServiceImpl() {
+	static {
 		System.out.println("Starting data reduction service for NCD");
+	}
+	public DataReductionServiceImpl() {
+		// Important do nothing here, OSGI may start the service more than once.
 	}
 	
 	@Override
