@@ -275,7 +275,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				
 				if (bgScaling != null && !bgScaling.isNaN()) {
 					bgData.imultiply(bgScaling);
-					AbstractDataset bgErrors = ((AbstractDataset) bgData.getErrorBuffer()).clone();
+					Dataset bgErrors = bgData.getErrorBuffer().clone();
 					bgErrors.imultiply(bgScaling * bgScaling);
 					bgData.setErrorBuffer(bgErrors);
 				}
