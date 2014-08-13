@@ -101,7 +101,7 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
@@ -1313,7 +1313,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 			newQValue = 0;
 		}
 		if (currentQDataset != null) {
-			int index = DatasetUtils.findIndexGreaterThan((AbstractDataset) currentQDataset, newQValue / getAngstromNmFactor());
+			int index = DatasetUtils.findIndexGreaterThan((Dataset) currentQDataset, newQValue / getAngstromNmFactor());
 			if (index < 1) {
 				index = 1;
 			}

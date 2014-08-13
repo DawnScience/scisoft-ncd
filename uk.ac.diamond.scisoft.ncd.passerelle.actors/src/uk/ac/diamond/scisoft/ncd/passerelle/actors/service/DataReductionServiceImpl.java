@@ -48,8 +48,8 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Node;
@@ -412,7 +412,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (nodeLink != null) {
 			node = nodeLink.getDestination();
 			if (node instanceof HDF5Dataset) {
-				String text = ((AbstractDataset) ((HDF5Dataset) node).getDataset()).getString(0);
+				String text = ((Dataset) ((HDF5Dataset) node).getDataset()).getString(0);
 				
 				int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());

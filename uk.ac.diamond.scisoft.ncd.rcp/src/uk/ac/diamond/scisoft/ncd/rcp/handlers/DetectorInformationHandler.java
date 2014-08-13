@@ -42,7 +42,7 @@ import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Group;
@@ -168,7 +168,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 	        HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
 	        if (sasNode != null && dataNode != null) {
 				try {
-					String type = ((AbstractDataset)((HDF5Dataset)sasNode.getDestination()).getDataset()).getString(0);
+					String type = ((Dataset)((HDF5Dataset)sasNode.getDestination()).getDataset()).getString(0);
 					
 		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR)) {
 		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);
