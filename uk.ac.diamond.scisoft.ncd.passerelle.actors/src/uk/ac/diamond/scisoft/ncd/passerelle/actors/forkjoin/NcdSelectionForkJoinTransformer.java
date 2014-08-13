@@ -36,7 +36,7 @@ import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -191,11 +191,11 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					DataSliceIdentifiers error_ids = new DataSliceIdentifiers();
 					error_ids.setIDs(inputGroupID, inputErrorsID);
 
-					AbstractDataset data = NcdNexusUtils.sliceInputData(sliceData, ids);
+					Dataset data = NcdNexusUtils.sliceInputData(sliceData, ids);
 					if (hasErrors) {
 						DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 						tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-						AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+						Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 						data.setError(inputErrors);
 					} else {
 						// Use counting statistics if no input error estimates are available

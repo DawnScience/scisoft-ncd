@@ -47,7 +47,7 @@ import ptolemy.kernel.util.Attribute;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import ptolemy.kernel.util.Settable;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
@@ -170,7 +170,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	private void writeNxsFile(String filePath, List<DataMessageComponent> cache, DataMessageComponent comp) throws NullPointerException, HDF5Exception {
 		
 		final List<IDataset>        sets = MessageUtils.getDatasets(cache);
-		AbstractDataset data = (AbstractDataset) sets.get(0);
+		Dataset data = (Dataset) sets.get(0);
 		
 		// add frame dimension
 		int[] newShape = ArrayUtils.addAll(new int[] {1, 1}, data.getShape());
@@ -250,7 +250,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	}
 	
 	
-	private int makedata(int open_group_id, String name, int type, AbstractDataset data) throws NullPointerException, HDF5Exception {
+	private int makedata(int open_group_id, String name, int type, Dataset data) throws NullPointerException, HDF5Exception {
 		int rank = data.getRank();
 		int[] dim = data.getShape();
 

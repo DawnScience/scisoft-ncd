@@ -38,7 +38,6 @@ import org.eclipse.ui.services.ISourceProviderService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
@@ -55,7 +54,7 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 	private IProgressMonitor monitor;
 	private ArrayList<IPeak> initPeaks;
 	
-	private AbstractDataset dataset, mask;
+	private Dataset dataset, mask;
 	private SectorROI sroi;
 	private double maxFWHM;
 	
@@ -81,7 +80,7 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		}
 	}
 
-	public MultivariateFunctionWithMonitor(AbstractDataset dataset, AbstractDataset mask, SectorROI sroi) {
+	public MultivariateFunctionWithMonitor(Dataset dataset, Dataset mask, SectorROI sroi) {
 		super();
 		this.dataset = dataset;
 		this.mask = mask;
@@ -127,8 +126,8 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		ArrayList<IPeak> peaks = new ArrayList<IPeak>(initPeaks.size());
 		
 		SectorROI tmpRoi = new SectorROI(beamxy[0], beamxy[1], sroi.getRadius(0), sroi.getRadius(1), sroi.getAngle(0), sroi.getAngle(1), 1.0, true, sroi.getSymmetry());
-		AbstractDataset[] intresult = ROIProfile.sector(dataset, mask, tmpRoi, true, false, true);
-		AbstractDataset axis = DatasetUtils.linSpace(tmpRoi.getRadius(0), tmpRoi.getRadius(1),
+		Dataset[] intresult = ROIProfile.sector(dataset, mask, tmpRoi, true, false, true);
+		Dataset axis = DatasetUtils.linSpace(tmpRoi.getRadius(0), tmpRoi.getRadius(1),
 				intresult[0].getSize(), Dataset.INT32);
 		double error = 0.0;
 		for (int idx = 0; idx < initPeaks.size(); idx++) {
@@ -139,8 +138,8 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 			int startIdx = DatasetUtils.findIndexGreaterThanOrEqualTo(axis, pos - fwhm);
 			int stopIdx = DatasetUtils.findIndexGreaterThanOrEqualTo(axis, pos + fwhm) + 1;
 
-			AbstractDataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
-			AbstractDataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
+			Dataset axisSlice = axis.getSlice(new int[] { startIdx }, new int[] { stopIdx }, null);
+			Dataset peakSlice = intresult[0].getSlice(new int[] { startIdx }, new int[] { stopIdx },
 					null);
 			try {
 				CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),

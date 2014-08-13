@@ -28,7 +28,7 @@ import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 
@@ -36,8 +36,8 @@ public class NCDAbsoluteCalibration {
 	
 	private double absScale;
 	
-	private AbstractDataset dataI, absI, calibratedI;
-	private AbstractDataset dataQ, absQ;
+	private Dataset dataI, absI, calibratedI;
+	private Dataset dataQ, absQ;
 	private UnivariateFunction absInterpolate;
 	
 	private double qMin, qMax;
@@ -49,7 +49,7 @@ public class NCDAbsoluteCalibration {
 		return absScale;
 	}
 
-	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, AbstractDataset absI, Unit<ScatteringVector> unit) {
+	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, Dataset absI, Unit<ScatteringVector> unit) {
 		absQ = new DoubleDataset(lstAbsQ.size());
 		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
 			Amount<ScatteringVector> vec = lstAbsQ.get(idx);
@@ -62,7 +62,7 @@ public class NCDAbsoluteCalibration {
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
 	}
 	
-	public void setData(List<Amount<ScatteringVector>> lstDataQ, AbstractDataset dataI, AbstractDataset emptyI, Unit<ScatteringVector> unit) {
+	public void setData(List<Amount<ScatteringVector>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<ScatteringVector> unit) {
 		dataQ = new DoubleDataset(lstDataQ.size());
 		for (int idx = 0; idx < lstDataQ.size(); idx++) {
 			Amount<ScatteringVector> vec = lstDataQ.get(idx);
@@ -104,23 +104,23 @@ public class NCDAbsoluteCalibration {
 		calibratedData(dataI);
 	}
 	
-	public void calibratedData(AbstractDataset data) {
+	public void calibratedData(Dataset data) {
 		calibratedI = data.clone().imultiply(absScale);
 	}
 	
-	public AbstractDataset getCalibratedI() {
+	public Dataset getCalibratedI() {
 		return calibratedI;
 	}
 	
-	public AbstractDataset getAbsQ() {
+	public Dataset getAbsQ() {
 		return absQ;
 	}
 	
-	public AbstractDataset getAbsI() {
+	public Dataset getAbsI() {
 		return absI;
 	}
 	
-	public AbstractDataset getDataQ() {
+	public Dataset getDataQ() {
 		return dataQ;
 	}
 }

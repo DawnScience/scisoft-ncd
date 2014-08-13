@@ -39,7 +39,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -72,7 +72,7 @@ public class NcdAverageForkJoinTransformerTest {
 
 	private ReentrantLock lock = new ReentrantLock();
 
-	private static AbstractDataset data;
+	private static Dataset data;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
 	private static int dim = 2;
@@ -219,7 +219,7 @@ public class NcdAverageForkJoinTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 
@@ -250,16 +250,16 @@ public class NcdAverageForkJoinTransformerTest {
 						result_ids.setIDs(result_group_id, result_data_id);
 						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
 						result_error_ids.setIDs(result_group_id, result_errors_id);
-						AbstractDataset outDataset = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
-						AbstractDataset dataErrors = (AbstractDataset) data.getErrorBuffer(); 
+						Dataset outDataset = NcdNexusUtils.sliceInputData(slice, result_ids);
+						Dataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						Dataset dataErrors = data.getErrorBuffer(); 
 						for (int k = 0; k < shape[1]; k++) {
 							  for (int i = 0; i < imageShape[0]; i++) {
 								for (int j = 0; j < imageShape[1]; j++) {
 									start = new int[] {0, k, 0, i, j};
 									int[] stop = new int[] {(int) shape[0], k + 1, (int) shape[2], i + 1 , j + 1};
-									AbstractDataset dataSlice = data.getSlice(start, stop, null);
-									AbstractDataset errorsSlice = dataErrors.getSlice(start, stop, null);
+									Dataset dataSlice = data.getSlice(start, stop, null);
+									Dataset errorsSlice = dataErrors.getSlice(start, stop, null);
 									double value = outDataset.getDouble(0, k, 0, i, j);
 									double errors = outErrors.getDouble(0, k, 0, i, j);
 									double expected = (Double) dataSlice.sum() / (shape[0] * shape[2]);

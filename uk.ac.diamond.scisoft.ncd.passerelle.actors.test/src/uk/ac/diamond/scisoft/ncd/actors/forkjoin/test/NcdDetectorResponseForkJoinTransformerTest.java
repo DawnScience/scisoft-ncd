@@ -37,7 +37,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -69,7 +69,7 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 
 	private ReentrantLock lock = new ReentrantLock();
 
-	private static AbstractDataset data, drData;
+	private static Dataset data, drData;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
 	private static int dim = 2;
@@ -204,7 +204,7 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 
@@ -233,8 +233,8 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 						result_ids.setIDs(result_group_id, result_data_id);
 						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
 						result_error_ids.setIDs(result_group_id, result_errors_id);
-						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						Dataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						Dataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
 						
 						for (int h = 0; h < shape[0]; h++) {
 				 		  for (int g = 0; g < shape[1]; g++) {

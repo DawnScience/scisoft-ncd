@@ -49,6 +49,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Dataset;
@@ -125,7 +126,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					if (shape.length > 2) {
 						Arrays.fill(stop, 0, shape.length - 2, 1);
 					}
-					AbstractDataset data = (AbstractDataset) node.getDataset()
+					Dataset data = (Dataset) node.getDataset()
 							.getSlice(start, stop, null).clone().squeeze();
 
 					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);

@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.hdf5.HDF5Attribute;
@@ -127,7 +127,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				Amount<Energy> energy = null;
 				HDF5Node node = nodeLink.getDestination();
 				if (node instanceof HDF5Dataset) {
-					AbstractDataset qaxis = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+					Dataset qaxis = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
 					double gradient = qaxis.getDouble(0);
 					double intercept = qaxis.getDouble(1);
 
@@ -216,7 +216,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
-						AbstractDataset beam = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						Dataset beam = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
 						roiData.setPoint(beam.getDouble(0), beam.getDouble(1));
 					}
 				}
@@ -225,7 +225,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
-						AbstractDataset angles = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						Dataset angles = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
 						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
 					}
 				}
@@ -234,7 +234,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
-						AbstractDataset radii = (AbstractDataset) ((HDF5Dataset) node).getDataset().getSlice();
+						Dataset radii = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
 						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
 					}
 				}
@@ -243,7 +243,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof HDF5Dataset) {
-						String symmetryText = ((AbstractDataset) ((HDF5Dataset) node).getDataset()).getString(0);
+						String symmetryText = ((Dataset) ((HDF5Dataset) node).getDataset()).getString(0);
 						int symmetry = SectorROI.getSymmetry(symmetryText);
 						if (roiData.checkSymmetry(symmetry)) {
 							roiData.setSymmetry(symmetry);

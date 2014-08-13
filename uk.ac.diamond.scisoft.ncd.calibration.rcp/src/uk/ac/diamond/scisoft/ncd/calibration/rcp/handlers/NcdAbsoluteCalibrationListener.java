@@ -49,8 +49,10 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -105,13 +107,13 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		this.emptyCellFileName = emptyCellFileName;
 	}
 
-	private AbstractDataset[] integrateInputData(ISourceProviderService service,
+	private Dataset[] integrateInputData(ISourceProviderService service,
 			String scaler,
 			String detectorSaxs,
 			SectorROI sroi,
 			QSpace qSpace,
 			String fileName) {
-		final AbstractDataset imageDataset;
+		final Dataset imageDataset;
 		final BooleanDataset mask;
 		final NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		try {
@@ -160,18 +162,18 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			if (shape.length > 2) {
 				Arrays.fill(stop, 0, shape.length - 2, 1);
 			}
-			AbstractDataset imageIntDataset = (AbstractDataset) node.getDataset().getSlice(start, stop, null).clone()
+			Dataset imageIntDataset = (Dataset) node.getDataset().getSlice(start, stop, null).clone()
 					.squeeze();
 			imageDataset = DatasetUtils.cast(imageIntDataset, Dataset.FLOAT32);
 			imageDataset.idivide(norm);
 
 			mask = MaskingTool.getSavedMask();
 
-			AbstractDataset[] profile = ROIProfile.sector(imageDataset, mask, sroi, true, false, false, qSpace, XAxis.Q, false);
-			AbstractDataset dataI = profile[0];
-			AbstractDataset dataQDataset = profile[4];
+			Dataset[] profile = ROIProfile.sector(imageDataset, mask, sroi, true, false, false, qSpace, XAxis.Q, false);
+			Dataset dataI = profile[0];
+			Dataset dataQDataset = profile[4];
 			
-			return new AbstractDataset[] {dataQDataset, dataI};
+			return new Dataset[] {dataQDataset, dataI};
 			
 		} catch (Exception ex) {
 			Status status = new Status(IStatus.ERROR, ID,
@@ -184,7 +186,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 	@Override
 	public void widgetSelected(SelectionEvent e) {
 		
-		final AbstractDataset glassyCarbonI;
+		final Dataset glassyCarbonI;
 		final List<Amount<ScatteringVector>> dataQ, absQ;
 		
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
@@ -201,7 +203,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			DatLoader dataLoader = new DatLoader(FileLocator.resolve(fileURL).getPath());
 			DataHolder data = dataLoader.loadFile();
 			
-			AbstractDataset absQDataset = data.getDataset(0);
+			Dataset absQDataset = data.getDataset(0);
 			absQ = new ArrayList<Amount<ScatteringVector>>();
 			final IndexIterator it = absQDataset.getIterator();
 			while (it.hasNext()) {
@@ -293,12 +295,12 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 				monitor.subTask("Reading calibration data...");
 				monitor.worked(1);
 				
-				AbstractDataset[] sampelData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, dataFileName);
-				AbstractDataset dataQDataset = sampelData[0];
-				AbstractDataset dataI = sampelData[1];
+				Dataset[] sampelData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, dataFileName);
+				Dataset dataQDataset = sampelData[0];
+				Dataset dataI = sampelData[1];
 				
-				AbstractDataset[] emptyCellData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, emptyCellFileName);
-				AbstractDataset emptyI = emptyCellData[1];
+				Dataset[] emptyCellData = integrateInputData(service, scaler, detectorSaxs, sroi, qSpace, emptyCellFileName);
+				Dataset emptyI = emptyCellData[1];
 				
 				monitor.subTask("Calculating calibration parameters...");
 				for (int idx = 0; idx < dataQDataset.getSize(); idx++) {
@@ -311,7 +313,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 					if (calibrant.equals("Glassy Carbon")) {
 						ncdAbsoluteCalibration.setAbsoluteData(absQ, glassyCarbonI, unit);
 					} else if (calibrant.equals("Water")) {
-						AbstractDataset tmpI = AbstractDataset.ones(dataI.getShape(), AbstractDataset.FLOAT64);
+						Dataset tmpI = DatasetFactory.ones(dataI.getShape(), Dataset.FLOAT64);
 						tmpI.imultiply(I_H2O);
 						ncdAbsoluteCalibration.setAbsoluteData(dataQ, tmpI, unit);
 					}

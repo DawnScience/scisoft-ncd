@@ -35,8 +35,9 @@ import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -139,11 +140,11 @@ public class NcdProcessingObjectTransformer extends Actor {
 			
 			MultidimensionalCounter frameCounter = new MultidimensionalCounter(selectedShape);
 			Iterator iter = frameCounter.iterator();
-			AbstractDataset data = AbstractDataset.zeros(resultShape, Dataset.FLOAT32);
+			Dataset data = DatasetFactory.zeros(resultShape, Dataset.FLOAT32);
 			data.setName(datasetName);
-			AbstractDataset errors = null;
+			Dataset errors = null;
 			if (hasErrors) {
-				errors = AbstractDataset.zeros(resultShape, Dataset.FLOAT64);
+				errors = DatasetFactory.zeros(resultShape, Dataset.FLOAT64);
 			}
 			while (iter.hasNext()) {
 				iter.next();
@@ -159,7 +160,7 @@ public class NcdProcessingObjectTransformer extends Actor {
 				
 				DataSliceIdentifiers ids = new DataSliceIdentifiers();
 				ids.setIDs(inputGroupID, inputDataID);
-				AbstractDataset value = NcdNexusUtils.sliceInputData(sliceData, ids);
+				Dataset value = NcdNexusUtils.sliceInputData(sliceData, ids);
 				int[] start = Arrays.copyOf(frame, resultShape.length);
 				int[] stop = Arrays.copyOf(resultShape, resultShape.length);
 				for (int i = 0; i < selectedShape.length; i++) {
@@ -170,7 +171,7 @@ public class NcdProcessingObjectTransformer extends Actor {
 				if (hasErrors && errors != null) {
 					DataSliceIdentifiers errors_ids = new DataSliceIdentifiers();
 					errors_ids.setIDs(inputGroupID, inputErrorsID);
-					AbstractDataset error = NcdNexusUtils.sliceInputData(sliceData, errors_ids);
+					Dataset error = NcdNexusUtils.sliceInputData(sliceData, errors_ids);
 					errors.setSlice(error, start, stop, null);
 				}
 			}

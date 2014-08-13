@@ -45,7 +45,8 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.roi.IROI;
@@ -81,7 +82,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 	private double[] percentiles;
 	private EuclideanDistance distance;
 	
-	private AbstractDataset mask;
+	private Dataset mask;
 
 	
 
@@ -116,8 +117,8 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 			
 			Object objMask = ((ObjectToken) maskParam.getToken()).getValue();
 			if (objMask != null) {
-				if (objMask instanceof AbstractDataset) {
-					mask = (AbstractDataset) objMask;
+				if (objMask instanceof Dataset) {
+					mask = (Dataset) objMask;
 				} else {
 					throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Invalid mask parameter",
 							this, null);
@@ -210,11 +211,11 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 			
 			for (int idx = 0; idx < numBins; idx++) {
 				
-				AbstractDataset binData = AbstractDataset.zeros(grid, AbstractDataset.FLOAT32);
+				Dataset binData = DatasetFactory.zeros(grid, Dataset.FLOAT32);
 				
 				for (Pair<Integer, Integer> point : resBins.get(idx)) {
 				
-					AbstractDataset data;
+					Dataset data;
 					try {
 						if (monitor.isCanceled()) {
 							throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -248,7 +249,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						}
 						
 						int dtype = HDF5Loader.getDtype(dataclass_id, datasize_id);
-						data = AbstractDataset.zeros(grid, dtype);
+						data = DatasetFactory.zeros(grid, dtype);
 						if ((dataspace_id > 0) && (memspace_id > 0)) {
 							int read_id = H5.H5Dread(
 									inputDataID,
@@ -288,7 +289,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						}
 					}
 					
-					data = DatasetUtils.cast(data, AbstractDataset.FLOAT32);
+					data = DatasetUtils.cast(data, Dataset.FLOAT32);
 					binData.iadd(data);
 				}
 				double mean = (Double) binData.mean(true);

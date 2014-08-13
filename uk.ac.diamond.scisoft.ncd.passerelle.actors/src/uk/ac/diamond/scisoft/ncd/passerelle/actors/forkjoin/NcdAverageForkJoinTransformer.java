@@ -35,6 +35,8 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
@@ -70,7 +72,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 	private int sliceDim, sliceSize;
 
 	public Port selectionInput;
-	private AbstractDataset selectionData;
+	private Dataset selectionData;
 
 	public NcdAverageForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -103,8 +105,8 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 		DataMessageComponent receivedObject = (DataMessageComponent) receivedMsg.getBodyContent();
 		if (receivedObject.getList().keySet().contains("selection")) {
 			Object obj = receivedObject.getList("selection");
-			if (obj instanceof AbstractDataset) {
-				selectionData = (AbstractDataset) obj;
+			if (obj instanceof Dataset) {
+				selectionData = (Dataset) obj;
 				return;
 			}
 		}
@@ -138,7 +140,7 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 		
 		int[] gridShape = (int[]) ConvertUtils.convert(Arrays.copyOf(frames, frames.length - dimension), int[].class);
 		if (!Arrays.equals(selectionData.getShape(), gridShape)) {
-			selectionData = AbstractDataset.ones(gridShape, AbstractDataset.INT);
+			selectionData = DatasetFactory.ones(gridShape, Dataset.INT);
 		}
 	}
 	
@@ -210,8 +212,8 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 				IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);
 				
 				int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dimension, framesAve_int.length);
-				AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT32);
-				AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT64);
+				Dataset ave_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
+				Dataset ave_errors_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT64);
 				try {
 					DataSliceIdentifiers input_ids = new DataSliceIdentifiers();
 					input_ids.setIDs(inputGroupID, inputDataID);
@@ -233,8 +235,8 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 							continue;
 						}
 						sliceSettings.setStart(tmpPos);
-						AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
-						AbstractDataset errors_slice;
+						Dataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
+						Dataset errors_slice;
 						if (hasErrors) {
 							errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
 							errors_slice.ipower(2);

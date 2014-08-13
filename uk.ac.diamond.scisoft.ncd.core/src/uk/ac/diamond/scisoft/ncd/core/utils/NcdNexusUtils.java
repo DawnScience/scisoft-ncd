@@ -28,7 +28,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -294,7 +295,7 @@ public final class NcdNexusUtils {
 		return dims;
 	}
 
-	public static AbstractDataset sliceInputData(SliceSettings sliceData, DataSliceIdentifiers ids)
+	public static Dataset sliceInputData(SliceSettings sliceData, DataSliceIdentifiers ids)
 			throws HDF5Exception {
 		long[] frames = sliceData.getFrames();
 		long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);
@@ -312,7 +313,7 @@ public final class NcdNexusUtils {
 
 		ids.setSlice(start_data, block_data, count_data, block_data);
 		
-		AbstractDataset data;
+		Dataset data;
 		int memspace_id = -1;
 		try {
 			int select_id = H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, ids.start,
@@ -324,7 +325,7 @@ public final class NcdNexusUtils {
 			int rank = block_data.length;
 			int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
 			int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
-			data = AbstractDataset.zeros(block_data_int, dtype);
+			data = DatasetFactory.zeros(block_data_int, dtype);
 			memspace_id = H5.H5Screate_simple(rank, ids.block, null);
 			// Read the data using the previously defined hyperslab.
 			if ((ids.dataset_id > 0) && (ids.dataspace_id > 0) && (memspace_id > 0)) {

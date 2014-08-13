@@ -34,7 +34,8 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -90,7 +91,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 			
 			for (int idx = 0; idx < frames[frames.length - 1]; idx++) {
 				
-				AbstractDataset data, errors;
+				Dataset data, errors;
 				try {
 					if (monitor.isCanceled()) {
 						throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -124,7 +125,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					}
 					
 					int dtype = HDF5Loader.getDtype(dataclass_id, datasize_id);
-					data = AbstractDataset.zeros(grid, dtype);
+					data = DatasetFactory.zeros(grid, dtype);
 					if ((dataspace_id > 0) && (memspace_id > 0)) {
 						int read_id = H5.H5Dread(
 								inputDataID,
@@ -153,7 +154,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					}
 					
 					int errdtype = HDF5Loader.getDtype(errorclass_id, errorsize_id);
-					errors = AbstractDataset.zeros(grid, errdtype);
+					errors = DatasetFactory.zeros(grid, errdtype);
 					if ((errorspace_id > 0) && (errormemspace_id > 0)) {
 						int read_id = H5.H5Dread(
 								inputErrorsID,
@@ -194,7 +195,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					}
 				}
 				
-				data = DatasetUtils.cast(data, AbstractDataset.FLOAT32);
+				data = DatasetUtils.cast(data, Dataset.FLOAT32);
 				double mean = (Double) data.mean(true);
 				double std = (Double) data.stdDeviation();
 				data.isubtract(mean).idivide(std);

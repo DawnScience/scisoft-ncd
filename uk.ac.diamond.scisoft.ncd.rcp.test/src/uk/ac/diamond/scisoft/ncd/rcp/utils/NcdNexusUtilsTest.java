@@ -34,7 +34,8 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.ILazyDataset;
@@ -103,14 +104,14 @@ public class NcdNexusUtilsTest {
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
 	    SliceSettings drSlice = new SliceSettings(frames_long, sliceDim, sliceBatch);
 	    drSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(drSlice, dr_id);
+		Dataset result = NcdNexusUtils.sliceInputData(drSlice, dr_id);
 		
 		for (int idx = 0; idx < data.getShape()[0]; idx++)
 			for (int frame = 0; frame < data.getShape()[1]; frame++) {
 				start = new int[] { idx, frame, 0, 0 };
 				stop = new int[] { idx + 1, frame + 1, image[0], image[1] };
-				AbstractDataset testResult = result.getSlice(start, stop, null);
-				AbstractDataset testData = (AbstractDataset) data.getSlice(start, stop, null);
+				Dataset testResult = result.getSlice(start, stop, null);
+				Dataset testData = (Dataset) data.getSlice(start, stop, null);
 				float valResult = testResult.max().floatValue();
 				float valData = testData.max().floatValue();
 				float acc = (float) Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)),
@@ -134,8 +135,8 @@ public class NcdNexusUtilsTest {
 	    SliceSettings drSlice = new SliceSettings(frames_long, 0, 1);
 		int[] start = new int[] {0, 0, 0, 0};
 	    drSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(drSlice, dr_id);
-		AbstractDataset result = sliceInputData(dim, frames, format, dr_id);
+		Dataset data = NcdNexusUtils.sliceInputData(drSlice, dr_id);
+		Dataset result = sliceInputData(dim, frames, format, dr_id);
 		
 		MultidimensionalCounter resultCounter = new MultidimensionalCounter(result.getShape());
 		Iterator resIter = resultCounter.iterator();
@@ -176,7 +177,7 @@ public class NcdNexusUtilsTest {
 		return new DataSliceIdentifiers[] {ids, errors_ids};
 	}
 	
-	public static AbstractDataset sliceInputData(int dim, int[] frames, String format, DataSliceIdentifiers ids) throws HDF5Exception {
+	public static Dataset sliceInputData(int dim, int[] frames, String format, DataSliceIdentifiers ids) throws HDF5Exception {
 		int[] datDimMake = Arrays.copyOfRange(frames, 0, frames.length-dim);
 		int[] imageSize = Arrays.copyOfRange(frames, frames.length - dim, frames.length);
 		ArrayList<int[]> list = NcdDataUtils.createSliceList(format, datDimMake);
@@ -194,8 +195,8 @@ public class NcdNexusUtilsTest {
 		Arrays.fill(count, 1);
 		
 		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
-		AbstractDataset data = AbstractDataset.zeros(block_int, dtype);
-		AbstractDataset result = null;
+		Dataset data = DatasetFactory.zeros(block_int, dtype);
+		Dataset result = null;
 		
 		MultidimensionalCounter bgFrameCounter = new MultidimensionalCounter(datDimMake);
 		Iterator iter = bgFrameCounter.iterator();

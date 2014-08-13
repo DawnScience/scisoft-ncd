@@ -37,7 +37,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -67,7 +67,7 @@ public class NcdInvariantForkJoinTransformerTest {
 
 	private ReentrantLock lock = new ReentrantLock();
 
-	private static AbstractDataset data;
+	private static Dataset data;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] invShape = new long[] {shape[0], shape[1], shape[2]};
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
@@ -167,7 +167,7 @@ public class NcdInvariantForkJoinTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 
@@ -196,8 +196,8 @@ public class NcdInvariantForkJoinTransformerTest {
 						result_ids.setIDs(result_group_id, result_data_id);
 						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
 						result_error_ids.setIDs(result_group_id, result_errors_id);
-						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						Dataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						Dataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
 						for (int h = 0; h < invShape[0]; h++) {
 						  for (int g = 0; g < invShape[1]; g++) {
 							for (int k = 0; k < invShape[2]; k++) {

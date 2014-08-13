@@ -62,8 +62,8 @@ import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -185,8 +185,8 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 			final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
 			if (runRefinement) {
 				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-				final AbstractDataset dataset = (AbstractDataset) trace.getData();
-				final AbstractDataset mask = (AbstractDataset) trace.getMask();
+				final Dataset dataset = (Dataset) trace.getData();
+				final Dataset mask = (Dataset) trace.getMask();
 
 				final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask,
 						sroi);
@@ -233,9 +233,9 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		Amount<Length> px = getPixel();
 		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
-		AbstractDataset xAxis = AbstractDataset.arange(sroi.getIntRadius(1), Dataset.FLOAT32);
+		Dataset xAxis = DatasetFactory.createRange(sroi.getIntRadius(1), Dataset.FLOAT32);
 		xAxis.imultiply(px.getEstimatedValue());
-		AbstractDataset qvalues = calibrationFunction.calculateValues(xAxis);
+		Dataset qvalues = calibrationFunction.calculateValues(xAxis);
 		
         ILineTrace calibrationLine = plottingSystem.createLineTrace("Fitting line");
         calibrationLine.setTraceType(TraceType.SOLID_LINE);
@@ -258,24 +258,24 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 			qEstError.add(q.getAbsoluteError());
 		}
 		
-		AbstractDataset.createFromList(peakPos);
+		DatasetFactory.createFromList(peakPos);
         ILineTrace estPoints = plottingSystem.createLineTrace("Peak Positions");
         estPoints.setTraceType(TraceType.POINT);
         estPoints.setTraceColor(ColorConstants.red);
         estPoints.setPointStyle(PointStyle.CIRCLE);
         estPoints.setPointSize(5);
-        AbstractDataset qDataset = AbstractDataset.createFromList(qEst);
-        qDataset.setError(AbstractDataset.createFromList(qEstError));
-        estPoints.setData(AbstractDataset.createFromList(peakPos), qDataset);
+        Dataset qDataset = DatasetFactory.createFromList(qEst);
+        qDataset.setError(DatasetFactory.createFromList(qEstError));
+        estPoints.setData(DatasetFactory.createFromList(peakPos), qDataset);
         plottingSystem.addTrace(estPoints);
         
-		AbstractDataset.createFromList(peakPos);
+        DatasetFactory.createFromList(peakPos);
         ILineTrace referencePoints = plottingSystem.createLineTrace("Calibration Points");
         referencePoints.setTraceType(TraceType.POINT);
         referencePoints.setTraceColor(ColorConstants.darkBlue);
         referencePoints.setPointStyle(PointStyle.FILLED_TRIANGLE);
         referencePoints.setPointSize(10);
-        referencePoints.setData(AbstractDataset.createFromList(peakPos), AbstractDataset.createFromList(qData));
+        referencePoints.setData(DatasetFactory.createFromList(peakPos), DatasetFactory.createFromList(qData));
         plottingSystem.addTrace(referencePoints);
         
         plottingSystem.getSelectedXAxis().setTitle("Pixel position / " + px.getUnit().toString());

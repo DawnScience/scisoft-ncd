@@ -175,8 +175,8 @@ public class LazyAverage extends LazyDataReduction {
 				}
 				
 				sliceSettings.setStart(data_iter.getPos());
-				AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
-				AbstractDataset errors_slice;
+				Dataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids);
+				Dataset errors_slice;
 				if (input_errors_ids.dataset_id != -1) {
 					errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids);
 					errors_slice.ipower(2);

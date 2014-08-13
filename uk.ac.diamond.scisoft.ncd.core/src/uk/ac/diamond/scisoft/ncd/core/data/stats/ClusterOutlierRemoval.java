@@ -28,6 +28,7 @@ import org.apache.commons.math3.stat.StatUtils;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 
 public class ClusterOutlierRemoval extends SaxsStatsData {
@@ -77,7 +78,7 @@ public class ClusterOutlierRemoval extends SaxsStatsData {
 			    System.out.println();
 			}
 			
-			AbstractDataset result = AbstractDataset.zeros(shape, AbstractDataset.INT);
+			Dataset result = DatasetFactory.zeros(shape, Dataset.INT);
 			//int selectIndex = dev.indexOf(Collections.min(dev));
 			for (int selectIndex = 0; selectIndex < clusterResults.size(); selectIndex++) {
 				Cluster<DoublePoint> selectCluster = clusterResults.get(selectIndex);

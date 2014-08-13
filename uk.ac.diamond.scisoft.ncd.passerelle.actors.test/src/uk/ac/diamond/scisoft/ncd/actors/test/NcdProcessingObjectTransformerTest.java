@@ -42,7 +42,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -73,7 +73,7 @@ public class NcdProcessingObjectTransformerTest {
 
 	private ReentrantLock lock = new ReentrantLock();
 
-	private static AbstractDataset data, errors;
+	private static Dataset data, errors;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
 	private static String frameSelection = "2,4;;34-47,89";
@@ -173,7 +173,7 @@ public class NcdProcessingObjectTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 		errors = data.getError(); 
 	}
@@ -200,8 +200,8 @@ public class NcdProcessingObjectTransformerTest {
 				    slice.setStart(start);
 				    
 					DataMessageComponent dataMsgComp = MessageUtils.coerceMessage(message);
-					AbstractDataset outDataset = (AbstractDataset) dataMsgComp.getList(testDatasetName);
-					AbstractDataset outErrors = (AbstractDataset) outDataset.getErrorBuffer();
+					Dataset outDataset = (Dataset) dataMsgComp.getList(testDatasetName);
+					Dataset outErrors = outDataset.getErrorBuffer();
 					for (int k = 0; k < shapeRes[0]; k++) {
 						for (int l = 0; l < shapeRes[1]; l++) {
 							for (int m = 0; m < shapeRes[2]; m++) {
@@ -212,8 +212,8 @@ public class NcdProcessingObjectTransformerTest {
 										int r = indexList.get(2)[m];
 										start = new int[] { p, q, r, i, j };
 										int[] stop = new int[] { p + 1, q + 1, r + 1, i + 1, j + 1 };
-										AbstractDataset dataSlice = data.getSlice(start, stop, null);
-										AbstractDataset errorsSlice = errors.getSlice(start, stop, null);
+										Dataset dataSlice = data.getSlice(start, stop, null);
+										Dataset errorsSlice = errors.getSlice(start, stop, null);
 										double value = outDataset.getDouble(k, l, m, i, j);
 										double errors = outErrors.getDouble(k, l, m, i, j);
 										double expected = dataSlice.getDouble(0);

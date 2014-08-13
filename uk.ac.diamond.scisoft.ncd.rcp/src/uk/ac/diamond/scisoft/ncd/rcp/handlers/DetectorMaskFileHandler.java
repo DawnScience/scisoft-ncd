@@ -47,7 +47,6 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -63,7 +62,7 @@ import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 public class DetectorMaskFileHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DetectorMaskFileHandler.class);
-	private AbstractDataset mask;
+	private Dataset mask;
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -94,7 +93,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName));
 				}
 				
-				mask = (AbstractDataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
+				mask = (Dataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
 				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, Dataset.BOOL);
 				final BooleanDataset savedMask = MaskingTool.getSavedMask();
 

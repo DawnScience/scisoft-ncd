@@ -64,8 +64,9 @@ import com.isencia.passerelle.model.FlowManager;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
@@ -111,7 +112,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	private Amount<Length> pxSize;
 	private Unit<ScatteringVector> qaxisUnit;
 	private BooleanDataset mask;
-	private AbstractDataset drData;
+	private Dataset drData;
 
 	private CalibrationResultsBean crb;
 	
@@ -521,7 +522,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				memspaceID = H5.H5Screate_simple(rank, drFrames, null);
 
 				int[] drFramesInt = (int[]) ConvertUtils.convert(drFrames, int[].class);
-				drData = AbstractDataset.zeros(drFramesInt, dtype);
+				drData = DatasetFactory.zeros(drFramesInt, dtype);
 
 				int readID = -1;
 				if ((drDataID >= 0) && (drDataspaceID >= 0) && (memspaceID >= 0)) {

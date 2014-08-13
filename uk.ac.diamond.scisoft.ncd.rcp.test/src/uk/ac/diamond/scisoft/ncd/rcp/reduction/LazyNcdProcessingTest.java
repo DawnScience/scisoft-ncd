@@ -38,7 +38,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -87,7 +87,7 @@ public class LazyNcdProcessingTest {
 	private static Integer bgLastFrame = 5;
 	private static String bgFrameSelection = "0;" + bgFirstFrame.toString() + "-" + bgLastFrame.toString();
 	
-	private static AbstractDataset dr;
+	private static Dataset dr;
 	
 	private static long[] frames = new long[] {1, 120, 512, 512};
 	private static long[] drFrames = new long[] {1, 1, 512, 512};
@@ -211,7 +211,7 @@ public class LazyNcdProcessingTest {
 	    SliceSettings dataSlice = new SliceSettings(frames, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, firstFrame, 0, 0};
 	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyDetectorResponse.name);
 	    DataSliceIdentifiers result_id = array_id[0];
@@ -219,8 +219,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings resultSlice = new SliceSettings(framesResult, 1, lastFrame - firstFrame + 1);
 	    start = new int[] {0, 0, 0, 0};
 	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+		Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		Dataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < 512; i++) {
@@ -250,12 +250,12 @@ public class LazyNcdProcessingTest {
 		    SliceSettings dataSlice = new SliceSettings(framesResult, 1, 1);
 		    int[] start = new int[] {0, frame, 0, 0};
 		    dataSlice.setStart(start);
-			AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
-			AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
+			Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
+			Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
 			data.setError(dataErrors);
 			
 			intSector.setAverageArea(true);
-			AbstractDataset[] intResult = ROIProfile.sector(data, null, intSector, true, true, false, null, null, true);
+			Dataset[] intResult = ROIProfile.sector(data, null, intSector, true, true, false, null, null, true);
 
 		    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazySectorIntegration.name);
 		    DataSliceIdentifiers result_id = array_id[0];
@@ -263,8 +263,8 @@ public class LazyNcdProcessingTest {
 		    SliceSettings resultSlice = new SliceSettings(framesSec, 1, 1);
 		    start = new int[] {0, frame, 0};
 		    resultSlice.setStart(start);
-			AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-			AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+			Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+			Dataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 			for (int j = 0; j < intPoints; j++) {
 				float  valResult      = result.getFloat(0, 0, j);
@@ -291,7 +291,7 @@ public class LazyNcdProcessingTest {
 				float  valResult      = result.getFloat(0, 0, j);
 				double valResultError = resultError.getDouble(0, 0, j);
 				float  valData        = intResult[1].getFloat(j);
-				double valDataError = Math.sqrt(((AbstractDataset) intResult[1].getErrorBuffer()).getDouble(j));
+				double valDataError = Math.sqrt(intResult[1].getError(j));
 				double acc    = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
 				double accerr = Math.max(1e-6 * Math.abs(Math.sqrt(valResultError * valResultError + valDataError * valDataError)),	1e-10);
 
@@ -310,21 +310,21 @@ public class LazyNcdProcessingTest {
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
 	    DataSliceIdentifiers norm_id = NcdNexusUtilsTest.readDataId(filename, calibration, "data", null)[0];
 	    SliceSettings normSlice = new SliceSettings(framesCal, 1, lastFrame - firstFrame + 1);
 	    normSlice.setStart(start);
-		AbstractDataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
+		Dataset norm = NcdNexusUtils.sliceInputData(normSlice, norm_id);
 		
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyNormalisation.name);
 	    DataSliceIdentifiers result_id = array_id[0];
 	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+		Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		Dataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			float valNorm = norm.getFloat(0, frame, normChannel); 
@@ -351,16 +351,16 @@ public class LazyNcdProcessingTest {
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyBackgroundSubtraction.name);
 	    DataSliceIdentifiers result_id = array_id[0];
 	    DataSliceIdentifiers result_error_id = array_id[1];
 	    SliceSettings resultSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-		AbstractDataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+		Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		Dataset resultError = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 	    DataSliceIdentifiers[] bg_ids = NcdNexusUtilsTest.readDataId(bgFilename, detectorBg, "data", "errors");
 	    DataSliceIdentifiers bg_data_id = bg_ids[0];
@@ -368,8 +368,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings bgSlice = new SliceSettings(framesBg, 1, 1);
 	    start = new int[] {0, 0, 0};
 	    bgSlice.setStart(start);
-		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_data_id);
-		AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSlice, bg_error_id);
+		Dataset bgData = NcdNexusUtils.sliceInputData(bgSlice, bg_data_id);
+		Dataset bgErrors = NcdNexusUtils.sliceInputData(bgSlice, bg_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			for (int i = 0; i < intPoints; i++) {
@@ -398,8 +398,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, lastFrame - firstFrame + 1);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 		dataErrors.ipower(2);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyInvariant.name);
@@ -408,8 +408,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings resultSlice = new SliceSettings(framesInv, 1, lastFrame - firstFrame + 1);
 	    start = new int[] {0, 0};
 	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+		Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		Dataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int frame = 0; frame <= lastFrame - firstFrame; frame++) {
 			float valResult = result.getFloat(0, frame);
@@ -436,8 +436,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings dataSlice = new SliceSettings(framesSec, 1, (int) framesSec[1]);
 	    int[] start = new int[] {0, 0, 0};
 	    dataSlice.setStart(start);
-		AbstractDataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+		Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id);
 		dataErrors.ipower(2);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, LazyAverage.name);
@@ -446,8 +446,8 @@ public class LazyNcdProcessingTest {
 	    SliceSettings resultSlice = new SliceSettings(framesAve, 1, 1);
 	    start = new int[] {0, 0, 0};
 	    resultSlice.setStart(start);
-		AbstractDataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
-		AbstractDataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
+		Dataset result = NcdNexusUtils.sliceInputData(resultSlice, result_id);
+		Dataset resultErrors = NcdNexusUtils.sliceInputData(resultSlice, result_error_id);
 
 		for (int i = 0; i < intPoints; i++) {
 			float valResult = result.getFloat(0, 0, i);
