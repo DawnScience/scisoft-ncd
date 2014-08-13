@@ -40,7 +40,7 @@ import org.eclipse.ui.progress.UIJob;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -156,11 +156,11 @@ class SaxsAnalysisDelegate {
 					yErrors = ((IErrorDataset) yData).getError().clone();
 				}
 				
-				AbstractDataset xTraceData = (AbstractDataset) xData.clone();
+				Dataset xTraceData = (Dataset) xData.clone();
 				if (xErrors != null) {
 					xTraceData.setError(xErrors);
 				}
-				AbstractDataset yTraceData = (AbstractDataset) yData.clone();
+				Dataset yTraceData = (Dataset) yData.clone();
 				if (yErrors != null) {
 					yTraceData.setError(yErrors);
 				}

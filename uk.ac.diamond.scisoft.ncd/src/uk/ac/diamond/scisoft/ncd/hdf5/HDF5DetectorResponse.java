@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
@@ -32,13 +32,13 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5DetectorResponse.class);
 
-	private AbstractDataset response;
+	private Dataset response;
 
-	public AbstractDataset getResponse() {
+	public Dataset getResponse() {
 		return response;
 	}
 
-	public void setResponse(AbstractDataset response) {
+	public void setResponse(Dataset response) {
 		this.response = response;
 	}
 
@@ -46,7 +46,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 		super(name, key);
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public Dataset writeout(int dim, ILock lock) {
 		if (response == null) {
 			return null;
 		}
@@ -57,7 +57,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			response = response.squeeze();
 			
 			if (data.getRank() != response.getRank() + 1) {
@@ -69,7 +69,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {

@@ -35,7 +35,7 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -66,7 +66,7 @@ public class NcdNormalisationTransformerTest {
 
 	private ReentrantLock lock = new ReentrantLock();
 
-	private static AbstractDataset data;
+	private static Dataset data;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] normShape = new long[] { shape[0], shape[1], shape[2], 1 };
 	private static long[] imageShape = new long[] { shape[3], shape[4] };
@@ -189,7 +189,7 @@ public class NcdNormalisationTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 
@@ -245,8 +245,8 @@ public class NcdNormalisationTransformerTest {
 					Object obj = message.getBodyContent();
 					if (obj instanceof NcdProcessingSliceObject) {
 						content = (NcdProcessingSliceObject) obj;
-						AbstractDataset outData = content.getData();
-						AbstractDataset outErrors = outData.getError();
+						Dataset outData = content.getData();
+						Dataset outErrors = outData.getError();
 						for (int h = 0; h < shape[0]; h++) {
 							for (int g = 0; g < shape[1]; g++) {
 								for (int k = 0; k < shape[2]; k++) {

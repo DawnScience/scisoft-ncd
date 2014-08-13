@@ -35,7 +35,7 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -59,7 +59,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 
 	public Parameter detectorResponseParam;
 
-	private AbstractDataset drData;
+	private Dataset drData;
 
 	public NcdDetectorResponseForkJoinTransformer(CompositeEntity container, String name)
 			throws NameDuplicationException, IllegalActionException {
@@ -75,8 +75,8 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 
 			Object obj = ((ObjectToken) detectorResponseParam.getToken()).getValue();
 			if (obj != null) {
-				if (obj instanceof AbstractDataset) {
-					drData = (AbstractDataset) obj;
+				if (obj instanceof Dataset) {
+					drData = (Dataset) obj;
 				} else {
 					throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR,
 							"Invalid detector response dataset", this, null);
@@ -148,11 +148,11 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
@@ -164,10 +164,10 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				DetectorResponse dr = new DetectorResponse();
 				int[] dataShape = inputData.getShape();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(),
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset errors = NcdDataUtils.flattenGridData(data.getErrorBuffer(),
 						dimension);
-				AbstractDataset response = drData.squeeze();
+				Dataset response = drData.squeeze();
 				dr.setResponse(response);
 
 				if (data.getRank() != response.getRank() + 1) {
@@ -179,7 +179,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				AbstractDataset myres = new FloatDataset(mydata, dataShape);
+				Dataset myres = new FloatDataset(mydata, dataShape);
 				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
 				long[] frames = sliceData.getFrames();

@@ -23,7 +23,7 @@ import java.util.Collections;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.validator.routines.IntegerValidator;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
 
@@ -179,7 +179,7 @@ public class NcdDataUtils {
 		return ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {}));
 	}
 	
-	public static AbstractDataset[] matchDataDimensions(AbstractDataset data, AbstractDataset bgData) {
+	public static Dataset[] matchDataDimensions(Dataset data, Dataset bgData) {
 		int bgRank = bgData.getRank();
 		int[] bgShape = bgData.getShape();
 		int rank = data.getRank();
@@ -222,10 +222,10 @@ public class NcdDataUtils {
 		for(int i = 0; i < nomatchBgDims.size(); i++) {
 			revPermBg.set(nomatchBgDims.indexOf(i), i);
 		}
-		return new AbstractDataset[] {data, bgData, revPermData, revPermBg}; 
+		return new Dataset[] {data, bgData, revPermData, revPermBg}; 
 	}
 	
-	public static AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+	public static Dataset flattenGridData(Dataset data, int dimension) {
 		
 		int dataRank = data.getRank();
 		int[] dataShape = data.getShape();

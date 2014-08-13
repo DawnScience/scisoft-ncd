@@ -50,6 +50,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistan
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
@@ -125,7 +126,7 @@ public class LazyNcdProcessing {
 	private int secRank;
 	private long[] secFrames;
 	
-	private AbstractDataset qaxis;
+	private Dataset qaxis;
 	
 	private LazyDetectorResponse lazyDetectorResponse;
 	private LazySectorIntegration lazySectorIntegration;
@@ -476,13 +477,13 @@ public class LazyNcdProcessing {
 					@Override
 					protected IStatus run(IProgressMonitor jobmonitor) {
 						try {
-							AbstractDataset data;
+							Dataset data;
 							try {
 								lock.acquire();
 								data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 								if (tmp_errors_ids != null) { 
 									if(tmp_errors_ids.dataset_id >= 0) {
-										AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+										Dataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
 										data.setError(errors);
 									} else {
 										tmp_errors_ids.setSlice(currentSliceParams);
@@ -581,7 +582,7 @@ public class LazyNcdProcessing {
 				@Override
 				protected IStatus run(IProgressMonitor jobmonitor) {
 					try {
-						AbstractDataset data;
+						Dataset data;
 						int finalSliceDim = currentSliceParams.getSliceDim();
 						int finalSliceSize = currentSliceParams.getSliceSize();
 						
@@ -590,7 +591,7 @@ public class LazyNcdProcessing {
 							data = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 							if (tmp_errors_ids != null) { 
 								if(tmp_errors_ids.dataset_id >= 0) {
-									AbstractDataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+									Dataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
 									data.setError(errors);
 								} else {
 									tmp_errors_ids.setSlice(currentSliceParams);
@@ -624,20 +625,20 @@ public class LazyNcdProcessing {
 							}
 							SliceSettings bgSliceParams = new SliceSettings(bgFrames, finalSliceDim, bgSliceSize);
 							bgSliceParams.setStart(bgStart);
-							AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
+							Dataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_bgIds);
 							if(tmp_errors_bgIds != null) {
 								if (tmp_errors_bgIds.dataset_id >= 0) {
-									AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
+									Dataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
 									bgData.setError(bgErrors);
 								} else {
 									tmp_errors_bgIds.setSlice(bgSliceParams);
 								}
 							}
-							AbstractDataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-							AbstractDataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getError(), bgData.getError());
+							Dataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
+							Dataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getError(), bgData.getError());
 							remapData[0].setError(remapErrors[0]);
 							remapData[1].setError(remapErrors[1]);
-							AbstractDataset res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], currentSliceParams, lock);
+							Dataset res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], currentSliceParams, lock);
 							remapData[0] = res;
 							remapErrors[0] = res.getError();
 
@@ -786,7 +787,7 @@ public class LazyNcdProcessing {
 	    }
 	}
 	
-	private void addPlotData(SaxsPlotData plotData, String detector, AbstractDataset qaxis) throws HDF5Exception {
+	private void addPlotData(SaxsPlotData plotData, String detector, Dataset qaxis) throws HDF5Exception {
     	plotData.setDetector(detector);
     	plotData.setQaxis(qaxis, qaxisUnit);
     	plotData.execute(entry_group_id, input_ids, input_errors_ids);
@@ -831,10 +832,10 @@ public class LazyNcdProcessing {
 		}
 	}
 
-	private AbstractDataset calculateQaxisDataset(String detector, int dim, long[] secFrames, long[] frames) throws HDF5LibraryException {
+	private Dataset calculateQaxisDataset(String detector, int dim, long[] secFrames, long[] frames) throws HDF5LibraryException {
 		
-		AbstractDataset qaxis = null;
-		AbstractDataset qaxisErr = null;
+		Dataset qaxis = null;
+		Dataset qaxisErr = null;
 		IDiffractionMetadata dm = null;
 		boolean hasErrors = true;
 		
@@ -886,8 +887,8 @@ public class LazyNcdProcessing {
 		
 		if (slope != null && intercept != null) {
 			int numPoints = (int) secFrames[secFrames.length - 1];
-			qaxis = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
-			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxis = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			if (dim == 1) {
 				Amount<Length> pxWaxs = ncdDetectors.getPxWaxs();
 				for (int i = 0; i < numPoints; i++) {

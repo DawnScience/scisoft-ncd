@@ -40,7 +40,7 @@ import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -211,12 +211,12 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
-				AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+				Dataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				Dataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
@@ -233,10 +233,10 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				}
 				int[] dataShape = inputData.getShape();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				// We need to get variance values for further calculations
-				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(), dimension);
-				AbstractDataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
+				Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(), dimension);
+				Dataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
 
 				Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(),
 						data.getShape()[0], data.getShape(), calibngd.getShape());
@@ -244,7 +244,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				AbstractDataset myres = new FloatDataset(mydata, dataShape);
+				Dataset myres = new FloatDataset(mydata, dataShape);
 				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
 				int selectID = -1;

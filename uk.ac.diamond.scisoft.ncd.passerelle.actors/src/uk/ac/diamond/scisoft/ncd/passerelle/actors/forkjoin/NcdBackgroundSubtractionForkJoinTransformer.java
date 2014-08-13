@@ -35,7 +35,7 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
@@ -227,11 +227,11 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
@@ -260,11 +260,11 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				bgIDs.setIDs(bgDetectorGroupID, bgDataID);
 				
 				lock.lock();
-				AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceData, bgIDs);
+				Dataset bgData = NcdNexusUtils.sliceInputData(bgSliceData, bgIDs);
 				if (hasBgErrors) {
 					DataSliceIdentifiers bgErrorsIDs = new DataSliceIdentifiers();
 					bgErrorsIDs.setIDs(bgDetectorGroupID, bgErrorsID);
-					AbstractDataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceData, bgErrorsIDs);
+					Dataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceData, bgErrorsIDs);
 					bgData.setError(bgErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
@@ -280,11 +280,11 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					bgData.setErrorBuffer(bgErrors);
 				}
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(),
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),
 						dimension);
 
-				AbstractDataset background = bgData.squeeze();
+				Dataset background = bgData.squeeze();
 
 				BackgroundSubtraction bs = new BackgroundSubtraction();
 				bs.setBackground(background);
@@ -294,7 +294,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				float[] mydata = (float[]) myobj[0];
 				double[] myerror = (double[]) myobj[1];
 
-				AbstractDataset myres = new FloatDataset(mydata, inputData.getShape());
+				Dataset myres = new FloatDataset(mydata, inputData.getShape());
 				myres.setErrorBuffer(myerror);
 
 

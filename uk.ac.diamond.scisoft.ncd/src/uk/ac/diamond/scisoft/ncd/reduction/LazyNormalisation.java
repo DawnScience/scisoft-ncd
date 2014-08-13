@@ -28,7 +28,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
@@ -107,7 +107,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		writeNcdMetadata(norm_group_id);
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
+	public Dataset execute(int dim, Dataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
 			Normalisation nm = new Normalisation();
 			nm.setCalibChannel(normChannel);
 			if(absScaling != null) {
@@ -116,18 +116,18 @@ public class LazyNormalisation extends LazyDataReduction {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData((Dataset) data.getErrorBuffer(), dim);
 			
 			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
 			calibrationSliceParams.setFrames(framesCal);
-			AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
-			AbstractDataset calibngd = flattenGridData(dataCal, 1);
+			Dataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibration_ids);
+			Dataset calibngd = flattenGridData(dataCal, 1);
 			
 			Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
 			int filespace_id = -1;

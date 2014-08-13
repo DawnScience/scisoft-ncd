@@ -29,7 +29,7 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.Invariant;
@@ -55,19 +55,19 @@ public class LazyInvariant extends LazyDataReduction {
 		writeNcdMetadata(inv_group_id);
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
+	public Dataset execute(int dim, Dataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
 		
 			Invariant inv = new Invariant();
 			
 			int[] dataShape = Arrays.copyOf(data.getShape(), data.getRank() - dim);
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			
 			Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {

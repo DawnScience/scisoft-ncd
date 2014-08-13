@@ -22,7 +22,7 @@ import java.util.Set;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 
 public class AndersonDarlingNormalityTest {
 	
@@ -65,8 +65,8 @@ public class AndersonDarlingNormalityTest {
 		return criticalValuesMap.keySet();
 	}
 	
-	public boolean acceptNullHypothesis(AbstractDataset data) {
-		AbstractDataset sortedData = data.clone().sort(null);
+	public boolean acceptNullHypothesis(Dataset data) {
+		Dataset sortedData = data.clone().sort(null);
 		double mean = (Double) data.mean(true);
 		int size = data.getSize();
 		double std = (Double) data.stdDeviation();

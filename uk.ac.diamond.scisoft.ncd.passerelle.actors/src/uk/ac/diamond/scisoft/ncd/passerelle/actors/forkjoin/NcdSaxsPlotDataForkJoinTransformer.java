@@ -37,8 +37,8 @@ import org.jscience.physics.amount.Amount;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -86,7 +86,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	
 	public StringChoiceParameter plotTypeParam;
 
-	private AbstractDataset inputAxis;
+	private Dataset inputAxis;
 	private String inputAxisUnit;
 	private long[] axisShape;
 
@@ -155,7 +155,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			DataSliceIdentifiers axisErrorsIDs = new DataSliceIdentifiers();
 			axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 			axisErrorsIDs.setSlice(axisSliceParams);
-			AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
+			Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
 			inputAxis.setError(inputAxisErrors);
 		}
 		
@@ -269,12 +269,12 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				tmp_ids.setSlice(currentSliceParams);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
@@ -284,26 +284,26 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				lock.unlock();
 
 
-				AbstractDataset saxsPlotData = null, saxsPlotErrors = null;
+				Dataset saxsPlotData = null, saxsPlotErrors = null;
 
 				// We need this shape parameter to restore all relevant dimensions
 				// in the integrated sector results dataset shape
 				int[] dataShape = inputData.getShape();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				if (inputData.hasErrors()) {
-					AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(),
+					Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),
 							dimension);
 					data.setErrorBuffer(errors);
 				}
 				
-				AbstractDataset axis = inputAxis.clone();
-				AbstractDataset mydata = plotData.getSaxsPlotDataset(data.squeeze(), axis.squeeze());
+				Dataset axis = inputAxis.clone();
+				Dataset mydata = plotData.getSaxsPlotDataset(data.squeeze(), axis.squeeze());
 				int resLength = dataShape.length - dimension + 1;
-				saxsPlotData = DatasetUtils.cast(mydata, AbstractDataset.FLOAT32);
+				saxsPlotData = DatasetUtils.cast(mydata, Dataset.FLOAT32);
 				if (saxsPlotData != null) {
 					if (saxsPlotData.hasErrors()) {
-						saxsPlotErrors = DatasetUtils.cast((AbstractDataset) mydata.getErrorBuffer(), AbstractDataset.FLOAT64);
+						saxsPlotErrors = DatasetUtils.cast(mydata.getErrorBuffer(), Dataset.FLOAT64);
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = saxsPlotData.getShape()[saxsPlotData.getRank() - 1];
@@ -329,7 +329,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
 							rgDataIDs.setIDs(resultGroupID, rgDataID);
 							rgDataIDs.setSlice(currentSliceParams);
-							AbstractDataset tmpDataset = new DoubleDataset(new double[] { Rg.getEstimatedValue() },
+							Dataset tmpDataset = new DoubleDataset(new double[] { Rg.getEstimatedValue() },
 									new int[] { 1 });
 							writeResults(rgDataIDs, tmpDataset, rgDataShape, 1);
 
@@ -345,7 +345,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							DataSliceIdentifiers rgRangeDataIDs = new DataSliceIdentifiers();
 							rgRangeDataIDs.setIDs(resultGroupID, rgRangeDataID);
 							rgRangeDataIDs.setSlice(currentSliceParams);
-							AbstractDataset qRangeDataset = new DoubleDataset(rgRange, new int[] { 2 });
+							Dataset qRangeDataset = new DoubleDataset(rgRange, new int[] { 2 });
 							writeResults(rgRangeDataIDs, qRangeDataset, rgRangeDataShape, 1);
 
 							Amount<Dimensionless> I0 = (Amount<Dimensionless>) params[0];
@@ -380,7 +380,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 						DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
 						rgDataIDs.setIDs(resultGroupID, loglogFitDataID);
 						rgDataIDs.setSlice(currentSliceParams);
-						AbstractDataset tmpDataset = loglogPlotData.getFitData(params, axis);
+						Dataset tmpDataset = loglogPlotData.getFitData(params, axis);
 						writeResults(rgDataIDs, tmpDataset, dataShape, 1);
 					}
 				}
@@ -398,7 +398,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		}
 	}
 
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim)
 			throws HDF5Exception {
 
 		int resRank = dataShape.length - dim + 1;
@@ -482,7 +482,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	@Override
 	protected void writeAxisData() throws HDF5LibraryException, HDF5Exception {
 		
-		AbstractDataset axisNew = plotData.getSaxsPlotAxis(inputAxis);
+		Dataset axisNew = plotData.getSaxsPlotAxis(inputAxis);
 		
 		resultAxisDataID = NcdNexusUtils.makeaxis(resultGroupID, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { axisNew.getRank() }, 1, inputAxisUnit);
@@ -534,7 +534,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		
 		// TODO: need to redesign SAXS plot interface to support multiple axis
 		if (plotData instanceof PorodPlotData) {
-			AbstractDataset q4Axis = axisNew.clone().ipower(4);
+			Dataset q4Axis = axisNew.clone().ipower(4);
 			setq4AxisErrors(axisNew, q4Axis);
 			
 			String variableName = plotData.getVariableName() + "^4";
@@ -588,9 +588,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		
 	}
 
-	private void setq4AxisErrors(AbstractDataset axisNew, AbstractDataset q4Axis) {
+	private void setq4AxisErrors(Dataset axisNew, Dataset q4Axis) {
 		
-		AbstractDataset errors = AbstractDataset.zeros(q4Axis, Dataset.FLOAT64);
+		Dataset errors = DatasetFactory.zeros(q4Axis, Dataset.FLOAT64);
 		
 		// Calculate std. deviation for q^4 values
 		IndexIterator itr = q4Axis.getIterator(true);

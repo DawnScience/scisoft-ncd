@@ -20,15 +20,17 @@ import java.util.Arrays;
 
 import javax.measure.unit.UnitFormat;
 
-import org.apache.commons.beanutils.ConvertUtils;
-import org.eclipse.dawnsci.hdf5.Nexus;
-
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
+import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.dawnsci.hdf5.Nexus;
+
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -67,10 +69,10 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		while (iter.hasNext()) {
 			int[] slice = iter.getPos();
 			sliceSettings.setStart(slice);
-			AbstractDataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids).squeeze();
-			AbstractDataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids).squeeze();
+			Dataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids).squeeze();
+			Dataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids).squeeze();
 			data_slice.setError(errors_slice);
-			AbstractDataset tmpFrame = getSaxsPlotDataset(data_slice, qaxis);
+			Dataset tmpFrame = getSaxsPlotDataset(data_slice, qaxis);
 			
 			int filespace_id = H5.H5Dget_space(data_id);
 			int type_id = H5.H5Dget_type(data_id);
@@ -135,7 +137,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 	private void writeAxisData(int group_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] axisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
-		AbstractDataset qaxisNew = getSaxsPlotAxis(qaxis);
+		Dataset qaxisNew = getSaxsPlotAxis(qaxis);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
@@ -191,12 +193,12 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 	}
 	
 	@Override
-	public AbstractDataset getSaxsPlotDataset(IDataset data, IDataset axis) {
-		AbstractDataset tmpData = AbstractDataset.zeros(data.getShape(), Dataset.FLOAT32);
+	public Dataset getSaxsPlotDataset(IDataset data, IDataset axis) {
+		Dataset tmpData = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
-		AbstractDataset tmpErrors = null;
+		Dataset tmpErrors = null;
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
-			tmpErrors = AbstractDataset.zeros(data.getShape(), Dataset.FLOAT32);
+			tmpErrors = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
 		IndexIterator itr = tmpData.getIterator();
@@ -216,12 +218,12 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 	}
 
 	@Override
-	public AbstractDataset getSaxsPlotAxis(IDataset axis) {
-		AbstractDataset tmpAxis = AbstractDataset.zeros(axis.getShape(), Dataset.FLOAT32);
+	public Dataset getSaxsPlotAxis(IDataset axis) {
+		Dataset tmpAxis = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
-		AbstractDataset tmpAxisErrors = null;
+		Dataset tmpAxisErrors = null;
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
-			tmpAxisErrors = AbstractDataset.zeros(axis.getShape(), Dataset.FLOAT32);
+			tmpAxisErrors = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
 		IndexIterator itr = tmpAxis.getIterator();

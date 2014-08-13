@@ -32,7 +32,7 @@ import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -145,26 +145,26 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 				}
 				
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				}
 				lock.unlock();
 
 
-				AbstractDataset saxsStatsData = null;
+				Dataset saxsStatsData = null;
 
 				// We need this shape parameter to restore all relevant dimensions
 				// in the integrated sector results dataset shape
 				int[] dataShape = inputData.getShape();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, 1);
+				Dataset data = NcdDataUtils.flattenGridData(inputData, 1);
 				if (inputData.hasErrors()) {
-					AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(),	1);
+					Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),	1);
 					data.setErrorBuffer(errors);
 				}
 				
@@ -179,9 +179,9 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 				}
 
 				statsData.setReferenceData(data);
-				AbstractDataset mydata = statsData.getStatsData();
+				Dataset mydata = statsData.getStatsData();
 				
-				saxsStatsData = DatasetUtils.cast(mydata, AbstractDataset.INT);
+				saxsStatsData = DatasetUtils.cast(mydata, Dataset.INT);
 				if (saxsStatsData != null) {
 					saxsStatsData = saxsStatsData.reshape(dataShape);
 				}
@@ -202,7 +202,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 		}
 	}
 
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape)
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape)
 			throws HDF5Exception {
 
 		int resRank = dataShape.length;

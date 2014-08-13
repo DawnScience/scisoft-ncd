@@ -35,7 +35,7 @@ import org.eclipse.dawnsci.hdf5.Nexus;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.ncd.core.DegreeOfOrientation;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -55,7 +55,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 
 	private static final long serialVersionUID = 2754886305339583550L;
 	
-	private AbstractDataset inputAxis;
+	private Dataset inputAxis;
 	private long[] axisShape;
 	
 	private int angleDataID;
@@ -120,7 +120,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				DataSliceIdentifiers axisErrorsIDs = new DataSliceIdentifiers();
 				axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 				axisErrorsIDs.setSlice(axisSliceParams);
-				AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
+				Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
 				inputAxis.setError(inputAxisErrors);
 			}
 		}
@@ -185,13 +185,13 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
 				lock.unlock();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				
 				Object[] myobj;
-				AbstractDataset axis = null;
+				Dataset axis = null;
 				
 				axis = inputAxis.clone().squeeze();
 				DegreeOfOrientation degree = new DegreeOfOrientation();

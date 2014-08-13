@@ -46,7 +46,7 @@ public class GuinierPlotData extends SaxsPlotData {
 	public double getDataError(int idx, IDataset axis, IDataset data) {
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double err = ((IErrorDataset) data).getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
@@ -56,7 +56,7 @@ public class GuinierPlotData extends SaxsPlotData {
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError().getDouble(idx);
+			double err = ((IErrorDataset) axis).getError(idx);
 			return 2.0 * val * err;
 		}
 		return Double.NaN;

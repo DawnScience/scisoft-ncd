@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
@@ -37,7 +37,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 	private String calibName;
 	private int calibChannel = 1;
 
-	private AbstractDataset calibngd;
+	private Dataset calibngd;
 	
 	public HDF5Normalisation(String name, String key) {
 		super(name, key);
@@ -47,7 +47,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		return normvalue;
 	}
 
-	public void setCalibrationData(AbstractDataset dataCal) {
+	public void setCalibrationData(Dataset dataCal) {
 		this.calibngd = dataCal;
 		
 	}
@@ -72,7 +72,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 		this.calibChannel = calibChannel;
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public Dataset writeout(int dim, ILock lock) {
 
 		try {
 			Normalisation nm = new Normalisation();
@@ -81,14 +81,14 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			calibngd = flattenGridData(calibngd, 1);
 			
 			Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {

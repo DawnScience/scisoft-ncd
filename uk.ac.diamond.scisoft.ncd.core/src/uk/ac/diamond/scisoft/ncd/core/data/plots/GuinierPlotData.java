@@ -16,9 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.ArrayUtils;
@@ -35,20 +32,15 @@ import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
 import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
 import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.RandomDataGenerator;
-import org.apache.commons.math3.random.Well19937a;
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
-import org.apache.commons.math3.util.Precision;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Slice;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.AndersonDarlingNormalityTest;
 
@@ -62,13 +54,13 @@ public class GuinierPlotData extends SaxsPlotData {
 	
 	private class GuinierLineFitFunction implements MultivariateFunction {
 
-		private AbstractDataset guinierData;
-		private AbstractDataset guinierAxis;
+		private Dataset guinierData;
+		private Dataset guinierAxis;
 		private SimpleRegression regression;
 		
 		private static final int MIN_POINTS = 50;
 
-		public GuinierLineFitFunction(AbstractDataset guinierData, AbstractDataset guinierAxis) {
+		public GuinierLineFitFunction(Dataset guinierData, Dataset guinierAxis) {
 			super();
 			this.guinierData = guinierData;
 			this.guinierAxis = guinierAxis;
@@ -96,14 +88,14 @@ public class GuinierPlotData extends SaxsPlotData {
 			double intercept = regression.getIntercept();
 			
 			// Test residual values for normality
-			//AbstractDataset testData = new FloatDataset(new int[] {idxMax - idxMin});
+			//Dataset testData = new FloatDataset(new int[] {idxMax - idxMin});
 			//for (int i = idxMin; i < idxMax; i++) {
 			//	double dataVal = guinierData.getDouble(i);
 			//	double axisVal = guinierAxis.getDouble(i);
 			//	double calc = regression.predict(axisVal);
 			//	testData.set(dataVal - calc, i - idxMin);
 			//}
-			//AbstractDataset testErrors = guinierData.getError().getSlice(new Slice(idxMin, idxMax));
+			//Dataset testErrors = guinierData.getError().getSlice(new Slice(idxMin, idxMax));
 			//boolean accept = test.acceptNullHypothesis(testData, testErrors);
 			//if (!accept) {
 			//	return -Double.MAX_VALUE;
@@ -155,7 +147,7 @@ public class GuinierPlotData extends SaxsPlotData {
 	public double getDataError(int idx, IDataset axis, IDataset data) {
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double err = ((IErrorDataset) data).getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
@@ -165,15 +157,15 @@ public class GuinierPlotData extends SaxsPlotData {
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError().getDouble(idx);
+			double err = ((IErrorDataset) axis).getError(idx);
 			return 2.0 * val * err;
 		}
 		return Double.NaN;
 	}
 	
 	public Object[] getGuinierPlotParameters(IDataset data, IDataset axis) {
-		AbstractDataset guinierData = getSaxsPlotDataset(data, axis);
-		AbstractDataset guinierAxis = getSaxsPlotAxis(axis);
+		Dataset guinierData = getSaxsPlotDataset(data, axis);
+		Dataset guinierAxis = getSaxsPlotAxis(axis);
 /*		int sliceSize = data.getSize() / 10;
 		int[] step = new int[] {sliceSize};
 		IndexIterator dataSliceIter = guinierData.getSliceIterator(null, null, null);
@@ -382,9 +374,9 @@ public class GuinierPlotData extends SaxsPlotData {
 		return Rg.copy();
 	}
 	
-	public AbstractDataset getFitData(SimpleRegression regression, IDataset axis) {
-		AbstractDataset guinierAxis = getSaxsPlotAxis(axis);
-		AbstractDataset result = AbstractDataset.zeros(guinierAxis.getShape(), AbstractDataset.FLOAT32);
+	public Dataset getFitData(SimpleRegression regression, IDataset axis) {
+		Dataset guinierAxis = getSaxsPlotAxis(axis);
+		Dataset result = DatasetFactory.zeros(guinierAxis.getShape(), Dataset.FLOAT32);
 		for (int i = 0; i < guinierAxis.getSize(); i++) {
 			result.set(regression.predict(guinierAxis.getDouble(i)), i);
 		}

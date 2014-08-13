@@ -50,7 +50,7 @@ import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -87,7 +87,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 	private ReentrantLock lock = new ReentrantLock();
 	private SectorROI intSector;
 
-	private static AbstractDataset data;
+	private static Dataset data;
 	private static long[] shape = new long[] { 5, 3, 91, 32, 64 };
 	private static long[] radialShape = new long[] { 5, 3, 91, 64 };
 	private static long[] azimuthalShape = new long[] { 5, 3, 91, 131 };
@@ -198,7 +198,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		int[] start = new int[] { 0, 0, 0, 0, 0 };
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 
@@ -242,11 +242,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						DataSliceIdentifiers azimuthal_error_ids = new DataSliceIdentifiers();
 						azimuthal_error_ids.setIDs(result_group_id, azimuthal_errors_id);
 						
-						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						Dataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						Dataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
 						
-						AbstractDataset azData = NcdNexusUtils.sliceInputData(azSlice, azimuthal_ids);
-						AbstractDataset azErrors = NcdNexusUtils.sliceInputData(azSlice, azimuthal_error_ids);
+						Dataset azData = NcdNexusUtils.sliceInputData(azSlice, azimuthal_ids);
+						Dataset azErrors = NcdNexusUtils.sliceInputData(azSlice, azimuthal_error_ids);
 						lock.unlock();
 						
 						for (int h = 0; h < shape[0]; h++)
@@ -254,16 +254,16 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 							for (int k = 0; k < shape[2]; k++) {
 								int[] startImage = new int[] {h, g, k, 0, 0};
 								int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
-								AbstractDataset image = data.getSlice(startImage, stopImage, null).squeeze();
-								AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
+								Dataset image = data.getSlice(startImage, stopImage, null).squeeze();
+								Dataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
 								image.setErrorBuffer(errimage);
 								intSector.setAverageArea(true);
-								AbstractDataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
+								Dataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
 								for (int i = 0; i < outData.getShape()[3]; i++) {
 										float value = outData.getFloat(h, g, k, i);
 										double error = outErrors.getDouble(h, g, k, i);
 										float expected = intResult[0].getFloat(i);
-										double expectederror = Math.sqrt(((AbstractDataset) intResult[0].getErrorBuffer()).getDouble(i));
+										double expectederror = Math.sqrt(intResult[0].getErrorBuffer().getDouble(i));
 										assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 										assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}
@@ -271,7 +271,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 									float value = azData.getFloat(h, g, k, i);
 									double error = azErrors.getDouble(h, g, k, i);
 									float expected = intResult[1].getFloat(i);
-									double expectederror = Math.sqrt(((AbstractDataset) intResult[1].getErrorBuffer()).getDouble(i));
+									double expectederror = Math.sqrt(intResult[1].getErrorBuffer().getDouble(i));
 									assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 									assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}
@@ -331,10 +331,10 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						DataSliceIdentifiers axis_error_ids = new DataSliceIdentifiers();
 						axis_error_ids.setIDs(result_group_id, axis_errors_id);
 						
-						AbstractDataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
-						AbstractDataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
-						AbstractDataset axisData = NcdNexusUtils.sliceInputData(axisSlice, axis_ids);
-						AbstractDataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axis_error_ids);
+						Dataset outData = NcdNexusUtils.sliceInputData(slice, result_ids);
+						Dataset outErrors = NcdNexusUtils.sliceInputData(slice, result_error_ids);
+						Dataset axisData = NcdNexusUtils.sliceInputData(axisSlice, axis_ids);
+						Dataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axis_error_ids);
 						lock.unlock();
 						
 						axisData.setError(axisErrors);
@@ -344,17 +344,17 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 							for (int k = 0; k < shape[2]; k++) {
 								int[] startImage = new int[] {h, g, k, 0, 0};
 								int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
-								AbstractDataset image = data.getSlice(startImage, stopImage, null).squeeze();
-								AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
+								Dataset image = data.getSlice(startImage, stopImage, null).squeeze();
+								Dataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
 								image.setErrorBuffer(errimage);
 								intSector.setAverageArea(true);
-								AbstractDataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
-								AbstractDataset resultData = plotType.getSaxsPlotDataObject().getSaxsPlotDataset(intResult[0], axisData);
+								Dataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
+								Dataset resultData = plotType.getSaxsPlotDataObject().getSaxsPlotDataset(intResult[0], axisData);
 								for (int i = 0; i < outData.getShape()[3]; i++) {
 										float value = outData.getFloat(h, g, k, i);
 										double error = outErrors.getDouble(h, g, k, i);
 										float expected = resultData.getFloat(i);
-										double expectederror = Math.sqrt(((AbstractDataset) resultData.getErrorBuffer()).getDouble(i));
+										double expectederror = Math.sqrt(resultData.getErrorBuffer().getDouble(i));
 										assertEquals(String.format("Test %s SAXS Plot data for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expected, value, 1e-6*expected);
 										assertEquals(String.format("Test %s SAXS Plot error for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}

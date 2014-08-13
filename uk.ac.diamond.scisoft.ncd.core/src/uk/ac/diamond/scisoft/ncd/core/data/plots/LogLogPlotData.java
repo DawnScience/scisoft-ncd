@@ -31,7 +31,8 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.Well19937a;
 import org.apache.commons.math3.util.Pair;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -116,7 +117,7 @@ public class LogLogPlotData extends SaxsPlotData {
 	public double getDataError(int idx, IDataset axis, IDataset data) {
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double err = ((IErrorDataset) data).getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
@@ -126,15 +127,15 @@ public class LogLogPlotData extends SaxsPlotData {
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError().getDouble(idx);
+			double err = ((IErrorDataset) axis).getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
 	}
 	
 	public double[] getPorodPlotParameters(IDataset data, IDataset axis) {
-		AbstractDataset loglogData = getSaxsPlotDataset(data, axis);
-		AbstractDataset loglogAxis = getSaxsPlotAxis(axis);
+		Dataset loglogData = getSaxsPlotDataset(data, axis);
+		Dataset loglogAxis = getSaxsPlotAxis(axis);
 		CMAESOptimizer optimizer = new CMAESOptimizer(
 				cmaesMaxIterations,
 				0.0,
@@ -196,13 +197,13 @@ public class LogLogPlotData extends SaxsPlotData {
 		return params;
 	}
 	
-	public AbstractDataset getFitData(double[] params, IDataset axis) {
+	public Dataset getFitData(double[] params, IDataset axis) {
 		double solvation = params[0];
 		double correlation = params[1];
 		double exponent = params[2];
 		
-		AbstractDataset loglogAxis = getSaxsPlotAxis(axis);
-		AbstractDataset result = AbstractDataset.zeros(loglogAxis.getShape(), AbstractDataset.FLOAT32);
+		Dataset loglogAxis = getSaxsPlotAxis(axis);
+		Dataset result = DatasetFactory.zeros(loglogAxis.getShape(), Dataset.FLOAT32);
 		for (int i = 0; i < loglogAxis.getSize(); i++) {
 			double axisVal = Math.pow(10.0, loglogAxis.getDouble(i));
 			double func = solvation / (1.0 + Math.pow(axisVal * correlation,  exponent));

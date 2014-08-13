@@ -39,7 +39,7 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
@@ -52,7 +52,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 public class LazySectorIntegration extends LazyDataReduction {
 
 	private SectorROI intSector;
-	private AbstractDataset[] areaData;
+	private Dataset[] areaData;
 	private Amount<ScatteringVectorOverDistance> gradient;
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
@@ -73,8 +73,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 		this.intSector.setClippingCompensation(true);
 	}
 
-	public void setAreaData(AbstractDataset... area) {
-		this.areaData = new AbstractDataset[2];
+	public void setAreaData(Dataset... area) {
+		this.areaData = new Dataset[2];
 		this.areaData[0] = area[0];
 		this.areaData[1] = area[1];
 	}
@@ -150,7 +150,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		writeNcdMetadata(sec_group_id);
 	}
 	
-	public AbstractDataset[] execute(int dim, AbstractDataset inputData, SliceSettings currentSliceParams, ILock lock) throws Exception {
+	public Dataset[] execute(int dim, Dataset inputData, SliceSettings currentSliceParams, ILock lock) throws Exception {
 		
 		DataSliceIdentifiers sector_id = new DataSliceIdentifiers();
 		sector_id.setIDs(sec_group_id, sec_data_id);
@@ -166,8 +166,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
 		err_azimuth_id.setSlice(currentSliceParams);
 		
-			AbstractDataset myazdata = null, myazerrors = null;
-			AbstractDataset myraddata = null, myraderrors = null;
+			Dataset myazdata = null, myazerrors = null;
+			Dataset myraddata = null, myraderrors = null;
 
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(intSector);
@@ -177,19 +177,19 @@ public class LazySectorIntegration extends LazyDataReduction {
 			sec.setFast(fast);
 			int[] dataShape = inputData.getShape();
 			
-			AbstractDataset data = flattenGridData(inputData, dim);
+			Dataset data = flattenGridData(inputData, dim);
 			if (inputData.hasErrors()) {
-				AbstractDataset errors = flattenGridData((AbstractDataset) inputData.getErrorBuffer(), dim);
+				Dataset errors = flattenGridData((Dataset) inputData.getErrorBuffer(), dim);
 				data.setErrorBuffer(errors);
 			}
 			
-			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], mask);
+			Dataset[] mydata = sec.process(data, data.getShape()[0], mask);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
+						myazerrors = DatasetUtils.cast((Dataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -206,7 +206,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
+						myraderrors =  DatasetUtils.cast((Dataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
@@ -238,10 +238,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 			}
 			
 			
-			return new AbstractDataset[] {myazdata, myraddata};
+			return new Dataset[] {myazdata, myraddata};
 	}
 	
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim) throws HDF5Exception {
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim) throws HDF5Exception {
 		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
 		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
 		

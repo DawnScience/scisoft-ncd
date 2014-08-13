@@ -21,7 +21,7 @@ import java.util.Iterator;
 
 import org.apache.commons.math3.util.Pair;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
@@ -81,12 +81,12 @@ public enum SaxsAnalysisPlotType {
 	 * @param xTraceDataSrc
 	 * @param yTraceDataSrc
 	 */
-	public IDataset[] process(AbstractDataset xTraceDataSrc, AbstractDataset yTraceDataSrc) {
+	public IDataset[] process(Dataset xTraceDataSrc, Dataset yTraceDataSrc) {
 		
     	SaxsPlotData plotData = getSaxsPlotDataObject();
     	
-    	AbstractDataset yTraceData = yTraceDataSrc.clone();
-		AbstractDataset xTraceData = xTraceDataSrc.clone();
+    	Dataset yTraceData = yTraceDataSrc.clone();
+		Dataset xTraceData = xTraceDataSrc.clone();
     	
 		IndexIterator itr = yTraceData.getIterator();		
 		while (itr.hasNext()) {

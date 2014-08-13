@@ -26,7 +26,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -37,7 +37,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5SectorIntegration.class);
 
-	private AbstractDataset[] areaData;
+	private Dataset[] areaData;
 	private DataSliceIdentifiers azimuthalIds, azimuthalErrorsIds;
 	
 	private SectorROI roi;
@@ -86,8 +86,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		return roi;
 	}
 
-	public void setAreaData(AbstractDataset... area) {
-		this.areaData = new AbstractDataset[2];
+	public void setAreaData(Dataset... area) {
+		this.areaData = new Dataset[2];
 		this.areaData[0] = area[0];
 		this.areaData[1] = area[1];
 	}
@@ -104,18 +104,18 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		this.fast = fast;
 	}
 
-	public AbstractDataset[] writeout(int dim, ILock lock) {
+	public Dataset[] writeout(int dim, ILock lock) {
 		if (roi == null) {
 			return null;
 		}
 
-		AbstractDataset maskUsed = mask;
+		Dataset maskUsed = mask;
 
 		roi.setClippingCompensation(true);
 
 		try {
-			AbstractDataset myazdata = null, myazerrors = null;
-			AbstractDataset myraddata = null, myraderrors = null;
+			Dataset myazdata = null, myazerrors = null;
+			Dataset myraddata = null, myraderrors = null;
 
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(roi);
@@ -127,18 +127,18 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			
 			data = flattenGridData(data, dim);
 			if (data.hasErrors()) {
-				AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+				Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 				data.setErrorBuffer(errors);
 			}
 			
 			roi.setAverageArea(false);
-			AbstractDataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
+			Dataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
 				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
+						myazerrors = DatasetUtils.cast(mydata[0].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -155,7 +155,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
+						myraderrors =  DatasetUtils.cast(mydata[1].getErrorBuffer(), Dataset.FLOAT64);
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
@@ -187,7 +187,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			}
 			
 			
-			return new AbstractDataset[] {myazdata, myraddata};
+			return new Dataset[] {myazdata, myraddata};
 			
 		} catch (Exception e) {
 			logger.error("exception caught reducing data", e);
@@ -196,7 +196,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		return null;
 	}
 	
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim) throws HDF5Exception {
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim) throws HDF5Exception {
 		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
 		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
 		

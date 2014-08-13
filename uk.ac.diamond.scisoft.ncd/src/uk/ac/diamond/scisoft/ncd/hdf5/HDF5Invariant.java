@@ -25,7 +25,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
@@ -50,24 +50,24 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 	}
 
 	@Override
-	public AbstractDataset getqAxis() {
+	public Dataset getqAxis() {
 		return null;
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public Dataset writeout(int dim, ILock lock) {
 		try {
 			if (data == null) return null;
 			Invariant inv = new Invariant();
 			
 			int[] dataShape = Arrays.copyOf(data.getShape(), data.getRank() - dim);
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			
 			Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {

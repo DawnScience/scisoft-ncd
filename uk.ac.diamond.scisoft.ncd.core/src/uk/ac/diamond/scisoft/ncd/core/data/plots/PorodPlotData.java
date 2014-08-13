@@ -36,7 +36,8 @@ import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
@@ -51,13 +52,13 @@ public class PorodPlotData extends SaxsPlotData {
 	
 	private class PorodLineFitFunction implements MultivariateFunction {
 
-		private AbstractDataset porodData;
-		private AbstractDataset porodAxis;
+		private Dataset porodData;
+		private Dataset porodAxis;
 		private SimpleRegression regression;
 		
 		private static final int MIN_POINTS = 50;
 
-		public PorodLineFitFunction(AbstractDataset porodData, AbstractDataset porodAxis) {
+		public PorodLineFitFunction(Dataset porodData, Dataset porodAxis) {
 			super();
 			this.porodData = porodData;
 			this.porodAxis = porodAxis;
@@ -124,9 +125,9 @@ public class PorodPlotData extends SaxsPlotData {
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors() && axis instanceof IErrorDataset
 				&& ((IErrorDataset) axis).hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double err = ((IErrorDataset) data).getError(idx);
 			double axval = axis.getDouble(idx);
-			double axerr = ((IErrorDataset) axis).getError().getDouble(idx);
+			double axerr = ((IErrorDataset) axis).getError(idx);
 			return Math.sqrt(Math.pow(4.0*Math.pow(axval, 3.0)*val*axerr, 2.0) + Math.pow(Math.pow(axval, 4.0)*err, 2.0));
 		}
 		return Double.NaN;
@@ -135,14 +136,14 @@ public class PorodPlotData extends SaxsPlotData {
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
-			return ((IErrorDataset) axis).getError().getDouble(idx);
+			return ((IErrorDataset) axis).getError(idx);
 		}
 		return Double.NaN;
 	}
 	
 	public SimpleRegression getPorodPlotParameters(IDataset data, IDataset axis) {
-		AbstractDataset porodData = getSaxsPlotDataset(data, axis);
-		AbstractDataset porodAxis = getSaxsPlotAxis(axis);
+		Dataset porodData = getSaxsPlotDataset(data, axis);
+		Dataset porodAxis = getSaxsPlotAxis(axis);
 		CMAESOptimizer optimizer = new CMAESOptimizer(
 				cmaesMaxIterations,
 				0.0,
@@ -199,10 +200,10 @@ public class PorodPlotData extends SaxsPlotData {
 		return c4.copy();
 	}
 
-	public AbstractDataset getFitData(AbstractDataset axis, SimpleRegression regression) {
-		AbstractDataset porodAxis = getSaxsPlotAxis(axis);
-		AbstractDataset result = AbstractDataset.zeros(porodAxis.getShape(), AbstractDataset.FLOAT32);
-		AbstractDataset errors = AbstractDataset.zeros(porodAxis.getShape(), AbstractDataset.FLOAT64);
+	public Dataset getFitData(Dataset axis, SimpleRegression regression) {
+		Dataset porodAxis = getSaxsPlotAxis(axis);
+		Dataset result = DatasetFactory.zeros(porodAxis.getShape(), Dataset.FLOAT32);
+		Dataset errors = DatasetFactory.zeros(porodAxis.getShape(), Dataset.FLOAT64);
 		for (int i = 0; i < porodAxis.getSize(); i++) {
 			Amount<Dimensionless> q = Amount.valueOf(axis.getDouble(i), axis.getError(i), Dimensionless.UNIT); 
 			Amount<Dimensionless> res = getC4(regression).divide(q.pow(4)).to(Dimensionless.UNIT);

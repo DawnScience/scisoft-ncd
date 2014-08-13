@@ -33,6 +33,7 @@ import org.eclipse.dawnsci.hdf5.Nexus;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 import uk.ac.diamond.scisoft.analysis.dataset.SliceIterator;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -161,8 +162,8 @@ public class LazyAverage extends LazyDataReduction {
 			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
-			AbstractDataset ave_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT32);
-			AbstractDataset ave_errors_frame = AbstractDataset.zeros(aveShape, Dataset.FLOAT32);
+			Dataset ave_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
+			Dataset ave_errors_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
 			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;

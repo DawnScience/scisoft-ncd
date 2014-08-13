@@ -23,7 +23,6 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
@@ -35,7 +34,7 @@ public class BackgroundSubtraction {
 	private FloatDataset background;
 	private DoubleDataset backgroundErrors;
 
-	public void setBackground(AbstractDataset ds) {
+	public void setBackground(Dataset ds) {
 		background = (FloatDataset) ds.cast(Dataset.FLOAT32);
 		backgroundErrors = (DoubleDataset) ds.getErrorBuffer();
 	}

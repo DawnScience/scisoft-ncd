@@ -16,7 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
 
 public interface ISaxsPlotData {
@@ -27,8 +27,8 @@ public interface ISaxsPlotData {
 	public double getAxisValue(int idx, IDataset axis);
 	public double getAxisError(int idx, IDataset axis);
 
-	public AbstractDataset getSaxsPlotDataset(IDataset data, IDataset axis);
+	public Dataset getSaxsPlotDataset(IDataset data, IDataset axis);
 
-	public AbstractDataset getSaxsPlotAxis(IDataset axis);
+	public Dataset getSaxsPlotAxis(IDataset axis);
 	
 }

@@ -23,7 +23,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 
@@ -31,20 +31,20 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 
 	private static final Logger logger = LoggerFactory.getLogger(HDF5BackgroundSubtraction.class);
 
-	private AbstractDataset background;
+	private Dataset background;
 
 	public HDF5BackgroundSubtraction(String name, String key) {
 		super(name, key);
 	}
 
-	public void setBackground(AbstractDataset ds) {
+	public void setBackground(Dataset ds) {
 		background = ds;
 		if (!ds.hasErrors()) {
 			background.setErrorBuffer(ds);
 		}
 	}
 
-	public AbstractDataset writeout(int dim, ILock lock) {
+	public Dataset writeout(int dim, ILock lock) {
 		if (background == null) {
 			return null;
 		}
@@ -58,7 +58,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			
 			background = background.squeeze();
 
@@ -70,7 +70,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerror = (double[]) myobj[1];
 					
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(myerror);
 			
 			try {

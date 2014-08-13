@@ -47,8 +47,8 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -81,14 +81,14 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	private static final long serialVersionUID = 9161664703395096017L;
 	
 	private SectorROI intSector;
-	private AbstractDataset[] areaData;
+	private Dataset[] areaData;
 	private Amount<ScatteringVectorOverDistance> gradient;
 	private Amount<ScatteringVector> intercept;
 	private Amount<Length> cameraLength;
 	private Amount<Energy> energy;
 	private Amount<Length> pxSize;
 	private Unit<ScatteringVector> axisUnit;
-	private AbstractDataset mask;
+	private Dataset mask;
 
 	private boolean doRadial = false;
 	private boolean doAzimuthal = false;
@@ -142,8 +142,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 
 			Object objMask = ((ObjectToken) maskParam.getToken()).getValue();
 			if (objMask != null) {
-				if (objMask instanceof AbstractDataset) {
-					mask = (AbstractDataset) objMask;
+				if (objMask instanceof Dataset) {
+					mask = (Dataset) objMask;
 				} else {
 					throw new InitializationException(ErrorCode.ACTOR_INITIALISATION_ERROR, "Invalid mask parameter",
 							this, null);
@@ -256,9 +256,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		return azFrames;
 	}
 
-	private AbstractDataset calculateAzimuthalAxisDataset() {
+	private Dataset calculateAzimuthalAxisDataset() {
 		
-		final AbstractDataset xi;
+		final Dataset xi;
 		
 		long[] azShape = getAzimuthalDataShape(); 
 		int azSize = (int) azShape[azShape.length - 1];
@@ -272,16 +272,16 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		return xi;
 	}
 
-	private AbstractDataset calculateQaxisDataset() {
+	private Dataset calculateQaxisDataset() {
 		
-		AbstractDataset qaxis = null;
-		AbstractDataset qaxisErr = null;
+		Dataset qaxis = null;
+		Dataset qaxisErr = null;
 
 		long[] secFrames = getResultDataShape();
 		int numPoints = (int) secFrames[secFrames.length - 1];
 		if (gradient != null &&	intercept != null && pxSize != null &&	axisUnit != null) {
-			qaxis = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
-			qaxisErr = AbstractDataset.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxis = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			double d2bs = intSector.getRadii()[0];
 			for (int i = 0; i < numPoints; i++) {
 				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
@@ -342,12 +342,12 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				tmp_ids.setSlice(currentSliceParams);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
@@ -357,8 +357,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				lock.unlock();
 
 
-				AbstractDataset myazdata = null, myazerrors = null;
-				AbstractDataset myraddata = null, myraderrors = null;
+				Dataset myazdata = null, myazerrors = null;
+				Dataset myraddata = null, myraderrors = null;
 
 				SectorIntegration sec = new SectorIntegration();
 				sec.setROI(intSector);
@@ -371,20 +371,20 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				// in the integrated sector results dataset shape
 				int[] dataShape = inputData.getShape();
 
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				if (inputData.hasErrors()) {
-					AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) inputData.getErrorBuffer(),
+					Dataset errors = NcdDataUtils.flattenGridData((Dataset) inputData.getErrorBuffer(),
 							dimension);
 					data.setErrorBuffer(errors);
 				}
 
-				AbstractDataset[] mydata = sec.process(data, data.getShape()[0], mask);
+				Dataset[] mydata = sec.process(data, data.getShape()[0], mask);
 				int resLength = dataShape.length - dimension + 1;
 				if (doAzimuthal) {
 					myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 					if (myazdata != null) {
 						if (myazdata.hasErrors()) {
-							myazerrors = DatasetUtils.cast((AbstractDataset) mydata[0].getErrorBuffer(),
+							myazerrors = DatasetUtils.cast((Dataset) mydata[0].getErrorBuffer(),
 									Dataset.FLOAT64);
 						}
 
@@ -402,7 +402,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 					if (myraddata != null) {
 						if (myraddata.hasErrors()) {
-							myraderrors = DatasetUtils.cast((AbstractDataset) mydata[1].getErrorBuffer(),
+							myraderrors = DatasetUtils.cast((Dataset) mydata[1].getErrorBuffer(),
 									Dataset.FLOAT64);
 						}
 						int[] resRadShape = Arrays.copyOf(dataShape, resLength);
@@ -475,7 +475,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		}
 	}
 	
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim)
 			throws HDF5Exception {
 
 		int resRank = dataShape.length - dim + 1;
@@ -504,7 +504,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	
 	@Override
 	protected void writeAxisData() throws HDF5Exception {
-		AbstractDataset qaxis = calculateQaxisDataset();
+		Dataset qaxis = calculateQaxisDataset();
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
@@ -550,7 +550,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	}
 	
 	private void writeAzimuthalAxisData() throws HDF5Exception {
-		AbstractDataset azAxis = calculateAzimuthalAxisDataset();
+		Dataset azAxis = calculateAzimuthalAxisDataset();
 		long[] azAxisShape = (long[]) ConvertUtils.convert(azAxis.getShape(), long[].class);
 		
 		String units = azAxis.getName();

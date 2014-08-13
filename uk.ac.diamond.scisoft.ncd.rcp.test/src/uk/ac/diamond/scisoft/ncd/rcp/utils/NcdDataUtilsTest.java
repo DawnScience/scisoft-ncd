@@ -16,14 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.utils;
 
-import java.util.ArrayList;
-
 import static org.junit.Assert.assertArrayEquals;
+
+import java.util.ArrayList;
 
 import org.junit.Test;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 
 public class NcdDataUtilsTest {
@@ -43,7 +43,7 @@ public class NcdDataUtilsTest {
 	int [] newShape1 = new int[] {5, 14, 3, 256, 128};
 	int [] newShape2 = new int[] {16, 3, 256, 128};
 	
-	AbstractDataset data1, data2;
+	Dataset data1, data2;
 	
 	@Test
 	public void createSliceListTest() {
@@ -78,10 +78,10 @@ public class NcdDataUtilsTest {
 	
 	@Test
 	public void matchDataDimensionsTest() {
-		data1 = AbstractDataset.ones(shape1, Dataset.INT32);
-		data2 = AbstractDataset.ones(shape2, Dataset.INT32);
+		data1 = DatasetFactory.ones(shape1, Dataset.INT32);
+		data2 = DatasetFactory.ones(shape2, Dataset.INT32);
 		
-		AbstractDataset[] newDatasets = NcdDataUtils.matchDataDimensions(data1, data2);
+		Dataset[] newDatasets = NcdDataUtils.matchDataDimensions(data1, data2);
 		
 		int[] testShape1 = newDatasets[0].getShape();
 		int[] testShape2 = newDatasets[1].getShape();

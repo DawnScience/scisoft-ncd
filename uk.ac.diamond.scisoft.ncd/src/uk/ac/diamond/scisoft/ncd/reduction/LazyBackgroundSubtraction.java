@@ -31,7 +31,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
@@ -152,14 +152,14 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		}
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, AbstractDataset bgData, SliceSettings sliceData, ILock lock) throws HDF5Exception {
+	public Dataset execute(int dim, Dataset data, Dataset bgData, SliceSettings sliceData, ILock lock) throws HDF5Exception {
 		
 		if (bgScaling != null) {
 			bgData.imultiply(bgScaling);
 			if (bgData.hasErrors()) {
 				Serializable bgErrorBuffer = bgData.getErrorBuffer();
-				if (bgErrorBuffer instanceof AbstractDataset) {
-					DoubleDataset bgError = new DoubleDataset((AbstractDataset) bgErrorBuffer);
+				if (bgErrorBuffer instanceof Dataset) {
+					DoubleDataset bgError = new DoubleDataset((Dataset) bgErrorBuffer);
 					bgError.imultiply(bgScaling*bgScaling);
 					bgData.setErrorBuffer(bgError);
 				}
@@ -173,9 +173,9 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 			int[] dataShape = data.getShape();
 
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
 			
-			AbstractDataset background = bgData.squeeze();
+			Dataset background = bgData.squeeze();
 
 			BackgroundSubtraction bs = new BackgroundSubtraction();
 			bs.setBackground(background);
@@ -185,7 +185,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerror = (double[]) myobj[1];
 					
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(myerror);
 			
 			try {

@@ -16,19 +16,19 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 
 public abstract class SaxsStatsData {
 	
-	AbstractDataset referenceData;
+	Dataset referenceData;
 
-	public void setReferenceData(AbstractDataset referenceData) {
+	public void setReferenceData(Dataset referenceData) {
 		this.referenceData = referenceData.clone().squeeze();
 		if (this.referenceData.getRank() > 1) {
 			throw new IllegalArgumentException("Only 1D datasets can be analysed.");
 		}
 	}
 	
-	public abstract AbstractDataset getStatsData();
+	public abstract Dataset getStatsData();
 
 }

@@ -34,7 +34,7 @@ import org.eclipse.core.runtime.OperationCanceledException;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
@@ -58,7 +58,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 
 	private static final long serialVersionUID = 5836823100154893276L;
 
-	private AbstractDataset inputAxis;
+	private Dataset inputAxis;
 	private long[] axisShape;
 
 	private int porodDataID, porodErrorsID;
@@ -107,7 +107,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				DataSliceIdentifiers axisErrorsIDs = new DataSliceIdentifiers();
 				axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 				axisErrorsIDs.setSlice(axisSliceParams);
-				AbstractDataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
+				Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
 				inputAxis.setError(inputAxisErrors);
 			}
 
@@ -179,11 +179,11 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				tmp_ids.setIDs(inputGroupID, inputDataID);
 
 				lock.lock();
-				AbstractDataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
+				Dataset inputData = NcdNexusUtils.sliceInputData(sliceData, tmp_ids);
 				if (hasErrors) {
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
-					AbstractDataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
+					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
@@ -193,12 +193,12 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				lock.unlock();
 
 				int[] dataShape = Arrays.copyOf(inputData.getShape(), inputData.getRank() - dimension);
-				AbstractDataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(),
+				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
+				Dataset errors = NcdDataUtils.flattenGridData((Dataset) data.getErrorBuffer(),
 						dimension);
 				
 				Object[] myobj;
-				AbstractDataset axis = null;
+				Dataset axis = null;
 				
 				if (inputAxis != null) {
 					axis = inputAxis.clone().squeeze();
@@ -211,7 +211,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				AbstractDataset myres = new FloatDataset(mydata, dataShape);
+				Dataset myres = new FloatDataset(mydata, dataShape);
 				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
 				long[] frames = getResultDataShape();
@@ -263,7 +263,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					PorodPlotData plotData = (PorodPlotData) SaxsAnalysisPlotType.POROD_PLOT.getSaxsPlotDataObject();
 					SimpleRegression regression = plotData.getPorodPlotParameters(data.squeeze(), axis);
 					if (regression != null) {
-						AbstractDataset tmpPorodDataset = plotData.getFitData(axis, regression);
+						Dataset tmpPorodDataset = plotData.getFitData(axis, regression);
 						
 						DataSliceIdentifiers porodDataIDs = new DataSliceIdentifiers();
 						porodDataIDs.setIDs(resultGroupID, porodDataID);
@@ -295,7 +295,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		}
 	}
 	
-	private void writeResults(DataSliceIdentifiers dataIDs, AbstractDataset data, int[] dataShape, int dim)
+	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim)
 			throws HDF5Exception {
 
 		int resRank = dataShape.length - dim + 1;

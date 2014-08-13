@@ -32,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.TestUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
@@ -60,7 +60,7 @@ public class NcdLazyDataReductionTest {
 	
 	private ILock lock = Job.getJobManager().newLock();
 	
-	private static AbstractDataset data;
+	private static Dataset data;
 	private static long [] shape = new long[] {5, 3, 91, 32, 64};
 	private static long [] normShape = new long[] {shape[0], shape[1], shape[2], 1};
 	private static long [] invShape = new long[] {shape[0], shape[1], shape[2]};
@@ -287,7 +287,7 @@ public class NcdLazyDataReductionTest {
 	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
-		AbstractDataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
+		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
 		data.setError(error);
 	}
 	
@@ -306,8 +306,8 @@ public class NcdLazyDataReductionTest {
 		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyNormalisation.configure(dim, shape, entry_id, processing_group_id);
-		AbstractDataset outData = lazyNormalisation.execute(dim, data, slice, lock);
-		AbstractDataset outErrors = outData.getError();
+		Dataset outData = lazyNormalisation.execute(dim, data, slice, lock);
+		Dataset outErrors = outData.getError();
 		
 		for (int h = 0; h < shape[0]; h++) {
 		  for (int g = 0; g < shape[1]; g++) {
@@ -345,12 +345,12 @@ public class NcdLazyDataReductionTest {
 		SliceSettings bgSliceParams = new SliceSettings(bgShape, 0, bgShape_int[0]);
 		int[] start = new int[] { 0, 0, 0, 0 };
 		bgSliceParams.setStart(start);
-		AbstractDataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
+		Dataset bgData = NcdNexusUtils.sliceInputData(bgSliceParams, bgIds);
 		int bgFrames = bgShape_int[0] * bgShape_int[1];
 		bgData = bgData.sum(0).sum(0).idivide(bgFrames);
 		
 		DataSliceIdentifiers bgErrorIds = ids[1];
-		AbstractDataset bgError = NcdNexusUtils.sliceInputData(bgSliceParams, bgErrorIds);
+		Dataset bgError = NcdNexusUtils.sliceInputData(bgSliceParams, bgErrorIds);
 		bgError = bgError.ipower(2).sum(0).sum(0).idivide(bgFrames);
 		bgData.setErrorBuffer(bgError);
 
@@ -361,8 +361,8 @@ public class NcdLazyDataReductionTest {
 		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyBackgroundSubtraction.configure(dim, shape, processing_group_id);
-		AbstractDataset outData = lazyBackgroundSubtraction.execute(dim, data, bgData, slice, lock);
-		AbstractDataset outErrors = outData.getError();
+		Dataset outData = lazyBackgroundSubtraction.execute(dim, data, bgData, slice, lock);
+		Dataset outErrors = outData.getError();
 			
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)
@@ -393,8 +393,8 @@ public class NcdLazyDataReductionTest {
 		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyDetectorResponse.configure(dim, shape, entry_id, processing_group_id);
-		AbstractDataset outData = lazyDetectorResponse.execute(dim, data, slice, lock);
-		AbstractDataset outErrors = outData.getError(); 
+		Dataset outData = lazyDetectorResponse.execute(dim, data, slice, lock);
+		Dataset outErrors = outData.getError(); 
 		
 		for (int h = 0; h < shape[0]; h++)
  		  for (int g = 0; g < shape[1]; g++)
@@ -423,8 +423,8 @@ public class NcdLazyDataReductionTest {
 		SliceSettings slice = new SliceSettings(invShape, 0, (int) invShape[0]);
 		slice.setStart(new int[] {0, 0, 0});
 		lazyInvariant.configure(dim, shape, entry_id, processing_group_id);
-		AbstractDataset outData = lazyInvariant.execute(dim, data, slice, lock);
-		AbstractDataset outErrors = outData.getError();
+		Dataset outData = lazyInvariant.execute(dim, data, slice, lock);
+		Dataset outErrors = outData.getError();
 		for (int h = 0; h < invShape[0]; h++) {
 		  for (int g = 0; g < invShape[1]; g++) {
 			for (int k = 0; k < invShape[2]; k++) {
@@ -470,8 +470,8 @@ public class NcdLazyDataReductionTest {
 		
 		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
-		AbstractDataset[] outDataset = lazySectorIntegration.execute(dim, data, slice, lock);
-		AbstractDataset[] outErrors = new AbstractDataset[] {outDataset[0].getError(), outDataset[1].getError()};
+		Dataset[] outDataset = lazySectorIntegration.execute(dim, data, slice, lock);
+		Dataset[] outErrors = new Dataset[] {outDataset[0].getError(), outDataset[1].getError()};
 			
 		intSector.setAverageArea(true);
 		for (int h = 0; h < shape[0]; h++)
@@ -479,15 +479,15 @@ public class NcdLazyDataReductionTest {
 			for (int k = 0; k < shape[2]; k++) {
 				int[] startImage = new int[] {h, g, k, 0, 0};
 				int[] stopImage = new int[] {h + 1, g + 1, k + 1, (int) imageShape[0], (int) imageShape[1]};
-				AbstractDataset image = data.getSlice(startImage, stopImage, null).squeeze();
-				AbstractDataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
+				Dataset image = data.getSlice(startImage, stopImage, null).squeeze();
+				Dataset errimage = ((DoubleDataset) data.getErrorBuffer()).getSlice(startImage, stopImage, null).squeeze();
 				image.setErrorBuffer(errimage);
-				AbstractDataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
+				Dataset[] intResult = ROIProfile.sector(image, null, intSector, true, true, false, null, null, true);
 				for (int i = 0; i < outDataset[1].getShape()[3]; i++) {
 						float value = outDataset[1].getFloat(h, g, k, i);
 						double error = outErrors[1].getDouble(h, g, k, i);
 						float expected = intResult[0].getFloat(i);
-						double expectederror = Math.sqrt(((AbstractDataset) intResult[0].getErrorBuffer()).getDouble(i));
+						double expectederror = Math.sqrt(intResult[0].getErrorBuffer().getDouble(i));
 						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 						assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
@@ -495,7 +495,7 @@ public class NcdLazyDataReductionTest {
 					float value = outDataset[0].getFloat(h, g, k, i);
 					double error = outErrors[0].getDouble(h, g, k, i);
 					float expected = intResult[1].getFloat(i);
-					double expectederror = Math.sqrt(((AbstractDataset) intResult[1].getErrorBuffer()).getDouble(i));
+					double expectederror = Math.sqrt(intResult[1].getErrorBuffer().getDouble(i));
 					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 					assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
@@ -527,17 +527,17 @@ public class NcdLazyDataReductionTest {
 		SliceSettings resultsSlice = new SliceSettings(shapeRes, 0, (int) shapeRes[0]);
 	    int[] start = new int[] {0, 0, 0, 0, 0};
 	    resultsSlice.setStart(start);
-		AbstractDataset outDataset = NcdNexusUtils.sliceInputData(resultsSlice, input_ids);
-		AbstractDataset outErrors = NcdNexusUtils.sliceInputData(resultsSlice, input_errors_ids);
-		AbstractDataset dataErrors = (AbstractDataset) data.getErrorBuffer(); 
+		Dataset outDataset = NcdNexusUtils.sliceInputData(resultsSlice, input_ids);
+		Dataset outErrors = NcdNexusUtils.sliceInputData(resultsSlice, input_errors_ids);
+		Dataset dataErrors = data.getErrorBuffer(); 
 				
 		for (int k = 0; k < shape[1]; k++) {
 		  for (int i = 0; i < imageShape[0]; i++) {
 			for (int j = 0; j < imageShape[1]; j++) {
 				start = new int[] {0, k, 0, i, j};
 				int[] stop = new int[] {(int) shape[0], k + 1, (int) shape[2], i + 1 , j + 1};
-				AbstractDataset dataSlice = data.getSlice(start, stop, null);
-				AbstractDataset errorsSlice = dataErrors.getSlice(start, stop, null);
+				Dataset dataSlice = data.getSlice(start, stop, null);
+				Dataset errorsSlice = dataErrors.getSlice(start, stop, null);
 				double value = outDataset.getDouble(0, k, 0, i, j);
 				double errors = outErrors.getDouble(0, k, 0, i, j);
 				double expected = (Double) dataSlice.sum() / (shape[0] * shape[2]);

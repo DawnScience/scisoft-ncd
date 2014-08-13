@@ -36,15 +36,15 @@ import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingSliceObject;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingSliceObject;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
@@ -166,8 +166,8 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			receivedObject = (NcdProcessingSliceObject) receivedMsg.getBodyContent();
 			lock = receivedObject.getLock();
 			SliceSettings sliceData = receivedObject.getSliceData();
-			AbstractDataset data = receivedObject.getData();
-			AbstractDataset qaxis = receivedObject.getAxis();
+			Dataset data = receivedObject.getData();
+			Dataset qaxis = receivedObject.getAxis();
 
 			Normalisation nm = new Normalisation();
 			nm.setCalibChannel(normChannel);
@@ -177,12 +177,12 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			int[] dataShape = data.getShape();
 
 			data = NcdDataUtils.flattenGridData(data, dimension);
-			AbstractDataset errors = NcdDataUtils.flattenGridData((AbstractDataset) data.getErrorBuffer(), dimension);
+			Dataset errors = NcdDataUtils.flattenGridData(data.getErrorBuffer(), dimension);
 
 			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
 			calibrationSliceParams.setFrames(framesCal);
-			AbstractDataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
-			AbstractDataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
+			Dataset dataCal = NcdNexusUtils.sliceInputData(calibrationSliceParams, calibrationIDs);
+			Dataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
 
 			Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0],
 					data.getShape(), calibngd.getShape());
@@ -190,7 +190,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
 			int selectID = -1;

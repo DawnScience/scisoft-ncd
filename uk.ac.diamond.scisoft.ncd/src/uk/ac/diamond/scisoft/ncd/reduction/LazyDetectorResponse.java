@@ -29,7 +29,8 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
@@ -40,7 +41,7 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 public class LazyDetectorResponse extends LazyDataReduction {
 
 	private String drFile;
-	private AbstractDataset drData;
+	private Dataset drData;
 	
 	public static String name = "DetectorResponse";
 
@@ -88,7 +89,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		int memspace_id = H5.H5Screate_simple(rank, drFrames, null);
 		
 		int[] drFrames_int = (int[]) ConvertUtils.convert(drFrames, int[].class);
-		drData = AbstractDataset.zeros(drFrames_int, dtype);
+		drData = DatasetFactory.zeros(drFrames_int, dtype);
 		
 		if ((input_data_id >= 0) && (input_dataspace_id >= 0) && (memspace_id >= 0)) {
 			H5.H5Dread(input_data_id, input_datatype_id, memspace_id, input_dataspace_id, HDF5Constants.H5P_DEFAULT,
@@ -107,14 +108,14 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		writeNcdMetadata(dr_group_id);
 	}
 	
-	public AbstractDataset execute(int dim, AbstractDataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
+	public Dataset execute(int dim, Dataset data, SliceSettings sliceData, ILock lock) throws HDF5Exception {
 		
 			DetectorResponse dr = new DetectorResponse();
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			AbstractDataset errors = flattenGridData((AbstractDataset) data.getErrorBuffer(), dim);
-			AbstractDataset response = drData.squeeze();
+			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset response = drData.squeeze();
 			dr.setResponse(response);
 			
 			if (data.getRank() != response.getRank() + 1) {
@@ -126,7 +127,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			AbstractDataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 			
 			try {

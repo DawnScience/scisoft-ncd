@@ -47,9 +47,9 @@ public class PorodPlotData extends SaxsPlotData {
 		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors() && axis instanceof IErrorDataset
 				&& ((IErrorDataset) axis).hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError().getDouble(idx);
+			double err = ((IErrorDataset) data).getError(idx);
 			double axval = axis.getDouble(idx);
-			double axerr = ((IErrorDataset) axis).getError().getDouble(idx);
+			double axerr = ((IErrorDataset) axis).getError(idx);
 			return Math.sqrt(Math.pow(4.0*Math.pow(axval, 3.0)*val*axerr, 2.0) + Math.pow(Math.pow(axval, 4.0)*err, 2.0));
 		}
 		return Double.NaN;
@@ -58,7 +58,7 @@ public class PorodPlotData extends SaxsPlotData {
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
 		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
-			return ((IErrorDataset) axis).getError().getDouble(idx);
+			return ((IErrorDataset) axis).getError(idx);
 		}
 		return Double.NaN;
 	}

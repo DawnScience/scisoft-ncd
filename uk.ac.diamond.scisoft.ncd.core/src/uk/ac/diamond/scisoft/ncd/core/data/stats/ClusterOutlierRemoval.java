@@ -27,6 +27,7 @@ import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.apache.commons.math3.stat.StatUtils;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
 
 public class ClusterOutlierRemoval extends SaxsStatsData {
@@ -41,7 +42,7 @@ public class ClusterOutlierRemoval extends SaxsStatsData {
 	}
 
 	@Override
-	public AbstractDataset getStatsData() {
+	public Dataset getStatsData() {
 		if (referenceData != null) {
 			int[] shape = referenceData.getShape();
 			IndexIterator itr = referenceData.getIterator(true);

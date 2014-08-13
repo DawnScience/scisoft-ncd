@@ -16,7 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
+import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 
 public class IdentityFilter extends SaxsStatsData {
 	
@@ -25,10 +26,10 @@ public class IdentityFilter extends SaxsStatsData {
 	}
 
 	@Override
-	public AbstractDataset getStatsData() {
+	public Dataset getStatsData() {
 		if (referenceData != null) {
 			int[] shape = referenceData.getShape();
-			AbstractDataset result = AbstractDataset.ones(shape, AbstractDataset.INT); 
+			Dataset result = DatasetFactory.ones(shape, Dataset.INT); 
 			return result; 
 		}
 		return null;

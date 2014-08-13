@@ -29,16 +29,16 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 public abstract class LazyDataReduction {
 
-	protected AbstractDataset qaxis;
+	protected Dataset qaxis;
 	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
-	protected AbstractDataset mask;
+	protected Dataset mask;
 
 	public LazyDataReduction() {
 	}
@@ -47,12 +47,12 @@ public abstract class LazyDataReduction {
 		this.detector = detector;
 	}
 
-	public void setQaxis(AbstractDataset qaxis, Unit<ScatteringVector> unit) {
+	public void setQaxis(Dataset qaxis, Unit<ScatteringVector> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}
 
-	public void setMask(AbstractDataset mask) {
+	public void setMask(Dataset mask) {
 		this.mask = mask;
 	}
 
@@ -111,7 +111,7 @@ public abstract class LazyDataReduction {
 		H5.H5Dclose(metadata_id);
 	}
 	
-	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+	protected Dataset flattenGridData(Dataset data, int dimension) {
 		
 		int dataRank = data.getRank();
 		int[] dataShape = data.getShape();

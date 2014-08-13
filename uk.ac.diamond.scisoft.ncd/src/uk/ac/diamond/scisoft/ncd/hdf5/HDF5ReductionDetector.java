@@ -23,6 +23,7 @@ import java.util.Map;
 import org.apache.commons.lang.ArrayUtils;
 
 import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
@@ -31,11 +32,11 @@ import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 
 public class HDF5ReductionDetector {
 
-	protected AbstractDataset data;
+	protected Dataset data;
 	
 	private String name;
 	protected String key;
-	protected AbstractDataset qAxis;
+	protected Dataset qAxis;
 	protected String qAxisUnit;
 	protected DataSliceIdentifiers ids, errIds;
 	
@@ -44,7 +45,7 @@ public class HDF5ReductionDetector {
 	protected Map<String, Object> attributeMap = new HashMap<String, Object>();
 	public static final String descriptionLabel = "description";
 	protected String description;
-	protected AbstractDataset mask = null;
+	protected Dataset mask = null;
 	
 	public HDF5ReductionDetector(String name, String key) {
 		this.key = key;
@@ -57,7 +58,7 @@ public class HDF5ReductionDetector {
 		this.name = name;
 	}
 	
-	public void setData(AbstractDataset ds) {
+	public void setData(Dataset ds) {
 		data = ds;
 		if (!ds.hasErrors()) {
 			data.setErrorBuffer(new DoubleDataset(ds));
@@ -109,11 +110,11 @@ public class HDF5ReductionDetector {
 	}
 	
 
-	public AbstractDataset getMask() {
+	public Dataset getMask() {
 		return mask;
 	}
 
-	public void setMask(AbstractDataset mask) {
+	public void setMask(Dataset mask) {
 		if (mask == null || ArrayUtils.isEquals(mask.getShape(), getDataDimensions())) {
 			this.mask = mask;
 		}
@@ -125,18 +126,18 @@ public class HDF5ReductionDetector {
 	}
 	
 	public void setqAxis(IDataset qAxis, String unit) {
-		this.qAxis = DatasetUtils.convertToAbstractDataset(qAxis);
+		this.qAxis = DatasetUtils.convertToDataset(qAxis);
 		this.qAxisUnit = unit;
 	}
 
-	public AbstractDataset getqAxis() {
+	public Dataset getqAxis() {
 		return qAxis;
 	}
 	
-	protected AbstractDataset flattenGridData(AbstractDataset data, int dimension) {
+	protected Dataset flattenGridData(Dataset dataset, int dimension) {
 		
-		int dataRank = data.getRank();
-		int[] dataShape = data.getShape();
+		int dataRank = dataset.getRank();
+		int[] dataShape = dataset.getShape();
 		if (dataRank > (dimension + 1)) {
 			int[] frameArray = Arrays.copyOf(dataShape, dataRank - dimension);
 			int totalFrames = 1;
@@ -145,8 +146,8 @@ public class HDF5ReductionDetector {
 			}
 			int[] newShape = Arrays.copyOfRange(dataShape, dataRank - dimension - 1, dataRank);
 			newShape[0] = totalFrames;
-			return data.reshape(newShape);
+			return dataset.reshape(newShape);
 		}
-		return data;
+		return dataset;
 	}
 }
