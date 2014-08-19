@@ -17,9 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.rcp.reduction;
 
 import static org.junit.Assert.assertEquals;
-
-import java.util.Arrays;
-
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
