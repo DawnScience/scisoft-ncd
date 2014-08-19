@@ -177,7 +177,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			int[] dataShape = data.getShape();
 
 			data = NcdDataUtils.flattenGridData(data, dimension);
-			Dataset errors = NcdDataUtils.flattenGridData(data.getErrorBuffer(), dimension);
+			Dataset errors = data.getErrorBuffer();
 
 			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
 			calibrationSliceParams.setFrames(framesCal);

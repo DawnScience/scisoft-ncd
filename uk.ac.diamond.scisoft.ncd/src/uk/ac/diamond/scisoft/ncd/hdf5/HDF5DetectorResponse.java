@@ -57,7 +57,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			response = response.squeeze();
 			
 			if (data.getRank() != response.getRank() + 1) {

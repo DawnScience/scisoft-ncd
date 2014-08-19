@@ -484,7 +484,7 @@ public class NcdLazyDataReductionTest {
 						float value = outDataset[1].getFloat(h, g, k, i);
 						double error = outErrors[1].getDouble(h, g, k, i);
 						float expected = intResult[0].getFloat(i);
-						double expectederror = Math.sqrt(intResult[0].getErrorBuffer().getDouble(i));
+						double expectederror = Math.sqrt(intResult[0].getError(i));
 						assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 						assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}
@@ -492,7 +492,7 @@ public class NcdLazyDataReductionTest {
 					float value = outDataset[0].getFloat(h, g, k, i);
 					double error = outErrors[0].getDouble(h, g, k, i);
 					float expected = intResult[1].getFloat(i);
-					double expectederror = Math.sqrt(intResult[1].getErrorBuffer().getDouble(i));
+					double expectederror = Math.sqrt(intResult[1].getError(i));
 					assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 					assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 				}

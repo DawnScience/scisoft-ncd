@@ -163,10 +163,6 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 				int[] dataShape = inputData.getShape();
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, 1);
-				if (inputData.hasErrors()) {
-					Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),	1);
-					data.setErrorBuffer(errors);
-				}
 				
 				SaxsAnalysisStats selectedSaxsStat = statType.getSelectionAlgorithm();
 				SaxsStatsData statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();

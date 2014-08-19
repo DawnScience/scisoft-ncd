@@ -194,8 +194,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 
 				int[] dataShape = Arrays.copyOf(inputData.getShape(), inputData.getRank() - dimension);
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				Dataset errors = NcdDataUtils.flattenGridData((Dataset) data.getErrorBuffer(),
-						dimension);
+				Dataset errors = data.getErrorBuffer();
 				
 				Object[] myobj;
 				Dataset axis = null;

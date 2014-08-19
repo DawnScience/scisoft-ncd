@@ -58,7 +58,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			
 			background = background.squeeze();
 

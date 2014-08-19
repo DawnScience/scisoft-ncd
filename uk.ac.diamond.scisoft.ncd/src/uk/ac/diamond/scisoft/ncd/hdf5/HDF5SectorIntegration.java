@@ -125,10 +125,6 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			if (data.hasErrors()) {
-				Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
-				data.setErrorBuffer(errors);
-			}
 			
 			roi.setAverageArea(false);
 			Dataset[] mydata = sec.process(data, data.getShape()[0], maskUsed);
@@ -137,7 +133,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast(mydata[0].getErrorBuffer(), Dataset.FLOAT64);
+						myazerrors = mydata[0].getErrorBuffer();
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -154,7 +150,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast(mydata[1].getErrorBuffer(), Dataset.FLOAT64);
+						myraderrors =  mydata[1].getErrorBuffer();
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];

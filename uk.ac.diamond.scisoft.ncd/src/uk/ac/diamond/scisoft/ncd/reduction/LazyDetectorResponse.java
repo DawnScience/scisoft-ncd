@@ -114,7 +114,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			Dataset response = drData.squeeze();
 			dr.setResponse(response);
 			

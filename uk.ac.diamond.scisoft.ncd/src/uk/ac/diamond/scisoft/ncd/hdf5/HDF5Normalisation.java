@@ -81,7 +81,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			calibngd = flattenGridData(calibngd, 1);
 			
 			Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(), data.getShape()[0], data.getShape(), calibngd.getShape());

@@ -116,7 +116,7 @@ public class LazyNormalisation extends LazyDataReduction {
 			int[] dataShape = data.getShape();
 			
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			
 			SliceSettings calibrationSliceParams = new SliceSettings(sliceData);
 			calibrationSliceParams.setFrames(framesCal);

@@ -291,11 +291,6 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				int[] dataShape = inputData.getShape();
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				if (inputData.hasErrors()) {
-					Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),
-							dimension);
-					data.setErrorBuffer(errors);
-				}
 				
 				Dataset axis = inputAxis.clone();
 				Dataset mydata = plotData.getSaxsPlotDataset(data.squeeze(), axis.squeeze());
@@ -303,7 +298,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				saxsPlotData = DatasetUtils.cast(mydata, Dataset.FLOAT32);
 				if (saxsPlotData != null) {
 					if (saxsPlotData.hasErrors()) {
-						saxsPlotErrors = DatasetUtils.cast(mydata.getErrorBuffer(), Dataset.FLOAT64);
+						saxsPlotErrors = mydata.getErrorBuffer();
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = saxsPlotData.getShape()[saxsPlotData.getRank() - 1];

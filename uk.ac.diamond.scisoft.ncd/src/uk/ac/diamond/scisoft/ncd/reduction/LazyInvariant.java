@@ -61,7 +61,7 @@ public class LazyInvariant extends LazyDataReduction {
 			
 			int[] dataShape = Arrays.copyOf(data.getShape(), data.getRank() - dim);
 			data = flattenGridData(data, dim);
-			Dataset errors = flattenGridData(data.getErrorBuffer(), dim);
+			Dataset errors = data.getErrorBuffer();
 			
 			Object[] myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
 			float[] mydata = (float[]) myobj[0];

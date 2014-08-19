@@ -372,11 +372,6 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				int[] dataShape = inputData.getShape();
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				if (inputData.hasErrors()) {
-					Dataset errors = NcdDataUtils.flattenGridData((Dataset) inputData.getErrorBuffer(),
-							dimension);
-					data.setErrorBuffer(errors);
-				}
 
 				Dataset[] mydata = sec.process(data, data.getShape()[0], mask);
 				int resLength = dataShape.length - dimension + 1;
@@ -384,8 +379,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 					if (myazdata != null) {
 						if (myazdata.hasErrors()) {
-							myazerrors = DatasetUtils.cast((Dataset) mydata[0].getErrorBuffer(),
-									Dataset.FLOAT64);
+							myazerrors = mydata[0].getErrorBuffer();
 						}
 
 						int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -402,8 +396,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 					if (myraddata != null) {
 						if (myraddata.hasErrors()) {
-							myraderrors = DatasetUtils.cast((Dataset) mydata[1].getErrorBuffer(),
-									Dataset.FLOAT64);
+							myraderrors = mydata[1].getErrorBuffer();
 						}
 						int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 						resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];

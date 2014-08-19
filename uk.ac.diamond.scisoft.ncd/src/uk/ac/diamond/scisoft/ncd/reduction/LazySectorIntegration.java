@@ -178,10 +178,6 @@ public class LazySectorIntegration extends LazyDataReduction {
 			int[] dataShape = inputData.getShape();
 			
 			Dataset data = flattenGridData(inputData, dim);
-			if (inputData.hasErrors()) {
-				Dataset errors = flattenGridData((Dataset) inputData.getErrorBuffer(), dim);
-				data.setErrorBuffer(errors);
-			}
 			
 			Dataset[] mydata = sec.process(data, data.getShape()[0], mask);
 			int resLength =  dataShape.length - dim + 1;
@@ -189,7 +185,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
 				if (myazdata != null) {
 					if (myazdata.hasErrors()) {
-						myazerrors = DatasetUtils.cast((Dataset) mydata[0].getErrorBuffer(), Dataset.FLOAT64);
+						myazerrors = mydata[0].getErrorBuffer();
 					}
 					
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
@@ -206,7 +202,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
 				if (myraddata != null) {
 					if (myraddata.hasErrors()) {
-						myraderrors =  DatasetUtils.cast((Dataset) mydata[1].getErrorBuffer(), Dataset.FLOAT64);
+						myraderrors =  mydata[1].getErrorBuffer();
 					}
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];

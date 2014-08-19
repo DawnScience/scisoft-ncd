@@ -235,7 +235,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
 				// We need to get variance values for further calculations
-				Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(), dimension);
+				Dataset errors = inputData.getErrorBuffer();
 				Dataset calibngd = NcdDataUtils.flattenGridData(dataCal, 1);
 
 				Object[] myobj = nm.process(data.getBuffer(), errors.getBuffer(), calibngd.getBuffer(),

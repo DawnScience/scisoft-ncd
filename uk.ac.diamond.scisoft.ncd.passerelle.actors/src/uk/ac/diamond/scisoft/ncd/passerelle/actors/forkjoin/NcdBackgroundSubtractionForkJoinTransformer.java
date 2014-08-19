@@ -281,8 +281,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				}
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				Dataset errors = NcdDataUtils.flattenGridData(inputData.getErrorBuffer(),
-						dimension);
+				Dataset errors = inputData.getErrorBuffer();
 
 				Dataset background = bgData.squeeze();
 

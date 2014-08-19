@@ -165,8 +165,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				int[] dataShape = inputData.getShape();
 
 				Dataset data = NcdDataUtils.flattenGridData(inputData, dimension);
-				Dataset errors = NcdDataUtils.flattenGridData(data.getErrorBuffer(),
-						dimension);
+				Dataset errors = data.getErrorBuffer();
 				Dataset response = drData.squeeze();
 				dr.setResponse(response);
 
