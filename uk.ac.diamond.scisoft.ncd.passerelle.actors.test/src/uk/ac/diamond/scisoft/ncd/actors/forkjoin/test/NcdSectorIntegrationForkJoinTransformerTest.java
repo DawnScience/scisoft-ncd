@@ -263,7 +263,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 										float value = outData.getFloat(h, g, k, i);
 										double error = outErrors.getDouble(h, g, k, i);
 										float expected = intResult[0].getFloat(i);
-										double expectederror = Math.sqrt(intResult[0].getError(i));
+										double expectederror = intResult[0].getError(i);
 										assertEquals(String.format("Test radial sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 										assertEquals(String.format("Test radial sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}
@@ -271,7 +271,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 									float value = azData.getFloat(h, g, k, i);
 									double error = azErrors.getDouble(h, g, k, i);
 									float expected = intResult[1].getFloat(i);
-									double expectederror = Math.sqrt(intResult[1].getError(i));
+									double expectederror = intResult[1].getError(i);
 									assertEquals(String.format("Test azimuthal sector integration profile for frame (%d, %d, %d, %d)", h, g, k, i), expected, value, 1e-6*expected);
 									assertEquals(String.format("Test azimuthal sector integration profile error for frame (%d, %d, %d, %d)", h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}
@@ -354,7 +354,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 										float value = outData.getFloat(h, g, k, i);
 										double error = outErrors.getDouble(h, g, k, i);
 										float expected = resultData.getFloat(i);
-										double expectederror = Math.sqrt(resultData.getError(i));
+										double expectederror = resultData.getError(i);
 										assertEquals(String.format("Test %s SAXS Plot data for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expected, value, 1e-6*expected);
 										assertEquals(String.format("Test %s SAXS Plot error for frame (%d, %d, %d, %d)", plotType.getName(), h, g, k, i), expectederror, error, 1e-6*expectederror);
 								}

@@ -296,7 +296,7 @@ public class NcdProcessingModelTest {
 				float  valResult      = result.getFloat(0, 0, j);
 				double valResultError = resultError.getDouble(0, 0, j);
 				float  valData        = intResult[0].getFloat(j);
-				double valDataError = intResult[0].getError(j);
+				double valDataError   = intResult[0].getError(j);
 				double acc    = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
 				double accerr = Math.max(1e-6 * Math.abs(Math.sqrt(valResultError * valResultError + valDataError * valDataError)),	1e-10);
 
@@ -317,7 +317,7 @@ public class NcdProcessingModelTest {
 				float  valResult      = result.getFloat(0, 0, j);
 				double valResultError = resultError.getDouble(0, 0, j);
 				float  valData        = intResult[1].getFloat(j);
-				double valDataError = Math.sqrt(intResult[1].getError(j));
+				double valDataError   = intResult[1].getError(j);
 				double acc    = Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)), 1e-10);
 				double accerr = Math.max(1e-6 * Math.abs(Math.sqrt(valResultError * valResultError + valDataError * valDataError)),	1e-10);
 
