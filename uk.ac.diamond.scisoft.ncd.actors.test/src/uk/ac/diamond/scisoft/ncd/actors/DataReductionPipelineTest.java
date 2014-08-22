@@ -32,7 +32,6 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.junit.After;
@@ -45,8 +44,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ptolemy.moml.MoMLParser;
-import uk.ac.diamond.scisoft.ncd.actors.Activator;
-
 import com.isencia.passerelle.workbench.model.launch.ModelRunner;
 
 public class DataReductionPipelineTest {
@@ -122,9 +119,9 @@ public class DataReductionPipelineTest {
 	public void testDataReductionPipeline1() throws Throwable {
 		
 		// Set up the locations
-		final String xmlPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
-		final String rawPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/i22-34820.nxs");
-		final String persPath = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/persistence_file.nxs");
+		final String xmlPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/ncd_configuration.xml");
+		final String rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/i22-34820.nxs");
+		final String persPath = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/persistence_file.nxs");
 		
 		System.setProperty("xml.path",         xmlPath);
 		System.setProperty("raw.path",         rawPath);
@@ -138,7 +135,7 @@ public class DataReductionPipelineTest {
 		System.setProperty("output.path", outputPath);
 
 		
-		testScalarInjection("test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_model.moml",  "/entry/dictionary/results_path");
+		testScalarInjection("data/ncd_model.moml",  "/entry/dictionary/results_path");
 	}
 	
 	private synchronized void testScalarInjection(final String path, final String... scalarNames) throws Throwable {
@@ -196,7 +193,7 @@ public class DataReductionPipelineTest {
 
 	private synchronized void testFile(final String relPath, boolean requireError)  throws Throwable {
 				
-		final String afile = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), relPath);
+		final String afile = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", relPath);
 
 		final IProject workflows = ResourcesPlugin.getWorkspace().getRoot().getProject("workflows");
 		if (!workflows.exists()) {
