@@ -27,6 +27,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -188,7 +189,7 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		new Label(r, SWT.NONE).setText("Directory:");
 		SelectorWidget locationSelector = new SelectorWidget(r) {
 			@Override
-			public void loadPath(String path) {
+			public void loadPath(String path, TypedEvent event) {
 				File dir = new File(path);
 				if (dir.exists() && dir.isDirectory()) {
 					inputDirectory = path;

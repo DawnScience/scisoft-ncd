@@ -26,6 +26,7 @@ import org.apache.commons.validator.routines.IntegerValidator;
 import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -565,7 +566,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			new Label(g, SWT.NONE).setText("Directory:");
 			locationSelector = new SelectorWidget(g) {
 				@Override
-				public void loadPath(String path) {
+				public void loadPath(String path, TypedEvent event) {
 					File dir = new File(path);
 					if (dir.exists() && dir.isDirectory()) {
 						inputDirectory = path;
@@ -809,7 +810,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgLabel.setText("Background Subtraction File:");
 			bgFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void loadPath(String path) {
+				public void loadPath(String path, TypedEvent event) {
 					File tmpBgFile = new File(path);
 					if (tmpBgFile.exists())
 						ncdBgFileSourceProvider.setBgFile(path);
@@ -845,7 +846,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			drLabel.setText("Detector Response File:");
 			drFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void loadPath(String path) {
+				public void loadPath(String path, TypedEvent event) {
 					File tmpDrFile = new File(path);
 					if (tmpDrFile.exists())
 						ncdDrFileSourceProvider.setDrFile(path);

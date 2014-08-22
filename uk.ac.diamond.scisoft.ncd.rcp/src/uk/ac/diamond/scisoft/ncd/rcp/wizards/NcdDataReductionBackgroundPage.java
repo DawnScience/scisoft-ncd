@@ -26,6 +26,7 @@ import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -82,7 +83,7 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 		bgLabel.setText("Background Subtraction File");
 		SelectorWidget bgFileSelector = new SelectorWidget(subContainer, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void loadPath(String path) {
+			public void loadPath(String path, TypedEvent event) {
 				File tmpBgFile = new File(path);
 				if (tmpBgFile.exists())
 					ncdBgFileSourceProvider.setBgFile(path);

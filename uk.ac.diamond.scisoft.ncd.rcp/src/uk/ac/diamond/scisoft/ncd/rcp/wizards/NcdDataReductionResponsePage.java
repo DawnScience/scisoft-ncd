@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 import java.io.File;
 
 import org.dawnsci.common.widgets.file.SelectorWidget;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
@@ -66,7 +67,7 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 		respLabel.setText("Detector Response File:");
 		SelectorWidget drFileSelector = new SelectorWidget(group, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void loadPath(String path) {
+			public void loadPath(String path, TypedEvent event) {
 				File tmpDrFile = new File(path);
 				if (tmpDrFile.exists())
 					ncdDrFileSourceProvider.setDrFile(path);
