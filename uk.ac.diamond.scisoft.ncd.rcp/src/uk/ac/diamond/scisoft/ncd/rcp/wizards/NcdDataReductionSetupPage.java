@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 import java.io.File;
 
 import org.apache.commons.validator.routines.IntegerValidator;
+import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.jface.wizard.IWizard;
 import org.eclipse.jface.wizard.IWizardPage;
 import org.eclipse.swt.SWT;
@@ -30,7 +31,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -66,8 +66,6 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider;
 
 	private String inputDirectory = "Please specify results directory";
-	private Text location;
-	private Button browse;
 	protected static final int PAGENUMBER = 1;
 
 	protected NcdDataReductionSetupPage() {
@@ -188,42 +186,25 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		r.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
 		
 		new Label(r, SWT.NONE).setText("Directory:");
-		location = new Text(r, SWT.BORDER);
-		location.setText(inputDirectory);
-		location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-		location.setToolTipText("Location of NCD data reduction results directory");
-		String tmpWorkigDir = ncdWorkingDirSourceProvider.getWorkingDir();
-		if (tmpWorkigDir != null)
-			location.setText(tmpWorkigDir);
-		location.addModifyListener(new ModifyListener() {
-			
+		SelectorWidget locationSelector = new SelectorWidget(r) {
 			@Override
-			public void modifyText(ModifyEvent e) {
-				File dir = new File(location.getText());
-				if (dir.exists()) {
-					inputDirectory = dir.getPath();
+			public void loadPath(String path) {
+				File dir = new File(path);
+				if (dir.exists() && dir.isDirectory()) {
+					inputDirectory = path;
 					ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 				} else {
 					ncdWorkingDirSourceProvider.setWorkingDir(null);
 				}
 			}
-		});
-
-		browse = new Button(r, SWT.NONE);
-		browse.setText("...");
-		browse.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				DirectoryDialog dChooser = new DirectoryDialog(getShell());
-				dChooser.setText("Select working directory for NCD data reduction");
-				dChooser.setFilterPath(inputDirectory);
-				final File dir = new File(dChooser.open());
-				if (dir.exists()) {
-					inputDirectory = dir.toString();
-					location.setText(inputDirectory);
-				}
-			}
-		});
+		};
+		locationSelector.setText(inputDirectory);
+		locationSelector.setTextToolTip("Location of NCD data reduction results directory");
+		locationSelector.setButtonToolTip("Select working directory for NCD data reduction");
+		String tmpWorkigDir = ncdWorkingDirSourceProvider.getWorkingDir();
+		if (tmpWorkigDir != null) {
+			locationSelector.setText(tmpWorkigDir);
+		}
 
 		//Data frame selection
 		Group g = new Group(container, SWT.NONE);

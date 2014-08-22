@@ -20,6 +20,7 @@ import java.io.File;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.validator.routines.IntegerValidator;
+import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.ModifyEvent;
 import org.eclipse.swt.events.ModifyListener;
@@ -29,7 +30,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -43,8 +43,6 @@ import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage {
 
 	protected static final int PAGENUMBER = 5;
-	private Text bgFile;
-	private Button browseBg;
 	private Text bgScale;
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider;
@@ -82,41 +80,22 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 
 		Label bgLabel = new Label(subContainer, SWT.NONE);
 		bgLabel.setText("Background Subtraction File");
-		bgFile = new Text(subContainer, SWT.BORDER);
-		bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 2, 1));
-		bgFile.setToolTipText("File with the background measurments");
-		String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
-		if (tmpBgFile != null)
-			bgFile.setText(tmpBgFile);
-		bgFile.addModifyListener(new ModifyListener() {
-			
+		SelectorWidget bgFileSelector = new SelectorWidget(subContainer, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void modifyText(ModifyEvent e) {
-				File tmpBgFile = new File(bgFile.getText());
+			public void loadPath(String path) {
+				File tmpBgFile = new File(path);
 				if (tmpBgFile.exists())
-					ncdBgFileSourceProvider.setBgFile(tmpBgFile.getAbsolutePath());
+					ncdBgFileSourceProvider.setBgFile(path);
 				else
 					ncdBgFileSourceProvider.setBgFile(null);
 			}
-		});
+		};
+		bgFileSelector.setTextToolTip("File with the background measurements");
+		bgFileSelector.setButtonToolTip("Select Background Data File");
+		String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
+		if (tmpBgFile != null)
+			bgFileSelector.setText(tmpBgFile);
 
-		browseBg = new Button(subContainer, SWT.NONE);
-		browseBg.setText("...");
-		browseBg.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false, 1, 1));
-		browseBg.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				FileDialog dChooser = new FileDialog(getShell());
-				dChooser.setText("Select Background Data File");
-				dChooser.setFilterNames(new String[] { "NeXus files", "All Files"});
-				dChooser.setFilterExtensions(new String[] {"*.nxs", "*.*"});
-				final File fl = new File(dChooser.open());
-				if (fl.exists()) {
-					bgFile.setText(fl.getAbsolutePath());
-				}
-			}
-		});
-		
 		Label bgScaleLabel = new Label(subContainer, SWT.NONE);
 		bgScaleLabel.setText("Bg. Scale");
 		bgScaleLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));

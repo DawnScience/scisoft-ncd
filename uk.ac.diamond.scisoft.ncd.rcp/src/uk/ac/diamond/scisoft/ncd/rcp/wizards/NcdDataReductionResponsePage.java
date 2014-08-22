@@ -18,19 +18,13 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.io.File;
 
+import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.swt.SWT;
-import org.eclipse.swt.events.ModifyEvent;
-import org.eclipse.swt.events.ModifyListener;
-import org.eclipse.swt.events.SelectionAdapter;
-import org.eclipse.swt.events.SelectionEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
-import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
-import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
@@ -40,8 +34,8 @@ import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 
 	private NcdProcessingSourceProvider ncdDrFileSourceProvider;
-	private Text drFile;
-	private Button browseDr;
+//	private Text drFile;
+//	private Button browseDr;
 
 	protected static final int PAGENUMBER = 2;
 
@@ -70,40 +64,22 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 
 		Label respLabel = new Label(group, SWT.NONE);
 		respLabel.setText("Detector Response File:");
-		drFile = new Text(group, SWT.BORDER);
-		drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-		drFile.setToolTipText("File with the detector response frame");
-		String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
-		if (tmpDrFile != null)
-			drFile.setText(tmpDrFile);
-		drFile.addModifyListener(new ModifyListener() {
+		SelectorWidget drFileSelector = new SelectorWidget(group, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void modifyText(ModifyEvent e) {
-				File tmpDrFile = new File(drFile.getText());
+			public void loadPath(String path) {
+				File tmpDrFile = new File(path);
 				if (tmpDrFile.exists())
-					ncdDrFileSourceProvider.setDrFile(tmpDrFile.getAbsolutePath());
+					ncdDrFileSourceProvider.setDrFile(path);
 				else
 					ncdDrFileSourceProvider.setDrFile(null);
 			}
-		});
+		};
+		drFileSelector.setTextToolTip("File with the detector response frame");
+		drFileSelector.setButtonToolTip("Select Detector Response File");
+		String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
+		if (tmpDrFile != null)
+			drFileSelector.setText(tmpDrFile);
 
-		browseDr = new Button(group, SWT.NONE);
-		browseDr.setText("...");
-		browseDr.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
-		browseDr.addSelectionListener(new SelectionAdapter() {
-			@Override
-			public void widgetSelected(SelectionEvent e) {
-				FileDialog dChooser = new FileDialog(getShell());
-				dChooser.setText("Select Detector Response File");
-				dChooser.setFilterNames(new String[] { "NeXus files", "All Files"});
-				dChooser.setFilterExtensions(new String[] {"*.nxs", "*.*"});
-				final File fl = new File(dChooser.open());
-				if (fl.exists()) {
-					drFile.setText(fl.toString());
-				}
-			}
-		});
-		
 		setControl(container);
 	}
 
