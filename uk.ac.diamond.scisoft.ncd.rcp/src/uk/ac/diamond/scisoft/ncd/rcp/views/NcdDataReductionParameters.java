@@ -23,15 +23,9 @@ import java.util.Map;
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.commons.validator.routines.IntegerValidator;
+import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
-import org.eclipse.swt.dnd.DND;
-import org.eclipse.swt.dnd.DropTarget;
-import org.eclipse.swt.dnd.DropTargetAdapter;
-import org.eclipse.swt.dnd.DropTargetEvent;
-import org.eclipse.swt.dnd.FileTransfer;
-import org.eclipse.swt.dnd.TextTransfer;
-import org.eclipse.swt.dnd.Transfer;
 import org.eclipse.swt.events.ControlAdapter;
 import org.eclipse.swt.events.ControlEvent;
 import org.eclipse.swt.events.ModifyEvent;
@@ -43,8 +37,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
-import org.eclipse.swt.widgets.DirectoryDialog;
-import org.eclipse.swt.widgets.FileDialog;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
@@ -77,14 +69,15 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private IMemento memento;
 
 	private Text bgFramesStart, bgFramesStop, detFramesStart, detFramesStop, bgAdvanced, detAdvanced, gridAverage;
-	private Text bgFile, drFile, bgScale, sampleThickness, absScale;
+	private Text bgScale, sampleThickness, absScale;
 
 	private Button runDataReduction, runDataReductionWizard;
-	private Text location;
-	
-	private Button browse;
+	private SelectorWidget locationSelector;
+	private SelectorWidget drFileSelector;
+	private SelectorWidget bgFileSelector;
+
 	private String inputDirectory = "Please specify results directory";
-	private Button bgButton, drButton, normButton, secButton, invButton, aveButton, browseBg, browseDr;
+	private Button bgButton, drButton, normButton, secButton, invButton, aveButton;
 	private Button loglogButton, guinierButton, porodButton, kratkyButton, zimmButton, debyebuecheButton;
 	
 	private NcdProcessingSourceProvider ncdNormalisationSourceProvider;
@@ -222,8 +215,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putBoolean(NcdPreferences.NCD_PLOT_ZIMM, zimmButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_PLOT_DEBYEBUECHE, debyebuecheButton.getSelection());
 			
-			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFile.getText());
-			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFile.getText());
+			memento.putString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION, bgFileSelector.getText());
+			memento.putString(NcdPreferences.NCD_DETECTORRESPONSE, drFileSelector.getText());
 			
 			Double sampleThicknessVal = getSampleThickness();
 			if (sampleThicknessVal != null) {
@@ -409,7 +402,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			
 			tmp = memento.getString(NcdPreferences.NCD_BACKGROUNDSUBTRACTION);
 			if (tmp != null) {
-				bgFile.setText(tmp);
+				bgFileSelector.setText(tmp);
 				ncdBgFileSourceProvider.setBgFile(tmp);
 			}
 			
@@ -421,13 +414,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			
 			tmp = memento.getString(NcdPreferences.NCD_DETECTORRESPONSE);
 			if (tmp != null) {
-				drFile.setText(tmp);
+				drFileSelector.setText(tmp);
 				ncdDrFileSourceProvider.setDrFile(tmp);
 			}
 			
 			tmp = memento.getString(NcdPreferences.NCD_DIRECTORY);
 			if (tmp != null) {
-				location.setText(tmp);
+				locationSelector.setText(tmp);
 				inputDirectory = tmp;
 				ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 			}
@@ -441,7 +434,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		
 		final ScrolledComposite sc = new ScrolledComposite(parent, SWT.H_SCROLL | SWT.V_SCROLL);
 		final Composite c = new Composite(sc, SWT.NONE);
-		GridLayout grid = new GridLayout(3, false);
+		GridLayout grid = new GridLayout(1, false);
 		c.setLayout(grid);
 		GridLayout gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
@@ -458,7 +451,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			Group g = new Group(c, SWT.BORDER);
 			g.setText("Data reduction pipeline");
 			g.setLayout(gl);
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			
 			drButton = new Button(g, SWT.CHECK);
 			drButton.setText("1. Detector response");
@@ -565,69 +558,30 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		{
 			Group g = new Group(c, SWT.NONE);
-			g.setLayout(new GridLayout(3, false));
+			g.setLayout(new GridLayout(2, false));
 			g.setText("Results directory");
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			
 			new Label(g, SWT.NONE).setText("Directory:");
-			location = new Text(g, SWT.BORDER);
-			location.setText(inputDirectory);
-			location.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false));
-			location.setToolTipText("Location of NCD data reduction results directory");
-			String tmpWorkigDir = ncdWorkingDirSourceProvider.getWorkingDir();
-			if (tmpWorkigDir != null) {
-				location.setText(tmpWorkigDir);
-			}
-			location.addModifyListener(new ModifyListener() {
-				
+			locationSelector = new SelectorWidget(g) {
 				@Override
-				public void modifyText(ModifyEvent e) {
-					File dir = new File(location.getText());
+				public void loadPath(String path) {
+					File dir = new File(path);
 					if (dir.exists() && dir.isDirectory()) {
-						inputDirectory = dir.getPath();
+						inputDirectory = path;
 						ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
 					} else {
 						ncdWorkingDirSourceProvider.setWorkingDir(null);
 					}
 				}
-			});
-			
-			DropTarget dt = new DropTarget(location, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
-			dt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
-			dt.addDropListener(new DropTargetAdapter() {
-				@Override
-				public void drop(DropTargetEvent event) {
-					Object data = event.data;
-					if (data instanceof String[]) {
-						String[] stringData = (String[]) data;
-						if (stringData.length > 0) {
-							File dir = new File(stringData[0]);
-							if (dir.exists() && dir.isDirectory()) {
-								location.setText(dir.getAbsolutePath());
-								location.notifyListeners(SWT.Modify, null);
-							}
-						}
-					}
-				}
-				
-			});
-
-			browse = new Button(g, SWT.NONE);
-			browse.setText("...");
-			browse.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					DirectoryDialog dChooser = new DirectoryDialog(getViewSite().getShell());
-					dChooser.setText("Select working directory for NCD data reduction");
-					dChooser.setFilterPath(inputDirectory);
-					final File dir = new File(dChooser.open());
-					if (dir.exists()) {
-						inputDirectory = dir.toString();
-						location.setText(inputDirectory);
-					}
-				}
-			});
-
+			};
+			locationSelector.setText(inputDirectory);
+			locationSelector.setTextToolTip("Location of NCD data reduction results directory");
+			locationSelector.setButtonToolTip("Select working directory for NCD data reduction");
+			String tmpWorkigDir = ncdWorkingDirSourceProvider.getWorkingDir();
+			if (tmpWorkigDir != null) {
+				locationSelector.setText(tmpWorkigDir);
+			}
 		}
 		
 		secEcomp = new ExpandableComposite(c, SWT.NONE);
@@ -636,13 +590,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		secEcomp.setLayout(gl);
-		secEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		secEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		secEcomp.addExpansionListener(expansionAdapter);
 
 		{
 			Composite g = new Composite(secEcomp, SWT.NONE);
 			g.setLayout(gl);
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			
 			radialButton = new Button(g, SWT.CHECK);
 			radialButton.setText("Radial Profile");
@@ -698,13 +652,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		saxsPlotEcomp.setLayout(gl);
-		saxsPlotEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		saxsPlotEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		saxsPlotEcomp.addExpansionListener(expansionAdapter);
 
 		{
 			Composite g = new Composite(saxsPlotEcomp, SWT.NONE);
 			g.setLayout(gl);
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
 			
 			// TODO Replace all these Buttons with a loop over SaxsAnalysisPlotType.values()
 			loglogButton = new Button(g, SWT.CHECK);
@@ -789,7 +743,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		gl = new GridLayout(4, false);
 		gl.horizontalSpacing = 15;
 		normEcomp.setLayout(gl);
-		normEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		normEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		normEcomp.addExpansionListener(expansionAdapter);
 
 		{
@@ -840,77 +794,37 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		refEcomp = new ExpandableComposite(c, SWT.NONE);
 		refEcomp.setText("Reference data");
 		refEcomp.setToolTipText("Set options for NCD data reduction");
-		gl = new GridLayout(2, false);
+		gl = new GridLayout(4, false);
 		gl.horizontalSpacing = 15;
 		refEcomp.setLayout(gl);
-		refEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		refEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		refEcomp.addExpansionListener(expansionAdapter);
 
 		{
 			Composite g = new Composite(refEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(5, false));
-			g.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true, 3, 1));
+			g.setLayout(new GridLayout(4, false));
+			g.setLayoutData(new GridData(SWT.FILL, SWT.LEFT, true, false));
 			
 			bgLabel = new Label(g, SWT.NONE);
-			bgLabel.setText("Background Subtraction File");
-			bgLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-			bgFile = new Text(g, SWT.BORDER);
-			bgFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
-			bgFile.setToolTipText("File with the background measurments");
-			String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
-			if (tmpBgFile != null)
-				bgFile.setText(tmpBgFile);
-			bgFile.addModifyListener(new ModifyListener() {
-				
+			bgLabel.setText("Background Subtraction File:");
+			bgFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void modifyText(ModifyEvent e) {
-					File tmpBgFile = new File(bgFile.getText());
+				public void loadPath(String path) {
+					File tmpBgFile = new File(path);
 					if (tmpBgFile.exists())
-						ncdBgFileSourceProvider.setBgFile(tmpBgFile.getAbsolutePath());
+						ncdBgFileSourceProvider.setBgFile(path);
 					else
 						ncdBgFileSourceProvider.setBgFile(null);
 				}
-			});
-
-			DropTarget bgdt = new DropTarget(bgFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
-			bgdt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
-			bgdt.addDropListener(new DropTargetAdapter() {
-				@Override
-				public void drop(DropTargetEvent event) {
-					Object data = event.data;
-					if (data instanceof String[]) {
-						String[] stringData = (String[]) data;
-						if (stringData.length > 0) {
-							File file = new File(stringData[0]);
-							if (file.exists() && file.isFile()) {
-								bgFile.setText(file.getAbsolutePath());
-								bgFile.notifyListeners(SWT.Modify, null);
-							}
-						}
-					}
-				}
-				
-			});
-
-			browseBg = new Button(g, SWT.NONE);
-			browseBg.setText("...");
-			browseBg.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
-			browseBg.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					FileDialog dChooser = new FileDialog(getViewSite().getShell());
-					dChooser.setText("Select Background Data File");
-					dChooser.setFilterNames(new String[] { "NeXus files", "All Files"});
-					dChooser.setFilterExtensions(new String[] {"*.nxs", "*.*"});
-					final File fl = new File(dChooser.open());
-					if (fl.exists()) {
-						bgFile.setText(fl.getAbsolutePath());
-					}
-				}
-			});
+			};
+			bgFileSelector.setTextToolTip("File with the background measurements");
+			bgFileSelector.setButtonToolTip("Select Background Data File");
+			String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
+			if (tmpBgFile != null)
+				bgFileSelector.setText(tmpBgFile);
 			
 			bgScaleLabel = new Label(g, SWT.NONE);
-			bgScaleLabel.setText("      Background Scale");
+			bgScaleLabel.setText("Background Scale:");
 			bgScaleLabel.setLayoutData(new GridData(SWT.RIGHT, SWT.CENTER, false, false));
 			bgScale = new Text(g, SWT.BORDER);
 			bgScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
@@ -928,62 +842,22 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			});
 			
 			drLabel = new Label(g, SWT.NONE);
-			drLabel.setText("Detector Response File");
-			drLabel.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
-			drFile = new Text(g, SWT.BORDER);
-			drFile.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
-			drFile.setToolTipText("File with the detector response frame");
-			String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
-			if (tmpDrFile != null)
-				drFile.setText(tmpDrFile);
-			drFile.addModifyListener(new ModifyListener() {
-				
+			drLabel.setText("Detector Response File:");
+			drFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void modifyText(ModifyEvent e) {
-					File tmpDrFile = new File(drFile.getText());
+				public void loadPath(String path) {
+					File tmpDrFile = new File(path);
 					if (tmpDrFile.exists())
-						ncdDrFileSourceProvider.setDrFile(tmpDrFile.getAbsolutePath());
+						ncdDrFileSourceProvider.setDrFile(path);
 					else
 						ncdDrFileSourceProvider.setDrFile(null);
 				}
-			});
-
-			DropTarget drdt = new DropTarget(drFile, DND.DROP_MOVE| DND.DROP_DEFAULT| DND.DROP_COPY);
-			drdt.setTransfer(new Transfer[] { TextTransfer.getInstance (), FileTransfer.getInstance()});
-			drdt.addDropListener(new DropTargetAdapter() {
-				@Override
-				public void drop(DropTargetEvent event) {
-					Object data = event.data;
-					if (data instanceof String[]) {
-						String[] stringData = (String[]) data;
-						if (stringData.length > 0) {
-							File file = new File(stringData[0]);
-							if (file.exists() && file.isFile()) {
-								drFile.setText(file.getAbsolutePath());
-								drFile.notifyListeners(SWT.Modify, null);
-							}
-						}
-					}
-				}
-				
-			});
-
-			browseDr = new Button(g, SWT.NONE);
-			browseDr.setText("...");
-			browseDr.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, false, false, 1, 1));
-			browseDr.addSelectionListener(new SelectionAdapter() {
-				@Override
-				public void widgetSelected(SelectionEvent e) {
-					FileDialog dChooser = new FileDialog(getViewSite().getShell());
-					dChooser.setText("Select Detector Response File");
-					dChooser.setFilterNames(new String[] { "NeXus files", "All Files"});
-					dChooser.setFilterExtensions(new String[] {"*.nxs", "*.*"});
-					final File fl = new File(dChooser.open());
-					if (fl.exists()) {
-						drFile.setText(fl.toString());
-					}
-				}
-			});
+			};
+			drFileSelector.setTextToolTip("File with the detector response frame");
+			drFileSelector.setButtonToolTip("Select Detector Response File");
+			String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
+			if (tmpDrFile != null)
+				drFileSelector.setText(tmpDrFile);
 			refEcomp.setClient(g);
 		}
 		refEcomp.setExpanded(false);
@@ -991,10 +865,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		bgEcomp = new ExpandableComposite(c, SWT.NONE);
 		bgEcomp.setText("Background frame selection");
 		bgEcomp.setToolTipText("Set background data slicing parameters");
-		gl = new GridLayout(2, false);
+		gl = new GridLayout(1, false);
 		gl.horizontalSpacing = 15;
 		bgEcomp.setLayout(gl);
-		bgEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		bgEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		bgEcomp.addExpansionListener(expansionAdapter);
 
 		{
@@ -1094,7 +968,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		ecomp.setLayout(gl);
-		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		ecomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		ecomp.addExpansionListener(expansionAdapter);
 
 		{
@@ -1193,7 +1067,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		gl = new GridLayout(2, false);
 		gl.horizontalSpacing = 15;
 		aveEcomp.setLayout(gl);
-		aveEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false, 3, 1));
+		aveEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 		aveEcomp.addExpansionListener(expansionAdapter);
 
 		{
@@ -1380,10 +1254,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			bgButton.setSelection(selection);
 		if (bgLabel != null && !(bgLabel.isDisposed()))
 			bgLabel.setEnabled(selection);
-		if (bgFile != null && !(bgFile.isDisposed()))
-			bgFile.setEnabled(selection);
-		if (browseBg != null && !(browseBg.isDisposed()))
-			browseBg.setEnabled(selection);
+		if (bgFileSelector != null && !(bgFileSelector.isDisposed()))
+			bgFileSelector.setEnabled(selection);
 		if (bgScaleLabel != null && !(bgScaleLabel.isDisposed()))
 			bgScaleLabel.setEnabled(selection);
 		if (bgScale != null && !(bgScale.isDisposed()))
@@ -1420,10 +1292,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			drButton.setSelection(selection);
 		if (drLabel != null && !(drLabel.isDisposed()))
 			drLabel.setEnabled(selection);
-		if (drFile != null && !(drFile.isDisposed()))
-			drFile.setEnabled(selection);
-		if (browseDr != null && !(browseDr.isDisposed()))
-			browseDr.setEnabled(selection);
+		if (drFileSelector != null && !(drFileSelector.isDisposed()))
+			drFileSelector.setEnabled(selection);
 	}
 	
 	private void updateAverageWidgets(boolean selection) {
@@ -1558,26 +1428,26 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.BKGFILE_STATE)) {
-			if (bgFile != null  && !(bgFile.isDisposed())) {
-				String tmpText = bgFile.getText();
+			if (bgFileSelector != null  && !(bgFileSelector.isDisposed())) {
+				String tmpText = bgFileSelector.getText();
 				if (!(tmpText.equals(sourceValue)) && (sourceValue != null))
-					bgFile.setText((String) sourceValue);
+					bgFileSelector.setText((String) sourceValue);
 			}
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.DRFILE_STATE)) {
-			if (drFile != null && !(drFile.isDisposed())) {
-				String tmpText = drFile.getText();
+			if (drFileSelector != null && !(drFileSelector.isDisposed())) {
+				String tmpText = drFileSelector.getText();
 				if (!(tmpText.equals(sourceValue)) && (sourceValue != null))
-					drFile.setText((String) sourceValue);
+					drFileSelector.setText((String) sourceValue);
 			}
 		}
 
 		if(sourceName.equals(NcdProcessingSourceProvider.WORKINGDIR_STATE)){
-			if(location !=null && !location.isDisposed()){
-				String tmpText = location.getText();
+			if(locationSelector !=null && !locationSelector.isDisposed()){
+				String tmpText = locationSelector.getText();
 				if(!tmpText.equals(sourceValue) && sourceValue != null){
-					location.setText((String) sourceValue);
+					locationSelector.setText((String) sourceValue);
 				}
 			}
 		}
