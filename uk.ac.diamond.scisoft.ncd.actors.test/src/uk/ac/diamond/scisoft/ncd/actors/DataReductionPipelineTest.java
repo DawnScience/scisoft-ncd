@@ -123,6 +123,59 @@ public class DataReductionPipelineTest {
 		final String rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/i22-34820.nxs");
 		final String persPath = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/persistence_file.nxs");
 		
+		final String[] scalarNames = {"/entry1/Pilatus2M_processing/Average/sas_type", "/entry1/Pilatus2M_processing/Average_Azimuthal/sas_type",
+				"/entry1/Pilatus2M_processing/DebyeBuechePlot/sas_type", "/entry1/Pilatus2M_processing/DegreeOfOrientation_Azimuthal/sas_type",
+				"/entry1/Pilatus2M_processing/GuinierPlot/sas_type", "/entry1/Pilatus2M_processing/Invariant/sas_type",
+				"/entry1/Pilatus2M_processing/KratkyPlot/sas_type", "/entry1/Pilatus2M_processing/LogLogPlot/sas_type",
+				"/entry1/Pilatus2M_processing/Normalisation/sas_type", "/entry1/Pilatus2M_processing/Normalisation_Azimuthal/sas_type",
+				"/entry1/Pilatus2M_processing/PorodPlot/sas_type", "/entry1/Pilatus2M_processing/SectorIntegration/integration symmetry",
+				"/entry1/Pilatus2M_processing/SectorIntegration/sas_type", "/entry1/Pilatus2M_processing/StandardisedIntensity/sas_type",
+				"/entry1/Pilatus2M_processing/ZimmPlot/sas_type", "/entry1/Pilatus2M_processing/guinierTestData/sas_type", "/entry1/entry_identifier",
+				"/entry1/instrument/Pilatus2M/sas_type", "/entry1/instrument/Scalers/description", "/entry1/instrument/Scalers/sas_type",
+				"/entry1/instrument/TfgTimes/sas_type", "/entry1/instrument/name", "/entry1/instrument/source/name", "/entry1/instrument/source/notes",
+				"/entry1/instrument/source/probe", "/entry1/instrument/source/type", "/entry1/program_name", "/entry1/scan_command", "/entry1/scan_identifier",
+				 "/entry1/title"};
+		final String[] setNames = {"/entry1/Pilatus2M/data", "/entry1/Pilatus2M_azimuthal/data", "/entry1/Pilatus2M_azimuthal/direction",
+				"/entry1/Pilatus2M_azimuthal/errors", "/entry1/Pilatus2M_processing/Average/data", "/entry1/Pilatus2M_processing/Average/errors",
+				"/entry1/Pilatus2M_processing/Average/q", "/entry1/Pilatus2M_processing/Average/q_errors", "/entry1/Pilatus2M_processing/Average_Azimuthal/data",
+				"/entry1/Pilatus2M_processing/Average_Azimuthal/direction", "/entry1/Pilatus2M_processing/Average_Azimuthal/errors",
+				"/entry1/Pilatus2M_processing/DebyeBuechePlot/data", "/entry1/Pilatus2M_processing/DebyeBuechePlot/errors",
+				"/entry1/Pilatus2M_processing/DebyeBuechePlot/variable", "/entry1/Pilatus2M_processing/DebyeBuechePlot/variable_errors",
+				"/entry1/Pilatus2M_processing/DegreeOfOrientation_Azimuthal/data", "/entry1/Pilatus2M_processing/DegreeOfOrientation_Azimuthal/orientation",
+				"/entry1/Pilatus2M_processing/DegreeOfOrientation_Azimuthal/vector_map", "/entry1/Pilatus2M_processing/GuinierPlot/I0",
+				"/entry1/Pilatus2M_processing/GuinierPlot/I0_errors", "/entry1/Pilatus2M_processing/GuinierPlot/Rg",
+				"/entry1/Pilatus2M_processing/GuinierPlot/Rg_errors", "/entry1/Pilatus2M_processing/GuinierPlot/Rg_range",
+				"/entry1/Pilatus2M_processing/GuinierPlot/data", "/entry1/Pilatus2M_processing/GuinierPlot/errors", "/entry1/Pilatus2M_processing/GuinierPlot/fit",
+				"/entry1/Pilatus2M_processing/GuinierPlot/variable", "/entry1/Pilatus2M_processing/GuinierPlot/variable_errors",
+				"/entry1/Pilatus2M_processing/Invariant/data", "/entry1/Pilatus2M_processing/Invariant/errors", "/entry1/Pilatus2M_processing/Invariant/porod_fit",
+				"/entry1/Pilatus2M_processing/Invariant/porod_fit_errors", "/entry1/Pilatus2M_processing/KratkyPlot/data",
+				"/entry1/Pilatus2M_processing/KratkyPlot/errors", "/entry1/Pilatus2M_processing/KratkyPlot/variable",
+				"/entry1/Pilatus2M_processing/KratkyPlot/variable_errors", "/entry1/Pilatus2M_processing/LogLogPlot/data",
+				//"/entry1/Pilatus2M_processing/LogLogPlot/errors, /entry1/Pilatus2M_processing/LogLogPlot/fit", //not sure why these fields are no longer available
+				"/entry1/Pilatus2M_processing/LogLogPlot/variable",
+				"/entry1/Pilatus2M_processing/LogLogPlot/variable_errors", "/entry1/Pilatus2M_processing/Normalisation/data",
+				"/entry1/Pilatus2M_processing/Normalisation/errors", "/entry1/Pilatus2M_processing/Normalisation/q",
+				"/entry1/Pilatus2M_processing/Normalisation/q_errors", "/entry1/Pilatus2M_processing/Normalisation_Azimuthal/data",
+				"/entry1/Pilatus2M_processing/Normalisation_Azimuthal/direction", "/entry1/Pilatus2M_processing/Normalisation_Azimuthal/errors",
+				"/entry1/Pilatus2M_processing/PorodPlot/data", "/entry1/Pilatus2M_processing/PorodPlot/errors", "/entry1/Pilatus2M_processing/PorodPlot/q^4",
+				"/entry1/Pilatus2M_processing/PorodPlot/q^4_errors", "/entry1/Pilatus2M_processing/PorodPlot/variable",
+				"/entry1/Pilatus2M_processing/PorodPlot/variable_errors", "/entry1/Pilatus2M_processing/SectorIntegration/azimuth",
+				"/entry1/Pilatus2M_processing/SectorIntegration/azimuth_errors", "/entry1/Pilatus2M_processing/SectorIntegration/beam centre",
+				"/entry1/Pilatus2M_processing/SectorIntegration/data", "/entry1/Pilatus2M_processing/SectorIntegration/direction",
+				"/entry1/Pilatus2M_processing/SectorIntegration/errors", "/entry1/Pilatus2M_processing/SectorIntegration/integration angles",
+				"/entry1/Pilatus2M_processing/SectorIntegration/integration radii", "/entry1/Pilatus2M_processing/SectorIntegration/mask",
+				"/entry1/Pilatus2M_processing/SectorIntegration/q", "/entry1/Pilatus2M_processing/SectorIntegration/q_errors",
+				"/entry1/Pilatus2M_processing/StandardisedIntensity/data", "/entry1/Pilatus2M_processing/StandardisedIntensity/errors",
+				"/entry1/Pilatus2M_processing/StandardisedIntensity/q", "/entry1/Pilatus2M_processing/StandardisedIntensity/q_errors",
+				"/entry1/Pilatus2M_processing/ZimmPlot/data", "/entry1/Pilatus2M_processing/ZimmPlot/errors", "/entry1/Pilatus2M_processing/ZimmPlot/variable",
+				"/entry1/Pilatus2M_processing/ZimmPlot/variable_errors", "/entry1/Pilatus2M_processing/guinierTestData/I0",
+				"/entry1/Pilatus2M_processing/guinierTestData/I0_errors", "/entry1/Pilatus2M_processing/guinierTestData/Rg",
+				"/entry1/Pilatus2M_processing/guinierTestData/Rg_errors", "/entry1/Pilatus2M_processing/guinierTestData/Rg_range",
+				"/entry1/Pilatus2M_processing/guinierTestData/data", "/entry1/Pilatus2M_processing/guinierTestData/errors",
+				"/entry1/Pilatus2M_processing/guinierTestData/fit", "/entry1/Pilatus2M_processing/guinierTestData/outliers",
+				"/entry1/Pilatus2M_processing/guinierTestData/variable", "/entry1/Pilatus2M_processing/guinierTestData/variable_errors",
+				"/entry1/Pilatus2M_result/data", "/entry1/Pilatus2M_result/errors", "/entry1/Pilatus2M_result/q", "/entry1/Pilatus2M_result/q_errors",
+				"/entry1/Scalers/data", "/entry1/instrument/Pilatus2M/data", "/entry1/instrument/Scalers/data", "/entry1/instrument/TfgTimes/data"};
 		System.setProperty("xml.path",         xmlPath);
 		System.setProperty("raw.path",         rawPath);
 		System.setProperty("persistence.path", persPath);		
@@ -135,18 +188,23 @@ public class DataReductionPipelineTest {
 		System.setProperty("output.path", outputPath);
 
 		
-		testScalarInjection("data/ncd_model.moml",  "/entry/dictionary/results_path");
+		testVariables("data/ncd_model.moml", setNames, scalarNames);
 	}
 	
-	private synchronized void testScalarInjection(final String path, final String... scalarNames) throws Throwable {
+	private synchronized void testVariables(final String path, final String[] setNames, final String... scalarNames) throws Throwable {
 	
-		testVariables(path, null, scalarNames);
+	    testVariables(path, setNames, IHierarchicalDataFile.TEXT, scalarNames);
 	}
-	private synchronized void testVariables(final String path, final String listName, final String... scalarNames) throws Throwable {
 	
-	    testVariables(path, listName, IHierarchicalDataFile.TEXT, scalarNames);
+	private IFile getFirstNexusFile(IResource[] resources) {
+		for (IResource resource : resources) {
+			if (((IFile)resource).getLocation().toOSString().endsWith("nxs")) {
+				return (IFile) resource;
+			}
+		}
+		return null;
 	}
-	public synchronized void testVariables(final String path, final String listName, int dataType, final String... scalarNames) throws Throwable {
+	public synchronized void testVariables(final String path, final String[] setNames, int dataType, final String... scalarNames) throws Throwable {
 
 		
 		testFile(path, false);
@@ -168,7 +226,7 @@ public class DataReductionPipelineTest {
 			return; // HACK Disguises a problem
 		}
 		
-		final IFile h5 = (IFile)reses[0];
+		final IFile h5 = getFirstNexusFile(reses);
 		if (h5==null||!h5.exists()) throw new Exception("output folder must have contents!");
 
 		final IHierarchicalDataFile hFile = HierarchicalDataFactory.getReader(h5.getLocation().toOSString());
@@ -178,9 +236,9 @@ public class DataReductionPipelineTest {
 				throw new Exception("Testing file '"+path+"', did not find injected scalars in "+scalars);
 			}
 			
-			if (listName!=null) {
+			if (setNames!=null) {
 				final List<String> sets = hFile.getDatasetNames(IHierarchicalDataFile.NUMBER_ARRAY);
-				if (!sets.contains(listName)) {
+				if (!sets.containsAll(Arrays.asList(setNames))) {
 					throw new Exception("Testing file '"+path+"', did not find injected list in "+sets);
 				}
 			}
