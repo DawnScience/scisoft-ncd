@@ -1,0 +1,8 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: NCD Actors Test
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.actors.test
+Bundle-Version: 1.0.0.qualifier
+Bundle-Vendor: Diamond Light Source
+Fragment-Host: uk.ac.diamond.scisoft.ncd.actors;bundle-version="3.0.0"
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
