@@ -366,6 +366,9 @@ public class DataReductionHandler extends AbstractHandler {
 		NcdProcessingSourceProvider ncdGridAverageSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.GRIDAVERAGE_STATE);		
 		context.setGridAverageSlice(ncdGridAverageSourceProvider.getGridAverage());
 
+		NcdProcessingSourceProvider ncdMaskFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASKFILE_STATE);
+		context.setMaskFile(ncdMaskFileSourceProvider.getMaskFile());
+
 		NcdProcessingSourceProvider ncdBgFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGFILE_STATE);
 		context.setBgPath(ncdBgFileSourceProvider.getBgFile());
 

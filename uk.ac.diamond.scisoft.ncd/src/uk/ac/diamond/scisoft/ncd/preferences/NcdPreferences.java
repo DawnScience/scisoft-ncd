@@ -29,6 +29,7 @@ public class NcdPreferences {
 	public static final String NCD_SECTOR_AZIMUTH = "ncd.sector.azimuth";
 	public static final String NCD_SECTOR_FAST = "ncd.sector.fast";
 	public static final String NCD_SECTOR_MASK = "ncd.sector.mask";
+	public static final String NCD_SECTOR_MASKFILE = "ncd.sector.maskfile";
 	
 	public static final String NCD_PLOT_LOGLOG = "ncd.plot.loglog";
 	public static final String NCD_PLOT_GUINIER = "ncd.plot.guinier";

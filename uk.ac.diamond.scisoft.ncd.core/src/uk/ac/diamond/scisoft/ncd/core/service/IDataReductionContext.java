@@ -110,6 +110,10 @@ public interface IDataReductionContext {
 
 	public void setEnableMask(boolean enableMask);
 
+	public String getMaskFile();
+
+	public void setMaskFile(String maskFile);
+
 	public NcdDetectorSettings getDetWaxsInfo();
 
 	public void setDetWaxsInfo(NcdDetectorSettings detWaxsInfo);

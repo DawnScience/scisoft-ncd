@@ -18,12 +18,23 @@ package uk.ac.diamond.scisoft.ncd.rcp.views;
 
 import java.io.File;
 import java.text.DecimalFormat;
+import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.apache.commons.math3.util.Pair;
 import org.apache.commons.validator.routines.IntegerValidator;
+import org.dawb.common.services.IPersistenceService;
+import org.dawb.common.services.IPersistentFile;
+import org.dawb.common.services.ServiceManager;
 import org.dawnsci.common.widgets.file.SelectorWidget;
+import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
+import org.eclipse.dawnsci.plotting.api.PlottingFactory;
+import org.eclipse.dawnsci.plotting.api.tool.IToolPage;
+import org.eclipse.dawnsci.plotting.api.tool.IToolPageSystem;
+import org.eclipse.dawnsci.plotting.api.trace.IImageTrace;
+import org.eclipse.dawnsci.plotting.api.trace.ITrace;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.TypedEvent;
@@ -38,12 +49,15 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
 import org.eclipse.swt.widgets.Composite;
+import org.eclipse.swt.widgets.Display;
 import org.eclipse.swt.widgets.Group;
 import org.eclipse.swt.widgets.Label;
 import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IMemento;
 import org.eclipse.ui.ISourceProviderListener;
+import org.eclipse.ui.IViewPart;
 import org.eclipse.ui.IViewSite;
+import org.eclipse.ui.IWorkbenchPage;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
@@ -53,7 +67,12 @@ import org.eclipse.ui.forms.widgets.ExpandableComposite;
 import org.eclipse.ui.handlers.IHandlerService;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
+import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
+import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
@@ -62,6 +81,8 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
 public class NcdDataReductionParameters extends ViewPart implements ISourceProviderListener {
+
+	private static final Logger logger = LoggerFactory.getLogger(NcdDataReductionParameters.class);
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.NcdDataReductionParameters"; //$NON-NLS-1$
 
@@ -73,6 +94,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private Text bgScale, sampleThickness, absScale;
 
 	private Button runDataReduction, runDataReductionWizard;
+
+	private SelectorWidget maskFileSelector;
 	private SelectorWidget locationSelector;
 	private SelectorWidget drFileSelector;
 	private SelectorWidget bgFileSelector;
@@ -87,7 +110,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdSectorSourceProvider;
 	private NcdProcessingSourceProvider ncdInvariantSourceProvider;
 	private NcdProcessingSourceProvider ncdAverageSourceProvider;
-	private NcdProcessingSourceProvider ncdMaskSourceProvider;
+	private NcdProcessingSourceProvider ncdMaskSourceProvider, ncdMaskFileSourceProvider;
 	private NcdProcessingSourceProvider ncdRadialSourceProvider, ncdAzimuthSourceProvider, ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
@@ -109,6 +132,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private ExpansionAdapter expansionAdapter;
 	
 	private IntegerValidator integerValidator = IntegerValidator.getInstance();
+
+	private IDataset mask;
 
 	private Double getSampleThickness() {
 		String input = sampleThickness.getText();
@@ -208,6 +233,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putBoolean(NcdPreferences.NCD_SECTOR_AZIMUTH, azimuthalButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_SECTOR_FAST, fastIntButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_SECTOR_MASK, useMask.getSelection());
+			memento.putString(NcdPreferences.NCD_SECTOR_MASKFILE, maskFileSelector.getText());
 			
 			memento.putBoolean(NcdPreferences.NCD_PLOT_LOGLOG, loglogButton.getSelection());
 			memento.putBoolean(NcdPreferences.NCD_PLOT_GUINIER, guinierButton.getSelection());
@@ -301,6 +327,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			if (val!=null) {
 				useMask.setSelection(val);
 				useMask.notifyListeners(SWT.Selection, null);
+			}
+			
+			tmp = memento.getString(NcdPreferences.NCD_SECTOR_MASKFILE);
+			if (tmp!=null) {
+				maskFileSelector.setText(tmp);
+				ncdMaskFileSourceProvider.setMaskFile(tmp);
 			}
 			
 			val = memento.getBoolean(NcdPreferences.NCD_PLOT_LOGLOG);
@@ -566,7 +598,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			new Label(g, SWT.NONE).setText("Directory:");
 			locationSelector = new SelectorWidget(g) {
 				@Override
-				public void loadPath(String path, TypedEvent event) {
+				public void pathChanged(String path, TypedEvent event) {
 					File dir = new File(path);
 					if (dir.exists() && dir.isDirectory()) {
 						inputDirectory = path;
@@ -576,6 +608,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					}
 				}
 			};
+			locationSelector.setLabel("");
 			locationSelector.setText(inputDirectory);
 			locationSelector.setTextToolTip("Location of NCD data reduction results directory");
 			locationSelector.setButtonToolTip("Select working directory for NCD data reduction");
@@ -588,7 +621,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		secEcomp = new ExpandableComposite(c, SWT.NONE);
 		secEcomp.setText("Sector Integration Parameters");
 		secEcomp.setToolTipText("Select Sector Integration options");
-		gl = new GridLayout(2, false);
+		gl = new GridLayout(3, false);
 		gl.horizontalSpacing = 15;
 		secEcomp.setLayout(gl);
 		secEcomp.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
@@ -641,8 +674,41 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
+					maskFileSelector.setEnabled(useMask.getSelection());
+					IImageTrace trace = getCurrentTrace();
+					if (trace != null) {
+						if (useMask.getSelection()) {
+							trace.setMask(mask);
+						} else {
+							trace.setMask(null);
+						}
+					}
 				}
 			});
+			maskFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files",
+					"All Files" }, new String[] { "*.nxs", "*.*" }) {
+				@Override
+				public void pathChanged(String path, TypedEvent event) {
+					if (!(event instanceof ModifyEvent)) {
+						try {
+							createMask(path);
+							// set mask
+							IImageTrace trace = getCurrentTrace();
+							mask = trace != null ? trace.getMask() : null;
+						} catch (Exception e) {
+							logger.error("Problem importing mask:", e);
+						}
+					}
+				}
+			};
+			maskFileSelector.getComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
+			maskFileSelector.setLabel("");
+			maskFileSelector.setTextToolTip("File with the mask information: dropping a file in this field will " +
+					"automatically try to load the persisted mask in the file if there is any.");
+			maskFileSelector.setButtonToolTip("Select Mask File");
+			String tmpMaskFile = ncdMaskFileSourceProvider.getMaskFile();
+			if (tmpMaskFile != null)
+				maskFileSelector.setText(tmpMaskFile);
 			secEcomp.setClient(g);
 		}
 		secEcomp.setExpanded(false);
@@ -803,14 +869,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 
 		{
 			Composite g = new Composite(refEcomp, SWT.NONE);
-			g.setLayout(new GridLayout(4, false));
+			g.setLayout(new GridLayout(3, false));
 			g.setLayoutData(new GridData(SWT.FILL, SWT.LEFT, true, false));
 			
-			bgLabel = new Label(g, SWT.NONE);
-			bgLabel.setText("Background Subtraction File:");
 			bgFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void loadPath(String path, TypedEvent event) {
+				public void pathChanged(String path, TypedEvent event) {
 					File tmpBgFile = new File(path);
 					if (tmpBgFile.exists())
 						ncdBgFileSourceProvider.setBgFile(path);
@@ -818,6 +882,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						ncdBgFileSourceProvider.setBgFile(null);
 				}
 			};
+			bgFileSelector.setLabel("Background Subtraction File:");
 			bgFileSelector.setTextToolTip("File with the background measurements");
 			bgFileSelector.setButtonToolTip("Select Background Data File");
 			String tmpBgFile = ncdBgFileSourceProvider.getBgFile();
@@ -842,11 +907,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			
-			drLabel = new Label(g, SWT.NONE);
-			drLabel.setText("Detector Response File:");
 			drFileSelector = new SelectorWidget(g, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 				@Override
-				public void loadPath(String path, TypedEvent event) {
+				public void pathChanged(String path, TypedEvent event) {
 					File tmpDrFile = new File(path);
 					if (tmpDrFile.exists())
 						ncdDrFileSourceProvider.setDrFile(path);
@@ -854,6 +917,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						ncdDrFileSourceProvider.setDrFile(null);
 				}
 			};
+			drFileSelector.setLabel("Detector Response File:");
 			drFileSelector.setTextToolTip("File with the detector response frame");
 			drFileSelector.setButtonToolTip("Select Detector Response File");
 			String tmpDrFile = ncdDrFileSourceProvider.getDrFile();
@@ -1015,7 +1079,6 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			
-			
 			detAdvanced = new Text(g, SWT.BORDER);
 			detAdvanced.setToolTipText("Formatting string for advanced data selection");
 			detAdvanced.setLayoutData(new GridData(GridData.FILL, SWT.CENTER, true, false, 3, 1));
@@ -1152,6 +1215,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
 		ncdMaskSourceProvider.addSourceProviderListener(this);
+		ncdMaskFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASKFILE_STATE);
+		ncdMaskFileSourceProvider.addSourceProviderListener(this);
 		
 		ncdDataSliceSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.DATASLICE_STATE);
 		ncdDataSliceSourceProvider.addSourceProviderListener(this);
@@ -1232,6 +1297,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			fastIntButton.setEnabled(selection);
 		if (useMask != null && !(useMask.isDisposed()))
 			useMask.setEnabled(selection);
+		if (maskFileSelector != null && !(maskFileSelector.isDisposed()))
+			maskFileSelector.setEnabled(selection);
 	}
 
 	private void updateBackgroundSubtractionWidgets(boolean selection) {
@@ -1428,6 +1495,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			debyebuecheButton.setSelection(isEnable);
 		}
 		
+		if (sourceName.equals(NcdProcessingSourceProvider.MASKFILE_STATE)) {
+			if (maskFileSelector != null  && !(maskFileSelector.isDisposed())) {
+				String tmpText = maskFileSelector.getText();
+				if (!(tmpText.equals(sourceValue)) && (sourceValue != null))
+					maskFileSelector.setText((String) sourceValue);
+			}
+		}
+		
 		if (sourceName.equals(NcdProcessingSourceProvider.BKGFILE_STATE)) {
 			if (bgFileSelector != null  && !(bgFileSelector.isDisposed())) {
 				String tmpText = bgFileSelector.getText();
@@ -1570,6 +1645,86 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 					useMask.setSelection((Boolean) sourceValue);
 				}
 			}
+		}
+	}
+
+	/**
+	 * 
+	 */
+	private IPlottingSystem getCurrentPlottingSystem() {
+		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
+				.getActivePage();
+		if (page == null)
+			return null;
+		IViewPart activePlot = page.findView(PlotView.ID + "DP");
+		if (activePlot instanceof PlotView) {
+			IPlottingSystem activePlotSystem = PlottingFactory
+					.getPlottingSystem(((PlotView) activePlot).getPartName());
+			return activePlotSystem;
+		}
+		return null;
+	}
+
+	/**
+	 * 
+	 * @return Current ImageTrace if any, null otherwise
+	 */
+	private IImageTrace getCurrentTrace() {
+		IPlottingSystem system = getCurrentPlottingSystem();
+		if (system == null)
+			return null;
+		Collection<ITrace> traces = system.getTraces();
+		if (traces == null)
+			return null;
+		Iterator<ITrace> it = traces.iterator();
+		if (!it.hasNext())
+			return null;
+		ITrace trace = it.next();
+		if (!(trace instanceof IImageTrace))
+			return null;
+		return (IImageTrace) trace;
+	}
+
+	/**
+	 * 
+	 * @param filePath
+	 * @throws Exception
+	 */
+	private void createMask(final String filePath) throws Exception {
+		IPersistentFile file = null;
+		try {
+			IPersistenceService service = (IPersistenceService) ServiceManager.getService(IPersistenceService.class);
+			file = service.getPersistentFile(filePath);
+			final IImageTrace image = getCurrentTrace();
+			final IPlottingSystem system = getCurrentPlottingSystem();
+			if (system == null) {
+				logger.error("The plotting system is NULL.");
+			}
+
+			//String name = options.getString("Mask");
+			String	name = file.getMaskNames(null).get(0);
+			final BooleanDataset mask = (BooleanDataset) file.getMask(name, null);
+			if (mask != null) {
+				Display.getDefault().syncExec(new Runnable() {
+					@Override
+					public void run() {
+						// we set the maskDataset on the masking tool
+						if (system != null) {
+							final IToolPageSystem tsystem = (IToolPageSystem) system.getAdapter(IToolPageSystem.class);
+							final IToolPage tool = tsystem.getActiveTool();
+							if (tool != null
+									&& tool.getToolId().equals("org.dawb.workbench.plotting.tools.maskingTool")) {
+								tool.setToolData(mask);
+							}
+						}
+						// we set the mask on the image trace
+						image.setMask(mask);
+					}
+				});
+			}
+		} finally {
+			if (file != null)
+				file.close();
 		}
 	}
 }

@@ -52,7 +52,7 @@ class DataReductionContext implements IDataReductionContext {
 	private CalibrationResultsBean calibrationResults;
 	private SliceInput             dataSliceInput, bgSliceInput, gridAverageSlice;
 	
-	private String bgPath, drFile, workingDir, calibrationName, waxsDetectorName, saxsDetectorName;
+	private String maskFile, bgPath, drFile, workingDir, calibrationName, waxsDetectorName, saxsDetectorName;
 	private String resultsFile;
 	
 	private Double absScaling, sampleThickness, bgScaling, energy;
@@ -182,6 +182,16 @@ class DataReductionContext implements IDataReductionContext {
 	@Override
 	public void setEnableMask(boolean enableMask) {
 		this.enableMask = enableMask;
+	}
+
+	@Override
+	public String getMaskFile() {
+		return maskFile;
+	}
+
+	@Override
+	public void setMaskFile(String maskFile) {
+		this.maskFile = maskFile;
 	}
 
 	@Override
@@ -331,6 +341,7 @@ class DataReductionContext implements IDataReductionContext {
 		result = prime * result + ((detWaxsInfo == null) ? 0 : detWaxsInfo.hashCode());
 		result = prime * result + ((drFile == null) ? 0 : drFile.hashCode());
 		result = prime * result + (enableMask ? 1231 : 1237);
+		result = prime * result + ((maskFile == null) ? 0 : maskFile.hashCode());
 		result = prime * result + ((energy == null) ? 0 : energy.hashCode());
 		result = prime * result + ((flags == null) ? 0 : flags.hashCode());
 		result = prime * result + ((gridAverageSlice == null) ? 0 : gridAverageSlice.hashCode());
@@ -419,6 +430,9 @@ class DataReductionContext implements IDataReductionContext {
 			return false;
 		if (enableMask != other.enableMask)
 			return false;
+		if (maskFile == null)
+			if (other.maskFile != null)
+				return false;
 		if (energy == null) {
 			if (other.energy != null)
 				return false;

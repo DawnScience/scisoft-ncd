@@ -48,6 +48,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public static final String WAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableWaxsDataReduction";
 	public static final String SAXS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableSaxsDataReduction";
 	public static final String MASK_STATE = "uk.ac.diamond.scisoft.ncd.rcp.enableMask";
+	public static final String MASKFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.maskFile";
 	                    
 	public static final String SCALER_STATE = "uk.ac.diamond.scisoft.ncd.rcp.scalerDetector";
 	public static final String SAXSDETECTOR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.saxsDetector";
@@ -63,7 +64,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public static final String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
 	public static final String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
-	
+
 	public static final String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
 	public static final String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
 	public static final String WORKINGDIR_STATE = "uk.ac.diamond.scisoft.ncd.rcp.workingDir";
@@ -79,10 +80,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private boolean enableFastIntegration = false;
 	private boolean enableWaxs = false;
 	private boolean enableSaxs = false;
-	private boolean enableMask = false;
+	private boolean enableMask = true;
 	
 	private String scaler, saxsDetector, waxsDetector;
-	private String bgFile, drFile, workingDir;
+	private String maskFile, bgFile, drFile, workingDir;
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
 	private Double bgScaling, absScaling, sampleThickness;
@@ -118,6 +119,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(ENERGY_STATE, energy);
 		currentState.put(DATASLICE_STATE, dataSlice);
 		currentState.put(BKGSLICE_STATE, bkgSlice);
+		currentState.put(MASKFILE_STATE, maskFile);
 		currentState.put(BKGFILE_STATE, bgFile);
 		currentState.put(DRFILE_STATE, drFile);
 		currentState.put(GRIDAVERAGE_STATE, gridAverage);
@@ -151,6 +153,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     NORMCHANNEL_STATE,
 		                     DATASLICE_STATE,
 		                     BKGSLICE_STATE,
+		                     MASKFILE_STATE,
 		                     BKGFILE_STATE,
 		                     DRFILE_STATE,
 		                     GRIDAVERAGE_STATE,
@@ -248,6 +251,11 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public void setBkgSlice(SliceInput bkgSlice) {
 		this.bkgSlice = (bkgSlice != null) ? new SliceInput(bkgSlice) : null;
 		fireSourceChanged(ISources.WORKBENCH, BKGSLICE_STATE, this.bkgSlice);
+	}
+
+	public void setMaskFile(String maskFile) {
+		this.maskFile = maskFile;
+		fireSourceChanged(ISources.WORKBENCH, MASKFILE_STATE, this.maskFile);
 	}
 
 	public void setBgFile(String bgFile) {
@@ -361,6 +369,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return bkgSlice;
 	}
 
+	public String getMaskFile() {
+		return maskFile;
+	}
+
 	public String getBgFile() {
 		return bgFile;
 	}
@@ -415,6 +427,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		energy                 = (Amount<Energy>) sourceState.get(ENERGY_STATE);               
 		dataSlice              = (SliceInput) sourceState.get(DATASLICE_STATE);            
 		bkgSlice               = (SliceInput) sourceState.get(BKGSLICE_STATE);             
+		maskFile               = (String) sourceState.get(MASKFILE_STATE);
 		bgFile                 = (String) sourceState.get(BKGFILE_STATE);              
 		drFile                 = (String) sourceState.get(DRFILE_STATE);               
 		gridAverage            = (SliceInput) sourceState.get(GRIDAVERAGE_STATE);          
