@@ -35,6 +35,7 @@ import org.eclipse.dawnsci.plotting.api.tool.IToolPage;
 import org.eclipse.dawnsci.plotting.api.tool.IToolPageSystem;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace;
 import org.eclipse.dawnsci.plotting.api.trace.ITrace;
+import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.custom.ScrolledComposite;
 import org.eclipse.swt.events.TypedEvent;
@@ -1696,13 +1697,20 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			IPersistenceService service = (IPersistenceService) ServiceManager.getService(IPersistenceService.class);
 			file = service.getPersistentFile(filePath);
 			final IImageTrace image = getCurrentTrace();
+			if (image == null) {
+				MessageDialog.openWarning(Display.getDefault().getActiveShell(), "Error setting mask",
+						"No image could be found on the Dataset Plot. Please load an image to the Dataset Plot" +
+						" and then retry setting the mask.");
+				maskFileSelector.setText("");
+				return;
+			}
 			final IPlottingSystem system = getCurrentPlottingSystem();
 			if (system == null) {
 				logger.error("The plotting system is NULL.");
 			}
 
 			//String name = options.getString("Mask");
-			String	name = file.getMaskNames(null).get(0);
+			String name = file.getMaskNames(null).get(0);
 			final BooleanDataset mask = (BooleanDataset) file.getMask(name, null);
 			if (mask != null) {
 				Display.getDefault().syncExec(new Runnable() {
