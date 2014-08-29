@@ -17,9 +17,11 @@
 package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import org.apache.commons.math3.util.Pair;
+import org.dawnsci.common.widgets.file.SelectorWidget;
 import org.eclipse.swt.SWT;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Button;
@@ -45,6 +47,7 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 	private NcdProcessingSourceProvider ncdAzimuthSourceProvider;
 	private NcdProcessingSourceProvider ncdFastIntSourceProvider;
 	private NcdProcessingSourceProvider ncdMaskSourceProvider;
+	private NcdProcessingSourceProvider ncdMaskFileSourceProvider;
 	
 	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
 	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
@@ -52,6 +55,7 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 	private SaxsPlotsSourceProvider kratkyPlotSourceProvider;
 	private SaxsPlotsSourceProvider zimmPlotSourceProvider;
 	private SaxsPlotsSourceProvider debyebuechePlotSourceProvider;
+	private SelectorWidget maskFileSelector;
 	
 	protected static final int PAGENUMBER = 3;
 
@@ -71,6 +75,7 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		ncdAzimuthSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.AZIMUTH_STATE);
 		ncdFastIntSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.FASTINT_STATE);
 		ncdMaskSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASK_STATE);
+		ncdMaskFileSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.MASKFILE_STATE);
 		loglogPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.LOGLOG_STATE);
 		guinierPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.GUINIER_STATE);
 		porodPlotSourceProvider = (SaxsPlotsSourceProvider) service.getSourceProvider(SaxsPlotsSourceProvider.POROD_STATE);
@@ -85,7 +90,7 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 		Group subContainer = new Group(container, SWT.NONE);
 		subContainer.setText("Sector Integration Parameters");
 		subContainer.setToolTipText("Select Sector Integration options");
-		subContainer.setLayout(new GridLayout(2, false));
+		subContainer.setLayout(new GridLayout(3, false));
 		subContainer.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 
 		radialButton = new Button(subContainer, SWT.CHECK);
@@ -130,9 +135,25 @@ public class NcdDataReductionSectorIntegrationPage extends AbstractNcdDataReduct
 			@Override
 			public void widgetSelected(SelectionEvent e) {
 				ncdMaskSourceProvider.setEnableMask(useMask.getSelection());
+				maskFileSelector.setEnabled(useMask.getSelection());
 			}
 		});
 		
+		maskFileSelector = new SelectorWidget(subContainer, false, new String[] { "NeXus files", "All Files" }, new String[] {
+				"*.nxs", "*.*" }) {
+			@Override
+			public void pathChanged(String path, TypedEvent event) {
+				// do something like setting a String field named maskInfoFilePath...
+			}
+		};
+		maskFileSelector.setLabel("");
+		maskFileSelector.getComposite().setLayoutData(new GridData(SWT.FILL, SWT.FILL, true, true, 2, 1));
+		maskFileSelector.setTextToolTip("File with the mask information");
+		maskFileSelector.setButtonToolTip("Select Mask File");
+		String tmpMaskFile = ncdMaskFileSourceProvider.getMaskFile();
+		if (tmpMaskFile != null)
+			maskFileSelector.setText(tmpMaskFile);
+
 		Group saxsPlotComp = new Group(container, SWT.NONE);
 		saxsPlotComp.setText("1D SAXS Analysis Data");
 		saxsPlotComp.setToolTipText("Include in results files data for making 1D SAXS analysis plots");

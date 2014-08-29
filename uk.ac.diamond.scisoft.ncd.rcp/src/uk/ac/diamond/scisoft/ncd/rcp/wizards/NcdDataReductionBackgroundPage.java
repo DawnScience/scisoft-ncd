@@ -76,14 +76,12 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 
 		Group subContainer = new Group(container, SWT.NONE);
 		subContainer.setText("Reference Data");
-		subContainer.setLayout(new GridLayout(7, false));
+		subContainer.setLayout(new GridLayout(6, false));
 		subContainer.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, false));
 
-		Label bgLabel = new Label(subContainer, SWT.NONE);
-		bgLabel.setText("Background Subtraction File");
 		SelectorWidget bgFileSelector = new SelectorWidget(subContainer, false, new String[] { "NeXus files", "All Files"}, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void loadPath(String path, TypedEvent event) {
+			public void pathChanged(String path, TypedEvent event) {
 				File tmpBgFile = new File(path);
 				if (tmpBgFile.exists())
 					ncdBgFileSourceProvider.setBgFile(path);
@@ -91,6 +89,7 @@ public class NcdDataReductionBackgroundPage extends AbstractNcdDataReductionPage
 					ncdBgFileSourceProvider.setBgFile(null);
 			}
 		};
+		bgFileSelector.setLabel("Background Subtraction File");
 		bgFileSelector.setTextToolTip("File with the background measurements");
 		bgFileSelector.setButtonToolTip("Select Background Data File");
 		String tmpBgFile = ncdBgFileSourceProvider.getBgFile();

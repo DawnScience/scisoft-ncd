@@ -25,7 +25,6 @@ import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Group;
-import org.eclipse.swt.widgets.Label;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
@@ -60,14 +59,12 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 
 		Group group = new Group(container, SWT.NONE);
 		group.setText("Reference Data");
-		group.setLayout(new GridLayout(3, false));
+		group.setLayout(new GridLayout(2, false));
 		group.setLayoutData(new GridData(SWT.FILL, SWT.TOP, true, true));
 
-		Label respLabel = new Label(group, SWT.NONE);
-		respLabel.setText("Detector Response File:");
 		SelectorWidget drFileSelector = new SelectorWidget(group, false, new String[] { "NeXus files", "All Files" }, new String[] {"*.nxs", "*.*"}) {
 			@Override
-			public void loadPath(String path, TypedEvent event) {
+			public void pathChanged(String path, TypedEvent event) {
 				File tmpDrFile = new File(path);
 				if (tmpDrFile.exists())
 					ncdDrFileSourceProvider.setDrFile(path);
@@ -75,6 +72,7 @@ public class NcdDataReductionResponsePage extends AbstractNcdDataReductionPage {
 					ncdDrFileSourceProvider.setDrFile(null);
 			}
 		};
+		drFileSelector.setLabel("Detector Response File:");
 		drFileSelector.setTextToolTip("File with the detector response frame");
 		drFileSelector.setButtonToolTip("Select Detector Response File");
 		String tmpDrFile = ncdDrFileSourceProvider.getDrFile();

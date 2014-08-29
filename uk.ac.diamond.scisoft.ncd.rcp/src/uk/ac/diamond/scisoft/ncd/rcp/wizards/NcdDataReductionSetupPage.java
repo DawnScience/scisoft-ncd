@@ -189,7 +189,7 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 		new Label(r, SWT.NONE).setText("Directory:");
 		SelectorWidget locationSelector = new SelectorWidget(r) {
 			@Override
-			public void loadPath(String path, TypedEvent event) {
+			public void pathChanged(String path, TypedEvent event) {
 				File dir = new File(path);
 				if (dir.exists() && dir.isDirectory()) {
 					inputDirectory = path;
@@ -199,6 +199,7 @@ public class NcdDataReductionSetupPage extends AbstractNcdDataReductionPage {
 				}
 			}
 		};
+		locationSelector.setLabel("");
 		locationSelector.setText(inputDirectory);
 		locationSelector.setTextToolTip("Location of NCD data reduction results directory");
 		locationSelector.setButtonToolTip("Select working directory for NCD data reduction");
