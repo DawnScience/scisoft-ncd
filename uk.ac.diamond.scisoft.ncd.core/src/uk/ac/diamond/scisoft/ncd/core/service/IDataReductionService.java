@@ -48,7 +48,7 @@ import org.eclipse.core.runtime.IStatus;
  
  // Loop over files - may be done in a job or thread.
  for(String rawFilePath : files) {
-     service.execute(rawFilePath, context, new NullProgressMonitor());
+     service.process(rawFilePath, context, new NullProgressMonitor());
  }
  
  </code>
