@@ -19,7 +19,6 @@ package uk.ac.diamond.scisoft.ncd.core.data.stats;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.ac.diamond.scisoft.analysis.dataset.AbstractDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
@@ -41,12 +40,12 @@ public class FilterData extends SaxsStatsData {
 		}
 		
 		@Override
-		public List<AbstractDataset> value(IDataset... datasets) {
+		public List<Dataset> value(IDataset... datasets) {
 			
 			if (datasets.length == 0)
 				return null;
 
-			List<AbstractDataset> result = new ArrayList<AbstractDataset>();
+			List<Dataset> result = new ArrayList<Dataset>();
 			
 			for (IDataset idataset : datasets) {
 				Dataset dataset = DatasetUtils.convertToDataset(idataset);
@@ -82,7 +81,7 @@ public class FilterData extends SaxsStatsData {
 				}
 				if (!resList.isEmpty()) {
 					filtered = DatasetFactory.createFromList(resList);
-					result.add((AbstractDataset) filtered);
+					result.add(filtered);
 				}
 			}
 			return result;
