@@ -1729,6 +1729,10 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 						image.setMask(mask);
 					}
 				});
+			} else {
+				MessageDialog.openWarning(Display.getDefault().getActiveShell(), "Error setting mask",
+						"No mask could be found in the selected file. Please select a file with a persisted mask with the following path: /entry/mask");
+				maskFileSelector.setText("");
 			}
 		} finally {
 			if (file != null)
