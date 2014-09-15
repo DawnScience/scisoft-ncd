@@ -46,9 +46,9 @@ import org.slf4j.LoggerFactory;
 import ptolemy.moml.MoMLParser;
 import com.isencia.passerelle.workbench.model.launch.ModelRunner;
 
-public class DataReductionPipelineTest {
+public class DataReductionPipelinePluginTest {
 	
-	private static final Logger logger = LoggerFactory.getLogger(DataReductionPipelineTest.class);
+	private static final Logger logger = LoggerFactory.getLogger(DataReductionPipelinePluginTest.class);
 	
 	/**
 	 * Ensure that the projects are available in this workspace.
