@@ -19,8 +19,8 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 import java.io.File;
 
 import org.dawnsci.common.widgets.file.SelectorWidget;
-import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.SWT;
+import org.eclipse.swt.events.TypedEvent;
 import org.eclipse.swt.layout.GridData;
 import org.eclipse.swt.layout.GridLayout;
 import org.eclipse.swt.widgets.Composite;

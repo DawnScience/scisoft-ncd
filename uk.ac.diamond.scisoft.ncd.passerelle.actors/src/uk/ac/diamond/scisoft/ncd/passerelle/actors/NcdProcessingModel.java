@@ -49,32 +49,25 @@ import ptolemy.data.StringToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-
-import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.actor.ProcessingException;
-import com.isencia.passerelle.actor.general.DevNullActor;
-import com.isencia.passerelle.actor.v5.ActorContext;
-import com.isencia.passerelle.actor.v5.ProcessRequest;
-import com.isencia.passerelle.actor.v5.ProcessResponse;
-import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.domain.et.ETDirector;
-import com.isencia.passerelle.message.ManagedMessage;
-import com.isencia.passerelle.model.Flow;
-import com.isencia.passerelle.model.FlowManager;
-
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
+import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.diffraction.DetectorProperties;
 import uk.ac.diamond.scisoft.analysis.diffraction.DiffractionCrystalEnvironment;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
-import uk.ac.diamond.scisoft.analysis.io.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
+import uk.ac.diamond.scisoft.analysis.metadata.IDiffractionMetadata;
 import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
+import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
+import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
+import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
+import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSink;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObjectTransformer;
@@ -90,12 +83,18 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJ
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdStandardiseForkJoinTransformer;
-import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
-import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
-import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;
-import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionProcess;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+
+import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.general.DevNullActor;
+import com.isencia.passerelle.actor.v5.ActorContext;
+import com.isencia.passerelle.actor.v5.ProcessRequest;
+import com.isencia.passerelle.actor.v5.ProcessResponse;
+import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.domain.et.ETDirector;
+import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.model.Flow;
+import com.isencia.passerelle.model.FlowManager;
 
 public class NcdProcessingModel implements IDataReductionProcess {
 

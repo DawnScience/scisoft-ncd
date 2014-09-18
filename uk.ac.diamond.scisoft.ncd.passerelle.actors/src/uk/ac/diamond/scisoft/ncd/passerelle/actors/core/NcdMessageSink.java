@@ -16,11 +16,12 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.data.StringToken;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;

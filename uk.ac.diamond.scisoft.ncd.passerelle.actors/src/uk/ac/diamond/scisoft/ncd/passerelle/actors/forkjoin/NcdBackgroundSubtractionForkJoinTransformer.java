@@ -36,7 +36,6 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
 import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
 import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.analysis.dataset.FloatDataset;
@@ -44,9 +43,9 @@ import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.v5.ProcessRequest;

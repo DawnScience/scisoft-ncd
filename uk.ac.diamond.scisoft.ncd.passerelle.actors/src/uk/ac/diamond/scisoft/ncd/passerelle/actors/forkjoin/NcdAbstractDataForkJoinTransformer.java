@@ -37,8 +37,8 @@ import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.TerminationException;
