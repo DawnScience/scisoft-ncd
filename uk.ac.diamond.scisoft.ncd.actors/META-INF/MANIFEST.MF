@@ -28,6 +28,6 @@ Require-Bundle: org.eclipse.core.resources,
  com.isencia.passerelle.workbench.starter;bundle-version="8.7.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.6
 Bundle-ActivationPolicy: lazy
-Import-Package: org.junit;version="4.10.0",
- org.slf4j;version="[1.7.6,1.7.7)",
- uk.ac.diamond.scisoft.analysis.monitor
+Import-Package: org.eclipse.dawnsci.analysis.api.monitor,
+ org.junit;version="4.10.0",
+ org.slf4j;version="[1.7.6,1.7.7)"

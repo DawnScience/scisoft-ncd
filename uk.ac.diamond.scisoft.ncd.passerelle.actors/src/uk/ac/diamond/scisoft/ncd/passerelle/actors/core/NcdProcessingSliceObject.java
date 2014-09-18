@@ -18,8 +18,9 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
 import java.util.concurrent.locks.ReentrantLock;
 
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
+import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 
 public class NcdProcessingSliceObject extends DataMessageComponent {

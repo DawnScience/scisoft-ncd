@@ -20,10 +20,10 @@ import javax.measure.quantity.Energy;
 
 import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.IProgressMonitor;
+import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
+import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.dataset.BooleanDataset;
-import uk.ac.diamond.scisoft.analysis.roi.SectorROI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.preferences.NcdReductionFlags;

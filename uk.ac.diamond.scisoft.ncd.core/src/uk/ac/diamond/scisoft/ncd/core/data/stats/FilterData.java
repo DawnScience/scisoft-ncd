@@ -19,15 +19,15 @@ package uk.ac.diamond.scisoft.ncd.core.data.stats;
 import java.util.ArrayList;
 import java.util.List;
 
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
-import uk.ac.diamond.scisoft.analysis.dataset.PositionIterator;
-import uk.ac.diamond.scisoft.analysis.dataset.Slice;
-import uk.ac.diamond.scisoft.analysis.dataset.Stats;
-import uk.ac.diamond.scisoft.analysis.dataset.function.DatasetToDatasetFunction;
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.Slice;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
+import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
+import org.eclipse.dawnsci.analysis.dataset.impl.Stats;
+import org.eclipse.dawnsci.analysis.dataset.impl.function.DatasetToDatasetFunction;
 
 public class FilterData extends SaxsStatsData {
 	

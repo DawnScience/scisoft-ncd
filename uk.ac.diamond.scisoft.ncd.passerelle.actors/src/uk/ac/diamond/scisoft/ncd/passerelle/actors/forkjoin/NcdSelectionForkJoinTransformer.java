@@ -30,14 +30,14 @@ import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 import org.eclipse.core.runtime.OperationCanceledException;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 
 import ptolemy.data.StringToken;
 import ptolemy.data.expr.StringParameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DoubleDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;

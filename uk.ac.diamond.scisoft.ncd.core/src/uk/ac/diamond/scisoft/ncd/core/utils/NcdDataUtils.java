@@ -22,10 +22,9 @@ import java.util.Collections;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.validator.routines.IntegerValidator;
-
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetUtils;
-import uk.ac.diamond.scisoft.analysis.dataset.IntegerDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 
 /**
  * This class contains utility methods for manipulating data for NCD data reduction

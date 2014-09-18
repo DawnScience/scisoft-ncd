@@ -20,10 +20,10 @@ import static org.junit.Assert.assertArrayEquals;
 
 import java.util.ArrayList;
 
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.junit.Test;
 
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 
 public class NcdDataUtilsTest {

@@ -20,8 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-
-import uk.ac.diamond.scisoft.analysis.message.DataMessageComponent;
+import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
 
 public class NcdProcessingObject extends DataMessageComponent {
 

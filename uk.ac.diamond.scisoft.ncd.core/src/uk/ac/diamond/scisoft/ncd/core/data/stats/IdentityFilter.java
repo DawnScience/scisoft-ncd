@@ -16,8 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 
 public class IdentityFilter extends SaxsStatsData {
 	

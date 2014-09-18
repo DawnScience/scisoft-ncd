@@ -16,11 +16,11 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import uk.ac.diamond.scisoft.analysis.dataset.Dataset;
-import uk.ac.diamond.scisoft.analysis.dataset.DatasetFactory;
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IndexIterator;
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 
 public abstract class SaxsPlotData implements ISaxsPlotData {
 	

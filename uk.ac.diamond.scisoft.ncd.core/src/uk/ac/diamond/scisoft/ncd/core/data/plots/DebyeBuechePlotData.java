@@ -17,9 +17,9 @@
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import org.apache.commons.math3.util.Pair;
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 
-import uk.ac.diamond.scisoft.analysis.dataset.IDataset;
-import uk.ac.diamond.scisoft.analysis.dataset.IErrorDataset;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class DebyeBuechePlotData extends SaxsPlotData {
