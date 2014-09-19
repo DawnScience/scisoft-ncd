@@ -24,6 +24,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.dawnsci.hdf5.api.HDF5File;
+import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
@@ -34,8 +36,6 @@ import org.eclipse.ui.statushandlers.StatusManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5File;
-import uk.ac.diamond.scisoft.analysis.hdf5.HDF5NodeLink;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
