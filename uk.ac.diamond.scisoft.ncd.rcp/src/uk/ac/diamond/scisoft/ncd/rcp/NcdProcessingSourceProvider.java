@@ -63,6 +63,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	public static final String BKGSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bgScale";
 	public static final String ABSSCALING_STATE = "uk.ac.diamond.scisoft.ncd.rcp.absScale";
 	public static final String SAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.sampleThickness";
+	public static final String USEFORMSAMPLETHICKNESS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.useFormSampleThickness";
 	
 	public static final String BKGFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.bkgFile";
 	public static final String DRFILE_STATE = "uk.ac.diamond.scisoft.ncd.rcp.drFile";
@@ -86,6 +87,8 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 	private SliceInput dataSlice, bkgSlice, gridAverage;
 	
 	private Double bgScaling, absScaling, sampleThickness;
+	private boolean useFormSampleThickness;
+
     @XmlElement
     @XmlJavaTypeAdapter(EnergyXmlAdapter.class)
 	private Amount<Energy> energy;
@@ -124,6 +127,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		currentState.put(BKGSCALING_STATE, bgScaling);
 		currentState.put(ABSSCALING_STATE, absScaling);
 		currentState.put(SAMPLETHICKNESS_STATE, sampleThickness);
+		currentState.put(USEFORMSAMPLETHICKNESS_STATE, useFormSampleThickness);
 		currentState.put(WORKINGDIR_STATE, workingDir);
 		
 		return currentState;
@@ -157,6 +161,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		                     BKGSCALING_STATE,
 		                     ABSSCALING_STATE,
 		                     SAMPLETHICKNESS_STATE,
+		                     USEFORMSAMPLETHICKNESS_STATE,
 		                     WORKINGDIR_STATE};
 	}
 
@@ -281,6 +286,13 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		}
 	}
 
+	public void setUseFormSampleThickness(boolean useFormSampleThickness, boolean notify) {
+		this.useFormSampleThickness = useFormSampleThickness;
+		if (notify) {
+			fireSourceChanged(ISources.WORKBENCH, USEFORMSAMPLETHICKNESS_STATE, this.useFormSampleThickness);
+		}
+	}
+
 	public void setAbsScaling(Double absScaling, boolean notify) {
 		this.absScaling = (absScaling != null) ? new Double(absScaling) : null;
 		if (notify) {
@@ -389,6 +401,10 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return sampleThickness;
 	}
 	
+	public boolean isUseFormSampleThickness() {
+		return useFormSampleThickness;
+	}
+	
 	public Amount<Energy> getEnergy() {
 		return energy;
 	}
@@ -421,6 +437,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		bgScaling              = (Double) sourceState.get(BKGSCALING_STATE);           
 		absScaling             = (Double) sourceState.get(ABSSCALING_STATE);           
 		sampleThickness        = (Double) sourceState.get(SAMPLETHICKNESS_STATE);      
+		useFormSampleThickness = (Boolean) sourceState.get(USEFORMSAMPLETHICKNESS_STATE);
 		workingDir             = (String) sourceState.get(WORKINGDIR_STATE);           
 		
 		fireSourceChanged(ISources.WORKBENCH, getCurrentState());
