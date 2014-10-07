@@ -163,6 +163,10 @@ public interface IDataReductionContext {
 
 	public void setSampleThickness(Double thickness);
 
+	public boolean isUseFormSampleThickness();
+
+	public void setUseFormSampleThickness(Boolean useFormSampleThickness);
+
 	public Double getBgScaling();
 
 	public void setBgScaling(Double bgScaling);
