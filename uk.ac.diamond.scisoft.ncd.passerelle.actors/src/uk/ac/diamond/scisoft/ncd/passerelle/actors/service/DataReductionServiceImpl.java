@@ -243,6 +243,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			}
 		}
 	
+		//finish setting normalization parameters now that we have the raw file
+		Double fileThickness = readSampleThickness(inputfilePath, inputfileExtension);
+		if (!context.isUseFormSampleThickness()) {
+			context.setSampleThickness(fileThickness);
+		}
 		
 		if (ignoreInputFile(context, inputfilePath, inputfileExtension)) {
 			return new Status(IStatus.WARNING, "uk.ac.diamond.scisoft.ncd", "Input file '"+inputfilePath+" is invalid but other files may still be processed.");
@@ -634,8 +639,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		Double absScaling = null;
 		Double thickness = null;
 		if (flags.isEnableNormalisation()) {
-	   	    absScaling = context.getAbsScaling();
-			thickness = context.getSampleThickness();
+			absScaling = context.getAbsScaling();
+			//check override and then use thickness if appropriate
+			if (context.isUseFormSampleThickness()) {
+				thickness = context.getSampleThickness();
+			}
 			NcdDetectorSettings scalerData = context.getScalerData();
 			if (scalerData != null) {
 				normChannel = scalerData.getNormChannel();
@@ -761,7 +769,26 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 	}
 
-
+	private Double readSampleThickness(String inputfilePath, String inputfileExtension) {
+		if (!inputfileExtension.equals("nxs")) {
+			return 1.0;
+		}
+		HDF5File dataTree;
+		try {
+			dataTree = new HDF5Loader(inputfilePath).loadTree();
+		} catch (Exception e) {
+			logger.info("Error loading Nexus tree from {}", inputfilePath);
+			return 1.0;
+		}
+		HDF5NodeLink node = dataTree.findNodeLink("/entry1/sample/thickness");
+		if (node != null) {
+			org.eclipse.dawnsci.analysis.api.dataset.IDataset sampleThicknessSet = ((HDF5Dataset) node.getDestination()).getDataset().getSlice(new org.eclipse.dawnsci.analysis.api.dataset.Slice());
+			assert node.getDestination().getAttribute("units").getFirstElement().equals("mm"); //units of sample thickness must be mm
+			return sampleThicknessSet.getDouble(0);
+		}
+		return 1.0;
+	}
+	
 	private void checkStages(NcdReductionFlags flags) {
 		
 		if (flags.isEnableSector()) {
