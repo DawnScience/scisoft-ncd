@@ -241,10 +241,40 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	
 		//finish setting normalization parameters now that we have the raw file
 		Double fileThickness = readSampleThickness(inputfilePath, inputfileExtension);
-		if (!context.isUseFormSampleThickness()) {
-			context.setSampleThickness(fileThickness);
+		
+		//set normalization parameters now that we have the raw file
+		int normChannel = -1;
+		Double absScaling = null;
+		Double thickness = null;
+		
+		if (flags.isEnableNormalisation()) {
+			absScaling = context.getAbsScaling();
+
+			if (context.isUseFormSampleThickness() && context.getSampleThickness() != null) {
+				thickness = context.getSampleThickness();
+			}
+			else if (fileThickness != null) {
+				thickness = fileThickness;
+			}
+			else {
+				thickness = 1.0;
+			}
+			
+			NcdDetectorSettings scalerData = context.getScalerData();
+			if (scalerData != null) {
+				normChannel = scalerData.getNormChannel();
+			}
 		}
 		
+		if (absScaling != null) {
+			if (thickness != null) {
+				processing.setAbsScaling(absScaling / thickness);
+			} else {
+				processing.setAbsScaling(absScaling);
+			}
+		}
+		processing.setNormChannel(normChannel);
+
 		if (ignoreInputFile(context, inputfilePath, inputfileExtension)) {
 			return new Status(IStatus.WARNING, "uk.ac.diamond.scisoft.ncd", "Input file '"+inputfilePath+" is invalid but other files may still be processed.");
 		}
@@ -604,21 +634,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			}
 		}
 		
-		int normChannel = -1;
-		Double absScaling = null;
-		Double thickness = null;
-		if (flags.isEnableNormalisation()) {
-			absScaling = context.getAbsScaling();
-			//check override and then use thickness if appropriate
-			if (context.isUseFormSampleThickness()) {
-				thickness = context.getSampleThickness();
-			}
-			NcdDetectorSettings scalerData = context.getScalerData();
-			if (scalerData != null) {
-				normChannel = scalerData.getNormChannel();
-			}
-		}
-		
 		if (context.isEnableMask()) {
 			BooleanDataset mask = context.getMask();
 			if (mask != null) {
@@ -651,14 +666,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		
 		processing.setBgFile(bgFile);
-		//need to move this out of this method if we can only get the target file later
-		if (absScaling != null) {
-			if (thickness != null) {
-				processing.setAbsScaling(absScaling / thickness);
-			} else {
-				processing.setAbsScaling(absScaling);
-			}
-		}
+
 		processing.setBgScaling(bgScaling);
 		processing.setDrFile(drFile);
 		processing.setFirstFrame(firstFrame);
@@ -666,7 +674,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		processing.setFrameSelection(frameSelection);
 		processing.setGridAverageSelection(gridAverage);
 		processing.setCalibration(context.getCalibrationName());
-		processing.setNormChannel(normChannel);
 		
 		processing.setSaxsAnalysisStatsParameters(context.getSaxsAnalysisStatParameters());
 	}
