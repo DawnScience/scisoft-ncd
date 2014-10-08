@@ -58,6 +58,8 @@ class DataReductionContext implements IDataReductionContext {
 	
 	private Double absScaling, sampleThickness, bgScaling, energy;
 	
+	private boolean useFormSampleThickness;
+	
 	private SaxsAnalysisStatsParameters saxsAnalysisStatsParameters;
 	
 	/**
@@ -702,6 +704,16 @@ class DataReductionContext implements IDataReductionContext {
 	@Override
 	public SaxsAnalysisStatsParameters getSaxsAnalysisStatParameters() {
 		return saxsAnalysisStatsParameters;
+	}
+
+	@Override
+	public boolean isUseFormSampleThickness() {
+		return useFormSampleThickness;
+	}
+
+	@Override
+	public void setUseFormSampleThickness(Boolean useFormSampleThickness) {
+		this.useFormSampleThickness = useFormSampleThickness;
 	}
 
 }

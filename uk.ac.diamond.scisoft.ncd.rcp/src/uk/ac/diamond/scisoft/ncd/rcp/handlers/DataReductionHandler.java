@@ -393,6 +393,9 @@ public class DataReductionHandler extends AbstractHandler {
 		NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		context.setAbsScaling(ncdAbsScaleSourceProvider.getAbsScaling());
 
+		NcdProcessingSourceProvider ncdUseFormSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.USEFORMSAMPLETHICKNESS_STATE);
+		context.setUseFormSampleThickness(ncdUseFormSampleThicknessSourceProvider.isUseFormSampleThickness());
+
 		NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		context.setSampleThickness(ncdSampleThicknessSourceProvider.getSampleThickness());
 		
