@@ -39,6 +39,7 @@ public class NcdPreferences {
 	
 	public static final String NCD_SAMPLETHICKNESS = "ncd.samplethickness";
 	public static final String NCD_ABSOLUTESCALE = "ncd.absolutescale";
+	public static final String NCD_USEFORMSAMPLETHICKNESS = "ncd.usefilesamplethickness";
 	public static final String NCD_BACKGROUNDSUBTRACTION = "ncd.backgroundsubtraction";
 	public static final String NCD_BACKGROUNDSCALE =  "ncd.backgroundscale";
 	public static final String NCD_DETECTORRESPONSE = "ncd.detectorresponse";
