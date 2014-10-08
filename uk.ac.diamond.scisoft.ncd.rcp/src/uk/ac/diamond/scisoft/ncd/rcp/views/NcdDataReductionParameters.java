@@ -116,6 +116,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private NcdProcessingSourceProvider ncdDataSliceSourceProvider, ncdBkgSliceSourceProvider, ncdGridAverageSourceProvider;
 	private NcdProcessingSourceProvider ncdBgFileSourceProvider, ncdDrFileSourceProvider, ncdWorkingDirSourceProvider;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider, ncdAbsScaleSourceProvider, ncdBgScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdUseFormSampleThicknessSourceProvider;
 	
 	private SaxsPlotsSourceProvider loglogPlotSourceProvider;
 	private SaxsPlotsSourceProvider guinierPlotSourceProvider;
@@ -125,9 +126,9 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	private SaxsPlotsSourceProvider debyebuechePlotSourceProvider;
 	
 	private Button useMask, bgAdvancedButton, detAdvancedButton, gridAverageButton;
-	private Button radialButton, azimuthalButton, fastIntButton;
+	private Button radialButton, azimuthalButton, fastIntButton, useFormSampleThicknessButton;
 	private Label bgLabel, bgScaleLabel, sampleThicknessLabel, absScaleLabel, drLabel;
-	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel;
+	private Label bgFramesStartLabel, bgFramesStopLabel, detFramesStartLabel, detFramesStopLabel, useFormSampleThicknessLabel;
 
 	private ExpandableComposite ecomp, saxsPlotEcomp, secEcomp, normEcomp, refEcomp, bgEcomp, aveEcomp;
 	private ExpansionAdapter expansionAdapter;
@@ -213,6 +214,13 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		return null;
 	}
 	
+	private Boolean isUseFileThicknessSelection() {
+		if (useFormSampleThicknessButton.isEnabled()) {
+			return true;
+		}
+		return false;
+	}
+	
 	@Override
 	public void init(IViewSite site, IMemento memento) throws PartInitException {
 	 this.memento = memento;
@@ -271,6 +279,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			memento.putBoolean(NcdPreferences.NCD_GRIDAVERAGE, gridAverageButton.getSelection());
 			
 			memento.putString(NcdPreferences.NCD_DIRECTORY, inputDirectory);
+			
+			memento.putBoolean(NcdPreferences.NCD_USEFORMSAMPLETHICKNESS, useFormSampleThicknessButton.getSelection());
 		}
 	}
 			
@@ -457,6 +467,12 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				locationSelector.setText(tmp);
 				inputDirectory = tmp;
 				ncdWorkingDirSourceProvider.setWorkingDir(inputDirectory);
+			}
+			
+			val = memento.getBoolean(NcdPreferences.NCD_USEFORMSAMPLETHICKNESS);
+			if (val != null) {
+				useFormSampleThicknessButton.setSelection(val);
+				//ncdSampleThicknessSourceProvider should have a thickness
 			}
 		}
 	}
@@ -855,6 +871,16 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				}
 			});
 			
+			useFormSampleThicknessButton = new Button(g, SWT.CHECK);
+			useFormSampleThicknessButton.setText("Use sample thickness in this form");
+			useFormSampleThicknessButton.setToolTipText("Use sample thickness in this GUI instead of value in the file");
+			useFormSampleThicknessButton.addSelectionListener(new SelectionAdapter() {
+				@Override
+				public void widgetSelected(SelectionEvent e) {
+					ncdUseFormSampleThicknessSourceProvider.setUseFormSampleThickness(useFormSampleThicknessButton.getSelection(), false);
+				}
+			});
+			
 			normEcomp.setClient(g);
 		}
 		normEcomp.setExpanded(false);
@@ -1238,6 +1264,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 		ncdSampleThicknessSourceProvider.addSourceProviderListener(this);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
+		ncdUseFormSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.USEFORMSAMPLETHICKNESS_STATE);
+		ncdUseFormSampleThicknessSourceProvider.addSourceProviderListener(this);
 		
 		ncdBgScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.BKGSCALING_STATE);
 		ncdBgScaleSourceProvider.addSourceProviderListener(this);
@@ -1275,6 +1303,8 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 			absScale.setEnabled(selection);
 		if (absScaleLabel != null && !(absScaleLabel.isDisposed()))
 			absScaleLabel.setEnabled(selection);
+		if (useFormSampleThicknessButton != null && !(useFormSampleThicknessButton.isDisposed()))
+			useFormSampleThicknessButton.setEnabled(selection);
 	}
 
 	private void updateSectorIntegrationWidgets(boolean selection) {
@@ -1434,6 +1464,11 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				absScale.setText("");
 				absScale.setEnabled(true);
 			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.USEFORMSAMPLETHICKNESS_STATE)) {
+			boolean isUseFormSampleThickness = ncdUseFormSampleThicknessSourceProvider.isUseFormSampleThickness();
+			useFormSampleThicknessButton.setEnabled(isUseFormSampleThickness);
 		}
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.NORMALISATION_STATE)) {
