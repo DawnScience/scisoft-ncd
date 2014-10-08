@@ -326,6 +326,7 @@ public class NcdDataReductionTransformer extends AbstractDataMessageTransformer 
 		context.setEnableFastIntegration(processing.isEnableFastIntegration());
 		context.setAbsScaling(processing.getAbsScaling());
 		context.setSampleThickness(processing.getSampleThickness());
+		context.setUseFormSampleThickness(processing.isUseFormSampleThickness());
 		context.setBgScaling(processing.getBgScaling());
 		
 		NcdCalibrationSourceProvider calibration = adapter.getNcdCalibrationSourceProvider();
