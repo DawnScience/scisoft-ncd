@@ -121,8 +121,26 @@ public class DataReductionPipelineTest {
 	@Test
 	public void testDataReductionPipeline1() throws Throwable {
 		
+		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
+		
+		testScalarInjection("test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_model.moml",  "/entry/dictionary/results_path");
+	}
+	
+	/**
+	 * These lot work better as separate tests.
+	 * @throws Throwable
+	 */
+	@Test
+	public void testDataReductionPipeline2() throws Throwable {
+		
+		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration_sample_thickness.xml");
+		
+		testScalarInjection("test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_model.moml",  "/entry/dictionary/results_path");
+	}
+
+	private void setUpLocations(String configXmlPath) throws CoreException {
 		// Set up the locations
-		final String xmlPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
+		final String xmlPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), configXmlPath);
 		final String rawPath  = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/i22-34820.nxs");
 		final String persPath = TestUtils.getAbsolutePath(Platform.getBundle(Activator.PLUGIN_ID), "test/uk/ac/diamond/scisoft/ncd/actors/test/persistence_file.nxs");
 		
@@ -136,9 +154,6 @@ public class DataReductionPipelineTest {
 		
 		final String outputPath = out.getLocation().toOSString();
 		System.setProperty("output.path", outputPath);
-
-		
-		testScalarInjection("test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_model.moml",  "/entry/dictionary/results_path");
 	}
 	
 	private synchronized void testScalarInjection(final String path, final String... scalarNames) throws Throwable {
