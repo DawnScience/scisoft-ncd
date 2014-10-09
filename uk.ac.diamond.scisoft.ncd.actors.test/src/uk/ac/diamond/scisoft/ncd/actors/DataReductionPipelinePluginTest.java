@@ -118,11 +118,24 @@ public class DataReductionPipelinePluginTest {
 	@Test
 	public void testDataReductionPipeline1() throws Throwable {
 		
-		// Set up the locations
-		final String xmlPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/ncd_configuration.xml");
-		final String rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/i22-34820.nxs");
-		final String persPath = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/persistence_file.nxs");
+		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
 		
+		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
+	}
+	
+	/**
+	 * These lot work better as separate tests.
+	 * @throws Throwable
+	 */
+	@Test
+	public void testDataReductionPipeline2() throws Throwable {
+		
+		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration_sample_thickness.xml");
+		
+		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
+	}
+
+	private String[] getScalarNames() {
 		final String[] scalarNames = {"/entry1/Pilatus2M_processing/Average/sas_type", "/entry1/Pilatus2M_processing/Average_Azimuthal/sas_type",
 				"/entry1/Pilatus2M_processing/DebyeBuechePlot/sas_type", "/entry1/Pilatus2M_processing/DegreeOfOrientation_Azimuthal/sas_type",
 				"/entry1/Pilatus2M_processing/GuinierPlot/sas_type", "/entry1/Pilatus2M_processing/Invariant/sas_type",
@@ -135,6 +148,10 @@ public class DataReductionPipelinePluginTest {
 				"/entry1/instrument/TfgTimes/sas_type", "/entry1/instrument/name", "/entry1/instrument/source/name", "/entry1/instrument/source/notes",
 				"/entry1/instrument/source/probe", "/entry1/instrument/source/type", "/entry1/program_name", "/entry1/scan_command", "/entry1/scan_identifier",
 				 "/entry1/title"};
+		return scalarNames;
+	}
+	
+	private String[] getSetNames() {
 		final String[] setNames = {"/entry1/Pilatus2M/data", "/entry1/Pilatus2M_azimuthal/data", "/entry1/Pilatus2M_azimuthal/direction",
 				"/entry1/Pilatus2M_azimuthal/errors", "/entry1/Pilatus2M_processing/Average/data", "/entry1/Pilatus2M_processing/Average/errors",
 				"/entry1/Pilatus2M_processing/Average/q", "/entry1/Pilatus2M_processing/Average/q_errors", "/entry1/Pilatus2M_processing/Average_Azimuthal/data",
@@ -176,6 +193,17 @@ public class DataReductionPipelinePluginTest {
 				"/entry1/Pilatus2M_processing/guinierTestData/variable", "/entry1/Pilatus2M_processing/guinierTestData/variable_errors",
 				"/entry1/Pilatus2M_result/data", "/entry1/Pilatus2M_result/errors", "/entry1/Pilatus2M_result/q", "/entry1/Pilatus2M_result/q_errors",
 				"/entry1/Scalers/data", "/entry1/instrument/Pilatus2M/data", "/entry1/instrument/Scalers/data", "/entry1/instrument/TfgTimes/data"};
+		return setNames;
+	}
+
+	private void setUpLocations(String configXmlPath) throws CoreException {
+		// Set up the locations
+		final String xmlPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", configXmlPath);
+		final String rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/i22-34820.nxs");
+		final String persPath = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.actors.test", "data/persistence_file.nxs");
+		
+
+
 		System.setProperty("xml.path",         xmlPath);
 		System.setProperty("raw.path",         rawPath);
 		System.setProperty("persistence.path", persPath);		
@@ -186,16 +214,18 @@ public class DataReductionPipelinePluginTest {
 		
 		final String outputPath = out.getLocation().toOSString();
 		System.setProperty("output.path", outputPath);
+	}
+	
+	private synchronized void testScalarInjection(final String path, final String[] setNames, final String... scalarNames) throws Throwable {
+	
+		testVariables(path, setNames, scalarNames);
+	}
+	private synchronized void testVariables(final String path, final String[] setName, final String... scalarNames) throws Throwable {
 
-		
-		testVariables("data/ncd_model.moml", setNames, scalarNames);
+		testVariables(path, setName, IHierarchicalDataFile.TEXT, scalarNames);
+
 	}
-	
-	private synchronized void testVariables(final String path, final String[] setNames, final String... scalarNames) throws Throwable {
-	
-	    testVariables(path, setNames, IHierarchicalDataFile.TEXT, scalarNames);
-	}
-	
+
 	private IFile getFirstNexusFile(IResource[] resources) {
 		for (IResource resource : resources) {
 			if (((IFile)resource).getLocation().toOSString().endsWith("nxs")) {
