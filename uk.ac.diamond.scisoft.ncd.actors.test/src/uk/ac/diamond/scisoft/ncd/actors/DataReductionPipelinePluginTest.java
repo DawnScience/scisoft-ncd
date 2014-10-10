@@ -118,7 +118,7 @@ public class DataReductionPipelinePluginTest {
 	@Test
 	public void testDataReductionPipeline1() throws Throwable {
 		
-		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration.xml");
+		setUpLocations( "data/ncd_configuration.xml");
 		
 		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
 	}
@@ -130,7 +130,7 @@ public class DataReductionPipelinePluginTest {
 	@Test
 	public void testDataReductionPipeline2() throws Throwable {
 		
-		setUpLocations( "test/uk/ac/diamond/scisoft/ncd/actors/test/ncd_configuration_sample_thickness.xml");
+		setUpLocations( "data/ncd_configuration_sample_thickness.xml");
 		
 		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
 	}
