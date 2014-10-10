@@ -84,11 +84,6 @@ public class SectorIntegration {
 			
 			Dataset slice = parentdata.getSlice(start, stop, null);
 			slice.squeeze();
-			if (doErrors) {
-				Dataset sliceErrors = parentdata.getErrorBuffer().getSlice(start, stop, null);
-				sliceErrors.squeeze();
-				slice.setErrorBuffer(sliceErrors);
-			}
 			
 			Dataset[] intresult;
 			try {
