@@ -14,7 +14,10 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.core.runtime.Platform;
+import junit.framework.Assert;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+
 import org.dawb.common.util.eclipse.BundleUtils;
 import org.dawb.common.util.io.FileUtils;
 import org.dawb.common.util.io.IFileUtils;
@@ -32,6 +35,8 @@ import org.eclipse.core.resources.ResourcesPlugin;
 import org.eclipse.core.runtime.CoreException;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.core.runtime.Platform;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.junit.After;
@@ -44,6 +49,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import ptolemy.moml.MoMLParser;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+
 import com.isencia.passerelle.workbench.model.launch.ModelRunner;
 
 public class DataReductionPipelinePluginTest {
@@ -121,6 +130,8 @@ public class DataReductionPipelinePluginTest {
 		setUpLocations( "data/ncd_configuration.xml");
 		
 		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
+		
+		testSumAndAverage(8.625e-5, 0.001e-5, 0.1219, 0.0001);
 	}
 	
 	/**
@@ -133,6 +144,30 @@ public class DataReductionPipelinePluginTest {
 		setUpLocations( "data/ncd_configuration_sample_thickness.xml");
 		
 		testScalarInjection("data/ncd_model.moml", getSetNames(), getScalarNames());
+		
+		testSumAndAverage(7.841e-4, 0.001e-4, 1.109, 0.001);
+	}
+
+	private void testSumAndAverage(double expectedMean, double toleranceMean, double expectedSum, double toleranceSum) throws Exception {
+		IFile h5 = getH5File();
+		int file_handle = H5.H5Fopen(h5.getLocation().toString(), HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		int detector_group_id = H5.H5Gopen(entry_group_id, "Pilatus2M_result", HDF5Constants.H5P_DEFAULT);
+		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+
+		DataSliceIdentifiers data_id = new DataSliceIdentifiers();
+		data_id.setIDs(detector_group_id, input_data_id);
+
+		long[] shape = {1,1,1414};
+		SliceSettings dataSlice = new SliceSettings(shape, 0, (int) shape[0]);
+		int[] start = new int[] { 0, 0, 0, 0, 0 };
+		dataSlice.setStart(start);
+		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
+
+		double sum = (Double) data.sum();
+		double mean = (Double) data.mean();
+		Assert.assertEquals(expectedMean, mean, toleranceMean);
+		Assert.assertEquals(expectedSum, sum, toleranceSum);
 	}
 
 	private String[] getScalarNames() {
@@ -239,26 +274,7 @@ public class DataReductionPipelinePluginTest {
 		
 		testFile(path, false);
 
-		workflows.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-		IFolder output = workflows.getFolder("output");
-		if (!output.exists()) output.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
-		// There should always be an output folder but sometimes there is a threading issue running all the tests in same VM
-		if (!output.exists()) {
-			logger.error("Did not find output folder, because tests are not run in separate VM and passerelle not clearing memory!");
-			logger.error("TODO Run tests in separate VM!");
-			return; // HACK Disguises a problem
-		}
-
-		final IResource[] reses = output.members();
-		if (reses.length<1) {
-			logger.error("Hit resource refresh problem or problem with workflow which meant that it did not run!");
-			logger.error("TODO Run tests in separate VM!");
-			return; // HACK Disguises a problem
-		}
-		
-		final IFile h5 = getFirstNexusFile(reses);
-		if (h5==null||!h5.exists()) throw new Exception("output folder must have contents!");
-
+		IFile h5 = getH5File();
 		final IHierarchicalDataFile hFile = HierarchicalDataFactory.getReader(h5.getLocation().toOSString());
 		try {
 			final List<String> scalars = hFile.getDatasetNames(dataType);
@@ -277,6 +293,29 @@ public class DataReductionPipelinePluginTest {
 			hFile.close();
 		}
 
+	}
+
+	private synchronized IFile getH5File() throws Exception {
+		workflows.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+		IFolder output = workflows.getFolder("output");
+		if (!output.exists()) output.refreshLocal(IResource.DEPTH_INFINITE, new NullProgressMonitor());
+		// There should always be an output folder but sometimes there is a threading issue running all the tests in same VM
+		if (!output.exists()) {
+			logger.error("Did not find output folder, because tests are not run in separate VM and passerelle not clearing memory!");
+			logger.error("TODO Run tests in separate VM!");
+			throw new Exception("Did not find output folder, because tests are not run in separate VM and passerelle not clearing memory!");
+		}
+
+		final IResource[] reses = output.members();
+		if (reses.length<1) {
+			logger.error("Hit resource refresh problem or problem with workflow which meant that it did not run!");
+			logger.error("TODO Run tests in separate VM!");
+			throw new Exception("Hit resource refresh problem or problem with workflow which meant that it did not run!");
+		}
+		
+		final IFile h5 = getFirstNexusFile(reses);
+		if (h5==null||!h5.exists()) throw new Exception("output folder must have contents!");
+		return h5;
 	}
 
 	private synchronized void testFile(final String relPath, boolean requireError)  throws Throwable {
