@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.4"?>
+<plugin>
+   <extension
+         point="org.eclipse.dawnsci.analysis.api.operation">
+      <operation
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationOperation"
+            description="Normalisation of datasets with errors"
+            id="uk.ac.diamond.scisoft.analysis.processing.Normalisation"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationModel"
+            name="Normalisation for NCD">
+      </operation>
+   </extension>
+
+</plugin>
