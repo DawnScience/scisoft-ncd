@@ -34,14 +34,12 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 
 	@Override
 	public OperationRank getInputRank() {
-		// TODO Auto-generated method stub
-		return null;
+		return OperationRank.ONE;
 	}
 
 	@Override
 	public OperationRank getOutputRank() {
-		// TODO Auto-generated method stub
-		return null;
+		return OperationRank.SAME;
 	}
 	
 	@Override
