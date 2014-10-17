@@ -10,6 +10,12 @@
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationModel"
             name="Normalisation for NCD">
       </operation>
+      <operation
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdMetadataImportOperation"
+            id="uk.ac.diamond.scisoft.analysis.processing.NcdMetadataImport"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdMetadataImportModel"
+            name="NCD Metadata Import">
+      </operation>
    </extension>
 
 </plugin>
