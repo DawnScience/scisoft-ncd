@@ -1,0 +1,17 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: NCD Processing
+Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd.processing;singleton:=true
+Bundle-Version: 1.0.0.qualifier
+Bundle-Activator: uk.ac.diamond.scisoft.ncd.processing.Activator
+Bundle-Vendor: Diamond Light Source
+Require-Bundle: org.eclipse.core.runtime,
+ org.eclipse.dawnsci.hdf5,
+ org.eclipse.dawnsci.analysis.api,
+ ncsa.hdf,
+ org.eclipse.dawnsci.analysis.dataset,
+ uk.ac.diamond.scisoft.analysis.processing,
+ uk.ac.diamond.scisoft.ncd.core,
+ uk.ac.diamond.scisoft.analysis
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
+Bundle-ActivationPolicy: lazy
