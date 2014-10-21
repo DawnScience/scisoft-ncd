@@ -22,6 +22,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.LongDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.ShortDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.StringDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataUtils;
@@ -75,7 +76,6 @@ public class NexusNcdMetadataReader {
 		String intSymm = null;
 		double[] beamCentre = null;
 		try {
-			//need to read the following - "integration angles", "integration radii", "integration symmetry", "beam centre"
 			hiFile = HierarchicalDataFactory.getReader(filePath);
 			try {
 				hiFile = HierarchicalDataFactory.getReader(filePath);
@@ -94,7 +94,10 @@ public class NexusNcdMetadataReader {
 					intRadii[i] = intRadiiSet.getDouble(i);
 				}
 				
-				//TODO intsymmset - not sure we can handle strings like this
+				intSymm = new String();
+				for (int i=0; i< intSymmSet.getSize(); ++i) {
+					intSymm += intSymmSet.getString(i);
+				}
 				
 				beamCentre = new double[beamCentreSet.getSize()];
 				for (int i=0; i< beamCentreSet.getSize(); ++i) {
@@ -116,7 +119,6 @@ public class NexusNcdMetadataReader {
 			SectorROI roi = new SectorROI();
 			roi.setAngles(intAngles);
 			roi.setRadii(intRadii);
-			//go through some bother to set the symmetry value
 			roi.setSymmetry(getSymmetryNumber(intSymm));
 			roi.setPoint(beamCentre);
 			return roi;
@@ -139,7 +141,7 @@ public class NexusNcdMetadataReader {
 		IDataset maskSet = null;
 		try {
 			hiFile = HierarchicalDataFactory.getReader(filePath);
-			maskSet = getSet(hiFile, MASK_NEXUS_PATH);
+			maskSet = getSet(hiFile, getDetectorFormattedPath(MASK_NEXUS_PATH));
 			
 		} finally {
 			if (hiFile!= null)
@@ -152,6 +154,7 @@ public class NexusNcdMetadataReader {
 		return maskSet;
 	}
 	
+	@SuppressWarnings("deprecation")
 	private Dataset getSet(IHierarchicalDataFile file, final String path) throws Exception {
 
 		if (!file.isDataset(path)) return null;
@@ -176,6 +179,8 @@ public class NexusNcdMetadataReader {
         	ret = new FloatDataset((float[])val, intShape);
         } else if (val instanceof double[]) {
         	ret = new DoubleDataset((double[])val, intShape);
+        } else if (val instanceof String[]) {
+        	ret = new StringDataset((String[])val, intShape);
         } else {
         	throw new Exception("Cannot deal with data type "+set.getDatatype().getDatatypeDescription());
         }
