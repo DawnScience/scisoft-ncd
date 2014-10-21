@@ -8,11 +8,16 @@
  */
 package uk.ac.diamond.scisoft.analysis.processing.io;
 
+import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.regex.Pattern;
+
+import javax.swing.tree.TreeNode;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.ByteDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -49,6 +54,7 @@ public class NexusNcdMetadataReader {
 
 	public void setFilePath(String filePath) {
 		this.filePath = filePath;
+		findDetectorName();
 	}
 
 	private String detectorName;
@@ -56,14 +62,49 @@ public class NexusNcdMetadataReader {
 	private String getDetectorFormattedPath(String pathString) {
 		return String.format(pathString, detectorName);
 	}
-	
+
 	public NexusNcdMetadataReader() {
 	}
-
+	
 	public NexusNcdMetadataReader(String filePath2) {
 		setFilePath(filePath2);
 	}
 
+	private void findDetectorName() {
+		if (!HierarchicalDataFactory.isHDF5(filePath)) return;
+		IHierarchicalDataFile hiFile = null;
+		try {
+			hiFile = HierarchicalDataFactory.getReader(filePath);
+			TreeNode node = hiFile.getNode();
+			Enumeration<?> children = node.children();
+			searchForDetectorName(children);
+		} catch (Exception e) {
+			throw new OperationException(null, e);
+		} finally {
+			if (hiFile!= null)
+				try {
+					hiFile.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+		}
+	}
+
+	private void searchForDetectorName(Enumeration<?> node) {
+		while (node.hasMoreElements()) {
+			TreeNode treeNode = (TreeNode)node.nextElement();
+			String name = treeNode.toString();
+			//for NCD, the entry ending with _processing has the detector name 
+			if (Pattern.matches(".*_processing", name)) {
+				String fixedName = name.replaceAll("_processing", "");
+				setDetectorName(fixedName);
+				return;
+			}
+			searchForDetectorName(treeNode.children());
+		}
+		return;
+	}
+	
 	public void setDetectorName(String detectorName) {
 		this.detectorName = detectorName;
 	}
@@ -83,28 +124,28 @@ public class NexusNcdMetadataReader {
 				IDataset intRadiiSet = getSet(hiFile, getDetectorFormattedPath(INT_RADII_NEXUS_PATH));
 				IDataset intSymmSet = getSet(hiFile, getDetectorFormattedPath(INT_SYMM_NEXUS_PATH));
 				IDataset beamCentreSet = getSet(hiFile, getDetectorFormattedPath(BEAM_CENTRE_NEXUS_PATH));
-				
+
 				intAngles = new double[intAnglesSet.getSize()];
 				for (int i=0; i< intAnglesSet.getSize(); ++i) {
 					intAngles[i] = intAnglesSet.getDouble(i);
 				}
-				
+
 				intRadii = new double[intRadiiSet.getSize()];
 				for (int i=0; i< intRadiiSet.getSize(); ++i) {
 					intRadii[i] = intRadiiSet.getDouble(i);
 				}
-				
+
 				intSymm = new String();
 				for (int i=0; i< intSymmSet.getSize(); ++i) {
 					intSymm += intSymmSet.getString(i);
 				}
-				
+
 				beamCentre = new double[beamCentreSet.getSize()];
 				for (int i=0; i< beamCentreSet.getSize(); ++i) {
 					beamCentre[i] = beamCentreSet.getDouble(i);
 				}
-				
-				} catch (Exception e) {
+
+			} catch (Exception e) {
 				e.printStackTrace();
 			} finally {
 				if (hiFile!= null)
@@ -114,7 +155,7 @@ public class NexusNcdMetadataReader {
 						e.printStackTrace();
 					}
 			}
-			
+
 			//then they need to be assembled into a ROI
 			SectorROI roi = new SectorROI();
 			roi.setAngles(intAngles);
@@ -122,7 +163,7 @@ public class NexusNcdMetadataReader {
 			roi.setSymmetry(getSymmetryNumber(intSymm));
 			roi.setPoint(beamCentre);
 			return roi;
-			} catch (Exception e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		} finally {
 			if (hiFile!= null)
