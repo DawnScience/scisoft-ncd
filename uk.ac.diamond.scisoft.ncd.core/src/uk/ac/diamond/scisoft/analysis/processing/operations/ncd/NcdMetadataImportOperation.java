@@ -16,7 +16,7 @@ import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.analysis.api.roi.IROI;
 
 import uk.ac.diamond.scisoft.analysis.metadata.MaskMetadataImpl;
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
@@ -43,17 +43,18 @@ public class NcdMetadataImportOperation extends AbstractOperation<NcdMetadataImp
 
 		NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
 		IDataset mask;
+		IROI roi;
 		try {
 			mask = reader.getMaskFromFile();
+			roi = reader.getROIDataFromFile();
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
 
 		MaskMetadata mm = new MaskMetadataImpl(mask);
 		slice.setMetadata(mm);
-
-		SectorROI roi = new SectorROI();
 		model.setRegion(roi);
+		
 		return new OperationData(slice);
 	}
 }
