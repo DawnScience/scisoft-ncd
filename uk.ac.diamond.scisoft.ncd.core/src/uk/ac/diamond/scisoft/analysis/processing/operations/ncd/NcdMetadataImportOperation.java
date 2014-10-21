@@ -9,28 +9,51 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
+import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
+import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
+import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 
-public class NcdMetadataImportOperation extends AbstractOperation<NormalisationModel, OperationData> {
+import uk.ac.diamond.scisoft.analysis.metadata.MaskMetadataImpl;
+import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
+
+public class NcdMetadataImportOperation extends AbstractOperation<NcdMetadataImportModel, OperationData> {
 
 	@Override
 	public String getId() {
-		// TODO Auto-generated method stub
-		return null;
+		return "uk.ac.diamond.scisoft.analysis.processing.NcdMetadataImport";
 	}
 
 	@Override
 	public OperationRank getInputRank() {
-		// TODO Auto-generated method stub
-		return null;
+		return OperationRank.TWO;
 	}
 
 	@Override
 	public OperationRank getOutputRank() {
-		// TODO Auto-generated method stub
-		return null;
+		return OperationRank.TWO;
 	}
 	
+	@Override
+	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
+
+		NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
+		IDataset mask;
+		try {
+			mask = reader.getMaskFromFile();
+		} catch (Exception e) {
+			throw new OperationException(this, e);
+		}
+
+		MaskMetadata mm = new MaskMetadataImpl(mask);
+		slice.setMetadata(mm);
+
+		SectorROI roi = new SectorROI();
+		model.setRegion(roi);
+		return new OperationData(slice);
+	}
 }
