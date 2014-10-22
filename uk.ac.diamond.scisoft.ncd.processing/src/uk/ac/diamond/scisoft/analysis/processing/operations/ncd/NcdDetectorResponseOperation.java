@@ -19,10 +19,16 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.LongDataset;
+import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
+import org.eclipse.dawnsci.hdf5.HierarchicalDataUtils;
+import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 
 public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorResponseModel, OperationData> {
+	
+	public Dataset response;
 
 	@Override
 	public String getId() {
@@ -42,7 +48,8 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 	@Override
 	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
 		DetectorResponse response = new DetectorResponse();
-		response.setResponse(model.getResponse());
+		Dataset responseDataset = getResponseFromFile();
+		response.setResponse(responseDataset);
 		FloatDataset errors = (FloatDataset) slice.getError();
 		FloatDataset data = (FloatDataset) slice.getSlice(new Slice());
 		int[] flatShape = data.getShape();
@@ -56,5 +63,46 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
 		toReturn.setData(myres);
 		return toReturn;
+	}
+
+	private Dataset getResponseFromFile() {
+		if (response == null) {
+			String filePath = model.getFilePath();
+			try {
+				
+				if (HierarchicalDataFactory.isHDF5(filePath)) {
+					IHierarchicalDataFile hiFile = null;
+					try {
+						hiFile = HierarchicalDataFactory.getReader(filePath);
+						ncsa.hdf.object.Dataset dataset = (ncsa.hdf.object.Dataset) hiFile.getData("/entry1/instrument/detector/data");
+						long[] dataShape = HierarchicalDataUtils.getDims(dataset);
+						
+						final int[] intShape  = getInt(dataShape);
+						response = new LongDataset((long[])dataset.read(), intShape);
+					} catch (Exception e) {
+						throw new OperationException(null, e);
+					} finally {
+						if (hiFile!= null)
+							try {
+								hiFile.close();
+							} catch (Exception e) {
+								e.printStackTrace();
+							}
+					}
+				}
+				
+				
+			} catch (Exception e) {
+				throw new OperationException(this, e);
+			}
+			
+		}
+		return response;
+	}
+	
+	private int[] getInt(long[] longShape) {
+		final int[] intShape  = new int[longShape.length];
+		for (int i = 0; i < intShape.length; i++) intShape[i] = (int)longShape[i];
+		return intShape;
 	}
 }
