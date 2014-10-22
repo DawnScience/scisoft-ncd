@@ -19,7 +19,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.LongDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataUtils;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
@@ -70,17 +70,17 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 			String filePath = model.getFilePath();
 			try {
 				
-				if (HierarchicalDataFactory.isHDF5(filePath)) {
+				if (!filePath.isEmpty() && HierarchicalDataFactory.isHDF5(filePath)) {
 					IHierarchicalDataFile hiFile = null;
 					try {
 						hiFile = HierarchicalDataFactory.getReader(filePath);
-						ncsa.hdf.object.Dataset dataset = (ncsa.hdf.object.Dataset) hiFile.getData("/entry1/instrument/detector/data");
+						ncsa.hdf.object.Dataset dataset = (ncsa.hdf.object.Dataset) hiFile.getData("/entry1/detector/data");
 						long[] dataShape = HierarchicalDataUtils.getDims(dataset);
 						
 						final int[] intShape  = getInt(dataShape);
-						response = new LongDataset((long[])dataset.read(), intShape);
+						response = new IntegerDataset((int[])dataset.read(), intShape);
 					} catch (Exception e) {
-						throw new OperationException(null, e);
+						throw new OperationException(this, e);
 					} finally {
 						if (hiFile!= null)
 							try {
