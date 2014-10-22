@@ -16,19 +16,18 @@ import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
+import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
-import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
-import org.eclipse.dawnsci.hdf5.HierarchicalDataUtils;
-import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 
+import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 
 public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorResponseModel, OperationData> {
 	
-	public Dataset response;
+	public IDataset response;
 
 	@Override
 	public String getId() {
@@ -48,10 +47,23 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 	@Override
 	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
 		DetectorResponse response = new DetectorResponse();
-		Dataset responseDataset = getResponseFromFile();
-		response.setResponse(responseDataset);
-		FloatDataset errors = (FloatDataset) slice.getError();
-		FloatDataset data = (FloatDataset) slice.getSlice(new Slice());
+		try {
+			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
+			response.setResponse((Dataset)loadedSet.getSlice(new Slice(0, 1)));
+		} catch (Exception e) {
+			throw new OperationException(this, e);
+		}
+
+		IntegerDataset data = (IntegerDataset) slice.squeeze();
+		data.resize(1, data.getShape()[0], data.getShape()[1]); //expand slice to include a third dimension - expecting response to be 2d, data 3d
+
+		FloatDataset errors;
+		if (slice.getError() != null) {
+			errors = (FloatDataset) slice.getError();
+		}
+		else {
+			errors = (FloatDataset) data.cast(AbstractDataset.FLOAT32);
+		}
 		int[] flatShape = data.getShape();
 
 		Object[] detData = response.process(data.getData(), errors.getData(), flatShape[0], flatShape);
@@ -65,44 +77,4 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		return toReturn;
 	}
 
-	private Dataset getResponseFromFile() {
-		if (response == null) {
-			String filePath = model.getFilePath();
-			try {
-				
-				if (!filePath.isEmpty() && HierarchicalDataFactory.isHDF5(filePath)) {
-					IHierarchicalDataFile hiFile = null;
-					try {
-						hiFile = HierarchicalDataFactory.getReader(filePath);
-						ncsa.hdf.object.Dataset dataset = (ncsa.hdf.object.Dataset) hiFile.getData("/entry1/detector/data");
-						long[] dataShape = HierarchicalDataUtils.getDims(dataset);
-						
-						final int[] intShape  = getInt(dataShape);
-						response = new IntegerDataset((int[])dataset.read(), intShape);
-					} catch (Exception e) {
-						throw new OperationException(this, e);
-					} finally {
-						if (hiFile!= null)
-							try {
-								hiFile.close();
-							} catch (Exception e) {
-								e.printStackTrace();
-							}
-					}
-				}
-				
-				
-			} catch (Exception e) {
-				throw new OperationException(this, e);
-			}
-			
-		}
-		return response;
-	}
-	
-	private int[] getInt(long[] longShape) {
-		final int[] intShape  = new int[longShape.length];
-		for (int i = 0; i < intShape.length; i++) intShape[i] = (int)longShape[i];
-		return intShape;
-	}
 }
