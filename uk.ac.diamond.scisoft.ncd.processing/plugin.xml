@@ -23,6 +23,12 @@
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseModel"
             name="NCD Detector Response">
       </operation>
+      <operation
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationOperation"
+            id="uk.ac.diamond.scisoft.analysis.processing.NcdSectorIntegration"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationModel"
+            name="NCD Sector Integration">
+      </operation>
    </extension>
 
 </plugin>
