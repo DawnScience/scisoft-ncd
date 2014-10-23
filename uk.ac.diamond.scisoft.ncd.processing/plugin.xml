@@ -16,6 +16,13 @@
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdMetadataImportModel"
             name="NCD Metadata Import">
       </operation>
+      <operation
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
+            description="Flat field detector response operation"
+            id="uk.ac.diamond.scisoft.analysis.processing.ncd.NcdDetectorResponse"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseModel"
+            name="NCD Detector Response">
+      </operation>
    </extension>
 
 </plugin>
