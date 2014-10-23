@@ -10,7 +10,6 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -49,7 +48,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		DetectorResponse response = new DetectorResponse();
 		try {
 			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
-			response.setResponse((Dataset)loadedSet.getSlice(new Slice(0, 1)));
+			response.setResponse((Dataset)loadedSet.getSlice());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
