@@ -111,10 +111,10 @@ public class NexusNcdMetadataReader {
 		String intSymm = null;
 		double[] beamCentre = null;
 		try {
-			IDataset intAnglesSet = loader.getDataset(getDetectorFormattedPath(INT_ANGLES_NEXUS_PATH));
-			IDataset intRadiiSet = loader.getDataset(getDetectorFormattedPath(INT_RADII_NEXUS_PATH));
-			IDataset intSymmSet = loader.getDataset(getDetectorFormattedPath(INT_SYMM_NEXUS_PATH));
-			IDataset beamCentreSet = loader.getDataset(getDetectorFormattedPath(BEAM_CENTRE_NEXUS_PATH));
+			IDataset intAnglesSet = loader.getLazyDataset(getDetectorFormattedPath(INT_ANGLES_NEXUS_PATH)).getSlice();
+			IDataset intRadiiSet = loader.getLazyDataset(getDetectorFormattedPath(INT_RADII_NEXUS_PATH)).getSlice();
+			IDataset intSymmSet = loader.getLazyDataset(getDetectorFormattedPath(INT_SYMM_NEXUS_PATH)).getSlice();
+			IDataset beamCentreSet = loader.getLazyDataset(getDetectorFormattedPath(BEAM_CENTRE_NEXUS_PATH)).getSlice();
 
 			intAngles = new double[intAnglesSet.getSize()];
 			for (int i=0; i< intAnglesSet.getSize(); ++i) {
@@ -153,7 +153,7 @@ public class NexusNcdMetadataReader {
 		if (!HierarchicalDataFactory.isHDF5(filePath)) return null;
 		IDataset maskSet = null;
 		IDataHolder loader = LoaderFactory.getData(filePath);
-		maskSet = loader.getDataset(getDetectorFormattedPath(MASK_NEXUS_PATH));
+		maskSet = loader.getLazyDataset(getDetectorFormattedPath(MASK_NEXUS_PATH)).getSlice();
 		
 		return maskSet;
 	}
