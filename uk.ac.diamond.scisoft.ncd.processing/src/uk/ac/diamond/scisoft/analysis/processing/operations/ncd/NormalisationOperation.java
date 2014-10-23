@@ -43,7 +43,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 	}
 	
 	@Override
-	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
+	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
 		norm.setNormvalue(model.getNormValue());

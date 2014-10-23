@@ -44,7 +44,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 	}
 	
 	@Override
-	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
+	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		DetectorResponse response = new DetectorResponse();
 		try {
 			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
