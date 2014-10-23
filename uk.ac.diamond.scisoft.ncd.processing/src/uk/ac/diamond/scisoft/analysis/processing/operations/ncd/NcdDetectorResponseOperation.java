@@ -35,7 +35,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 
 	@Override
 	public OperationRank getInputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ANY;
 	}
 
 	@Override
@@ -54,7 +54,13 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		}
 
 		IntegerDataset data = (IntegerDataset) slice.squeeze();
-		data.resize(1, data.getShape()[0], data.getShape()[1]); //expand slice to include a third dimension - expecting response to be 2d, data 3d
+		int[] dataShape = new int[data.getShape().length + 1];
+		dataShape[0] = 1;
+		int index = 1;
+		for (int dimension: data.getShape()) {
+			dataShape[index++] = dimension;
+		}
+		data.resize(dataShape); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
 
 		FloatDataset errors;
 		if (slice.getError() != null) {
