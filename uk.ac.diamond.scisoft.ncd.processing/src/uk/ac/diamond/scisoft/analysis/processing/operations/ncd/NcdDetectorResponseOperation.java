@@ -30,7 +30,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 
 	@Override
 	public String getId() {
-		return "uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation";
+		return "uk.ac.diamond.scisoft.analysis.processing.operations.NcdDetectorResponseOperation";
 	}
 
 	@Override

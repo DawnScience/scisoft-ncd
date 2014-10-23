@@ -19,7 +19,7 @@
       <operation
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
             description="Flat field detector response operation"
-            id="uk.ac.diamond.scisoft.analysis.processing.ncd.NcdDetectorResponse"
+            id="uk.ac.diamond.scisoft.analysis.processing.NcdDetectorResponse"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseModel"
             name="NCD Detector Response">
       </operation>
