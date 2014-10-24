@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -25,6 +26,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
@@ -61,8 +63,8 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		model.setRegion(roi);
 		
 		SectorIntegration sec = new SectorIntegration();
-		int[] frames = slice.getShape();
-		int dimension = 0;
+		int[] frames = addDimension(slice.getShape());
+		int dimension = 2; //should match input rank
 		int[] areaShape = (int[]) ConvertUtils.convert(
 				Arrays.copyOfRange(frames, frames.length - dimension, frames.length), int[].class);
 		List<MaskMetadata> mask;
@@ -71,13 +73,18 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
-		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, (Dataset) mask.get(0).getMask().getSlice(), (SectorROI) model.getRegion(), true, false, false);
+		
+		Dataset maskDataset = (Dataset) mask.get(0).getMask().getSlice();
+		Dataset sliceDataset = (Dataset) slice.getSlice(new Slice());
+		sliceDataset.resize(addDimension(sliceDataset.getShape()));
+		Dataset newSliceDataset = new IntegerDataset(((IntegerDataset)sliceDataset).getData(), sliceDataset.getShape()); //remove metadata so there won't be any checking
+		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, (SectorROI) model.getRegion(), true, false, false);
 
 		sec.setAreaData(areaData);
 		sec.setCalculateRadial(true);
 		sec.setROI((SectorROI)model.getRegion());
 		
-		Dataset[] mydata = sec.process((Dataset)slice.getSlice(), slice.getShape()[0], (Dataset)mask.get(0).getMask().getSlice());
+		Dataset[] mydata = sec.process(newSliceDataset, 1, maskDataset);
 		int resLength = slice.getShape().length - dimension + 1;
 
 		Dataset myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
@@ -97,8 +104,25 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 
 		OperationData toReturn = new OperationData();
 		Dataset myres = new FloatDataset(myraddata);
-		myres.setErrorBuffer(new DoubleDataset(myraderrors));
+		if (myraderrors != null) {
+			myres.setErrorBuffer(new DoubleDataset(myraderrors));
+		}
 		toReturn.setData(myres);
 		return toReturn;
+	}
+	
+	/**
+	 * Add a dimension of 1 to account for slicing of original data in the Processing pipeline
+	 * @param set
+	 * @return
+	 */
+	private int[] addDimension(int[] set) {
+		int[] dataShape = new int[set.length + 1];
+		dataShape[0] = 1;
+		int index = 1;
+		for (int dimension: set) {
+			dataShape[index++] = dimension;
+		}
+		return dataShape;
 	}
 }
