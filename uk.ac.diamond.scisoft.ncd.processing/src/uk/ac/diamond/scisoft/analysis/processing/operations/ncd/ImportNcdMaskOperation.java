@@ -37,13 +37,8 @@ public class ImportNcdMaskOperation extends ImportMaskOperation {
 		return String.format(NCDMASKLOCATIONSTRING, detectorName);
 	}
 	
-	public ImportNcdMaskOperation() {
-		super();
-		findDetectorName();
-	}
-	
 	private void findDetectorName() {
-		if (!HierarchicalDataFactory.isHDF5(model.getFilePath())) return;
+		if (model.getFilePath() == null || model.getFilePath().isEmpty() || !HierarchicalDataFactory.isHDF5(model.getFilePath())) return;
 		IHierarchicalDataFile hiFile = null;
 		try {
 			hiFile = HierarchicalDataFactory.getReader(model.getFilePath());
@@ -94,6 +89,7 @@ public class ImportNcdMaskOperation extends ImportMaskOperation {
 	
 	@Override
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
+		findDetectorName();
 		OperationData returnData = new OperationData();
 		try {
 			returnData = super.process(input, monitor);
