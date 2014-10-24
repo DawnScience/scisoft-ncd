@@ -29,6 +29,12 @@
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationModel"
             name="NCD Sector Integration">
       </operation>
+       <operation
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ImportNcdMaskOperation"
+            id="uk.ac.diamond.scisoft.analysis.processing.ImportNcdMask"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
+            name="Import NCD Mask from File">
+      </operation>
    </extension>
 
 </plugin>
