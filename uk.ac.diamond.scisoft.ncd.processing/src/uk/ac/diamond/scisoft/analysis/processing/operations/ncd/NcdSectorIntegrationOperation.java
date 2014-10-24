@@ -76,8 +76,15 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		
 		Dataset maskDataset = (Dataset) mask.get(0).getMask().getSlice();
 		Dataset sliceDataset = (Dataset) slice.getSlice(new Slice());
+		
 		sliceDataset.resize(addDimension(sliceDataset.getShape()));
 		Dataset newSliceDataset = new IntegerDataset(((IntegerDataset)sliceDataset).getData(), sliceDataset.getShape()); //remove metadata so there won't be any checking
+		if (!sliceDataset.hasErrors()) {
+			// Use counting statistics if no input error estimates are available 
+			DoubleDataset inputErrorsBuffer = new DoubleDataset(newSliceDataset);
+			newSliceDataset.setErrorBuffer(inputErrorsBuffer);
+		}
+		
 		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, (SectorROI) model.getRegion(), true, false, false);
 
 		sec.setAreaData(areaData);
