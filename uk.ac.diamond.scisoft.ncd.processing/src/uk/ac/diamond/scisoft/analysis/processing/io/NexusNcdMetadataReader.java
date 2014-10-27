@@ -10,6 +10,7 @@ package uk.ac.diamond.scisoft.analysis.processing.io;
 
 import java.util.Enumeration;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -18,12 +19,16 @@ import javax.swing.tree.TreeNode;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+import org.eclipse.dawnsci.analysis.api.metadata.UnitMetadata;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
+import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 
 /**
@@ -39,6 +44,13 @@ public class NexusNcdMetadataReader {
 	public static final String INT_SYMM_NEXUS_PATH = BASE_NEXUS_PATH + "/integration symmetry";
 	public static final String BEAM_CENTRE_NEXUS_PATH = BASE_NEXUS_PATH + "/beam centre";
 	
+	//q axis calibration
+	public static final String QAXIS_BASE_PATH = BASE_NEXUS_PATH + "/qaxis calibration";
+	public static final String QAXIS_GRADIENT_NEXUS_PATH = QAXIS_BASE_PATH + "/gradient";
+	public static final String QAXIS_GRADIENT_ERRORS_NEXUS_PATH = QAXIS_BASE_PATH + "/gradient_errors";
+	public static final String QAXIS_INTERCEPT_NEXUS_PATH = QAXIS_BASE_PATH + "/intercept";
+	public static final String QAXIS_INTERCEPT_ERRORS_NEXUS_PATH = QAXIS_BASE_PATH + "/intercept_errors";
+
 	private String filePath;
 
 	public String getFilePath() {
@@ -167,5 +179,26 @@ public class NexusNcdMetadataReader {
 			}
 		}
 		return SectorROI.NONE;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public QAxisCalibration getQAxisCalibrationFromFile() throws Exception {
+		IDataHolder loader = LoaderFactory.getData(filePath);
+
+		IDataset gradient = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)).getSlice();
+		List<UnitMetadata> gradientUnits = gradient.getMetadata(UnitMetadata.class);
+		IDataset gradientErrors= loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_ERRORS_NEXUS_PATH)).getSlice();
+		List<UnitMetadata> gradientErrorsUnits = gradientErrors.getMetadata(UnitMetadata.class);
+		IDataset intercept = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_INTERCEPT_NEXUS_PATH)).getSlice();
+		List<UnitMetadata> interceptUnits = intercept.getMetadata(UnitMetadata.class);
+		IDataset interceptErrors = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_INTERCEPT_ERRORS_NEXUS_PATH)).getSlice();
+		List<UnitMetadata> interceptErrorsUnits = interceptErrors.getMetadata(UnitMetadata.class);
+
+		QAxisCalibration cal = new QAxisCalibration();
+		cal.setGradient((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradient.getDouble(), gradientUnits.get(0).getUnit()));
+		cal.setGradientErrors((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradientErrors.getDouble(), gradientErrorsUnits.get(0).getUnit()));
+		cal.setIntercept((Amount<ScatteringVector>) Amount.valueOf(intercept.getDouble(), interceptUnits.get(0).getUnit()));
+		cal.setInterceptErrors((Amount<ScatteringVector>) Amount.valueOf(interceptErrors.getDouble(), interceptErrorsUnits.get(0).getUnit()));
+		return cal;
 	}
 }
