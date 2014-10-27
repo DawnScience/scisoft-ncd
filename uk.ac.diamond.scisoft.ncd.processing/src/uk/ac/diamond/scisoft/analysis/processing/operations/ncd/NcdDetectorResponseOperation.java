@@ -30,12 +30,12 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 
 	@Override
 	public String getId() {
-		return "uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation";
+		return "uk.ac.diamond.scisoft.analysis.processing.operations.NcdDetectorResponseOperation";
 	}
 
 	@Override
 	public OperationRank getInputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ANY;
 	}
 
 	@Override
@@ -44,7 +44,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 	}
 	
 	@Override
-	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
+	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		DetectorResponse response = new DetectorResponse();
 		try {
 			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
@@ -54,7 +54,13 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		}
 
 		IntegerDataset data = (IntegerDataset) slice.squeeze();
-		data.resize(1, data.getShape()[0], data.getShape()[1]); //expand slice to include a third dimension - expecting response to be 2d, data 3d
+		int[] dataShape = new int[data.getShape().length + 1];
+		dataShape[0] = 1;
+		int index = 1;
+		for (int dimension: data.getShape()) {
+			dataShape[index++] = dimension;
+		}
+		data.resize(dataShape); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
 
 		FloatDataset errors;
 		if (slice.getError() != null) {

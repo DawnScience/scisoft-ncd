@@ -39,7 +39,7 @@ public class NcdMetadataImportOperation extends AbstractOperation<NcdMetadataImp
 	}
 	
 	@Override
-	public OperationData execute(IDataset slice, IMonitor monitor) throws OperationException {
+	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 
 		NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
 		IDataset mask;
