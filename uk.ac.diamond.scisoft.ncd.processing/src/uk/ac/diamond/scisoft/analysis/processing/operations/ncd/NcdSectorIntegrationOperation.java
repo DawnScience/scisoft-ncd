@@ -172,7 +172,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Amount<Length> cameraLength = Amount.valueOf(dif.getOriginalDetector2DProperties().getDetectorDistance(), SI.MILLIMETER);
 		Amount<Energy> energy = Amount.valueOf(12.39842/dif.getOriginalDiffractionCrystalEnvironment().getWavelength(), SI.KILO(NonSI.ELECTRON_VOLT));
 		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
-		Unit<ScatteringVector> axisUnit = ScatteringVector.UNIT;
+		Unit<ScatteringVector> axisUnit = Unit.ONE.divide(NonSI.ANGSTROM).asType(ScatteringVector.class);
 		
 		int[] secFrames = datasetShape;
 		int numPoints = (int) secFrames[secFrames.length - 1];
