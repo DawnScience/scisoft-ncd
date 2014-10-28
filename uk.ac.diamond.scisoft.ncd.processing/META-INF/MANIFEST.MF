@@ -13,7 +13,8 @@ Require-Bundle: org.eclipse.core.runtime,
  uk.ac.diamond.scisoft.analysis.processing,
  uk.ac.diamond.scisoft.ncd.core,
  uk.ac.diamond.scisoft.analysis,
- org.apache.commons.beanutils
+ org.apache.commons.beanutils,
+ uk.ac.diamond.org.jscience4
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.analysis.processing.io

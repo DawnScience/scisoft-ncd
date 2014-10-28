@@ -12,9 +12,17 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import java.util.Arrays;
 import java.util.List;
 
+import javax.measure.quantity.Energy;
+import javax.measure.quantity.Length;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
+import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -23,13 +31,19 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.jscience.physics.amount.Amount;
 
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.analysis.metadata.AxesMetadataImpl;
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
+import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
 
@@ -109,10 +123,21 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			}
 		}
 
+		Dataset qaxis = null;
+		try {
+			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), slice.getMetadata(IDiffractionMetadata.class).get(0), myraddata.getShape(), (SectorROI)model.getRegion());
+		} catch (Exception e) {
+			throw new OperationException(this, e);
+		}
 		OperationData toReturn = new OperationData();
 		Dataset myres = new FloatDataset(myraddata);
 		if (myraderrors != null) {
 			myres.setErrorBuffer(new DoubleDataset(myraderrors));
+		}
+		if (qaxis != null) {
+			AxesMetadataImpl axes = new AxesMetadataImpl(1);
+			axes.setAxis(0, new ILazyDataset[]{qaxis});
+			myres.setMetadata(axes);
 		}
 		toReturn.setData(myres);
 		return toReturn;
@@ -131,5 +156,42 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			dataShape[index++] = dimension;
 		}
 		return dataShape;
+	}
+	
+	/**
+	 * Copied from u.a.d.s.ncd.passerelle.actors.NcdSectorIntegrationForkJoinTransformer
+	 * @return
+	 */
+	@SuppressWarnings("unused")
+	private Dataset calculateQaxisDataset(QAxisCalibration cal, IDiffractionMetadata dif, int[] datasetShape, SectorROI intSector) {
+		
+		Dataset qaxis = null;
+		Dataset qaxisErr = null;
+		Amount<ScatteringVectorOverDistance> gradient = cal.getGradient();
+		Amount<ScatteringVector> intercept = cal.getIntercept();
+		Amount<Length> cameraLength = Amount.valueOf(dif.getOriginalDetector2DProperties().getDetectorDistance(), SI.MILLIMETER);
+		Amount<Energy> energy = Amount.valueOf(12.39842/dif.getOriginalDiffractionCrystalEnvironment().getWavelength(), SI.KILO(NonSI.ELECTRON_VOLT));
+		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
+		Unit<ScatteringVector> axisUnit = Unit.ONE.divide(NonSI.ANGSTROM).asType(ScatteringVector.class);
+		
+		int[] secFrames = datasetShape;
+		int numPoints = (int) secFrames[secFrames.length - 1];
+		if (gradient != null &&	intercept != null && pxSize != null &&	axisUnit != null) {
+			qaxis = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			double d2bs = intSector.getRadii()[0];
+			for (int i = 0; i < numPoints; i++) {
+				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
+						.to(axisUnit);
+				qaxis.set(amountQaxis.getEstimatedValue(), i);
+				qaxisErr.set(amountQaxis.getAbsoluteError(), i);
+			}
+			qaxis.setError(qaxisErr);
+			qaxis.setName("q");
+			return qaxis;
+		}
+		qaxis = DatasetUtils.cast(DatasetUtils.indices(numPoints).squeeze(), Dataset.FLOAT32);
+		qaxis.setName("q");
+		return qaxis;
 	}
 }
