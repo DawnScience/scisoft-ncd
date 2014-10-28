@@ -20,6 +20,7 @@ import javax.measure.unit.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
@@ -40,6 +41,7 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.analysis.metadata.AxesMetadataImpl;
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
 import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
@@ -121,10 +123,21 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			}
 		}
 
+		Dataset qaxis = null;
+		try {
+			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), slice.getMetadata(IDiffractionMetadata.class).get(0), myraddata.getShape(), (SectorROI)model.getRegion());
+		} catch (Exception e) {
+			throw new OperationException(this, e);
+		}
 		OperationData toReturn = new OperationData();
 		Dataset myres = new FloatDataset(myraddata);
 		if (myraderrors != null) {
 			myres.setErrorBuffer(new DoubleDataset(myraderrors));
+		}
+		if (qaxis != null) {
+			AxesMetadataImpl axes = new AxesMetadataImpl(1);
+			axes.setAxis(0, new ILazyDataset[]{qaxis});
+			myres.setMetadata(axes);
 		}
 		toReturn.setData(myres);
 		return toReturn;
@@ -174,9 +187,11 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 				qaxisErr.set(amountQaxis.getAbsoluteError(), i);
 			}
 			qaxis.setError(qaxisErr);
+			qaxis.setName("q");
 			return qaxis;
 		}
 		qaxis = DatasetUtils.cast(DatasetUtils.indices(numPoints).squeeze(), Dataset.FLOAT32);
+		qaxis.setName("q");
 		return qaxis;
 	}
 }

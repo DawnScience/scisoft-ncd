@@ -9,17 +9,19 @@
 package uk.ac.diamond.scisoft.analysis.processing.io;
 
 import java.util.Enumeration;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import javax.swing.tree.TreeNode;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
-import org.eclipse.dawnsci.analysis.api.metadata.UnitMetadata;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -68,6 +70,9 @@ public class NexusNcdMetadataReader {
 		return String.format(pathString, detectorName);
 	}
 
+	private String getFormattedUnitPath(String pathString) {
+		return getDetectorFormattedPath(pathString) + "@units";
+	}
 	public NexusNcdMetadataReader() {
 	}
 	
@@ -184,21 +189,31 @@ public class NexusNcdMetadataReader {
 	@SuppressWarnings("unchecked")
 	public QAxisCalibration getQAxisCalibrationFromFile() throws Exception {
 		IDataHolder loader = LoaderFactory.getData(filePath);
+		IHierarchicalDataFile hiFile = HierarchicalDataFactory.getReader(filePath);
 
 		IDataset gradient = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)).getSlice();
-		List<UnitMetadata> gradientUnits = gradient.getMetadata(UnitMetadata.class);
+		String gradientUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_GRADIENT_NEXUS_PATH));
 		IDataset gradientErrors= loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_ERRORS_NEXUS_PATH)).getSlice();
-		List<UnitMetadata> gradientErrorsUnits = gradientErrors.getMetadata(UnitMetadata.class);
+		String gradientErrorsUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_GRADIENT_ERRORS_NEXUS_PATH));
 		IDataset intercept = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_INTERCEPT_NEXUS_PATH)).getSlice();
-		List<UnitMetadata> interceptUnits = intercept.getMetadata(UnitMetadata.class);
+		String interceptUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_INTERCEPT_NEXUS_PATH));
 		IDataset interceptErrors = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_INTERCEPT_ERRORS_NEXUS_PATH)).getSlice();
-		List<UnitMetadata> interceptErrorsUnits = interceptErrors.getMetadata(UnitMetadata.class);
+		String interceptErrorsUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_INTERCEPT_ERRORS_NEXUS_PATH));
 
 		QAxisCalibration cal = new QAxisCalibration();
-		cal.setGradient((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradient.getDouble(), gradientUnits.get(0).getUnit()));
-		cal.setGradientErrors((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradientErrors.getDouble(), gradientErrorsUnits.get(0).getUnit()));
-		cal.setIntercept((Amount<ScatteringVector>) Amount.valueOf(intercept.getDouble(), interceptUnits.get(0).getUnit()));
-		cal.setInterceptErrors((Amount<ScatteringVector>) Amount.valueOf(interceptErrors.getDouble(), interceptErrorsUnits.get(0).getUnit()));
+		Unit<ScatteringVectorOverDistance> gradientUnits = (Unit<ScatteringVectorOverDistance>) Unit.ONE.divide(NonSI.ANGSTROM.times(SI.MILLIMETER));
+		Unit<ScatteringVector> interceptUnits = (Unit<ScatteringVector>) Unit.ONE.divide(NonSI.ANGSTROM);
+		Map<String, String> unitsMap = new HashMap<String, String>();
+		unitsMap.put(gradientUnits.toString(), "[Angstrom^-1*mm^-1]");
+		unitsMap.put(interceptUnits.toString(), "[Angstrom^-1]");
+		if (!unitsMap.get(gradientUnits.toString()).equals(gradientUnitsString) || !unitsMap.get(interceptUnits.toString()).equals(interceptUnitsString) ||
+				!unitsMap.get(gradientUnits.toString()).equals(gradientErrorsUnitsString) || !unitsMap.get(interceptUnits.toString()).equals(interceptErrorsUnitsString)) {
+			throw new Exception("Units are not the expected ones");
+		}
+		cal.setGradient((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradient.getSlice().getDouble(), gradientUnits));
+		cal.setGradientErrors((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradientErrors.getDouble(), gradientUnits));
+		cal.setIntercept((Amount<ScatteringVector>) Amount.valueOf(intercept.getDouble(), interceptUnits));
+		cal.setInterceptErrors((Amount<ScatteringVector>) Amount.valueOf(interceptErrors.getDouble(), interceptUnits));
 		return cal;
 	}
 }
