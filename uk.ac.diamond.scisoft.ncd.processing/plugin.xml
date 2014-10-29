@@ -35,6 +35,12 @@
             model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
             name="Import NCD Mask from File">
       </operation>
+       <operation
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionOperation"
+             id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtraction"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
+             name="NCD Background Subtraction">
+       </operation>
    </extension>
 
 </plugin>
