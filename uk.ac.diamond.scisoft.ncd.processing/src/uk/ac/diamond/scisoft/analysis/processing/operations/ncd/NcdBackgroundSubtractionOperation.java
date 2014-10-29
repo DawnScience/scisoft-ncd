@@ -13,7 +13,6 @@ import java.util.Arrays;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -27,6 +26,11 @@ import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 
+/**
+ * Run the NCD background subtraction code. This operation uses frames, not sector integrated datasets
+ * @author rbv51579
+ *
+ */
 public class NcdBackgroundSubtractionOperation extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
 	
 	public IDataset background;
@@ -51,7 +55,6 @@ public class NcdBackgroundSubtractionOperation extends AbstractOperation<NcdBack
 		
 		try {
 			background = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null);
-			background.squeeze();
 			Dataset backgroundErrors = (Dataset) background.getError();
 			if (backgroundErrors == null) {
 				backgroundErrors = (Dataset) background.getSlice();
@@ -60,28 +63,27 @@ public class NcdBackgroundSubtractionOperation extends AbstractOperation<NcdBack
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
+		
+		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
 		try {
 			OriginMetadata origin = slice.getMetadata(OriginMetadata.class).get(0);
-			ILazyDataset originParent = origin.getParent().squeeze();
+			ILazyDataset originParent = origin.getParent();
 			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
 				throw new Exception("Data and background shapes must match");
 			}
-
+			Dataset bgSlice = (Dataset)background.getSliceView(origin.getInitialSlice()).getSlice(origin.getCurrentSlice());
+			bgSubtraction.setBackground(bgSlice);
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
 
-		
 		Dataset error = (Dataset) slice.getError();
 		if (error == null) {
 			error = (Dataset) slice.getSlice();
 		}
 		Dataset data = (Dataset)slice.getSlice();
 		data.setError(error);
-
-		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
-		bgSubtraction.setBackground((Dataset)background.getSlice(new Slice(0,1)).squeeze());
 
 		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), error.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
 		float[] bgData = (float[])bgDataAndError[0];
