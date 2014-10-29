@@ -75,7 +75,7 @@ public class NcdBackgroundSubtractionOperation extends AbstractOperation<NcdBack
 		
 		Dataset error = (Dataset) slice.getError();
 		if (error == null) {
-			error = (Dataset) slice.getSlice(); //TODO check what should be here if no errors are available
+			error = (Dataset) slice.getSlice();
 		}
 		Dataset data = (Dataset)slice.getSlice();
 		data.setError(error);
