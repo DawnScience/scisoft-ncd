@@ -10,15 +10,38 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.eclipse.dawnsci.analysis.api.processing.model.AbstractOperationModel;
+import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="Normalisation scaling value",label = "Normalisation value" )
-	private double normValue;
+	private double normValue = 1;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
 	private int calibChannel;
 	
+	@OperationModelField(hint="Location of calibration data in Nexus file", label = "Calibration data location" )
+	private String calibDataPath = "";
+
+	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
+	private String filePath = "";
+
+	public String getFilePath() {
+		return filePath;
+	}
+
+	public void setFilePath(String filePath) {
+		firePropertyChange("filePath", this.filePath, this.filePath = filePath);
+	}
+
+	public String getCalibDataPath() {
+		return calibDataPath;
+	}
+
+	public void setCalibDataPath(String calibDataPath) {
+		firePropertyChange("calibDataPath", this.calibDataPath, this.calibDataPath = calibDataPath);
+	}
+
 	public double getNormValue() {
 		return normValue;
 	}
