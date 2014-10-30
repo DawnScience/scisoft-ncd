@@ -25,6 +25,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NormalisationOperation extends AbstractOperation<NormalisationModel, OperationData> {
 
@@ -70,6 +71,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		}
 		// now set up normalization
 		//check dimension
+		data.resize(NcdOperationUtils.addDimension(data.getShape()));
 		Object[] normData = norm.process(data.getBuffer(), errors.getBuffer(),
 				calibrationSlice.getBuffer(), 1, slice.getShape(), calibrationSlice.getShape());
 		OperationData toReturn = new OperationData();
