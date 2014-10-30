@@ -73,7 +73,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		//check dimension
 		data.resize(NcdOperationUtils.addDimension(data.getShape()));
 		Object[] normData = norm.process(data.getBuffer(), errors.getBuffer(),
-				calibrationSlice.getBuffer(), 1, slice.getShape(), calibrationSlice.getShape());
+				calibrationSlice.getBuffer(), 1, data.getShape(), calibrationSlice.getShape());
 		OperationData toReturn = new OperationData();
 		float[] mydata = (float[]) normData[0];
 		double[] myerrors = (double[]) normData[1];
