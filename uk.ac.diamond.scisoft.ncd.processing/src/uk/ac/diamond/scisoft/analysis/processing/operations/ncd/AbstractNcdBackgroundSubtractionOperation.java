@@ -53,7 +53,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation extends Abstract
 		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
 		try {
-			OriginMetadata origin = slice.getMetadata(OriginMetadata.class).get(0);
+			OriginMetadata origin = getOriginMetadata(slice);
 			ILazyDataset originParent = origin.getParent();
 			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
 				throw new Exception("Data and background shapes must match");
