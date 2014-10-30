@@ -10,7 +10,6 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -62,8 +61,8 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 			throw new OperationException(this, e);
 		}
 		OriginMetadata origin = getOriginMetadata(slice);
-		Slice[] newInitialSlice = getSmallerSlice(origin.getInitialSlice(), calibration, origin.getParent());
-		Slice[] newCurrentSlice = getSmallerSlice(origin.getCurrentSlice(), calibration, origin.getParent());
+		Slice[] newInitialSlice = getSmallerSlice(origin.getInitialSlice());
+		Slice[] newCurrentSlice = getSmallerSlice(origin.getCurrentSlice());
 		Dataset calibrationSlice = (Dataset) calibration.getSliceView(newInitialSlice).getSlice(newCurrentSlice);
 		
 		if (errors == null) {
@@ -85,7 +84,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		
 	}
 	
-	private Slice[] getSmallerSlice(Slice[] modifiedSlice, IDataset desiredSizeDataset, ILazyDataset fullSlice) {
+	private Slice[] getSmallerSlice(Slice[] modifiedSlice) {
 		Slice[] newSlice = new Slice[modifiedSlice.length-1];
 		int index = 0;
 		for (Slice slice: modifiedSlice) {
