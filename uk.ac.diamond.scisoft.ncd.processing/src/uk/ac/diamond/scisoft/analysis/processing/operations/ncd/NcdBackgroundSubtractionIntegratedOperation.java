@@ -13,31 +13,31 @@ import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 
 /**
- * Run the NCD background subtraction code. This operation uses frames, not sector integrated datasets
+ * Run the NCD background subtraction code. This operation uses sector integrated datasets
  * @author rbv51579
  *
  */
-public class NcdBackgroundSubtractionOperation extends AbstractNcdBackgroundSubtractionOperation {
+public class NcdBackgroundSubtractionIntegratedOperation extends AbstractNcdBackgroundSubtractionOperation {
 	
 	public IDataset background;
 
 	@Override
 	public String getId() {
-		return "uk.ac.diamond.scisoft.analysis.processing.operations.NcdBackgroundSubtractionOperation";
+		return "uk.ac.diamond.scisoft.analysis.processing.operations.NcdBackgroundSubtractionIntegratedOperation";
 	}
 
 	@Override
 	public OperationRank getInputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ONE;
 	}
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ONE;
 	}
 	
 	@Override
 	public String getDataPath() {
-		return "/entry1/instrument/detector/data";
+		return "/entry/result/data";
 	}
 }

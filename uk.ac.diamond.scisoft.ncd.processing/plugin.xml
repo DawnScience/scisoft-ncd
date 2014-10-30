@@ -41,6 +41,13 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
              name="NCD Background Subtraction">
        </operation>
+       <operation
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionIntegratedOperation"
+             description="NCD Background Subtraction if data and background are already integrated"
+             id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionIntegrated"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
+             name="NCD Background Subtraction for Integrated Frames">
+       </operation>
    </extension>
 
 </plugin>
