@@ -55,7 +55,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		}
 
 		IntegerDataset data = (IntegerDataset) slice.squeeze();
-		NcdOperationUtils.addDimension(data.getShape()); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
+		data.resize(NcdOperationUtils.addDimension(data.getShape())); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
 
 		FloatDataset errors;
 		if (slice.getError() != null) {
