@@ -46,6 +46,7 @@ import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
 import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIntegrationModel, OperationData> {
 
@@ -77,7 +78,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		model.setRegion(roi);
 		
 		SectorIntegration sec = new SectorIntegration();
-		int[] frames = addDimension(slice.getShape());
+		int[] frames = NcdOperationUtils.addDimension(slice.getShape());
 		int dimension = 2; //should match input rank
 		int[] areaShape = (int[]) ConvertUtils.convert(
 				Arrays.copyOfRange(frames, frames.length - dimension, frames.length), int[].class);
@@ -91,7 +92,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Dataset maskDataset = (Dataset) mask.get(0).getMask().getSlice();
 		Dataset sliceDataset = (Dataset) slice.getSlice(new Slice());
 		
-		sliceDataset.resize(addDimension(sliceDataset.getShape()));
+		sliceDataset.resize(NcdOperationUtils.addDimension(sliceDataset.getShape()));
 		Dataset newSliceDataset = new IntegerDataset(((IntegerDataset)sliceDataset).getData(), sliceDataset.getShape()); //remove metadata so there won't be any checking
 		if (!sliceDataset.hasErrors()) {
 			// Use counting statistics if no input error estimates are available 
@@ -141,21 +142,6 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		}
 		toReturn.setData(myres);
 		return toReturn;
-	}
-	
-	/**
-	 * Add a dimension of 1 to account for slicing of original data in the Processing pipeline
-	 * @param set
-	 * @return
-	 */
-	private int[] addDimension(int[] set) {
-		int[] dataShape = new int[set.length + 1];
-		dataShape[0] = 1;
-		int index = 1;
-		for (int dimension: set) {
-			dataShape[index++] = dimension;
-		}
-		return dataShape;
 	}
 	
 	/**

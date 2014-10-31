@@ -23,6 +23,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorResponseModel, OperationData> {
 	
@@ -54,13 +55,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		}
 
 		IntegerDataset data = (IntegerDataset) slice.squeeze();
-		int[] dataShape = new int[data.getShape().length + 1];
-		dataShape[0] = 1;
-		int index = 1;
-		for (int dimension: data.getShape()) {
-			dataShape[index++] = dimension;
-		}
-		data.resize(dataShape); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
+		data.resize(NcdOperationUtils.addDimension(data.getShape())); //expand slice to include another dimension - expect data to be n+1 dimensions, response n dimensions
 
 		FloatDataset errors;
 		if (slice.getError() != null) {
