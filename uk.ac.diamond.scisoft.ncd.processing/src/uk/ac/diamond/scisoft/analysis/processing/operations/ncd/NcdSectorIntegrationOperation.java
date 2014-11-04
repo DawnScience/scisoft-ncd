@@ -75,6 +75,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			throw new OperationException(this, e);
 		}
 
+		((SectorROI)roi).setAverageArea(false);
 		model.setRegion(roi);
 		
 		SectorIntegration sec = new SectorIntegration();
