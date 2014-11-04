@@ -9,7 +9,6 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 
 /**
@@ -18,8 +17,6 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
  *
  */
 public class NcdBackgroundSubtractionIntegratedOperation extends AbstractNcdBackgroundSubtractionOperation {
-	
-	public IDataset background;
 
 	@Override
 	public String getId() {
