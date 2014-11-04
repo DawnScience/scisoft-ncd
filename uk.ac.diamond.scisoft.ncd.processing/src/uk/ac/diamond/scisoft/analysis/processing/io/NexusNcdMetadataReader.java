@@ -155,7 +155,7 @@ public class NexusNcdMetadataReader {
 
 			//then they need to be assembled into a ROI
 			SectorROI roi = new SectorROI();
-			roi.setAngles(intAngles);
+			roi.setAnglesDegrees(intAngles);
 			roi.setRadii(intRadii);
 			roi.setSymmetry(getSymmetryNumber(intSymm));
 			roi.setPoint(beamCentre);
