@@ -11,12 +11,6 @@
             name="Normalisation for NCD">
       </operation>
       <operation
-            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdMetadataImportOperation"
-            id="uk.ac.diamond.scisoft.analysis.processing.NcdMetadataImport"
-            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdMetadataImportModel"
-            name="NCD Metadata Import">
-      </operation>
-      <operation
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
             description="Flat field detector response operation"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdDetectorResponse"
