@@ -38,14 +38,14 @@ import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
+import org.eclipse.dawnsci.analysis.api.tree.Node;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.TreeFile;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.RectangularROI;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5Group;
-import org.eclipse.dawnsci.hdf5.api.HDF5Node;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlotType;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
@@ -1204,9 +1204,9 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		currentPathToData = "";
 		try {
 			HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
-			HDF5File file = loader.loadTree();
-			HDF5Group group = file.getGroup();
-			HDF5NodeLink link = group.iterator().next(); //top level
+			TreeFile file = loader.loadTree();
+			GroupNode group = file.getGroupNode();
+			NodeLink link = group.iterator().next(); //top level
 			findAxesAndSignals(link);
 				
 		} catch (Exception e1) {
@@ -1215,19 +1215,19 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 	}
 
 	//recursive depth-first-search to find all possible axes and signals for q and data
-	private void findAxesAndSignals(HDF5NodeLink link) {
-		HDF5Node node = link.getDestination();
-		if (node instanceof HDF5Group) {
-			HDF5Group group2 = (HDF5Group) node;
+	private void findAxesAndSignals(NodeLink link) {
+		Node node = link.getDestination();
+		if (node instanceof GroupNode) {
+			GroupNode group2 = (GroupNode) node;
 			for (Iterator<String> nodeItr = group2.getNodeNameIterator(); nodeItr
 					.hasNext();) {
 				String nodeName = nodeItr.next();
-				HDF5NodeLink link1 = group2.getNodeLink(nodeName);
+				NodeLink link1 = group2.getNodeLink(nodeName);
 				findAxesAndSignals(link1);
 			}
 		}
-		else if (node instanceof HDF5Dataset) {
-			HDF5Node dest1 = node;
+		else if (node instanceof DataNode) {
+			Node dest1 = node;
 			for (Iterator<String> attItr = dest1.getAttributeNameIterator(); attItr
 					.hasNext();) {
 				String attName = attItr.next();
