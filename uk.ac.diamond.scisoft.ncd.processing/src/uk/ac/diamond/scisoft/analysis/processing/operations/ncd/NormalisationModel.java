@@ -14,7 +14,7 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(hint="Normalisation scaling value",label = "Normalisation value" )
+	@OperationModelField(hint="Normalisation scaling value",max=1e10,label = "Normalisation value" )
 	private double normValue = 1;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
