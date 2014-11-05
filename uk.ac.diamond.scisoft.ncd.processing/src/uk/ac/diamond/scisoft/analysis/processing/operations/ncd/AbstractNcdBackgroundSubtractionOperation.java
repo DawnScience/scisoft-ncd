@@ -50,6 +50,13 @@ public abstract class AbstractNcdBackgroundSubtractionOperation extends Abstract
 			throw new OperationException(this, e1);
 		}
 		
+		if (model.getBgScale() != 0 && model.getBgScale() != Double.NaN) {
+			double bgScaling = model.getBgScale();
+			((FloatDataset)background).imultiply(bgScaling);
+			DoubleDataset bgErrors = (DoubleDataset) background.getError();
+			bgErrors.imultiply(bgScaling * bgScaling);
+		}
+		
 		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
 		try {
