@@ -42,7 +42,7 @@ import org.eclipse.dawnsci.analysis.api.tree.DataNode;
 import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
-import org.eclipse.dawnsci.analysis.api.tree.TreeFile;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.RectangularROI;
@@ -1204,7 +1204,7 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 		currentPathToData = "";
 		try {
 			HDF5Loader loader = new HDF5Loader(modelBuildingParameters.getDataFilename());
-			TreeFile file = loader.loadTree();
+			Tree file = loader.loadTree();
 			GroupNode group = file.getGroupNode();
 			NodeLink link = group.iterator().next(); //top level
 			findAxesAndSignals(link);
