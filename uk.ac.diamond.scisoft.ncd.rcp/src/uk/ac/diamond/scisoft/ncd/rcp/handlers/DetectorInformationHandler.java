@@ -30,13 +30,13 @@ import org.eclipse.core.commands.AbstractHandler;
 import org.eclipse.core.commands.ExecutionEvent;
 import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
+import org.eclipse.dawnsci.analysis.api.tree.Node;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.hdf5.Nexus;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5Group;
-import org.eclipse.dawnsci.hdf5.api.HDF5Node;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.hdf5.nexus.NexusUtils;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.ui.IWorkbenchPage;
@@ -79,7 +79,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		if (sel != null) {
 			Object[] selObjects = sel.toArray();
 			HashMap<String, Integer> detNames = new HashMap<String, Integer>();
-			HashMap<String, HDF5Group> detInfo = new HashMap<String, HDF5Group>();
+			HashMap<String, GroupNode> detInfo = new HashMap<String, GroupNode>();
 			for (int i = 0; i < selObjects.length; i++) {
 				String tmpfilePath, tmpfileExtension;
 				if (selObjects[i] instanceof IFile) {
@@ -95,25 +95,25 @@ public class DetectorInformationHandler extends AbstractHandler {
 				}
 				
 				try {
-					HDF5File tmpfile = new HDF5Loader(tmpfilePath).loadTree();
+					Tree tmpfile = new HDF5Loader(tmpfilePath).loadTree();
 					String[] locations = new String[] {"/entry1", "/entry1/instrument"};
 					for (String loc : locations) {
-						HDF5NodeLink nodeLink = tmpfile.findNodeLink(loc);
+						NodeLink nodeLink = tmpfile.findNodeLink(loc);
 						if (nodeLink != null) {
-							HDF5Group node = (HDF5Group) nodeLink.getDestination();
+							GroupNode node = (GroupNode) nodeLink.getDestination();
 							Iterator<String> iterator = node.getNodeNameIterator();
 
 							while (iterator.hasNext()) {
 								String tmpName = iterator.next();
-								HDF5Node tmpTree = node.findNodeLink(tmpName).getDestination();
-								if (tmpTree instanceof HDF5Group) {
+								Node tmpTree = node.findNodeLink(tmpName).getDestination();
+								if (tmpTree instanceof GroupNode) {
 									String nxClass = tmpTree.getAttribute(NexusUtils.NXCLASS).getFirstElement();
 									if (nxClass.equals(Nexus.DETECT) || nxClass.equals(Nexus.MONITOR)) {
 										if (detNames.containsKey(tmpName)) {
 											detNames.put(tmpName, detNames.get(tmpName) + 1);
 										} else {
 											detNames.put(tmpName, 1);
-											detInfo.put(tmpName, (HDF5Group) tmpTree);
+											detInfo.put(tmpName, (GroupNode) tmpTree);
 										}
 									}
 								}
@@ -142,7 +142,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 		return null;
 	}
 
-	private void updateDetectorInformation(Map<String, HDF5Group> detectors, IWorkbenchWindow window) {
+	private void updateDetectorInformation(Map<String, GroupNode> detectors, IWorkbenchWindow window) {
 		
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
@@ -152,11 +152,11 @@ public class DetectorInformationHandler extends AbstractHandler {
 	    
 	    ncdDetectorSourceProvider.clearNcdDetectors();
 	
-		Iterator<Entry<String, HDF5Group>> it = detectors.entrySet().iterator();
+		Iterator<Entry<String, GroupNode>> it = detectors.entrySet().iterator();
 	    while (it.hasNext()) {
-	        Entry<String, HDF5Group> detector = it.next();
+	        Entry<String, GroupNode> detector = it.next();
 	        String detName = detector.getKey();
-	        HDF5Group detNode = detector.getValue();
+	        GroupNode detNode = detector.getValue();
 			String nxClass = detNode.getAttribute(NexusUtils.NXCLASS).getFirstElement();
 	        if (nxClass.equals(Nexus.MONITOR)) {
         		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, DetectorTypes.CALIBRATION_DETECTOR, 1);
@@ -164,15 +164,15 @@ public class DetectorInformationHandler extends AbstractHandler {
     	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
     	        continue;
 	        }
-	        HDF5NodeLink sasNode = detector.getValue().getNodeLink("sas_type");
-	        HDF5NodeLink dataNode = detector.getValue().getNodeLink("data");
+	        NodeLink sasNode = detector.getValue().getNodeLink("sas_type");
+	        NodeLink dataNode = detector.getValue().getNodeLink("data");
 	        if (sasNode != null && dataNode != null) {
 				try {
-					String type = ((Dataset)((HDF5Dataset)sasNode.getDestination()).getDataset()).getString(0);
+					String type = ((Dataset)((DataNode)sasNode.getDestination()).getDataset()).getString(0);
 					
 		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR)) {
 		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);
-	    				int[] dims = ((HDF5Dataset)dataNode.getDestination()).getDataset().getShape();
+	    				int[] dims = ((DataNode)dataNode.getDestination()).getDataset().getShape();
 	    				tmpDet.setMaxChannel(dims[dims.length - 1] - 1);
 		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);
 		        	}
@@ -188,9 +188,9 @@ public class DetectorInformationHandler extends AbstractHandler {
 								tmpDet.setDimension(INTERPRETATION.get(interpretation));
 							}
 						}
-		    	        HDF5NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
+		    	        NodeLink pixelData = detector.getValue().getNodeLink("x_pixel_size");
 		    	        if (pixelData != null) {
-		    	        	HDF5Dataset pxSizeDataset = (HDF5Dataset) pixelData.getDestination();
+		    	        	DataNode pxSizeDataset = (DataNode) pixelData.getDestination();
 		    				double pxSize = pxSizeDataset.getDataset().getSlice().getDouble(0);
 		    				if (pxSizeDataset.containsAttribute("units")) {
 								Unit<Length> pxSizeUnit = Unit.valueOf(pxSizeDataset.getAttribute("units").getFirstElement()).asType(Length.class);

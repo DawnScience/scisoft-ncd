@@ -24,8 +24,8 @@ import org.eclipse.core.commands.ExecutionException;
 import org.eclipse.core.resources.IFile;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
@@ -69,8 +69,8 @@ public class BackgroundSubtractionFileHandler extends AbstractHandler {
 			}
 
 			try {
-				HDF5File bgFile = new HDF5Loader(fileName).loadTree();
-				HDF5NodeLink node = bgFile.findNodeLink("/entry1/" + detectorSaxs + "/data");
+				Tree bgFile = new HDF5Loader(fileName).loadTree();
+				NodeLink node = bgFile.findNodeLink("/entry1/" + detectorSaxs + "/data");
 				if (node == null) {
 					return errorDialog(NLS.bind(NcdMessages.NO_BG_DATA, fileName), null);
 				}

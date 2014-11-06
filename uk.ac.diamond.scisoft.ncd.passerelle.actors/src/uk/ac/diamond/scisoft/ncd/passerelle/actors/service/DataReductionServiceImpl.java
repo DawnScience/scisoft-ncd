@@ -40,16 +40,16 @@ import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.Node;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.eclipse.dawnsci.hdf5.Nexus;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5Node;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.osgi.util.NLS;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
@@ -416,7 +416,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 	private void writeNCDMetadata(int entry_id, String inputfilePath) {
 		try {
-			HDF5File inputFileTree = new HDF5Loader(inputfilePath).loadTree();
+			Tree inputFileTree = new HDF5Loader(inputfilePath).loadTree();
 
 			writeStringMetadata("/entry1/entry_identifier", "entry_identifier", entry_id, inputFileTree);
 			writeStringMetadata("/entry1/scan_command", "scan_command", entry_id, inputFileTree);
@@ -439,15 +439,15 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 	}
 	
-	private void writeStringMetadata(String nodeName, String textName, int entry_id, HDF5File inputFileTree) throws HDF5Exception {
+	private void writeStringMetadata(String nodeName, String textName, int entry_id, Tree inputFileTree) throws HDF5Exception {
 		
-		HDF5Node node;
-		HDF5NodeLink nodeLink;
+		Node node;
+		NodeLink nodeLink;
 		nodeLink = inputFileTree.findNodeLink(nodeName);
 		if (nodeLink != null) {
 			node = nodeLink.getDestination();
-			if (node instanceof HDF5Dataset) {
-				String text = ((Dataset) ((HDF5Dataset) node).getDataset()).getString(0);
+			if (node instanceof DataNode) {
+				String text = ((Dataset) ((DataNode) node).getDataset()).getString(0);
 				
 				int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());
@@ -576,7 +576,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (!inputfileExtension.equals("nxs")) {
 			return true;
 		}
-		HDF5File dataTree;
+		Tree dataTree;
 		try {
 			dataTree = new HDF5Loader(inputfilePath).loadTree();
 		} catch (Exception e) {
@@ -584,14 +584,14 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			return true;
 		}
 		if (context.isEnableWaxs()) {
-			HDF5NodeLink node = dataTree.findNodeLink("/entry1/"+context.getWaxsDetectorName()+"/data");
+			NodeLink node = dataTree.findNodeLink("/entry1/"+context.getWaxsDetectorName()+"/data");
 			if (node == null) {
 				return true;
 			}
 		}
 		
 		if (context.isEnableSaxs()) {
-			HDF5NodeLink node = dataTree.findNodeLink("/entry1/"+context.getSaxsDetectorName()+"/data");
+			NodeLink node = dataTree.findNodeLink("/entry1/"+context.getSaxsDetectorName()+"/data");
 			if (node == null) {
 				return true;
 			}
@@ -781,16 +781,16 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (!inputfileExtension.equals("nxs")) {
 			return 1.0;
 		}
-		HDF5File dataTree;
+		Tree dataTree;
 		try {
 			dataTree = new HDF5Loader(inputfilePath).loadTree();
 		} catch (Exception e) {
 			logger.info("Error loading Nexus tree from {}", inputfilePath);
 			return 1.0;
 		}
-		HDF5NodeLink node = dataTree.findNodeLink("/entry1/sample/thickness");
+		NodeLink node = dataTree.findNodeLink("/entry1/sample/thickness");
 		if (node != null) {
-			org.eclipse.dawnsci.analysis.api.dataset.IDataset sampleThicknessSet = ((HDF5Dataset) node.getDestination()).getDataset().getSlice(new org.eclipse.dawnsci.analysis.api.dataset.Slice());
+			org.eclipse.dawnsci.analysis.api.dataset.IDataset sampleThicknessSet = ((DataNode) node.getDestination()).getDataset().getSlice(new org.eclipse.dawnsci.analysis.api.dataset.Slice());
 			assert node.getDestination().getAttribute("units").getFirstElement().equals("mm"); //units of sample thickness must be mm
 			return sampleThicknessSet.getDouble(0);
 		}

@@ -35,12 +35,12 @@ import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
 import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
 import org.eclipse.dawnsci.plotting.api.region.IRegion;
@@ -95,11 +95,11 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					dataFileName = ((File) sel).getAbsolutePath();
 				}
 				try {
-					HDF5File dataTree = new HDF5Loader(dataFileName).loadTree();
-					HDF5NodeLink nodeLink = dataTree.findNodeLink(ENERGY_NODE);
+					Tree dataTree = new HDF5Loader(dataFileName).loadTree();
+					NodeLink nodeLink = dataTree.findNodeLink(ENERGY_NODE);
 					Double energy = null;   // energy value in keV
 					if (nodeLink != null) {
-	    				energy = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
+	    				energy = ((DataNode) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
 	    				ncdEnergySourceProvider.setEnergy(Amount.valueOf(energy, SI.KILO(NonSI.ELECTRON_VOLT)));
 	    				logger.info("Energy value : {}", energy);
 					} else {
@@ -111,7 +111,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					}
 
 					// Open first frame if dataset has miltiple images
-					HDF5Dataset node = (HDF5Dataset) nodeLink.getDestination();
+					DataNode node = (DataNode) nodeLink.getDestination();
 					final int[] shape = node.getDataset().getShape();
 					
 					final int[] sqShape = AbstractDataset.squeezeShape(shape, true);

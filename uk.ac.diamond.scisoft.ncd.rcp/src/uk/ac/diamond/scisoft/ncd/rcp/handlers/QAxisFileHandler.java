@@ -39,14 +39,14 @@ import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
 import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
+import org.eclipse.dawnsci.analysis.api.tree.Attribute;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
+import org.eclipse.dawnsci.analysis.api.tree.Node;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
-import org.eclipse.dawnsci.hdf5.api.HDF5Attribute;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5Group;
-import org.eclipse.dawnsci.hdf5.api.HDF5Node;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlotType;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
@@ -111,8 +111,8 @@ public class QAxisFileHandler extends AbstractHandler {
 				}
 				CalibrationResultsBean crb = null;
 				
-				HDF5File qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
-				HDF5NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+				Tree qaxisFile = new HDF5Loader(qaxisFilename).loadTree();
+				NodeLink nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 						+ "_processing/SectorIntegration/qaxis calibration");
 				
 				if (nodeLink == null) {
@@ -125,15 +125,15 @@ public class QAxisFileHandler extends AbstractHandler {
 				Amount<Length> cameraLength = null;
 				Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
 				Amount<Energy> energy = null;
-				HDF5Node node = nodeLink.getDestination();
-				if (node instanceof HDF5Dataset) {
-					Dataset qaxis = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
+				Node node = nodeLink.getDestination();
+				if (node instanceof DataNode) {
+					Dataset qaxis = (Dataset) ((DataNode) node).getDataset().getSlice();
 					double gradient = qaxis.getDouble(0);
 					double intercept = qaxis.getDouble(1);
 
 					// The default value that was used when unit setting was fixed.
 					UnitFormat unitFormat = UnitFormat.getUCUMInstance();
-					HDF5Attribute unitsAttr = node.getAttribute("unit");
+					Attribute unitsAttr = node.getAttribute("unit");
 					if (unitsAttr != null) {
 						String unitString = unitsAttr.getFirstElement();
 						unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
@@ -141,24 +141,24 @@ public class QAxisFileHandler extends AbstractHandler {
 					amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
 					amountIntercept = Amount.valueOf(intercept,  unit);
 					
-				} else if (node instanceof HDF5Group) {
-					HDF5Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+				} else if (node instanceof GroupNode) {
+					Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/gradient").getDestination();
-					HDF5Node gradientError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+					Node gradientError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/gradient_errors").getDestination();
-					HDF5Node interceptData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+					Node interceptData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
-					HDF5Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+					Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
 					
-					double gradient = ((HDF5Dataset) gradientData).getDataset().getSlice().getDouble(0);
-					double errgradient = ((HDF5Dataset) gradientError).getDataset().getSlice().getDouble(0);
+					double gradient = ((DataNode) gradientData).getDataset().getSlice().getDouble(0);
+					double errgradient = ((DataNode) gradientError).getDataset().getSlice().getDouble(0);
 					String strUnit = gradientData.getAttribute("units").getFirstElement();
 					Unit<ScatteringVectorOverDistance> gradientUnit = UnitFormat.getUCUMInstance()
 							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
 					
-					double intercept = ((HDF5Dataset) interceptData).getDataset().getSlice().getDouble(0);
-					double erritercept = ((HDF5Dataset) interceptError).getDataset().getSlice().getDouble(0);
+					double intercept = ((DataNode) interceptData).getDataset().getSlice().getDouble(0);
+					double erritercept = ((DataNode) interceptError).getDataset().getSlice().getDouble(0);
 					strUnit = interceptData.getAttribute("units").getFirstElement();
 					unit = UnitFormat.getUCUMInstance()
 							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
@@ -172,21 +172,21 @@ public class QAxisFileHandler extends AbstractHandler {
 							+ "_processing/SectorIntegration/camera length");
 					if (nodeLink != null) {
 						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
-							double dataVal = ((HDF5Dataset) node).getDataset().getSlice().getDouble(0); 
+						if (node instanceof DataNode) {
+							double dataVal = ((DataNode) node).getDataset().getSlice().getDouble(0); 
 							if (node.containsAttribute("units")) {
 								cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
 										.asType(Length.class);
 							}
 							cameraLength = Amount.valueOf(dataVal, cameraLengthUnit);
-						} else if (node instanceof HDF5Group) {
-							HDF5Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+						} else if (node instanceof GroupNode) {
+							Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 									+ "_processing/SectorIntegration/camera length/data").getDestination();
-							HDF5Node error = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
+							Node error = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 									+ "_processing/SectorIntegration/camera length/errors").getDestination();
 							
-							double dataVal = ((HDF5Dataset) data).getDataset().getSlice().getDouble(0); 
-							double errorVal = ((HDF5Dataset) error).getDataset().getSlice().getDouble(0); 
+							double dataVal = ((DataNode) data).getDataset().getSlice().getDouble(0); 
+							double errorVal = ((DataNode) error).getDataset().getSlice().getDouble(0); 
 							cameraLengthUnit = Unit.valueOf(data.getAttribute("units").getFirstElement())
 										.asType(Length.class);
 							cameraLength = Amount.valueOf(dataVal, errorVal, cameraLengthUnit);
@@ -200,9 +200,9 @@ public class QAxisFileHandler extends AbstractHandler {
 							+ "_processing/SectorIntegration/energy");
 					if (nodeLink != null) {
 						node = nodeLink.getDestination();
-						if (node instanceof HDF5Dataset) {
+						if (node instanceof DataNode) {
 							energy = Amount.valueOf(
-									((HDF5Dataset) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
+									((DataNode) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
 						}
 					}
 					ncdEnergySourceProvider.setEnergy(energy);
@@ -215,8 +215,8 @@ public class QAxisFileHandler extends AbstractHandler {
 						+ "_processing/SectorIntegration/beam centre");
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
-					if (node instanceof HDF5Dataset) {
-						Dataset beam = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
+					if (node instanceof DataNode) {
+						Dataset beam = (Dataset) ((DataNode) node).getDataset().getSlice();
 						roiData.setPoint(beam.getDouble(0), beam.getDouble(1));
 					}
 				}
@@ -224,8 +224,8 @@ public class QAxisFileHandler extends AbstractHandler {
 						+ "_processing/SectorIntegration/integration angles");
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
-					if (node instanceof HDF5Dataset) {
-						Dataset angles = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
+					if (node instanceof DataNode) {
+						Dataset angles = (Dataset) ((DataNode) node).getDataset().getSlice();
 						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
 					}
 				}
@@ -233,8 +233,8 @@ public class QAxisFileHandler extends AbstractHandler {
 						+ "_processing/SectorIntegration/integration radii");
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
-					if (node instanceof HDF5Dataset) {
-						Dataset radii = (Dataset) ((HDF5Dataset) node).getDataset().getSlice();
+					if (node instanceof DataNode) {
+						Dataset radii = (Dataset) ((DataNode) node).getDataset().getSlice();
 						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
 					}
 				}
@@ -242,8 +242,8 @@ public class QAxisFileHandler extends AbstractHandler {
 						+ "_processing/SectorIntegration/integration symmetry");
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
-					if (node instanceof HDF5Dataset) {
-						String symmetryText = ((Dataset) ((HDF5Dataset) node).getDataset()).getString(0);
+					if (node instanceof DataNode) {
+						String symmetryText = ((Dataset) ((DataNode) node).getDataset()).getString(0);
 						int symmetry = SectorROI.getSymmetry(symmetryText);
 						if (roiData.checkSymmetry(symmetry)) {
 							roiData.setSymmetry(symmetry);
@@ -273,7 +273,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (lockedMeta == null) {
 					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
 					if (nodeLink != null) {
-						int[] dataShape = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getShape();
+						int[] dataShape = ((DataNode) nodeLink.getDestination()).getDataset().getShape();
 						int[] imageShape = Arrays.copyOfRange(dataShape, Math.max(dataShape.length - 2, 0), dataShape.length);
 						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(imageShape));
 					} else {

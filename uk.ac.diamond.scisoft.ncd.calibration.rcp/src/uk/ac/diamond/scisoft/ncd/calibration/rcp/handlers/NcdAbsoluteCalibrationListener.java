@@ -39,6 +39,9 @@ import org.eclipse.dawnsci.analysis.api.io.ILoaderService;
 import org.eclipse.dawnsci.analysis.api.io.ScanFileHolderException;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -46,9 +49,6 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
 import org.eclipse.dawnsci.plotting.api.region.IRegion;
@@ -116,17 +116,17 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		final BooleanDataset mask;
 		final NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		try {
-			HDF5File dataTree = new HDF5Loader(fileName).loadTree();
-			HDF5NodeLink nodeLink = dataTree.findNodeLink("/entry1/" + scaler + "/data");
+			Tree dataTree = new HDF5Loader(fileName).loadTree();
+			NodeLink nodeLink = dataTree.findNodeLink("/entry1/" + scaler + "/data");
 			NcdDetectorSettings scalerData = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
 			Double norm = null;
 			if (nodeLink != null) {
 				Integer channel = scalerData.getNormChannel();
-				IDataset normDataset = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice();
+				IDataset normDataset = ((DataNode) nodeLink.getDestination()).getDataset().getSlice();
 				final int[] normIdx = new int[normDataset.getRank()];
 				Arrays.fill(normIdx, 0);
 				normIdx[normIdx.length - 1] = channel;
-				norm = ((HDF5Dataset) nodeLink.getDestination()).getDataset().getSlice().getDouble(normIdx);
+				norm = ((DataNode) nodeLink.getDestination()).getDataset().getSlice().getDouble(normIdx);
 			} else {
 				Status status = new Status(IStatus.ERROR, ID,
 						"Cannot find normalisation data. Please check normalisation dataset setting.");
@@ -143,7 +143,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			}
 
 			// Open first frame if dataset has multiple images
-			HDF5Dataset node = (HDF5Dataset) nodeLink.getDestination();
+			DataNode node = (DataNode) nodeLink.getDestination();
 			final int[] shape = node.getDataset().getShape();
 
 			final int[] sqShape = AbstractDataset.squeezeShape(shape, true);

@@ -16,7 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.rcp.utils;
 
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,11 +32,11 @@ import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5Group;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -69,9 +70,9 @@ public class NcdNexusUtilsTest {
 
 		inputPath = testFileFolder + "/NCDReductionTest/i22-24139.nxs";
 		
-		HDF5File tmpfile = new HDF5Loader(inputPath).loadTree();
-		HDF5Group node = (HDF5Group) tmpfile.findNodeLink("/entry1/Rapid2D").getDestination();
-		lazyDataset = node.getDataset("data").getDataset();
+		Tree tmpfile = new HDF5Loader(inputPath).loadTree();
+		GroupNode node = (GroupNode) tmpfile.findNodeLink("/entry1/Rapid2D").getDestination();
+		lazyDataset = node.getDataNode("data").getDataset();
 	}
 	
 	@Test

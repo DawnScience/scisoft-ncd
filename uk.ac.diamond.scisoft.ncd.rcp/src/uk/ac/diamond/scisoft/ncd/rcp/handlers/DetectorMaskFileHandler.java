@@ -28,12 +28,12 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dawnsci.analysis.api.tree.DataNode;
+import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
+import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.hdf5.api.HDF5Dataset;
-import org.eclipse.dawnsci.hdf5.api.HDF5File;
-import org.eclipse.dawnsci.hdf5.api.HDF5NodeLink;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
 import org.eclipse.dawnsci.plotting.api.trace.IImageTrace;
@@ -86,14 +86,14 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 				} else {
 					maskFileName = ((File) sel).getAbsolutePath();
 				}
-				HDF5File dataTree = new HDF5Loader(maskFileName).loadTree();
-				HDF5NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs
+				Tree dataTree = new HDF5Loader(maskFileName).loadTree();
+				NodeLink node = dataTree.findNodeLink("/entry1/" + detectorSaxs
 						+ "_processing/SectorIntegration/mask");
 				if (node == null) {
 					throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName));
 				}
 				
-				mask = (Dataset) ((HDF5Dataset) node.getDestination()).getDataset().getSlice();
+				mask = (Dataset) ((DataNode) node.getDestination()).getDataset().getSlice();
 				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, Dataset.BOOL);
 				final BooleanDataset savedMask = MaskingTool.getSavedMask();
 
