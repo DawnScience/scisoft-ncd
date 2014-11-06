@@ -47,7 +47,24 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
-		norm.setNormvalue(model.getNormValue());
+		double normValue = model.getNormValue();
+		if (model.isUseThisThickness() && model.getThickness() != 0) {
+			normValue /= model.getThickness();
+		}
+		else {
+			//use value from dataset if > 0
+			double thickness;
+			try {
+				thickness = LoaderFactory.getDataSet(model.getOriginalDataFilePath(), "/entry1/sample/thickness", null).getDouble();
+			} catch (Exception e) {
+				throw new OperationException(this, e);
+			}
+			if (thickness > 0) {
+				normValue /= thickness;
+			}
+		}
+
+		norm.setNormvalue(normValue);
 		Dataset errors = (Dataset) slice.getError();
 		Dataset data = (Dataset) slice.getSlice();
 		
@@ -78,7 +95,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		double[] myerrors = (double[]) normData[1];
 
 		Dataset myres = new FloatDataset(mydata, slice.getShape());
-		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
+		myres.setError(new DoubleDataset(myerrors, slice.getShape()));
 		toReturn.setData(myres);
 		return toReturn;
 		
