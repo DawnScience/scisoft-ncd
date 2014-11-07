@@ -41,11 +41,11 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		
 		try {
 			background = LoaderFactory.getDataSet(model.getFilePath(), getDataPath(), null);
-			Dataset backgroundErrors = (Dataset) background.getError();
+			Dataset backgroundErrors = ((Dataset) background).getErrorBuffer();
 			if (backgroundErrors == null) {
 				backgroundErrors = (Dataset) background.getSlice();
 			}
-			background.setError(backgroundErrors);
+			((Dataset)background).setErrorBuffer(backgroundErrors);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
@@ -53,8 +53,9 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		if (model.getBgScale() != 0 && model.getBgScale() != Double.NaN) {
 			double bgScaling = model.getBgScale();
 			((FloatDataset)background).imultiply(bgScaling);
-			DoubleDataset bgErrors = (DoubleDataset) background.getError();
+			DoubleDataset bgErrors = (DoubleDataset) ((Dataset) background).getErrorBuffer();
 			bgErrors.imultiply(bgScaling * bgScaling);
+			((Dataset)background).setErrorBuffer(bgErrors);
 		}
 		
 		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
