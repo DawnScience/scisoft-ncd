@@ -40,7 +40,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.SAME;
+		return OperationRank.ONE;
 	}
 	
 	@Override
