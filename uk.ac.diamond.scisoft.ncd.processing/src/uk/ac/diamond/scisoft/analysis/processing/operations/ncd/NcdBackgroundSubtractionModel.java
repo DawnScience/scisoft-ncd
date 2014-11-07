@@ -17,4 +17,14 @@ public class NcdBackgroundSubtractionModel extends AbstractOperationModel {
 		firePropertyChange("filePath", this.filePath, this.filePath = filePath);
 	}
 
+	@OperationModelField(hint="Value to scale the background data", label = "Background scale" )
+	private double bgScale;
+
+	public double getBgScale() {
+		return bgScale;
+	}
+
+	public void setBgScale(double bgScale) {
+		this.bgScale = bgScale;
+	}
 }

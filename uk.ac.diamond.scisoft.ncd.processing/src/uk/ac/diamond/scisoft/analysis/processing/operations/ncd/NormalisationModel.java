@@ -14,7 +14,7 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(hint="Normalisation scaling value",label = "Normalisation value" )
+	@OperationModelField(hint="Normalisation scaling value",max=1e10,label = "Normalisation value" )
 	private double normValue = 1;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
@@ -25,6 +25,15 @@ public class NormalisationModel extends AbstractOperationModel {
 
 	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
 	private String filePath = "";
+
+	@OperationModelField(hint="File containing thickness data (original data file)",file = FileType.EXISTING_FILE, label = "Thickness file" )
+	private String originalDataFilePath = "";
+
+	@OperationModelField(hint="Thickness (mm)", label = "Thickness of sample" )
+	private double thickness = 0;
+
+	@OperationModelField(hint="Use Thickness Value in This Form", label = "Use This Thickness" )
+	private boolean useThisThickness = false;
 
 	public String getFilePath() {
 		return filePath;
@@ -58,5 +67,28 @@ public class NormalisationModel extends AbstractOperationModel {
 		this.calibChannel = calibChannel;
 	}
 
+	public void setOriginalDataFilePath(String originalDataFilePath) {
+		this.originalDataFilePath = originalDataFilePath;
+	}
+
+	public String getOriginalDataFilePath() {
+		return originalDataFilePath;
+	}
+
+	public double getThickness() {
+		return thickness;
+	}
+
+	public void setThickness(double thickness) {
+		this.thickness = thickness;
+	}
+
+	public boolean isUseThisThickness() {
+		return useThisThickness;
+	}
+
+	public void setUseThisThickness(boolean useThisThickness) {
+		this.useThisThickness = useThisThickness;
+	}
 
 }
