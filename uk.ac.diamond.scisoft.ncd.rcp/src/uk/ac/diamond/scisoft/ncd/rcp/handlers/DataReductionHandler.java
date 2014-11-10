@@ -206,7 +206,7 @@ public class DataReductionHandler extends AbstractHandler {
 			
 			selObjects = sel.toArray();
 			
-			boolean runModal = uk.ac.diamond.scisoft.ncd.rcp.Activator.getDefault().getPreferenceStore().getBoolean(NcdPreferences.NCD_REDUCTION_MODAL);
+			boolean runModal = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore().getBoolean(NcdPreferences.NCD_REDUCTION_MODAL);
 			final NcdDataReductionJob ncdProcess = new NcdDataReductionJob();
 			if (runModal) {
 				try {
