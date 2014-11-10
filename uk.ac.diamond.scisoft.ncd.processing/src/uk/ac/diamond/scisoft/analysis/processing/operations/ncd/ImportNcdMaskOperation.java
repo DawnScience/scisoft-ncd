@@ -114,4 +114,10 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 		input.setMetadata(mm);
 		return new OperationData(input);
 	}
+	
+	@Override
+	public Class<?> getModelClass() {
+
+		return ImportMaskModel.class;
+	}
 }
