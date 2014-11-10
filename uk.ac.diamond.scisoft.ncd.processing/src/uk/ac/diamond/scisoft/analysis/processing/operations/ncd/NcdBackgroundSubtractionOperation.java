@@ -16,7 +16,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
  * @author rbv51579
  *
  */
-public class NcdBackgroundSubtractionOperation extends AbstractNcdBackgroundSubtractionOperation {
+public class NcdBackgroundSubtractionOperation extends AbstractNcdBackgroundSubtractionOperation<NcdBackgroundSubtractionModel> {
 
 	@Override
 	public String getId() {

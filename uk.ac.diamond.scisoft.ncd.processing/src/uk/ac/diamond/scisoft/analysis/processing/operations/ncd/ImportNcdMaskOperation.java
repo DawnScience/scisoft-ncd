@@ -27,9 +27,10 @@ import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.metadata.MaskMetadataImpl;
+import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskOperation;
 
-public class ImportNcdMaskOperation extends ImportMaskOperation {
+public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel> {
 
 	private static String NCDMASKLOCATIONSTRING = "/entry1/%s_processing/SectorIntegration/mask";
 

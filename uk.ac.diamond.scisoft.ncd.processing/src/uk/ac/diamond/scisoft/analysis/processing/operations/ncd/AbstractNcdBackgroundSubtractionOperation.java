@@ -30,7 +30,7 @@ import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
  * @author rbv51579
  *
  */
-public abstract class AbstractNcdBackgroundSubtractionOperation extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
+public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractionModel> extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
 	
 	public IDataset background;
 	
