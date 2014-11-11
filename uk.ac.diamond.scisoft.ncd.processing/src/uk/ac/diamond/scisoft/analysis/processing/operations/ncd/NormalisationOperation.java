@@ -66,7 +66,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 
 		norm.setNormvalue(normValue);
 		Dataset errors = (Dataset) slice.getError();
-		Dataset data = (Dataset) slice.getSlice();
+		Dataset data = (Dataset) slice.getSliceView();
 		
 		IDataset calibration;
 		try {
