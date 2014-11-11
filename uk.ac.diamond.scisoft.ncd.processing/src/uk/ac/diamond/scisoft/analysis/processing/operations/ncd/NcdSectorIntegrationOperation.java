@@ -20,7 +20,6 @@ import javax.measure.unit.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
@@ -138,7 +137,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		}
 		if (qaxis != null) {
 			AxesMetadataImpl axes = new AxesMetadataImpl(1);
-			axes.setAxis(0, new ILazyDataset[]{qaxis});
+			axes.setAxis(0, qaxis);
 			myres.setMetadata(axes);
 		}
 		toReturn.setData(myres);
