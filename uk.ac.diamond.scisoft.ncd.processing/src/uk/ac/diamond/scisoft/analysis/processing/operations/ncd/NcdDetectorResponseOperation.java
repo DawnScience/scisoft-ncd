@@ -49,6 +49,9 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		DetectorResponse response = new DetectorResponse();
 		try {
 			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
+			if (loadedSet == null) {
+				throw new Exception("No detector response dataset found");
+			}
 			response.setResponse((Dataset)loadedSet.getSlice());
 		} catch (Exception e) {
 			throw new OperationException(this, e);

@@ -41,15 +41,20 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	}
 	
 	private void findDetectorName() {
-		if (model.getFilePath() == null || model.getFilePath().isEmpty() || !HierarchicalDataFactory.isHDF5(model.getFilePath())) return;
+		if (model.getFilePath() == null || model.getFilePath().isEmpty() || !HierarchicalDataFactory.isHDF5(model.getFilePath())) {
+			throw new OperationException(this, new Exception("No HDF5 file specified for the mask"));
+		}
 		IHierarchicalDataFile hiFile = null;
 		try {
 			hiFile = HierarchicalDataFactory.getReader(model.getFilePath());
 			TreeNode node = hiFile.getNode();
 			Enumeration<?> children = node.children();
 			searchForDetectorName(children);
+			if (detectorName.isEmpty() || detectorName == null) {
+				throw new Exception("No detector name found");
+			}
 		} catch (Exception e) {
-			throw new OperationException(null, e);
+			throw new OperationException(this, e);
 		} finally {
 			if (hiFile!= null)
 				try {
@@ -98,6 +103,9 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 			returnData = super.process(input, monitor);
 		} catch (OperationException e){
 			returnData = getNcdMask(input);
+		}
+		if (returnData.getData() == null) {
+			throw new OperationException(this, "No mask data available");
 		}
 		return returnData;
 	}

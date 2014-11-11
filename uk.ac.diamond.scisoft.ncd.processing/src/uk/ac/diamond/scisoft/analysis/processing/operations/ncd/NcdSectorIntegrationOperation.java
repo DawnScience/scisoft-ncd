@@ -70,6 +70,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		IROI roi;
 		try {
 			roi = reader.getROIDataFromFile();
+			if (roi == null) {
+				throw new Exception("ROI must be defined for this operation");
+			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
@@ -85,6 +88,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		List<MaskMetadata> mask;
 		try {
 			mask = slice.getMetadata(MaskMetadata.class);
+			if (mask == null) {
+				throw new Exception("Mask must be defined for this operation");
+			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}

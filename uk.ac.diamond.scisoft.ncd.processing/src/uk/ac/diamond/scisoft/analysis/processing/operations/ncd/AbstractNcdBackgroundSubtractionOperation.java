@@ -41,6 +41,9 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		
 		try {
 			background = LoaderFactory.getDataSet(model.getFilePath(), getDataPath(), null);
+			if (background == null) {
+				throw new Exception("No background dataset found");
+			}
 			Dataset backgroundErrors = ((Dataset) background).getErrorBuffer();
 			if (backgroundErrors == null) {
 				backgroundErrors = (Dataset) background.getSlice();
