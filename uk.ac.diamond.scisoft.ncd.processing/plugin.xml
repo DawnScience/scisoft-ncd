@@ -7,6 +7,7 @@
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationOperation"
             description="Normalisation of datasets with errors"
+            icon="icons/ncdnorm.png"
             id="uk.ac.diamond.scisoft.analysis.processing.Normalisation"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationModel"
             name="Normalisation for NCD">
@@ -15,6 +16,7 @@
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
             description="Flat field detector response operation"
+            icon="icons/ncddetresp.png"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdDetectorResponse"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseModel"
             name="NCD Detector Response">
@@ -22,6 +24,7 @@
       <operation
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationOperation"
+            icon="icons/ncdsectInt.png"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdSectorIntegration"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationModel"
             name="NCD Sector Integration">
@@ -29,6 +32,7 @@
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ImportNcdMaskOperation"
+             icon="icons/ncdmask.png"
              id="uk.ac.diamond.scisoft.analysis.processing.ImportNcdMask"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
              name="Import NCD Mask from File">
@@ -36,6 +40,7 @@
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionOperation"
+             icon="icons/ncdsubtract.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtraction"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
              name="NCD Background Subtraction">
@@ -44,6 +49,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionIntegratedOperation"
              description="NCD Background Subtraction if data and background are already integrated"
+             icon="icons/ncdsubtract.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionIntegrated"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
              name="NCD Background Subtraction for Integrated Frames">
