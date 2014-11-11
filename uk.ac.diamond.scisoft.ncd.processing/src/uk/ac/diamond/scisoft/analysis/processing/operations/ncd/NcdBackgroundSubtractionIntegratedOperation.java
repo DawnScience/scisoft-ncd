@@ -20,7 +20,7 @@ public class NcdBackgroundSubtractionIntegratedOperation extends AbstractNcdBack
 
 	@Override
 	public String getId() {
-		return "uk.ac.diamond.scisoft.analysis.processing.operations.NcdBackgroundSubtractionIntegratedOperation";
+		return "uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionIntegrated";
 	}
 
 	@Override

@@ -4,6 +4,7 @@
    <extension
          point="org.eclipse.dawnsci.analysis.api.operation">
       <operation
+            category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationOperation"
             description="Normalisation of datasets with errors"
             id="uk.ac.diamond.scisoft.analysis.processing.Normalisation"
@@ -11,6 +12,7 @@
             name="Normalisation for NCD">
       </operation>
       <operation
+            category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
             description="Flat field detector response operation"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdDetectorResponse"
@@ -18,30 +20,38 @@
             name="NCD Detector Response">
       </operation>
       <operation
+            category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationOperation"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdSectorIntegration"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationModel"
             name="NCD Sector Integration">
       </operation>
        <operation
-            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ImportNcdMaskOperation"
-            id="uk.ac.diamond.scisoft.analysis.processing.ImportNcdMask"
-            model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
-            name="Import NCD Mask from File">
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ImportNcdMaskOperation"
+             id="uk.ac.diamond.scisoft.analysis.processing.ImportNcdMask"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
+             name="Import NCD Mask from File">
       </operation>
        <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionOperation"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtraction"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
              name="NCD Background Subtraction">
        </operation>
        <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionIntegratedOperation"
              description="NCD Background Subtraction if data and background are already integrated"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionIntegrated"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
              name="NCD Background Subtraction for Integrated Frames">
        </operation>
+       <category
+             id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             name="NCD">
+       </category>
    </extension>
 
 </plugin>
