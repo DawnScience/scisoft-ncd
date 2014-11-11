@@ -51,7 +51,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		if (model.isUseThisThickness() && model.getThickness() != 0) {
 			normValue /= model.getThickness();
 		}
-		else {
+		else if (!model.getOriginalDataFilePath().isEmpty()){
 			//use value from dataset if > 0
 			double thickness;
 			try {
