@@ -198,6 +198,44 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		inputfileExtension = FilenameUtils.getExtension(inputfilePath);
 		inputfileName      = FilenameUtils.getName(inputfilePath);
 
+		// Get thickness and set normalization parameters
+		Double fileThickness = readSampleThickness(inputfilePath, inputfileExtension);
+
+		int normChannel = -1;
+		Double absScaling = null;
+		Double thickness = null;
+		
+		if (flags.isEnableNormalisation()) {
+			absScaling = context.getAbsScaling();
+
+			if (context.isUseFormSampleThickness() && context.getSampleThickness() != null) {
+				thickness = context.getSampleThickness();
+			}
+			else if (fileThickness != null) {
+				thickness = fileThickness;
+			}
+			else {
+				thickness = 1.0;
+			}
+			
+			NcdDetectorSettings scalerData = context.getScalerData();
+			if (scalerData != null) {
+				normChannel = scalerData.getNormChannel();
+			}
+		}
+		
+		if (absScaling != null) {
+			if (thickness != null) {
+				processing.setAbsScaling(absScaling / thickness);
+				bgProcessing.setAbsScaling(absScaling / thickness);
+			} else {
+				processing.setAbsScaling(absScaling);
+				bgProcessing.setAbsScaling(absScaling);
+			}
+		}
+		processing.setNormChannel(normChannel);
+		bgProcessing.setNormChannel(normChannel);
+
 		// Process background
 		IHierarchicalDataFile dawbReader = null;
 		IHierarchicalDataFile dawbWriter = null;
@@ -243,42 +281,6 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			}
 		}
 	
-		//finish setting normalization parameters now that we have the raw file
-		Double fileThickness = readSampleThickness(inputfilePath, inputfileExtension);
-		
-		//set normalization parameters now that we have the raw file
-		int normChannel = -1;
-		Double absScaling = null;
-		Double thickness = null;
-		
-		if (flags.isEnableNormalisation()) {
-			absScaling = context.getAbsScaling();
-
-			if (context.isUseFormSampleThickness() && context.getSampleThickness() != null) {
-				thickness = context.getSampleThickness();
-			}
-			else if (fileThickness != null) {
-				thickness = fileThickness;
-			}
-			else {
-				thickness = 1.0;
-			}
-			
-			NcdDetectorSettings scalerData = context.getScalerData();
-			if (scalerData != null) {
-				normChannel = scalerData.getNormChannel();
-			}
-		}
-		
-		if (absScaling != null) {
-			if (thickness != null) {
-				processing.setAbsScaling(absScaling / thickness);
-			} else {
-				processing.setAbsScaling(absScaling);
-			}
-		}
-		processing.setNormChannel(normChannel);
-
 		if (ignoreInputFile(context, inputfilePath, inputfileExtension)) {
 			return new Status(IStatus.WARNING, "uk.ac.diamond.scisoft.ncd", "Input file '"+inputfilePath+" is invalid but other files may still be processed.");
 		}
