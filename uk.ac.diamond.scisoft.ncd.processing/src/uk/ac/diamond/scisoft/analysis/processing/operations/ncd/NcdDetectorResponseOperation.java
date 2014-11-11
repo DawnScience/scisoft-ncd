@@ -73,6 +73,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 
 		Dataset myres = new FloatDataset(mydata, slice.getShape());
 		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
+		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;
 	}

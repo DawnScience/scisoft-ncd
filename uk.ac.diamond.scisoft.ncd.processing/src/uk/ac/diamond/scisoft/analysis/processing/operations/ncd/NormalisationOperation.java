@@ -96,6 +96,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 
 		Dataset myres = new FloatDataset(mydata, slice.getShape());
 		myres.setError(new DoubleDataset(myerrors, slice.getShape()));
+		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;
 		

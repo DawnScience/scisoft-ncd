@@ -87,6 +87,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		bgDataset.setError(bgErrorDataset);
 
 		OperationData toReturn = new OperationData();
+		copyMetadata(slice, bgDataset);
 		toReturn.setData(bgDataset);
 		return toReturn;
 	}
