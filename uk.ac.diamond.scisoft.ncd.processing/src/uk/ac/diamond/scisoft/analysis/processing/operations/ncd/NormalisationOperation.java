@@ -9,6 +9,10 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.util.Arrays;
+import java.util.List;
+
+import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
@@ -78,8 +82,8 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 			throw new OperationException(this, e);
 		}
 		OriginMetadata origin = getOriginMetadata(slice);
-		Slice[] newInitialSlice = getSmallerSlice(origin.getInitialSlice());
-		Slice[] newCurrentSlice = getSmallerSlice(origin.getCurrentSlice());
+		Slice[] newInitialSlice = getSmallerSlice(origin.getInitialSlice(), ArrayUtils.toObject(origin.getDataDimensions()));
+		Slice[] newCurrentSlice = getSmallerSlice(origin.getCurrentSlice(), ArrayUtils.toObject(origin.getDataDimensions()));
 		Dataset calibrationSlice = (Dataset) calibration.getSliceView(newInitialSlice).getSlice(newCurrentSlice);
 		
 		if (errors == null) {
@@ -102,14 +106,16 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		
 	}
 	
-	private Slice[] getSmallerSlice(Slice[] modifiedSlice) {
-		Slice[] newSlice = new Slice[modifiedSlice.length-1];
+	private Slice[] getSmallerSlice(Slice[] modifiedSlice, Integer[] dataDimensionsToRemove) {
+		Slice[] newSlice = new Slice[modifiedSlice.length-dataDimensionsToRemove.length];
 		int index = 0;
+		List<Integer> dataDimensionsToRemoveArray = Arrays.asList(dataDimensionsToRemove);
 		for (Slice slice: modifiedSlice) {
-			newSlice[index++] = slice;
-			if (index == modifiedSlice.length - 1) {
-				break;
+			if (dataDimensionsToRemoveArray.contains(index)) {
+				index++;
+				continue;
 			}
+			newSlice[index++] = slice;
 		}
 		return newSlice;
 	}
