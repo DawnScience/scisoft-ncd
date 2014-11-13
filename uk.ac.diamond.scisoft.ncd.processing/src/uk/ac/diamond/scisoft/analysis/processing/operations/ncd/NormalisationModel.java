@@ -26,9 +26,6 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
 	private String filePath = "";
 
-	@OperationModelField(hint="File containing thickness data (original data file)",file = FileType.EXISTING_FILE, label = "Thickness file" )
-	private String originalDataFilePath = "";
-
 	@OperationModelField(hint="Thickness (mm)", label = "Thickness of sample" )
 	private double thickness = 0;
 
@@ -65,14 +62,6 @@ public class NormalisationModel extends AbstractOperationModel {
 
 	public void setCalibChannel(int calibChannel) {
 		this.calibChannel = calibChannel;
-	}
-
-	public void setOriginalDataFilePath(String originalDataFilePath) {
-		this.originalDataFilePath = originalDataFilePath;
-	}
-
-	public String getOriginalDataFilePath() {
-		return originalDataFilePath;
 	}
 
 	public double getThickness() {
