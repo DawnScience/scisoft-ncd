@@ -18,7 +18,7 @@ public class NexusNcdMetadataReaderTest {
 	public void testReader() throws Exception {
 		NexusNcdMetadataReader reader = new NexusNcdMetadataReader();
 		reader.setDetectorName("detector");
-		reader.setFilePath("/scratch/rbv51579/dawn_trunk_git/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.core.test/data/b21-15008.reduced.nxs");
+		reader.setFilePath("/scratch/rbv51579/dawn_trunk_git/scisoft-ncd.git/uk.ac.diamond.scisoft.ncd.core.test/data/b21-15930.reduced.nxs");
 		reader.getMaskFromFile();
 		reader.getROIDataFromFile();
 	}
