@@ -51,9 +51,9 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
-		double normValue = model.getNormValue();
+		double absScale = model.getAbsScale();
 		if (model.isUseThisThickness() && model.getThickness() != 0) {
-			normValue /= model.getThickness();
+			absScale /= model.getThickness();
 		}
 		else {
 			//use value from dataset if > 0
@@ -66,11 +66,11 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 				throw new OperationException(this, e);
 			}
 			if (thickness > 0) {
-				normValue /= thickness;
+				absScale /= thickness;
 			}
 		}
 
-		norm.setNormvalue(normValue);
+		norm.setNormvalue(absScale);
 		Dataset errors = (Dataset) slice.getError();
 		Dataset data = (Dataset) slice.getSliceView();
 		

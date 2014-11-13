@@ -14,8 +14,8 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(hint="Normalisation scaling value",max=1e10,label = "Normalisation value" )
-	private double normValue = 1;
+	@OperationModelField(hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
+	private double absScale = 1;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
 	private int calibChannel;
@@ -48,12 +48,12 @@ public class NormalisationModel extends AbstractOperationModel {
 		firePropertyChange("calibDataPath", this.calibDataPath, this.calibDataPath = calibDataPath);
 	}
 
-	public double getNormValue() {
-		return normValue;
+	public double getAbsScale() {
+		return absScale;
 	}
 
-	public void setNormValue(double normValue) {
-		this.normValue = normValue;
+	public void setAbsScale(double absScale) {
+		this.absScale = absScale;
 	}
 
 	public int getCalibChannel() {
