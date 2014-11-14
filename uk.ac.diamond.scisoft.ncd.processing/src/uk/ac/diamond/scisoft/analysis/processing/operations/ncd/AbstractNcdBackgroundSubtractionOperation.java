@@ -38,9 +38,15 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
-		
+		String fileToRead = "";
+		if (model.isUseCurrentFileForBackground()) {
+			fileToRead = getOriginMetadata(slice).getFilePath();
+		}
+		else {
+			fileToRead = model.getFilePath();
+		}
 		try {
-			background = LoaderFactory.getDataSet(model.getFilePath(), getDataPath(), null);
+			background = LoaderFactory.getDataSet(fileToRead, getDataPath(), null);
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}

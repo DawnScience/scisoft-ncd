@@ -17,7 +17,18 @@ public class NcdBackgroundSubtractionModel extends AbstractOperationModel {
 		firePropertyChange("filePath", this.filePath, this.filePath = filePath);
 	}
 
-	@OperationModelField(hint="Value to scale the background data", label = "Background scale" )
+	@OperationModelField(hint="Use the current data file as the background", label = "Use Current Data File for Background" )
+	private boolean useCurrentFileForBackground = false;
+
+	public boolean isUseCurrentFileForBackground() {
+		return useCurrentFileForBackground;
+	}
+
+	public void setUseCurrentFileForBackground(boolean useCurrentFileForBackground) {
+		this.useCurrentFileForBackground = useCurrentFileForBackground;
+	}
+
+	@OperationModelField(hint="Value to scale the background data", label = "Background Scale" )
 	private double bgScale;
 
 	public double getBgScale() {
