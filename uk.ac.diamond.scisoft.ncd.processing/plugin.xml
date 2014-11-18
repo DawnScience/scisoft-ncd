@@ -14,6 +14,15 @@
       </operation>
       <operation
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+            class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.Normalisation2dOperation"
+            description="Normalisation of 2d datasets with errors"
+            icon="icons/ncdnorm.png"
+            id="uk.ac.diamond.scisoft.analysis.processing.Normalisation2d"
+            model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationModel"
+            name="Normalisation of 2-d Images for NCD">
+      </operation>
+      <operation
+            category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseOperation"
             description="Flat field detector response operation"
             icon="icons/ncddetresp.png"
