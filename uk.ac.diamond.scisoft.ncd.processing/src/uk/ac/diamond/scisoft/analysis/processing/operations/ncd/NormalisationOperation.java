@@ -75,8 +75,20 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		Dataset data = (Dataset) slice.getSliceView();
 		
 		IDataset calibration;
+		String calibDataFile;
+		if (model.isUseCurrentDataForCalibration()) {
+			calibDataFile = getOriginMetadata(slice).getFilePath();
+		}
+		else {
+			calibDataFile = model.getFilePath();
+		}
+
+		if (calibDataFile == null || calibDataFile.isEmpty()) {
+			throw new OperationException(this, new Exception("Calibration data file must be defined"));
+		}
+
 		try {
-			calibration = LoaderFactory.getDataSet(model.getFilePath(), model.getCalibDataPath(), null);
+			calibration = LoaderFactory.getDataSet(calibDataFile, model.getCalibDataPath(), null);
 			if (calibration == null) {
 				throw new Exception("Dataset not found: " + model.getCalibDataPath());
 			}

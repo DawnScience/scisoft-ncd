@@ -26,6 +26,9 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
 	private String filePath = "";
 
+	@OperationModelField(hint="If true, calibration data will be extracted from the current data file. If false, data will be from the calibration file defined here", label = "Calibration file is current data file")
+	private boolean useCurrentDataForCalibration = true;
+
 	@OperationModelField(hint="Thickness (mm)", label = "Thickness of sample" )
 	private double thickness = 0;
 
@@ -46,6 +49,14 @@ public class NormalisationModel extends AbstractOperationModel {
 
 	public void setCalibDataPath(String calibDataPath) {
 		firePropertyChange("calibDataPath", this.calibDataPath, this.calibDataPath = calibDataPath);
+	}
+
+	public boolean isUseCurrentDataForCalibration() {
+		return useCurrentDataForCalibration;
+	}
+
+	public void setUseCurrentDataForCalibration(boolean useCurrentDataForCalibration) {
+		this.useCurrentDataForCalibration = useCurrentDataForCalibration;
 	}
 
 	public double getAbsScale() {
