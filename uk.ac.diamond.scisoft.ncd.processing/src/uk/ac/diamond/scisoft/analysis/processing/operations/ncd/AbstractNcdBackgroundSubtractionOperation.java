@@ -51,36 +51,40 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
-			Dataset backgroundErrors = ((Dataset) background).getErrorBuffer();
-			if (backgroundErrors == null) {
-				backgroundErrors = (Dataset) background.getSlice();
-			}
-			((Dataset)background).setErrorBuffer(backgroundErrors);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
 		
-		if (model.getBgScale() != 0 && model.getBgScale() != Double.NaN) {
-			double bgScaling = model.getBgScale();
-			((FloatDataset)background).imultiply(bgScaling);
-			DoubleDataset bgErrors = (DoubleDataset) ((Dataset) background).getErrorBuffer();
-			bgErrors.imultiply(bgScaling * bgScaling);
-			((Dataset)background).setErrorBuffer(bgErrors);
-		}
-		
-		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
+		Dataset bgSlice;
 		try {
 			OriginMetadata origin = getOriginMetadata(slice);
 			ILazyDataset originParent = origin.getParent();
 			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
 				throw new Exception("Data and background shapes must match");
 			}
-			Dataset bgSlice = (Dataset)background.getSliceView(origin.getInitialSlice()).getSlice(origin.getCurrentSlice());
-			bgSubtraction.setBackground(bgSlice);
+			bgSlice = (Dataset)background.getSliceView(origin.getInitialSlice()).getSlice(origin.getCurrentSlice());
+			
+			Dataset backgroundErrors = ((Dataset) background).getErrorBuffer();
+			if (backgroundErrors == null) {
+				backgroundErrors = (Dataset) background.getSlice();
+			}
+			bgSlice.setErrorBuffer(backgroundErrors);
+
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
+		
+		if (model.getBgScale() != 0 && model.getBgScale() != Double.NaN) {
+			double bgScaling = model.getBgScale();
+			bgSlice.imultiply(bgScaling);
+			DoubleDataset bgErrors = (DoubleDataset) bgSlice.getErrorBuffer();
+			bgErrors.imultiply(bgScaling * bgScaling);
+			bgSlice.setErrorBuffer(bgErrors);
+		}
+		
+		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
+		bgSubtraction.setBackground(bgSlice);
 
 		Dataset error = (Dataset) slice.getError();
 		if (error == null) {
@@ -108,7 +112,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	 * @return
 	 * @throws Exception
 	 */
-	private ILazyDataset getDataset(String fileToRead) throws Exception {
+	private IDataset getDataset(String fileToRead) throws Exception {
 		List<String> placesToTry = Arrays.asList(getDataPath(), "/entry/result/data");
 		IDataset toReturn = null;
 		for (String location : placesToTry) {
