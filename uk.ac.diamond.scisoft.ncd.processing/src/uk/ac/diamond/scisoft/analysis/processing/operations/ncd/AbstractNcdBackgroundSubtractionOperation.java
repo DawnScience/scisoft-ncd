@@ -10,6 +10,7 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
@@ -46,7 +47,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			fileToRead = model.getFilePath();
 		}
 		try {
-			background = LoaderFactory.getDataSet(fileToRead, getDataPath(), null);
+			background = (IDataset) getDataset(fileToRead);
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
@@ -98,6 +99,24 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		OperationData toReturn = new OperationData();
 		copyMetadata(slice, bgDataset);
 		toReturn.setData(bgDataset);
+		return toReturn;
+	}
+	
+	/**
+	 * Check /entry/result/data in case this is a file from created from the Processing pipeline
+	 * @param fileToRead
+	 * @return
+	 * @throws Exception
+	 */
+	private ILazyDataset getDataset(String fileToRead) throws Exception {
+		List<String> placesToTry = Arrays.asList(getDataPath(), "/entry/result/data");
+		IDataset toReturn = null;
+		for (String location : placesToTry) {
+			toReturn = LoaderFactory.getDataSet(fileToRead, location, null);
+			if (toReturn != null) {
+				break;
+			}
+		}
 		return toReturn;
 	}
 
