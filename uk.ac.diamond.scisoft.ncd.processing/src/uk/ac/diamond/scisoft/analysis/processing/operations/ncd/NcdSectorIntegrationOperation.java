@@ -20,7 +20,6 @@ import javax.measure.unit.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -34,7 +33,6 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.jscience.physics.amount.Amount;
 
@@ -96,14 +94,16 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		}
 		
 		Dataset maskDataset = (Dataset) mask.get(0).getMask().getSlice();
-		Dataset sliceDataset = (Dataset) slice.getSlice(new Slice());
+		Dataset sliceDataset = (Dataset) slice.getSliceView();
 		
 		sliceDataset.resize(NcdOperationUtils.addDimension(sliceDataset.getShape()));
-		Dataset newSliceDataset = new IntegerDataset(((IntegerDataset)sliceDataset).getData(), sliceDataset.getShape()); //remove metadata so there won't be any checking
+		Dataset sliceErrors = sliceDataset.getError();
+		sliceDataset.clearMetadata(null);
+		sliceDataset.setError(sliceErrors);
 		if (!sliceDataset.hasErrors()) {
 			// Use counting statistics if no input error estimates are available 
-			DoubleDataset inputErrorsBuffer = new DoubleDataset(newSliceDataset);
-			newSliceDataset.setErrorBuffer(inputErrorsBuffer);
+			DoubleDataset inputErrorsBuffer = new DoubleDataset(sliceDataset);
+			sliceDataset.setErrorBuffer(inputErrorsBuffer);
 		}
 		
 		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, (SectorROI) model.getRegion(), true, false, false);
@@ -112,7 +112,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		sec.setCalculateRadial(true);
 		sec.setROI((SectorROI)model.getRegion());
 		
-		Dataset[] mydata = sec.process(newSliceDataset, 1, maskDataset);
+		Dataset[] mydata = sec.process(sliceDataset, 1, maskDataset);
 		int resLength = slice.getShape().length - dimension + 1;
 
 		Dataset myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
