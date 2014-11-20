@@ -14,6 +14,7 @@ import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -33,7 +34,7 @@ import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
  */
 public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractionModel> extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
 	
-	public IDataset background;
+	public ILazyDataset background;
 	
 	public abstract String getDataPath();
 	
@@ -47,7 +48,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			fileToRead = model.getFilePath();
 		}
 		try {
-			background = (IDataset) getDataset(fileToRead);
+			background = getDataset(fileToRead);
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
@@ -65,7 +66,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			}
 			bgSlice = (Dataset)background.getSliceView(origin.getInitialSlice()).getSlice(origin.getCurrentSlice());
 			
-			Dataset backgroundErrors = ((Dataset) background).getErrorBuffer();
+			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {
 				backgroundErrors = (Dataset) background.getSlice();
 			}
@@ -112,11 +113,12 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	 * @return
 	 * @throws Exception
 	 */
-	private IDataset getDataset(String fileToRead) throws Exception {
+	private ILazyDataset getDataset(String fileToRead) throws Exception {
 		List<String> placesToTry = Arrays.asList(getDataPath(), "/entry/result/data");
-		IDataset toReturn = null;
+		ILazyDataset toReturn = null;
 		for (String location : placesToTry) {
-			toReturn = LoaderFactory.getDataSet(fileToRead, location, null);
+			IDataHolder holder = LoaderFactory.getData(fileToRead);
+			toReturn = holder.getLazyDataset(location);
 			if (toReturn != null) {
 				break;
 			}
