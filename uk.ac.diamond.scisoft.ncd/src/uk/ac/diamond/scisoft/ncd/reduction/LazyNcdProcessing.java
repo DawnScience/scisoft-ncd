@@ -52,6 +52,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
+import org.eclipse.dawnsci.analysis.dataset.impl.SliceND;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
@@ -463,8 +464,8 @@ public class LazyNcdProcessing {
 		Arrays.fill(start, 0);
 		Arrays.fill(step, 1);
 		step[sliceDim] = sliceSize;
-		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
-		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
+		SliceND slice = new SliceND(iter_array, null, iter_array, step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), slice);
 		
 		if (flags.isEnableSector() && dim == 2) {
 			ArrayList<Job> sectorJobList = new ArrayList<Job>();
