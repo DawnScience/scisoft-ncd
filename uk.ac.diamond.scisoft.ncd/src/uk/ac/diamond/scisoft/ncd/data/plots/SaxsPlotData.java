@@ -33,6 +33,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
+import org.eclipse.dawnsci.analysis.dataset.impl.SliceND;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -59,16 +60,14 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		H5.H5Tclose(type);
 		
     	SliceSettings sliceSettings = new SliceSettings(frames, frames.length - 2, 1);
-		int[] start = new int[frames_int.length];
 		int[] step = new int[frames_int.length];
-		Arrays.fill(start, 0);
 		Arrays.fill(step, 1);
 		step[step.length - 1] = frames_int[frames_int.length - 1];
-		int[] newShape = AbstractDataset.checkSlice(frames_int, start, frames_int, start, frames_int, step);
-		IndexIterator iter = new SliceIterator(frames_int, AbstractDataset.calcSize(frames_int), start, step, newShape);
+		SliceND slice = new SliceND(frames_int, null, frames_int, step);
+		IndexIterator iter = new SliceIterator(frames_int, AbstractDataset.calcSize(frames_int), slice);
+		int[] pos = iter.getPos();
 		while (iter.hasNext()) {
-			int[] slice = iter.getPos();
-			sliceSettings.setStart(slice);
+			sliceSettings.setStart(pos);
 			Dataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids).squeeze();
 			Dataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids).squeeze();
 			data_slice.setError(errors_slice);

@@ -68,7 +68,7 @@ public class NcdNexusUtilsTest {
 			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
 		}
 
-		inputPath = testFileFolder + "/NCDReductionTest/i22-24139.nxs";
+		inputPath = testFileFolder + "NCDReductionTest/i22-24139.nxs";
 		
 		Tree tmpfile = new HDF5Loader(inputPath).loadTree();
 		GroupNode node = (GroupNode) tmpfile.findNodeLink("/entry1/Rapid2D").getDestination();

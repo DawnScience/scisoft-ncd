@@ -133,9 +133,9 @@ public class NcdProcessingModelTest {
 			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
 		}
 
-		Path bgPath = new Path(testFileFolder + "/NCDReductionTest/i22-24132.nxs");
-		Path drPath = new Path(testFileFolder + "/NCDReductionTest/i22-24125.nxs");
-		Path inputPath = new Path(testFileFolder + "/NCDReductionTest/i22-24139.nxs");
+		Path bgPath = new Path(testFileFolder + "NCDReductionTest/i22-24132.nxs");
+		Path drPath = new Path(testFileFolder + "NCDReductionTest/i22-24125.nxs");
+		Path inputPath = new Path(testFileFolder + "NCDReductionTest/i22-24139.nxs");
 
 		FileInputStream inFile = new FileInputStream(inputPath.toOSString());
 		FileOutputStream outFile = new FileOutputStream(filename);

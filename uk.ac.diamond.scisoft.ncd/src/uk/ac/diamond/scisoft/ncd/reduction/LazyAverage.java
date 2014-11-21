@@ -34,6 +34,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
+import org.eclipse.dawnsci.analysis.dataset.impl.SliceND;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -116,12 +117,10 @@ public class LazyAverage extends LazyDataReduction {
 		
 		// Loop over dimensions that aren't averaged
 		int[] iter_array = Arrays.copyOf(framesAve_int, framesAve_int.length);
-		int[] start = new int[iter_array.length];
 		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
-		Arrays.fill(start, 0);
 		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
-		int[] newShape = AbstractDataset.checkSlice(iter_array, start, iter_array, start, iter_array, step);
-		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), start, step, newShape);
+		SliceND slice = new SliceND(iter_array, null, iter_array, step);
+		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), slice);
 		
 		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
@@ -158,8 +157,8 @@ public class LazyAverage extends LazyDataReduction {
 				}
 			}
 			
-			newShape = AbstractDataset.checkSlice(data_stop, data_start, data_stop, data_start, data_stop, data_step);
-			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), data_start, data_step, newShape);
+			slice = new SliceND(data_stop, data_start, data_stop, data_step);
+			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), slice);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			Dataset ave_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
