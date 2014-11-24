@@ -9,6 +9,13 @@
 
 package uk.ac.diamond.scisoft.ncd.processing;
 
+import java.util.List;
+
+import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+
+import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+
 public class NcdOperationUtils {
 	/**
 	 * Add a dimension of 1 to account for slicing of original data in the Processing pipeline
@@ -23,5 +30,24 @@ public class NcdOperationUtils {
 			dataShape[index++] = dimension;
 		}
 		return dataShape;
+	}
+	
+	/**
+	 * Check existing paths list, then /entry/result/data in case this is a file from created from the Processing pipeline.
+	 * @param fileToRead
+	 * @return
+	 * @throws Exception
+	 */
+	public static ILazyDataset getDataset(String fileToRead, List<String> dataPathsToTry) throws Exception {
+		dataPathsToTry.add("/entry/result/data");
+		ILazyDataset toReturn = null;
+		for (String location : dataPathsToTry) {
+			IDataHolder holder = LoaderFactory.getData(fileToRead);
+			toReturn = holder.getLazyDataset(location);
+			if (toReturn != null) {
+				break;
+			}
+		}
+		return toReturn;
 	}
 }

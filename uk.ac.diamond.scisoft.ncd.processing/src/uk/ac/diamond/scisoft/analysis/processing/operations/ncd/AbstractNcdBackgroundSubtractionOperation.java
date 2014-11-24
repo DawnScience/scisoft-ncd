@@ -9,12 +9,11 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -24,8 +23,8 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 
-import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 /**
  * Run the NCD background subtraction code.
@@ -38,6 +37,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	
 	public abstract String getDataPath();
 	
+	@SuppressWarnings("serial")
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		String fileToRead = "";
@@ -48,7 +48,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			fileToRead = model.getFilePath();
 		}
 		try {
-			background = getDataset(fileToRead);
+			background = NcdOperationUtils.getDataset(fileToRead, new ArrayList<String>(){{add(getDataPath());}});
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
@@ -104,25 +104,6 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		OperationData toReturn = new OperationData();
 		copyMetadata(slice, bgDataset);
 		toReturn.setData(bgDataset);
-		return toReturn;
-	}
-	
-	/**
-	 * Check /entry/result/data in case this is a file from created from the Processing pipeline
-	 * @param fileToRead
-	 * @return
-	 * @throws Exception
-	 */
-	private ILazyDataset getDataset(String fileToRead) throws Exception {
-		List<String> placesToTry = Arrays.asList(getDataPath(), "/entry/result/data");
-		ILazyDataset toReturn = null;
-		for (String location : placesToTry) {
-			IDataHolder holder = LoaderFactory.getData(fileToRead);
-			toReturn = holder.getLazyDataset(location);
-			if (toReturn != null) {
-				break;
-			}
-		}
 		return toReturn;
 	}
 
