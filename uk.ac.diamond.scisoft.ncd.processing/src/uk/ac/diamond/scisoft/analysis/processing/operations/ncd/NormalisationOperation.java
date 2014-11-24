@@ -62,7 +62,11 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 			try {
 
 				String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-				thickness = LoaderFactory.getDataSet(dataFile, "/entry1/sample/thickness", null).getDouble();
+				IDataset thicknessDataset = LoaderFactory.getDataSet(dataFile, "/entry1/sample/thickness", null);
+				if (thicknessDataset == null) {
+					throw new IllegalArgumentException("File does not contain the required thickness information");
+				}
+				thickness = thicknessDataset.getDouble();
 			} catch (Exception e) {
 				throw new OperationException(this, e);
 			}
