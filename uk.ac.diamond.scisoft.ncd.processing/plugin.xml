@@ -64,6 +64,7 @@
              name="NCD Background Subtraction for Integrated Frames">
        </operation>
        <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GuinierOperation"
              description="Calculate Guinier plot and derived Rg and range, I0"
              id="uk.ac.diamond.scisoft.analysis.processing.Guinier"
