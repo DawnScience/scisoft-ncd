@@ -9,6 +9,8 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.util.ArrayList;
+
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
@@ -21,7 +23,6 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 
-import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
@@ -48,11 +49,12 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		DetectorResponse response = new DetectorResponse();
 		try {
-			IDataset loadedSet = LoaderFactory.getDataSet(model.getFilePath(), "/entry1/instrument/detector/data", null).squeeze();
+			@SuppressWarnings("serial")
+			IDataset loadedSet = (IDataset) NcdOperationUtils.getDataset(model.getFilePath(), new ArrayList<String>() {{add("/entry1/instrument/detector/data");}});;
 			if (loadedSet == null) {
 				throw new Exception("No detector response dataset found");
 			}
-			response.setResponse((Dataset)loadedSet.getSlice());
+			response.setResponse((Dataset)loadedSet.squeeze().getSlice());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
