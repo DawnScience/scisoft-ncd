@@ -45,10 +45,10 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 		try {
 			axisSlice = slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0];
 			if (axisSlice == null) {
-				throw new OperationException(this, new Exception("No axes found"));
+				throw new Exception("No axes found");
 			}
 		} catch (Exception e) {
-			throw new OperationException(this, new Exception("problem while getting axis metadata"));
+			throw new OperationException(this, new Exception("problem while getting axis metadata", e));
 		}
 		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
 
