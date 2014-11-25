@@ -23,6 +23,9 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="Location of calibration data in Nexus file", label = "Calibration data location" )
 	private String calibDataPath = "";
 
+	@OperationModelField(hint="If true, calibration data will be extracted from the default location, /entry1/It/data. If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
+	private boolean useDefaultPathForCalibration = true;
+
 	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
 	private String filePath = "";
 
@@ -49,6 +52,14 @@ public class NormalisationModel extends AbstractOperationModel {
 
 	public void setCalibDataPath(String calibDataPath) {
 		firePropertyChange("calibDataPath", this.calibDataPath, this.calibDataPath = calibDataPath);
+	}
+
+	public boolean isUseDefaultPathForCalibration() {
+		return useDefaultPathForCalibration;
+	}
+
+	public void setUseDefaultPathForCalibration(boolean useDefaultPathForCalibration) {
+		this.useDefaultPathForCalibration = useDefaultPathForCalibration;
 	}
 
 	public boolean isUseCurrentDataForCalibration() {

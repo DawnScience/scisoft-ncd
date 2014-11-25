@@ -87,10 +87,22 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 			throw new OperationException(this, new Exception("Calibration data file must be defined"));
 		}
 
+		String calibDataPath;
+		if (model.isUseDefaultPathForCalibration()) {
+			calibDataPath = "/entry1/It/data";
+		}
+		else {
+			if (model.getCalibDataPath() != null || model.getCalibDataPath().isEmpty()) {
+				calibDataPath = model.getCalibDataPath();
+			}
+			else {
+				throw new IllegalArgumentException("Calibration default path not used, but no data path defined");
+			}
+		}
 		try {
-			calibration = LoaderFactory.getDataSet(calibDataFile, model.getCalibDataPath(), null);
+			calibration = LoaderFactory.getDataSet(calibDataFile, calibDataPath, null);
 			if (calibration == null) {
-				throw new Exception("Dataset not found: " + model.getCalibDataPath());
+				throw new Exception("Dataset not found: " + calibDataPath);
 			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);
