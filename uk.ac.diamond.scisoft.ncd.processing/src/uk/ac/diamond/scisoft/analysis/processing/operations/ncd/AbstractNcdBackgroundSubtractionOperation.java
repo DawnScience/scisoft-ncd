@@ -25,6 +25,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 /**
@@ -53,6 +54,8 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
+			IDataset newBackground = ((Dataset)background).getByIndexes(NcdDataUtils.createSliceList(model.getImageSelectionString(), background.getShape()));
+			newBackground.clone(); //TODO just do something so that we have the values
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
