@@ -68,6 +68,7 @@
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GuinierOperation"
              description="Calculate Guinier plot and derived Rg and range, I0"
              id="uk.ac.diamond.scisoft.analysis.processing.Guinier"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="Guinier calculation">
        </operation>
        <category
