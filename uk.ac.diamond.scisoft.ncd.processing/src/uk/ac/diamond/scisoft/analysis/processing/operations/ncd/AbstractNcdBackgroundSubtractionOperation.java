@@ -23,6 +23,7 @@ import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
@@ -54,8 +55,34 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
-			IDataset newBackground = ((Dataset)background).getByIndexes(NcdDataUtils.createSliceList(model.getImageSelectionString(), background.getShape()));
-			newBackground.clone(); //TODO just do something so that we have the values
+			
+			//find the frame axis
+			int[] dataDimensions = getOriginMetadata(slice).getDataDimensions();
+			int frameAxis = 0;
+			for (int i=0; i < background.getShape().length; ++i) {
+				int axis = background.getShape()[i];
+				if (axis == 1) continue;
+				boolean skipFrameAxisSet = false;
+				for (int dataDim : dataDimensions) {
+					if (axis == dataDim) {
+						skipFrameAxisSet = true;
+						continue;
+					}
+				}
+				if (!skipFrameAxisSet) {
+					frameAxis = i;
+					break;
+				}
+			}
+			
+			//get the data from the given selection along the frame axis
+			int[] bgShape = new int[] {background.getShape()[frameAxis]};
+			ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(model.getImageSelectionString(), bgShape);
+			IntegerDataset sliceDataset = new IntegerDataset(sliceList.get(0), sliceList.get(0).length);
+			Dataset bgDataset = (Dataset) background.getSlice();
+			Object[] args = new Object[background.getShape().length];
+			args[frameAxis] = sliceDataset;
+			background = (IDataset) bgDataset.getByIndexes(args);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
