@@ -72,7 +72,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			
 			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {
-				backgroundErrors = (Dataset) background.getSlice();
+				backgroundErrors = bgSlice.getSlice();
 			}
 			bgSlice.setErrorBuffer(backgroundErrors);
 
