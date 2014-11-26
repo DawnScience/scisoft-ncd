@@ -71,6 +71,13 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="Guinier calculation">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsDataStats"
+             id="uk.ac.diamond.scisoft.analysis.processing.SaxsDataStats"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsDataStatsModel"
+             name="SAXS Filtering">
+       </operation>
        <category
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              name="NCD">
