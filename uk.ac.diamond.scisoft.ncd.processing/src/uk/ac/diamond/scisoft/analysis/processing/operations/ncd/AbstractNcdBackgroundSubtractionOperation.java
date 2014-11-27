@@ -19,6 +19,7 @@ import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
+import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
@@ -42,7 +43,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		String fileToRead = "";
 		if (model.isUseCurrentFileForBackground()) {
-			fileToRead = getOriginMetadata(slice).getFilePath();
+			fileToRead = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
 		}
 		else {
 			fileToRead = model.getFilePath();
@@ -59,12 +60,12 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
 		Dataset bgSlice;
 		try {
-			OriginMetadata origin = getOriginMetadata(slice);
-			ILazyDataset originParent = origin.getParent();
+			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
+			ILazyDataset originParent = ssm.getSourceInfo().getParent();
 			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
 				throw new Exception("Data and background shapes must match");
 			}
-			bgSlice = (Dataset)background.getSliceView(origin.getInitialSlice()).getSlice(origin.getCurrentSlice());
+			bgSlice = (Dataset)background.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
 			
 			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {

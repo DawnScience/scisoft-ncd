@@ -21,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
+import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
@@ -59,8 +60,8 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 			//use value from dataset if > 0
 			double thickness;
 			try {
-				OriginMetadata origin = getOriginMetadata(slice);
-				String dataFile = origin.getFilePath();
+
+				String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
 				thickness = LoaderFactory.getDataSet(dataFile, "/entry1/sample/thickness", null).getDouble();
 			} catch (Exception e) {
 				throw new OperationException(this, e);
@@ -77,7 +78,7 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		IDataset calibration;
 		String calibDataFile;
 		if (model.isUseCurrentDataForCalibration()) {
-			calibDataFile = getOriginMetadata(slice).getFilePath();
+			calibDataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
 		}
 		else {
 			calibDataFile = model.getFilePath();
@@ -107,9 +108,9 @@ public class NormalisationOperation extends AbstractOperation<NormalisationModel
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
-		OriginMetadata origin = getOriginMetadata(slice);
-		Slice[] newInitialSlice = getSmallerSlice(origin.getInitialSlice(), ArrayUtils.toObject(origin.getDataDimensions()));
-		Slice[] newCurrentSlice = getSmallerSlice(origin.getCurrentSlice(), ArrayUtils.toObject(origin.getDataDimensions()));
+		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
+		Slice[] newInitialSlice = getSmallerSlice(ssm.getSliceInfo().getViewSlice(), ArrayUtils.toObject(ssm.getShapeInfo().getDataDimensions()));
+		Slice[] newCurrentSlice = getSmallerSlice(ssm.getSliceInfo().getCurrentSlice(), ArrayUtils.toObject(ssm.getShapeInfo().getDataDimensions()));
 		Dataset calibrationSlice = (Dataset) calibration.getSliceView(newInitialSlice).getSlice(newCurrentSlice);
 		
 		if (errors == null) {
