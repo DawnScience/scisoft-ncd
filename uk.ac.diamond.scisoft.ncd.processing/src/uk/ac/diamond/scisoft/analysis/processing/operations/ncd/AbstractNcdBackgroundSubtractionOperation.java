@@ -11,21 +11,20 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
+import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
+import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
@@ -66,22 +65,12 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			if (toAdd>0) {
 				selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
 			}
-			List<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, background.getShape());
-			List<IntegerDataset> sliceDatasetList = new ArrayList<IntegerDataset>();
-			for (int[] slice1 : sliceList) {
-				sliceDatasetList.add(new IntegerDataset(slice1, slice1.length));
-			}
-			Object[] sets = new ILazyDataset[sliceDatasetList.size()];
-			int index = 0;
-			for (IntegerDataset sliceDataset : sliceDatasetList) {
-				if (sliceDataset.getSize() != background.getShape()[index]) {
-					sets[index++] = sliceDataset;
-				}
-				else {
-					index++;
-				}
-			}
-			backgroundToProcess = ((Dataset)background.getSlice()).getByIndexes(sets);
+			int[] reshaped = Arrays.copyOf(background.getShape(), background.getShape().length - slice.getShape().length);
+			ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, reshaped);
+			ArrayList<int[]> combinations = NcdDataUtils.generateCombinations(sliceList);
+		
+			backgroundToProcess = (IDataset) getByCombinations(background.getSliceView(), combinations).getSlice();
+			
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
@@ -137,4 +126,17 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		return toReturn;
 	}
 
+	private ILazyDataset getByCombinations(ILazyDataset data, ArrayList<int[]> combinations) throws Exception {
+		ILazyDataset[] toReturn = new ILazyDataset[combinations.size()];
+		int i=0;
+		for (int[] combo : combinations) {
+			Slice[] sliceList = new Slice[combo.length];
+			for (int i1=0; i1<combo.length; ++i1){
+				sliceList[i1] = new Slice(combo[i1], combo[i1]+1);
+			}
+			toReturn[i++] = data.getSlice(sliceList);
+		}
+		AggregateDataset agg = new AggregateDataset(false, toReturn);
+		return agg;
+	}
 }
