@@ -32,7 +32,6 @@
 				<pathelement location="${workspace.git.loc}/dawn-isencia.git/com.isencia.passerelle.commons/target/classes" />
 				<pathelement location="${workspace.git.loc}/dawn-isencia.git/com.isencia.passerelle.domain.et/target/classes" />
 				<pathelement location="${workspace.git.loc}/dawn-isencia.git/com.isencia.passerelle.engine/target/classes" />
-				<pathelement location="${workspace.git.loc}/dawn-isencia.git/com.isencia.passerelle.resources/target/classes" />
 				<pathelement location="${workspace.git.loc}/dawn-isencia.git/com.isencia.passerelle.runtime/target/classes" />
 				<pathelement location="${workspace.git.loc}/dawn-isenciaui.git/com.isencia.passerelle.workbench.model.editor.ui/target/classes" />
 				<pathelement location="${workspace.git.loc}/dawn-common.git/org.dawb.common.services/bin" />
