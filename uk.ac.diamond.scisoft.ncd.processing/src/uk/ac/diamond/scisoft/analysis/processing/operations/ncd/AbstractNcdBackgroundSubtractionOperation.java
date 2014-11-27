@@ -40,6 +40,8 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	
 	public ILazyDataset background;
 	
+	public IDataset backgroundToProcess;
+	
 	public abstract String getDataPath();
 	
 	@SuppressWarnings("serial")
@@ -79,7 +81,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 					index++;
 				}
 			}
-			background = ((Dataset)background.getSlice()).getByIndexes(sets);
+			backgroundToProcess = ((Dataset)background.getSlice()).getByIndexes(sets);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
