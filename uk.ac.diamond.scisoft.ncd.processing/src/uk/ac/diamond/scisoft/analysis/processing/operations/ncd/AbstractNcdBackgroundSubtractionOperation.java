@@ -11,7 +11,9 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
+import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.metadata.OriginMetadata;
@@ -56,33 +58,28 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				throw new Exception("No background dataset found");
 			}
 			
-			//find the frame axis
-			int[] dataDimensions = getOriginMetadata(slice).getDataDimensions();
-			int frameAxis = 0;
-			for (int i=0; i < background.getShape().length; ++i) {
-				int axis = background.getShape()[i];
-				if (axis == 1) continue;
-				boolean skipFrameAxisSet = false;
-				for (int dataDim : dataDimensions) {
-					if (axis == dataDim) {
-						skipFrameAxisSet = true;
-						continue;
-					}
+			//append ; to fill out the dimensions for image selection
+			String selectionString = model.getImageSelectionString();
+			int toAdd= background.getShape().length - 1 - model.getImageSelectionString().split(";").length;
+			if (toAdd>0) {
+				selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
+			}
+			List<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, background.getShape());
+			List<IntegerDataset> sliceDatasetList = new ArrayList<IntegerDataset>();
+			for (int[] slice1 : sliceList) {
+				sliceDatasetList.add(new IntegerDataset(slice1, slice1.length));
+			}
+			Object[] sets = new ILazyDataset[sliceDatasetList.size()];
+			int index = 0;
+			for (IntegerDataset sliceDataset : sliceDatasetList) {
+				if (sliceDataset.getSize() != background.getShape()[index]) {
+					sets[index++] = sliceDataset;
 				}
-				if (!skipFrameAxisSet) {
-					frameAxis = i;
-					break;
+				else {
+					index++;
 				}
 			}
-			
-			//get the data from the given selection along the frame axis
-			int[] bgShape = new int[] {background.getShape()[frameAxis]};
-			ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(model.getImageSelectionString(), bgShape);
-			IntegerDataset sliceDataset = new IntegerDataset(sliceList.get(0), sliceList.get(0).length);
-			Dataset bgDataset = (Dataset) background.getSlice();
-			Object[] args = new Object[background.getShape().length];
-			args[frameAxis] = sliceDataset;
-			background = (IDataset) bgDataset.getByIndexes(args);
+			background = ((Dataset)background.getSlice()).getByIndexes(sets);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
