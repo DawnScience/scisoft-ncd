@@ -15,7 +15,7 @@ import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 import uk.ac.diamond.scisoft.analysis.processing.operations.IntegrationModel;
 
 public class NcdSectorIntegrationModel extends IntegrationModel {
-	@OperationModelField(hint="Enter the path to the ROI NeXus file", file = FileType.EXISTING_FILE, label = "Select ROI File:")
+	@OperationModelField(hint="The path to the a NeXus file containing a ROI.\nYou can click and drag a file into this field.", file = FileType.EXISTING_FILE, label = "Region of Interest File")
 	private String filePath = "";
 
 	public String getFilePath() {
