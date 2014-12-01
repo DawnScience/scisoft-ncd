@@ -59,17 +59,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				throw new Exception("No background dataset found");
 			}
 			
-			//append ; to fill out the dimensions for image selection
-			String selectionString = model.getImageSelectionString();
-			int toAdd= background.getShape().length - 1 - model.getImageSelectionString().split(";").length;
-			if (toAdd>0) {
-				selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
-			}
-			int[] reshaped = Arrays.copyOf(background.getShape(), background.getShape().length - slice.getShape().length);
-			ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, reshaped);
-			ArrayList<int[]> combinations = NcdDataUtils.generateCombinations(sliceList);
-		
-			backgroundToProcess = (IDataset) getByCombinations(background.getSliceView(), combinations).getSlice();
+			backgroundToProcess = getImageSelection(slice);
 			
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
@@ -83,7 +73,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
 				throw new Exception("Data and background shapes must match");
 			}
-			bgSlice = (Dataset)background.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+			bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
 			
 			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {
@@ -126,6 +116,33 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		return toReturn;
 	}
 
+	/**
+	 * Get images based on a user selection written in Irakli's format - note the latter number is inclusive (for 0-10, 11 images are selected)
+	 * @param slice
+	 * @return
+	 * @throws Exception
+	 */
+	private IDataset getImageSelection(IDataset slice) throws Exception {
+		//append ; to fill out the dimensions for image selection
+		String selectionString = model.getImageSelectionString();
+		int toAdd= background.getShape().length - 1 - model.getImageSelectionString().split(";").length;
+		if (toAdd>0) {
+			selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
+		}
+		int[] reshaped = Arrays.copyOf(background.getShape(), background.getShape().length - slice.getShape().length);
+		ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, reshaped); //only get image slices, not image data
+		ArrayList<int[]> combinations = NcdDataUtils.generateCombinations(sliceList);
+
+		return (IDataset) getByCombinations(background.getSliceView(), combinations).getSlice();
+	}
+
+	/**
+	 * Create a dataset whose images match the positions listed in combinations.
+	 * @param data
+	 * @param combinations
+	 * @return
+	 * @throws Exception
+	 */
 	private ILazyDataset getByCombinations(ILazyDataset data, ArrayList<int[]> combinations) throws Exception {
 		ILazyDataset[] toReturn = new ILazyDataset[combinations.size()];
 		int i=0;
