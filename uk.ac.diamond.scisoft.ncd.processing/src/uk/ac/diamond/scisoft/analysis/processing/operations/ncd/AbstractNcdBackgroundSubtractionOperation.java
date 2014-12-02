@@ -41,7 +41,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	
 	public ILazyDataset background;
 	
-	public IDataset backgroundToProcess;
+	public ILazyDataset backgroundToProcess;
 	
 	public abstract String getDataPath();
 	
@@ -142,7 +142,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		return toReturn;
 	}
 
-	private int getNumberOfImages(IDataset backgroundToProcess2, SliceFromSeriesMetadata ssm) {
+	private int getNumberOfImages(ILazyDataset backgroundToProcess2, SliceFromSeriesMetadata ssm) {
 		//find location of data dimensions in origin, see if we have them in background
 		ILazyDataset origin = ssm.getParent();
 		List<Integer>backgroundDataDims = new ArrayList<Integer>();
@@ -183,7 +183,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	 * @return
 	 * @throws Exception
 	 */
-	private IDataset getImageSelection(IDataset slice) throws Exception {
+	private ILazyDataset getImageSelection(IDataset slice) throws Exception {
 		//append ; to fill out the dimensions for image selection
 		String selectionString = model.getImageSelectionString();
 		int rank = getInputRank().equals(OperationRank.ONE) ? 1 : 2; 
@@ -195,7 +195,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, reshaped); //only get image slices, not image data
 		ArrayList<int[]> combinations = NcdDataUtils.generateCombinations(sliceList);
 
-		return (IDataset) getByCombinations(background.getSliceView(), combinations).getSlice();
+		return getByCombinations(background.getSliceView(), combinations);
 	}
 
 	/**
@@ -213,7 +213,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			for (int i1=0; i1<combo.length; ++i1){
 				sliceList[i1] = new Slice(combo[i1], combo[i1]+1);
 			}
-			toReturn[i++] = data.getSlice(sliceList);
+			toReturn[i++] = data.getSliceView(sliceList);
 		}
 		AggregateDataset agg = new AggregateDataset(false, toReturn);
 		return agg;
