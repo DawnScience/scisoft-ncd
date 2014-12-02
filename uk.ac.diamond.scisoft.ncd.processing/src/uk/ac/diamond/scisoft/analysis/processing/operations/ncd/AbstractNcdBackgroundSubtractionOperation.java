@@ -70,7 +70,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		try {
 			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 			ILazyDataset originParent = ssm.getSourceInfo().getParent();
-			if (!(Arrays.equals(originParent.getShape(), background.getShape()))) {
+			if (!(Arrays.equals(originParent.getShape(), backgroundToProcess.getShape()))) {
 				throw new Exception("Data and background shapes must match");
 			}
 			bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
