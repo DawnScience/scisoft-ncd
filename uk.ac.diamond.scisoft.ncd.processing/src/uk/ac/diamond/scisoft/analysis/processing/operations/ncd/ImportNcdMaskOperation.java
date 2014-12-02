@@ -20,6 +20,7 @@ import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
+import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
@@ -124,8 +125,7 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	}
 	
 	@Override
-	public Class<?> getModelClass() {
-
+	public Class<? extends IOperationModel> getModelClass() {
 		return ImportMaskModel.class;
 	}
 }
