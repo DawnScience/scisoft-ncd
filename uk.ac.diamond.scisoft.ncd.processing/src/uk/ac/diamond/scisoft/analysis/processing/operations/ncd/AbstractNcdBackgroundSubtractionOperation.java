@@ -11,6 +11,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -20,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
+import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -65,15 +67,39 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			throw new OperationException(this, e1);
 		}
 		
-		//compare data and BG sizes, if same size, find the correct background slice to pair with the data
 		Dataset bgSlice;
 		try {
 			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
-			ILazyDataset originParent = ssm.getSourceInfo().getParent();
-			if (!(Arrays.equals(originParent.getShape(), backgroundToProcess.getShape()))) {
-				throw new Exception("Data and background shapes must match");
+			
+			//if the background image is the same shape as the sliced image, then do simple subtraction on the background
+			if (slice.getSliceView().squeeze().getShape() == backgroundToProcess.getSliceView().squeeze().getShape()) {
+				bgSlice = (Dataset) backgroundToProcess;
 			}
-			bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+			else {
+				//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
+				Dataset defaultBgSlice = (Dataset) backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+				if (slice.getShape().length < defaultBgSlice.getSliceView().squeeze().getShape().length) {
+					throw new IllegalArgumentException("Data reduced/BG unreduced background subtraction is currently not supported");
+				}
+				//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
+				int backgroundImages = getNumberOfImages(backgroundToProcess, ssm);
+				int total = getNumberOfSliceImages(ssm);
+				if (backgroundImages == total) {
+					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+				}
+				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
+				else if (total % backgroundImages == 0) {
+					bgSlice = (Dataset)backgroundToProcess.getSliceView().getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
+				}
+				else {
+					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
+					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+				}
+			}
+			//data slice must not be larger than BG data slice! we have not done enough reduction on slices in this case!
+			if (slice.getShape().length > bgSlice.getShape().length) {
+				throw new Exception("Slice should not have bigger dimensionality than the background data");
+			}
 			
 			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {
@@ -116,6 +142,41 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		return toReturn;
 	}
 
+	private int getNumberOfImages(IDataset backgroundToProcess2, SliceFromSeriesMetadata ssm) {
+		//find location of data dimensions in origin, see if we have them in background
+		ILazyDataset origin = ssm.getParent();
+		List<Integer>backgroundDataDims = new ArrayList<Integer>();
+		for (int dataDim : ssm.getShapeInfo().getDataDimensions()) {
+			int dataDimSize = origin.getShape()[dataDim];
+			for (int i = 0; i < backgroundToProcess2.getShape().length; ++i) {
+				if (backgroundToProcess2.getShape()[i] == dataDimSize) {
+					backgroundDataDims.add(i);
+				}
+			}
+		}
+		
+		int backgroundImages = 1;
+		for (int i=0; i < backgroundToProcess2.getShape().length; ++i) {
+			int backgroundDim = backgroundToProcess2.getShape()[i];
+			if (backgroundDim != 1 && !backgroundDataDims.contains(i)) {
+				backgroundImages *= backgroundDim;
+			}
+		}
+		return backgroundImages;
+	}
+
+	private int getNumberOfSliceImages(SliceFromSeriesMetadata ssm) {
+		int totalSize = 1;
+		for (int i = 0; i < ssm.getShapeInfo().getSubSampledShape().length; ++i) {
+			for (int j=0; j < ssm.getShapeInfo().getDataDimensions().length; ++j) {
+				if (ssm.getShapeInfo().getDataDimensions()[j] == i) {
+					continue;
+				}
+				totalSize *= ssm.getShapeInfo().getSubSampledShape()[i];
+			}
+		}
+		return totalSize;
+	}
 	/**
 	 * Get images based on a user selection written in Irakli's format - note the latter number is inclusive (for 0-10, 11 images are selected)
 	 * @param slice
@@ -125,7 +186,8 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	private IDataset getImageSelection(IDataset slice) throws Exception {
 		//append ; to fill out the dimensions for image selection
 		String selectionString = model.getImageSelectionString();
-		int toAdd= background.getShape().length - 1 - model.getImageSelectionString().split(";").length;
+		int rank = getInputRank().equals(OperationRank.ONE) ? 1 : 2; 
+		int toAdd= background.getShape().length - rank - model.getImageSelectionString().split(";").length;
 		if (toAdd>0) {
 			selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
 		}
