@@ -81,7 +81,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				int backgroundImages = getNumberOfImages(backgroundToProcess, ssm);
 				int sampleImages = getNumberOfSliceImages(ssm);
 				if (backgroundImages == sampleImages) {
-					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+					bgSlice = (Dataset)backgroundToProcess.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
 				}
 				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
 				else if (sampleImages % backgroundImages == 0) {
