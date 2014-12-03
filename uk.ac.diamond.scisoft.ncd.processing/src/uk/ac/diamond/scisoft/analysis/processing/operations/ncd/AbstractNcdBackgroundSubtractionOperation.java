@@ -73,8 +73,8 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 			
 			//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-			if (AbstractDataset.squeezeShape(slice.getShape(), false) == AbstractDataset.squeezeShape(backgroundToProcess.getShape(), false)) {
-				bgSlice = (Dataset) backgroundToProcess;
+			if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(backgroundToProcess.getShape(), false))) {
+				bgSlice = (Dataset) backgroundToProcess.getSlice();
 			}
 			else {
 				//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
