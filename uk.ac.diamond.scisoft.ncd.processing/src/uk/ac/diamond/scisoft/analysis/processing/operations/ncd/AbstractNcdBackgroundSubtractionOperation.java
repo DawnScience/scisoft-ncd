@@ -23,6 +23,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
+import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
@@ -72,7 +73,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 			
 			//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-			if (slice.getSliceView().squeeze().getShape() == backgroundToProcess.getSliceView().squeeze().getShape()) {
+			if (AbstractDataset.squeezeShape(slice.getShape(), false) == AbstractDataset.squeezeShape(backgroundToProcess.getShape(), false)) {
 				bgSlice = (Dataset) backgroundToProcess;
 			}
 			else {
@@ -168,10 +169,14 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 	private int getNumberOfSliceImages(SliceFromSeriesMetadata ssm) {
 		int totalSize = 1;
 		for (int i = 0; i < ssm.getShapeInfo().getSubSampledShape().length; ++i) {
+			boolean isADataDimension = false;
 			for (int j=0; j < ssm.getShapeInfo().getDataDimensions().length; ++j) {
 				if (ssm.getShapeInfo().getDataDimensions()[j] == i) {
-					continue;
+					isADataDimension = true;
+					break;
 				}
+			}
+			if (!isADataDimension) {
 				totalSize *= ssm.getShapeInfo().getSubSampledShape()[i];
 			}
 		}
