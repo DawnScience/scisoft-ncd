@@ -85,7 +85,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				}
 				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
 				else if (sampleImages % backgroundImages == 0) {
-					bgSlice = (Dataset)backgroundToProcess.getSliceView().getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
+					bgSlice = (Dataset)backgroundToProcess.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
 				}
 				else {
 					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
