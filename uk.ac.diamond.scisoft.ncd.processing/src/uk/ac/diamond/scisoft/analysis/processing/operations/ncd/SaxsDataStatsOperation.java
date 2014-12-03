@@ -15,7 +15,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsStatsData;
 
-public class SaxsDataStats extends AbstractOperation<SaxsDataStatsModel, OperationData> {
+public class SaxsDataStatsOperation extends AbstractOperation<SaxsDataStatsModel, OperationData> {
 
 	@Override
 	public String getId() {
