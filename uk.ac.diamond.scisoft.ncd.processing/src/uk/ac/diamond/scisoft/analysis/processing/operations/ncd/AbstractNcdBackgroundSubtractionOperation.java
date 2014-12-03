@@ -77,24 +77,24 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				bgSlice = (Dataset) backgroundToProcess;
 			}
 			else {
-				//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
-				Dataset defaultBgSlice = (Dataset) backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
-				if (slice.getShape().length < defaultBgSlice.getSliceView().squeeze().getShape().length) {
-					throw new IllegalArgumentException("Data reduced/BG unreduced background subtraction is currently not supported");
-				}
 				//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
 				int backgroundImages = getNumberOfImages(backgroundToProcess, ssm);
-				int total = getNumberOfSliceImages(ssm);
-				if (backgroundImages == total) {
+				int sampleImages = getNumberOfSliceImages(ssm);
+				if (backgroundImages == sampleImages) {
 					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
 				}
 				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
-				else if (total % backgroundImages == 0) {
+				else if (sampleImages % backgroundImages == 0) {
 					bgSlice = (Dataset)backgroundToProcess.getSliceView().getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
 				}
 				else {
 					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
 					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+
+					//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
+					if (slice.getShape().length < bgSlice.getSliceView().squeeze().getShape().length) {
+						throw new IllegalArgumentException("Data reduced/BG unreduced background subtraction is currently not supported");
+					}
 				}
 			}
 			//data slice must not be larger than BG data slice! we have not done enough reduction on slices in this case!
