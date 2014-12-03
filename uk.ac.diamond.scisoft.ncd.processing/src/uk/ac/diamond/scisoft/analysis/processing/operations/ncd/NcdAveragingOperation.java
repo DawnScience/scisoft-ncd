@@ -42,7 +42,8 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 		Dataset d = DatasetUtils.cast(input,Dataset.FLOAT64);
 		
 		if (sliceData == null) {
-			sliceData = new Dataset[counter];
+			sliceData = new Dataset[ssm.getShapeInfo().getTotalSlices()];
+			counter = 0;
 		}
 		
 		//first accumulate all data
@@ -51,11 +52,22 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 		
 		if (counter == ssm.getShapeInfo().getTotalSlices()) {
 
-			IDataset out = (IDataset) new AggregateDataset(false, sliceData);
-			
-			sliceData = null;
-			counter = 0;
-			out = (IDataset) out.mean();
+			AggregateDataset aggregate = new AggregateDataset(true, sliceData);
+			Dataset[] errorData = new Dataset[counter];
+			boolean hasError = false;
+			for (int i=0; i < counter; ++i) {
+				Dataset slice = sliceData[i];
+				if (slice.getErrorBuffer() != null) {
+					hasError = true;
+				}
+				errorData[i] = slice.getErrorBuffer();
+			}
+			AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
+			Dataset out = ((Dataset)aggregate.getSlice()).mean(false, 0);
+			Dataset errorSum = null;
+			if (hasError) {
+				errorSum = (Dataset) ((Dataset)aggregateErrors).sum();
+			}
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {
 				
@@ -63,6 +75,11 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 				
 			}
 			out.setMetadata(outsmm);
+			if (hasError) {
+				out.setErrorBuffer(errorSum.idivide(counter));
+			}
+			sliceData = null;
+			counter = 0;
 			return new OperationData(out);
 		}
 		
@@ -71,12 +88,12 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 
 	@Override
 	public OperationRank getInputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ONE;
 	}
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ONE;
 	}
 
 }
