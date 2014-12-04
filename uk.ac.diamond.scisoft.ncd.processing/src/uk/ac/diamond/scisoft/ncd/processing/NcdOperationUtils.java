@@ -11,10 +11,13 @@ package uk.ac.diamond.scisoft.ncd.processing;
 
 import java.util.List;
 
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
 
 public class NcdOperationUtils {
 	/**
@@ -49,5 +52,24 @@ public class NcdOperationUtils {
 			}
 		}
 		return toReturn;
+	}
+	
+
+	public static Object[] getGuinierPlotParameters(IDataset slice) throws Exception {
+		GuinierPlotData guinier = new GuinierPlotData();
+		
+		@SuppressWarnings("unused")
+		IDataset dataSlice = slice.getSliceView();
+		ILazyDataset axisSlice;
+		try {
+			axisSlice = slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0];
+			if (axisSlice == null) {
+				throw new Exception("No axes found");
+			}
+		} catch (Exception e) {
+			throw new Exception("problem while getting axis metadata", e);
+		}
+		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
+		return params;
 	}
 }

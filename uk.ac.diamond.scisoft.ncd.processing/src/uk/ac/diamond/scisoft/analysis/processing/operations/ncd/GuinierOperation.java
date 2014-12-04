@@ -5,8 +5,6 @@ import java.io.Serializable;
 import javax.measure.quantity.Dimensionless;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.AbstractOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -16,7 +14,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel;
-import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class GuinierOperation extends AbstractOperation<EmptyModel, OperationData> {
 
@@ -37,7 +35,12 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
-		Object[] params = getGuinierPlotParameters(slice);
+		Object[] params;
+		try {
+			params = NcdOperationUtils.getGuinierPlotParameters(slice);
+		} catch (Exception e) {
+			throw new OperationException(this, "Guinier calculation threw an exception" + e);
+		}
 
 		@SuppressWarnings("unchecked")
 		DoubleDataset i0 = new DoubleDataset(new double[]{((Amount<Dimensionless>)params[0]).getEstimatedValue()}, new int[]{1});
@@ -56,21 +59,4 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 		return new OperationData(slice, new Serializable[]{i0, rG, rGLow, rGUpper});
 	}
 
-	public Object[] getGuinierPlotParameters(IDataset slice) {
-		GuinierPlotData guinier = new GuinierPlotData();
-		
-		@SuppressWarnings("unused")
-		IDataset dataSlice = slice.getSliceView();
-		ILazyDataset axisSlice;
-		try {
-			axisSlice = slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0];
-			if (axisSlice == null) {
-				throw new Exception("No axes found");
-			}
-		} catch (Exception e) {
-			throw new OperationException(this, new Exception("problem while getting axis metadata", e));
-		}
-		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
-		return params;
-	}
 }
