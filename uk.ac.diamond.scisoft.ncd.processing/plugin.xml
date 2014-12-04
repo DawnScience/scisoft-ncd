@@ -83,7 +83,7 @@
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingOperation"
              description="Rg calculation, filtering, then averaging"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdAveraging"
-             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingModel"
              name="NCD Averaging">
        </operation>
        <category

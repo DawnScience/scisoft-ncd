@@ -22,13 +22,12 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
-public class NcdAveragingOperation extends AbstractOperation<EmptyModel, OperationData> implements IExportOperation {
+public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, OperationData> implements IExportOperation {
 
 	private Dataset[] sliceData;
 	private ILazyDataset parent;
@@ -66,8 +65,7 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 		
 		if (counter == ssm.getShapeInfo().getTotalSlices()) {
 
-			boolean filteredAveraging = false;
-			if (filteredAveraging) {
+			if (model.isUseFiltering()) {
 				//calculate Rg from GuinierPlotData - same as in GuinierOperation
 				double[] rG = new double[counter];
 				for (int i=0; i < counter; ++i) {
