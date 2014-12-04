@@ -15,9 +15,15 @@ import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
+import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.ClusterOutlierRemoval;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.FilterData;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsStatsData;
 
 public class NcdOperationUtils {
 	/**
@@ -71,5 +77,21 @@ public class NcdOperationUtils {
 		}
 		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
 		return params;
+	}
+	
+	public static Dataset getSaxsAnalysisStats(Dataset data, SaxsAnalysisStatsParameters statType) {
+		SaxsAnalysisStats selectedSaxsStat = statType.getSelectionAlgorithm();
+		SaxsStatsData statsData = selectedSaxsStat.getSaxsAnalysisStatsObject();
+		if (statsData instanceof FilterData) {
+			((FilterData)statsData).setConfigenceInterval(statType.getSaxsFilteringCI());
+		}
+		if (statsData instanceof ClusterOutlierRemoval) {
+			((ClusterOutlierRemoval)statsData).setDbSCANClustererEpsilon(statType.getDbSCANClustererEpsilon());
+			((ClusterOutlierRemoval)statsData).setDbSCANClustererMinPoints(statType.getDbSCANClustererMinPoints());
+		}
+
+		statsData.setReferenceData(data);
+		Dataset mydata = statsData.getStatsData();
+		return mydata;
 	}
 }
