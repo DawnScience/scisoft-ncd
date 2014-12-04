@@ -145,7 +145,7 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 			}
 			out.setMetadata(outsmm);
 			if (hasError) {
-				out.setErrorBuffer(errorSum.idivide(numImages));
+				out.setError(errorSum.ipower(0.5).idivide(numImages));
 			}
 			sliceData = null;
 			counter = 0;
