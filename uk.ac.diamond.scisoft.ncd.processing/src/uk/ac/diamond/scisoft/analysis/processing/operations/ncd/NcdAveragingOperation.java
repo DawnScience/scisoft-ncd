@@ -1,5 +1,9 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import javax.measure.quantity.Dimensionless;
+
+import org.apache.commons.lang.math.NumberUtils;
+import org.eclipse.core.runtime.Platform;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -12,8 +16,14 @@ import org.eclipse.dawnsci.analysis.api.slice.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
+import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
+import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdAveragingOperation extends AbstractOperation<EmptyModel, OperationData> implements IExportOperation {
 
@@ -26,6 +36,7 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 		return "uk.ac.diamond.scisoft.analysis.processing.NcdAveraging";
 	}
 
+	@SuppressWarnings("unchecked")
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 		
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(input);
@@ -55,7 +66,38 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 			boolean filteredAveraging = false;
 			if (filteredAveraging) {
 				//calculate Rg from GuinierPlotData - same as in GuinierOperation
-				//filter using method from NcdSaxsDataStatsForkJoinTransformer
+				double[] rG = new double[counter];
+				for (int i=0; i < counter; ++i) {
+					try {
+						Object[] guinierParams = NcdOperationUtils.getGuinierPlotParameters(sliceData[i]);
+						rG[i] = ((Amount<Dimensionless>)guinierParams[1]).getEstimatedValue();
+					} catch (Exception e) {
+						throw new OperationException(this, "Exception during Guinier calculation" + e);
+					}
+					
+				}
+				//filter using method from NcdSaxsDataStatsForkJoinTransformer - this part from NcdDataReductionTransformer
+				String saxsSelectionAlgorithm = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+						NcdPreferences.SAXS_SELECTION_ALGORITHM,
+						SaxsAnalysisStatsParameters.DEFAULT_SELECTION_METHOD.getName(), null);
+				String strDBSCANClustererEps = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+						NcdPreferences.DBSCANClusterer_EPSILON, Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_EPSILON), null);
+				int dbSCANClustererMinPoints = Platform.getPreferencesService().getInt("uk.ac.diamond.scisoft.ncd.rcp",
+						NcdPreferences.DBSCANClusterer_MINPOINTS, SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_MINPOINTS, null);
+				String strSaxsFilteringCI = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
+						NcdPreferences.SAXS_FILTERING_CI, Double.toString(SaxsAnalysisStatsParameters.SAXS_FILTERING_CI), null);
+				SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
+				saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));
+				if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+					saxsAnalysisStatParams.setDbSCANClustererEpsilon(Double.valueOf(strDBSCANClustererEps));
+				}
+				saxsAnalysisStatParams.setDbSCANClustererMinPoints(dbSCANClustererMinPoints);
+				if (NumberUtils.isNumber(strDBSCANClustererEps)) {
+					saxsAnalysisStatParams.setSaxsFilteringCI(Double.valueOf(strSaxsFilteringCI));
+				}
+				
+				DoubleDataset rgDataset = new DoubleDataset(rG);
+				Dataset filter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams);
 			}
 			
 			//after filtering (if done), do the averaging
