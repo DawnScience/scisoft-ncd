@@ -6,7 +6,6 @@ import java.util.List;
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
-import org.eclipse.core.runtime.Platform;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -24,7 +23,6 @@ import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
-import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, OperationData> implements IExportOperation {
@@ -78,15 +76,11 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 					
 				}
 				//filter using method from NcdSaxsDataStatsForkJoinTransformer - this part from NcdDataReductionTransformer
-				String saxsSelectionAlgorithm = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
-						NcdPreferences.SAXS_SELECTION_ALGORITHM,
-						SaxsAnalysisStatsParameters.DEFAULT_SELECTION_METHOD.getName(), null);
-				String strDBSCANClustererEps = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
-						NcdPreferences.DBSCANClusterer_EPSILON, Double.toString(SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_EPSILON), null);
-				int dbSCANClustererMinPoints = Platform.getPreferencesService().getInt("uk.ac.diamond.scisoft.ncd.rcp",
-						NcdPreferences.DBSCANClusterer_MINPOINTS, SaxsAnalysisStatsParameters.DBSCAN_CLUSTERER_MINPOINTS, null);
-				String strSaxsFilteringCI = Platform.getPreferencesService().getString("uk.ac.diamond.scisoft.ncd.rcp",
-						NcdPreferences.SAXS_FILTERING_CI, Double.toString(SaxsAnalysisStatsParameters.SAXS_FILTERING_CI), null);
+				String saxsSelectionAlgorithm = "Data Filter"; //TODO these parameters are from preferences in Irakli's GUI
+				String strDBSCANClustererEps = "0.1";
+				int dbSCANClustererMinPoints = 0;
+				String strSaxsFilteringCI = "0.999";
+
 				SaxsAnalysisStatsParameters saxsAnalysisStatParams = new SaxsAnalysisStatsParameters();
 				saxsAnalysisStatParams.setSelectionAlgorithm(SaxsAnalysisStats.forName(saxsSelectionAlgorithm));
 				if (NumberUtils.isNumber(strDBSCANClustererEps)) {
