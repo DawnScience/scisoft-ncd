@@ -120,14 +120,18 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 				Dataset slice = sliceData[i];
 				if (slice.getErrorBuffer() != null) {
 					hasError = true;
+					errorData[i] = slice.getErrorBuffer();
 				}
-				errorData[i] = slice.getErrorBuffer();
+				else if (slice.getError() != null) {
+					hasError = true;
+					errorData[i] = slice.getError().ipower(2);
+				}
 			}
 
 			Dataset errorSum = null;
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
-				errorSum = (Dataset) ((Dataset)aggregateErrors).sum();
+				errorSum = (Dataset) ((Dataset) aggregateErrors.getSlice()).sum(false, 0);
 			}
 
 			Dataset out = ((Dataset)aggregate.getSlice()).mean(false, 0);
