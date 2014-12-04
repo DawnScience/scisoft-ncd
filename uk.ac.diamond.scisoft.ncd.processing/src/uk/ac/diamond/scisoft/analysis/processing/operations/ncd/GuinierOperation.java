@@ -37,20 +37,7 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
-		GuinierPlotData guinier = new GuinierPlotData();
-		
-		@SuppressWarnings("unused")
-		IDataset dataSlice = slice.getSliceView();
-		ILazyDataset axisSlice;
-		try {
-			axisSlice = slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0];
-			if (axisSlice == null) {
-				throw new Exception("No axes found");
-			}
-		} catch (Exception e) {
-			throw new OperationException(this, new Exception("problem while getting axis metadata", e));
-		}
-		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
+		Object[] params = getGuinierPlotParameters(slice);
 
 		@SuppressWarnings("unchecked")
 		DoubleDataset i0 = new DoubleDataset(new double[]{((Amount<Dimensionless>)params[0]).getEstimatedValue()}, new int[]{1});
@@ -67,5 +54,23 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 		rGUpper.setName("RgUpper");
 		rGUpper.squeeze();
 		return new OperationData(slice, new Serializable[]{i0, rG, rGLow, rGUpper});
+	}
+
+	public Object[] getGuinierPlotParameters(IDataset slice) {
+		GuinierPlotData guinier = new GuinierPlotData();
+		
+		@SuppressWarnings("unused")
+		IDataset dataSlice = slice.getSliceView();
+		ILazyDataset axisSlice;
+		try {
+			axisSlice = slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0];
+			if (axisSlice == null) {
+				throw new Exception("No axes found");
+			}
+		} catch (Exception e) {
+			throw new OperationException(this, new Exception("problem while getting axis metadata", e));
+		}
+		Object[] params = guinier.getGuinierPlotParameters(slice, (IDataset)axisSlice);
+		return params;
 	}
 }
