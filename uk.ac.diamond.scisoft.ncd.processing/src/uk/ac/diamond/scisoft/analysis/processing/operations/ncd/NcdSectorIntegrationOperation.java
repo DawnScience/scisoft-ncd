@@ -33,12 +33,12 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.metadata.AxesMetadataImpl;
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
 import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
