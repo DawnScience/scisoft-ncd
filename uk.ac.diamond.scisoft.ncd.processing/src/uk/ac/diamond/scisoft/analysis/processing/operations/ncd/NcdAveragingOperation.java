@@ -52,6 +52,13 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 		
 		if (counter == ssm.getShapeInfo().getTotalSlices()) {
 
+			boolean filteredAveraging = false;
+			if (filteredAveraging) {
+				//calculate Rg from GuinierPlotData - same as in GuinierOperation
+				//filter using method from NcdSaxsDataStatsForkJoinTransformer
+			}
+			
+			//after filtering (if done), do the averaging
 			AggregateDataset aggregate = new AggregateDataset(true, sliceData);
 			Dataset[] errorData = new Dataset[counter];
 			boolean hasError = false;
