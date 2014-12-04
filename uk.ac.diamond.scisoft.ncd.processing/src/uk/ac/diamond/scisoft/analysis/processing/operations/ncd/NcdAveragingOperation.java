@@ -1,5 +1,8 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -98,6 +101,15 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 				
 				DoubleDataset rgDataset = new DoubleDataset(rG);
 				Dataset filter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams);
+				
+				List<Dataset> filteredDataset = new ArrayList<Dataset>();
+				for (int i=0; i < counter; ++i) {
+					if (filter.getBoolean(i) == true) {
+						filteredDataset.add(sliceData[i]);
+					}
+				}
+				sliceData = new Dataset[filteredDataset.size()];
+				sliceData = filteredDataset.toArray(sliceData);
 			}
 			
 			//after filtering (if done), do the averaging
