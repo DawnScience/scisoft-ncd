@@ -135,6 +135,7 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 			}
 
 			Dataset out = ((Dataset)aggregate.getSlice()).mean(false, 0);
+			copyMetadata(input, out);
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {
 				
