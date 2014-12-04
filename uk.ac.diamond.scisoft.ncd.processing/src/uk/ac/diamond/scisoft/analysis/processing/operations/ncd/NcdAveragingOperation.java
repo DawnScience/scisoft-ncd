@@ -114,9 +114,10 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 			
 			//after filtering (if done), do the averaging
 			AggregateDataset aggregate = new AggregateDataset(true, sliceData);
-			Dataset[] errorData = new Dataset[counter];
+			int numImages = sliceData.length;
+			Dataset[] errorData = new Dataset[numImages];
 			boolean hasError = false;
-			for (int i=0; i < counter; ++i) {
+			for (int i=0; i < numImages; ++i) {
 				Dataset slice = sliceData[i];
 				if (slice.getErrorBuffer() != null) {
 					hasError = true;
@@ -144,7 +145,7 @@ public class NcdAveragingOperation extends AbstractOperation<EmptyModel, Operati
 			}
 			out.setMetadata(outsmm);
 			if (hasError) {
-				out.setErrorBuffer(errorSum.idivide(counter));
+				out.setErrorBuffer(errorSum.idivide(numImages));
 			}
 			sliceData = null;
 			counter = 0;
