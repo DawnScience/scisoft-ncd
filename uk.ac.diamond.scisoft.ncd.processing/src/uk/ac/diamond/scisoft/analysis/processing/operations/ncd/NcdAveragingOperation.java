@@ -66,10 +66,13 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			if (model.isUseFiltering()) {
 				//calculate Rg from GuinierPlotData - same as in GuinierOperation
 				double[] rG = new double[counter];
+				double[] rGError = new double[counter];
 				for (int i=0; i < counter; ++i) {
 					try {
 						Object[] guinierParams = NcdOperationUtils.getGuinierPlotParameters(sliceData[i]);
-						rG[i] = ((Amount<Dimensionless>)guinierParams[1]).getEstimatedValue();
+						Amount<Dimensionless> rGAmount = (Amount<Dimensionless>)guinierParams[1];
+						rG[i] = rGAmount.getEstimatedValue();
+						rGError[i] = rGAmount.getAbsoluteError();
 					} catch (Exception e) {
 						throw new OperationException(this, "Exception during Guinier calculation" + e);
 					}
@@ -92,11 +95,13 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 				}
 				
 				DoubleDataset rgDataset = new DoubleDataset(rG);
-				Dataset filter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams);
+				DoubleDataset rgErrorDataset = new DoubleDataset(rGError);
+				rgDataset.setError(rgErrorDataset);
+				Dataset removalFilter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams); //remove frame[i] if true
 				
 				List<Dataset> filteredDataset = new ArrayList<Dataset>();
 				for (int i=0; i < counter; ++i) {
-					if (filter.getBoolean(i) == true) {
+					if (removalFilter.getBoolean(i) == false) {
 						filteredDataset.add(sliceData[i]);
 					}
 				}
