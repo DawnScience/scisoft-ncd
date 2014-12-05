@@ -1,5 +1,6 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,6 +64,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 		
 		if (counter == ssm.getShapeInfo().getTotalSlices()) {
 
+			Serializable[] filterData = null;
 			if (model.isUseFiltering()) {
 				//calculate Rg from GuinierPlotData - same as in GuinierOperation
 				double[] rG = new double[counter];
@@ -95,9 +97,11 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 				}
 				
 				DoubleDataset rgDataset = new DoubleDataset(rG);
+				rgDataset.setName("Rg");
 				DoubleDataset rgErrorDataset = new DoubleDataset(rGError);
 				rgDataset.setError(rgErrorDataset);
 				Dataset removalFilter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams); //remove frame[i] if true
+				removalFilter.setName("Removal filter");
 				
 				List<Dataset> filteredDataset = new ArrayList<Dataset>();
 				for (int i=0; i < counter; ++i) {
@@ -107,6 +111,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 				}
 				sliceData = new Dataset[filteredDataset.size()];
 				sliceData = filteredDataset.toArray(sliceData);
+				filterData = new Serializable[]{rgDataset, removalFilter};
 			}
 			
 			//after filtering (if done), do the averaging
@@ -146,6 +151,9 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			}
 			sliceData = null;
 			counter = 0;
+			if (model.isUseFiltering()) {
+				return new OperationData(out, filterData);
+			}
 			return new OperationData(out);
 		}
 		
