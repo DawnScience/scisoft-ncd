@@ -12,7 +12,6 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import java.util.Arrays;
 import java.util.List;
 
-import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
@@ -20,6 +19,8 @@ import javax.measure.unit.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
+import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -154,17 +155,29 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 	 * Copied from u.a.d.s.ncd.passerelle.actors.NcdSectorIntegrationForkJoinTransformer
 	 * @return
 	 */
-	@SuppressWarnings("unused")
 	private Dataset calculateQaxisDataset(QAxisCalibration cal, IDiffractionMetadata dif, int[] datasetShape, SectorROI intSector) {
 		
 		Dataset qaxis = null;
 		Dataset qaxisErr = null;
-		Amount<ScatteringVectorOverDistance> gradient = cal.getGradient();
-		Amount<ScatteringVector> intercept = cal.getIntercept();
-		Amount<Length> cameraLength = Amount.valueOf(dif.getOriginalDetector2DProperties().getDetectorDistance(), SI.MILLIMETER);
-		Amount<Energy> energy = Amount.valueOf(12.39842/dif.getOriginalDiffractionCrystalEnvironment().getWavelength(), SI.KILO(NonSI.ELECTRON_VOLT));
+		
+		Amount<ScatteringVectorOverDistance> gradient;
+		Amount<ScatteringVector> intercept;
 		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
-		Unit<ScatteringVector> axisUnit = Unit.ONE.divide(NonSI.ANGSTROM).asType(ScatteringVector.class);
+		Unit<ScatteringVector> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+
+		if (cal == null) {
+			//calculate parameters - from NcdProcessingModel
+			DetectorProperties detectorProperties = dif.getDetector2DProperties();
+			DiffractionCrystalEnvironment crystalEnvironment = dif.getDiffractionCrystalEnvironment();
+			Amount<Length> cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
+			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
+			gradient = wv.inverse().times(2.0*Math.PI).divide(cameraLength).to(axisUnit.divide(pxSize.getUnit()).asType(ScatteringVectorOverDistance.class));
+			intercept = Amount.valueOf(0.0, axisUnit);
+		}
+		else {
+			gradient = cal.getGradient();
+			intercept = cal.getIntercept();
+		}
 		
 		int[] secFrames = datasetShape;
 		int numPoints = (int) secFrames[secFrames.length - 1];
