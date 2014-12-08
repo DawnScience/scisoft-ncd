@@ -20,8 +20,11 @@ import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 import javax.swing.tree.TreeNode;
 
+import org.dawb.common.services.ServiceManager;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
+import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
+import org.eclipse.dawnsci.analysis.api.persistence.IPersistentFile;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -36,6 +39,7 @@ import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 /**
  * Read available information from NCD data reduction files - initially ROI and mask
  */
+@SuppressWarnings("deprecation")
 public class NexusNcdMetadataReader {
 	
 	public static final String BASE_NEXUS_INSTRUMENT_PATH = "/entry1/%s_processing";
@@ -128,10 +132,23 @@ public class NexusNcdMetadataReader {
 		String intSymm = null;
 		double[] beamCentre = null;
 		try {
-			IDataset intAnglesSet = loader.getLazyDataset(getDetectorFormattedPath(INT_ANGLES_NEXUS_PATH)).getSlice();
-			IDataset intRadiiSet = loader.getLazyDataset(getDetectorFormattedPath(INT_RADII_NEXUS_PATH)).getSlice();
-			IDataset intSymmSet = loader.getLazyDataset(getDetectorFormattedPath(INT_SYMM_NEXUS_PATH)).getSlice();
-			IDataset beamCentreSet = loader.getLazyDataset(getDetectorFormattedPath(BEAM_CENTRE_NEXUS_PATH)).getSlice();
+			IDataset intAnglesSet;
+			IDataset intRadiiSet;
+			IDataset intSymmSet;
+			IDataset beamCentreSet;
+			
+			if (loader.getLazyDataset(getDetectorFormattedPath(INT_ANGLES_NEXUS_PATH)) != null) { //NCD data reduction pipeline result file
+				intAnglesSet = loader.getLazyDataset(getDetectorFormattedPath(INT_ANGLES_NEXUS_PATH)).getSlice();
+				intRadiiSet = loader.getLazyDataset(getDetectorFormattedPath(INT_RADII_NEXUS_PATH)).getSlice();
+				intSymmSet = loader.getLazyDataset(getDetectorFormattedPath(INT_SYMM_NEXUS_PATH)).getSlice();
+				beamCentreSet = loader.getLazyDataset(getDetectorFormattedPath(BEAM_CENTRE_NEXUS_PATH)).getSlice();
+			}
+			else { //mask/ROI file
+				IPersistenceService service = (IPersistenceService)ServiceManager.getService(IPersistenceService.class);
+				IPersistentFile pf = service.getPersistentFile(filePath);
+				SectorROI sector = (SectorROI) pf.getROI("Profile 1");
+				return sector;
+			}
 
 			intAngles = new double[intAnglesSet.getSize()];
 			for (int i=0; i< intAnglesSet.getSize(); ++i) {
