@@ -9,18 +9,22 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.io.File;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import javax.measure.quantity.Length;
 import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
+import javax.xml.bind.JAXBContext;
+import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
-import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.metadata.MaskMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -44,6 +48,9 @@ import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
 import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdSourceProviderAdapter;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIntegrationModel, OperationData> {
@@ -160,19 +167,25 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Dataset qaxis = null;
 		Dataset qaxisErr = null;
 		
-		Amount<ScatteringVectorOverDistance> gradient;
-		Amount<ScatteringVector> intercept;
+		Amount<ScatteringVectorOverDistance> gradient = null;
+		Amount<ScatteringVector> intercept = null;
 		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
 		Unit<ScatteringVector> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
 
 		if (cal == null) {
-			//calculate parameters - from NcdProcessingModel
-			DetectorProperties detectorProperties = dif.getDetector2DProperties();
-			DiffractionCrystalEnvironment crystalEnvironment = dif.getDiffractionCrystalEnvironment();
-			Amount<Length> cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
-			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
-			gradient = wv.inverse().times(2.0*Math.PI).divide(cameraLength).to(axisUnit.divide(pxSize.getUnit()).asType(ScatteringVectorOverDistance.class));
-			intercept = Amount.valueOf(0.0, axisUnit);
+			NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
+			try {
+				ncdCalibrationSourceProvider = getSourceProviderAdapter(model.getFilePath()).getNcdCalibrationSourceProvider();
+			} catch (Exception e) {
+				throw new OperationException(this, e);
+			}
+			HashMap<String, NcdDetectorSettings> detectors = ncdCalibrationSourceProvider.getNcdDetectors();
+			for (String detectorName : detectors.keySet()) {
+				if (ncdCalibrationSourceProvider.getGradient(detectorName) != null) {
+					gradient = ncdCalibrationSourceProvider.getGradient(detectorName);
+					intercept = ncdCalibrationSourceProvider.getIntercept(detectorName);
+				}
+			}
 		}
 		else {
 			gradient = cal.getGradient();
@@ -198,5 +211,31 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		qaxis = DatasetUtils.cast(DatasetUtils.indices(numPoints).squeeze(), Dataset.FLOAT32);
 		qaxis.setName("q");
 		return qaxis;
+	}
+	
+	//from NcdDataReductionTransformer
+	private NcdSourceProviderAdapter getSourceProviderAdapter(final String xmlPath) throws Exception {
+		
+		final File file = new File(xmlPath);
+		FileReader reader=null;
+		try {
+			reader = new FileReader(file);
+			
+			JAXBContext jc = JAXBContext.newInstance (NcdSourceProviderAdapter.class);
+			Unmarshaller u = jc.createUnmarshaller ();
+			
+			return (NcdSourceProviderAdapter) u.unmarshal(reader);
+			
+		} catch (Exception ne) {
+			throw new Exception("Cannot export ncd parameters", ne);
+		} finally {
+			if (reader!=null) {
+				try {
+					reader.close();
+				} catch (IOException e) {
+					throw new Exception("Cannot export ncd parameters", e);
+				}
+		    }
+		}
 	}
 }

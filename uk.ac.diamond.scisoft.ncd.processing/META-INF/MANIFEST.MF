@@ -19,7 +19,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.dawb.common.services,
  uk.ac.diamond.scisoft.ncd,
  uk.ac.diamond.scisoft.ncd.core.rcp,
- org.dawnsci.persistence
+ org.dawnsci.persistence,
+ org.eclipse.ui.workbench
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.analysis.processing.io
