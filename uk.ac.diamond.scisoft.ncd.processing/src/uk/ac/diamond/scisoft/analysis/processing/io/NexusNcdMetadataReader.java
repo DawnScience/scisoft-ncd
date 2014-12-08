@@ -208,6 +208,11 @@ public class NexusNcdMetadataReader {
 		IDataHolder loader = LoaderFactory.getData(filePath);
 		IHierarchicalDataFile hiFile = HierarchicalDataFactory.getReader(filePath);
 
+		if (loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)) == null) {
+			return null; //this file is a Dawn mask/ROI file, we will calculate the calibration parameters later
+		}
+		
+		//this is an NCD data reduction pipeline-reduced file
 		IDataset gradient = loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)).getSlice();
 		String gradientUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_GRADIENT_NEXUS_PATH));
 		IDataset gradientErrors= loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_ERRORS_NEXUS_PATH)).getSlice();
