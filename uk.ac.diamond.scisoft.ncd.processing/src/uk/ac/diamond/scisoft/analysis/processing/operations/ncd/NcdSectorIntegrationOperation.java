@@ -175,7 +175,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		if (cal == null) {
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
 			try {
-				ncdCalibrationSourceProvider = getSourceProviderAdapter(model.getFilePath()).getNcdCalibrationSourceProvider();
+				ncdCalibrationSourceProvider = getSourceProviderAdapter(model.getCalibrationPath()).getNcdCalibrationSourceProvider();
 			} catch (Exception e) {
 				throw new OperationException(this, e);
 			}
