@@ -114,11 +114,14 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			sliceDataset.setErrorBuffer(inputErrorsBuffer);
 		}
 		
-		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, (SectorROI) model.getRegion(), true, false, false);
+		SectorROI sectorRoi = (SectorROI) model.getRegion();
+		sectorRoi.setClippingCompensation(true);
+
+		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, sectorRoi, true, false, false);
 
 		sec.setAreaData(areaData);
 		sec.setCalculateRadial(true);
-		sec.setROI((SectorROI)model.getRegion());
+		sec.setROI(sectorRoi);
 		
 		Dataset[] mydata = sec.process(sliceDataset, 1, maskDataset);
 		int resLength = slice.getShape().length - dimension + 1;
