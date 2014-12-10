@@ -104,7 +104,13 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 			
 			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
 			if (backgroundErrors == null) {
-				backgroundErrors = bgSlice.getSlice();
+				Dataset backgroundErrorOnly = bgSlice.getSlice().getError();
+				if (backgroundErrorOnly == null) {
+					backgroundErrors = bgSlice.getSlice();
+				}
+				else {
+					backgroundErrors = backgroundErrorOnly.ipower(2);
+				}
 			}
 			bgSlice.setErrorBuffer(backgroundErrors);
 
@@ -123,19 +129,24 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		bgSubtraction.setBackground(bgSlice);
 
-		Dataset error = (Dataset) slice.getError();
-		if (error == null) {
-			error = (Dataset) slice.getSlice();
+		Dataset errorBuffer = ((Dataset) slice).getErrorBuffer();
+		if (errorBuffer == null) {
+			Dataset error = (Dataset) slice.getError();
+			if (error == null) {
+				errorBuffer = (Dataset) slice.getSlice();
+			}
+			else {
+				errorBuffer = error.ipower(2);
+			}
 		}
 		Dataset data = (Dataset)slice.getSlice();
-		data.setError(error);
 
-		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), error.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
+		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), errorBuffer.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
 		float[] bgData = (float[])bgDataAndError[0];
 		double[] bgError = (double[])bgDataAndError[1];
 		Dataset bgDataset = new FloatDataset(bgData, data.getShape());
 		Dataset bgErrorDataset = new DoubleDataset(bgError, data.getShape());
-		bgDataset.setError(bgErrorDataset);
+		bgDataset.setErrorBuffer(bgErrorDataset);
 
 		OperationData toReturn = new OperationData();
 		copyMetadata(slice, bgDataset);
