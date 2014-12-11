@@ -15,6 +15,11 @@ import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 import uk.ac.diamond.scisoft.analysis.processing.operations.IntegrationModel;
 
 public class NcdSectorIntegrationModel extends IntegrationModel {
+
+	public enum IntegrationOperationName {
+		azimuthal, radial;
+	}
+
 	@OperationModelField(hint="The path to the a NeXus file containing a ROI.\nYou can click and drag a file into this field.", file = FileType.EXISTING_FILE, label = "Region of Interest File")
 	private String filePath = "";
 
@@ -35,5 +40,17 @@ public class NcdSectorIntegrationModel extends IntegrationModel {
 
 	public void setCalibrationPath(String calibrationPath) {
 		firePropertyChange("calibrationPath", this.calibrationPath, this.calibrationPath = calibrationPath);
+	}
+
+	@OperationModelField(label="Integration Type")
+	private IntegrationOperationName azimuthalOrRadialIntegration = IntegrationOperationName.azimuthal;
+
+	public IntegrationOperationName getAzimuthalOrRadialIntegration() {
+		return azimuthalOrRadialIntegration;
+	}
+
+	public void setAzimuthalOrRadialIntegration(
+			IntegrationOperationName azimuthalOrRadialIntegration) {
+		this.azimuthalOrRadialIntegration = azimuthalOrRadialIntegration;
 	}
 }

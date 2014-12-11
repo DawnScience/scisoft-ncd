@@ -117,20 +117,36 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		SectorROI sectorRoi = (SectorROI) model.getRegion();
 		sectorRoi.setClippingCompensation(true);
 
-		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, sectorRoi, true, false, false);
+		boolean calculateAzimuthal;
+		if (model.getAzimuthalOrRadialIntegration().equals(NcdSectorIntegrationModel.IntegrationOperationName.azimuthal)) {
+			calculateAzimuthal = false; //azimuthal integration, so calculate radial profile
+		}
+		else {
+			calculateAzimuthal = true;
+		}
+		Dataset[] areaData = ROIProfile.area(areaShape, Dataset.FLOAT32, maskDataset, sectorRoi, !calculateAzimuthal, calculateAzimuthal, false);
 
 		sec.setAreaData(areaData);
-		sec.setCalculateRadial(true);
+		sec.setCalculateRadial(!calculateAzimuthal);
+		sec.setCalculateAzimuthal(calculateAzimuthal);
 		sec.setROI(sectorRoi);
 		
 		Dataset[] mydata = sec.process(sliceDataset, 1, maskDataset);
 		int resLength = slice.getShape().length - dimension + 1;
 
-		Dataset myraddata = DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
+		int dataIndex;
+		// mydata[0] is azimuthal profile, radial integration. mydata[1] is radial profile, azimuthal integration
+		if (model.getAzimuthalOrRadialIntegration().equals(NcdSectorIntegrationModel.IntegrationOperationName.radial)) {
+			dataIndex = 0;
+		}
+		else {
+			dataIndex = 1;
+		}
+		Dataset myraddata = DatasetUtils.cast(mydata[dataIndex], Dataset.FLOAT32);
 		Dataset myraderrors = null;
 		if (myraddata != null) {
 			if (myraddata.hasErrors()) {
-				myraderrors = mydata[1].getErrorBuffer();
+				myraderrors = mydata[dataIndex].getErrorBuffer();
 			}
 			int[] resRadShape = Arrays.copyOf(slice.getShape(), resLength);
 			resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
