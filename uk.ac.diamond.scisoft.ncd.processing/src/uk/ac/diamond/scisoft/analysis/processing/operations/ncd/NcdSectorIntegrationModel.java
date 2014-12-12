@@ -31,7 +31,7 @@ public class NcdSectorIntegrationModel extends IntegrationModel {
 		firePropertyChange("filePath", this.filePath, this.filePath = filePath);
 	}
 	
-	@OperationModelField(hint="The path to XML file containing the calibration data.", file = FileType.EXISTING_FILE, label = "Calibration File")	
+	@OperationModelField(hint="The path to XML file containing the calibration data.", file = FileType.EXISTING_FILE, label = "Calibration XML File")	
 	private String calibrationPath = "";
 
 	public String getCalibrationPath() {
