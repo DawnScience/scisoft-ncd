@@ -42,7 +42,7 @@ public class NcdSectorIntegrationModel extends IntegrationModel {
 		firePropertyChange("calibrationPath", this.calibrationPath, this.calibrationPath = calibrationPath);
 	}
 
-	@OperationModelField(label="Integration Type")
+	@OperationModelField(hint="Azimuthal integration results in radial profile\nRadial integration results in azimuthal profile", label="Integration Type")
 	private IntegrationOperationName azimuthalOrRadialIntegration = IntegrationOperationName.azimuthal;
 
 	public IntegrationOperationName getAzimuthalOrRadialIntegration() {
