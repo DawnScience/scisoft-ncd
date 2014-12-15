@@ -30,7 +30,7 @@ import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
-public class NormalisationOperation extends AbstractOperation<NormalisationModel, OperationData> {
+public class NormalisationOperation<T extends NormalisationModel> extends AbstractOperation<NormalisationModel, OperationData> {
 
 	@Override
 	public String getId() {

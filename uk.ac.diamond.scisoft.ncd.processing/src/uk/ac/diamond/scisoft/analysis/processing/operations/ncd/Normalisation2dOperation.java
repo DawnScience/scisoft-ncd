@@ -2,7 +2,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 
-public class Normalisation2dOperation extends NormalisationOperation {
+public class Normalisation2dOperation extends NormalisationOperation<NormalisationModel> {
 
 	@Override
 	public String getId() {
