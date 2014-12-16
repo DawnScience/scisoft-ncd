@@ -53,7 +53,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		Dataset axis = null;
 		
 		Dataset data = (Dataset) slice;
-		Dataset errors = data.getErrorBuffer();
+		Dataset errors = getErrorBuffer(data);
 		int[] dataShape = data.getShape();
 		
 		Dataset inputAxis = null;
@@ -66,11 +66,17 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			throw new OperationException(this, e);
 		}
 		
-		if (model.isCalculateSaxsInvariant()) {
-			if (inputAxis == null) {
-				throw new OperationException(this, new Exception("q axis must be defined to calculate SAXS invariant"));
-			}
+		if (inputAxis == null && model.isCalculateSaxsInvariant()) {
+			throw new OperationException(this, new Exception("q axis must be defined to calculate SAXS invariant"));
+		}
+		else if (inputAxis == null) {
+			System.out.println("q axis does not need to be defined for non-SAXS invariant calculation");
+		}
+		else {
 			axis = inputAxis.clone().squeeze();
+		}
+
+		if (model.isCalculateSaxsInvariant()) {
 			SaxsInvariant inv = new SaxsInvariant();
 			myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
 		} else {
@@ -78,11 +84,18 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
 		}
 		
+		//note: completely different data being returned from the two types - two floats from SaxsInvariant, two datasets from Invariant
 		float[] mydata = (float[]) myobj[0];
 		double[] myerrors = (double[]) myobj[1];
 
-		Dataset myres = new FloatDataset(mydata, dataShape);
-		myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+		Dataset myres;
+		if (model.isCalculateSaxsInvariant()) {
+			myres = null;
+		}
+		else {
+			myres = new FloatDataset(mydata, dataShape);
+			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+		}
 
 		Dataset porodDataset = null;
 		if (axis != null) {
@@ -98,6 +111,19 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			}
 		}
 
+		if (model.isCalculateSaxsInvariant()) {
+			Dataset resultDataset = new FloatDataset(mydata, new int[]{1});
+			Dataset resultError = new DoubleDataset(myerrors, new int[]{1});
+			return new OperationData(null, new Serializable[]{resultDataset, resultError, porodDataset});
+		}
 		return new OperationData(myres, new Serializable[]{porodDataset});
+	}
+
+	private Dataset getErrorBuffer(Dataset data) {
+		if (data.getErrorBuffer() == null) {
+			Dataset error = data.getError();
+			return error.ipower(2);
+		}
+		return data.getErrorBuffer();
 	}
 }
