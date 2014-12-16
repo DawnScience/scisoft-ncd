@@ -39,7 +39,7 @@ public class OrientationOperation extends AbstractOperation<EmptyModel, Operatio
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.NONE;
+		return OperationRank.ONE;
 	}
 
 	@Override
@@ -68,8 +68,11 @@ public class OrientationOperation extends AbstractOperation<EmptyModel, Operatio
 		float[] myvector = (float[]) myobj[2];
 
 		Dataset resultData = new FloatDataset(mydata, new int[]{1});
+		resultData.setName("Data");
 		Dataset resultAngle = new FloatDataset(myangle, new int[]{1});
+		resultAngle.setName("Angle");
 		Dataset resultVector = new FloatDataset(myvector, new int[]{2});
-		return new OperationData(null, new Serializable[]{resultData, resultAngle, resultVector});
+		resultVector.setName("Vector");
+		return new OperationData(slice, new Serializable[]{resultData, resultAngle, resultVector});
 	}
 }
