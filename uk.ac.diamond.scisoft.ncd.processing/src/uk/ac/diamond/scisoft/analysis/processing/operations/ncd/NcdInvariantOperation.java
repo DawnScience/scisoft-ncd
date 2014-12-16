@@ -11,6 +11,7 @@
 
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.List;
 
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -24,13 +25,12 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 
-import uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel;
 import uk.ac.diamond.scisoft.ncd.core.Invariant;
 import uk.ac.diamond.scisoft.ncd.core.SaxsInvariant;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 
-public class NcdInvariantOperation extends AbstractOperation<EmptyModel, OperationData> {
+public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, OperationData> {
 
 	@Override
 	public String getId() {
@@ -58,11 +58,18 @@ public class NcdInvariantOperation extends AbstractOperation<EmptyModel, Operati
 		
 		Dataset inputAxis = null;
 		try {
-			inputAxis = (Dataset) slice.getMetadata(AxesMetadata.class).get(0).getAxes()[0].getSlice();
+			List<AxesMetadata> axes = slice.getMetadata(AxesMetadata.class);
+			if (axes != null) {
+				inputAxis = (Dataset) axes.get(0).getAxes()[0].getSlice(); //assume q is first axis
+			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
-		if (inputAxis != null) {
+		
+		if (model.isCalculateSaxsInvariant()) {
+			if (inputAxis == null) {
+				throw new OperationException(this, new Exception("q axis must be defined to calculate SAXS invariant"));
+			}
 			axis = inputAxis.clone().squeeze();
 			SaxsInvariant inv = new SaxsInvariant();
 			myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
@@ -70,6 +77,7 @@ public class NcdInvariantOperation extends AbstractOperation<EmptyModel, Operati
 			Invariant inv = new Invariant();
 			myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
 		}
+		
 		float[] mydata = (float[]) myobj[0];
 		double[] myerrors = (double[]) myobj[1];
 
