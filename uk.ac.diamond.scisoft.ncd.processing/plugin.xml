@@ -86,6 +86,14 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingModel"
              name="NCD Averaging">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdInvariantOperation"
+             description="Invariant Calculation"
+             id="uk.ac.diamond.scisoft.analysis.processing.Invariant"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
+             name="NCD Invariant">
+       </operation>
        <category
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              name="NCD">
