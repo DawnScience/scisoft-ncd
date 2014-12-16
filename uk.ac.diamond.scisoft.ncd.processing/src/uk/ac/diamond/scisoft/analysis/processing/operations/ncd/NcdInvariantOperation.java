@@ -93,6 +93,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			SimpleRegression regression = plotData.getPorodPlotParameters(data.squeeze(), axis);
 			if (regression != null) {
 				porodDataset = plotData.getFitData(axis, regression);
+				porodDataset.setName("Porod dataset");
 				
 			}
 		}
