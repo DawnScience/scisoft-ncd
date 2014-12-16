@@ -94,6 +94,14 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="NCD Invariant">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.OrientationOperation"
+             description="Degree of Orientation"
+             id="uk.ac.diamond.scisoft.analysis.processing.Orientation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
+             name="Degree of Orientation">
+       </operation>
        <category
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              name="NCD">
