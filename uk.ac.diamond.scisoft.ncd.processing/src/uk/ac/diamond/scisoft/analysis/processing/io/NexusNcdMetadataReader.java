@@ -208,7 +208,7 @@ public class NexusNcdMetadataReader {
 		IDataHolder loader = LoaderFactory.getData(filePath);
 		IHierarchicalDataFile hiFile = HierarchicalDataFactory.getReader(filePath);
 
-		if (loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)) == null) {
+		if (loader == null || loader.getLazyDataset(getDetectorFormattedPath(QAXIS_GRADIENT_NEXUS_PATH)) == null) {
 			return null; //this file is a Dawn mask/ROI file, we will calculate the calibration parameters later
 		}
 		
