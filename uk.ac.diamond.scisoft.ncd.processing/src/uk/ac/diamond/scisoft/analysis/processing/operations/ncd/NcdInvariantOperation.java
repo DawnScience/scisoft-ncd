@@ -54,7 +54,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		Dataset axis = null;
 		
 		Dataset data = (Dataset) slice;
-		Dataset errors = getErrorBuffer(data);
+		Dataset errors = NcdOperationUtils.getErrorBuffer(data);
 		int[] dataShape = NcdOperationUtils.addDimension(data.getShape());
 		
 		Dataset inputAxis = null;
@@ -110,13 +110,5 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			return new OperationData(slice, new Serializable[]{myres, porodDataset});
 		}
 		return new OperationData(slice, new Serializable[]{myres});
-	}
-
-	private Dataset getErrorBuffer(Dataset data) {
-		if (data.getErrorBuffer() == null) {
-			Dataset error = data.getError();
-			return error.ipower(2);
-		}
-		return data.getErrorBuffer();
 	}
 }

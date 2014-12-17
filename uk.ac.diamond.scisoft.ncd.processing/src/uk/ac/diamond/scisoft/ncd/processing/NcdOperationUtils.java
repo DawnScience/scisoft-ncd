@@ -94,4 +94,17 @@ public class NcdOperationUtils {
 		Dataset mydata = statsData.getStatsData();
 		return mydata;
 	}
+	
+	/**
+	 * Provide an easy way to get the errorBuffer because only error may be defined
+	 * @param data
+	 * @return
+	 */
+	public static Dataset getErrorBuffer(Dataset data) {
+		if (data.getErrorBuffer() == null) {
+			Dataset error = data.getError();
+			return error.ipower(2);
+		}
+		return data.getErrorBuffer();
+	}
 }
