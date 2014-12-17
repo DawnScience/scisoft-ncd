@@ -102,15 +102,9 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				throw new Exception("Slice should not have bigger dimensionality than the background data");
 			}
 			
-			Dataset backgroundErrors = bgSlice.getSlice().getErrorBuffer();
+			Dataset backgroundErrors = NcdOperationUtils.getErrorBuffer(bgSlice.getSlice());
 			if (backgroundErrors == null) {
-				Dataset backgroundErrorOnly = bgSlice.getSlice().getError();
-				if (backgroundErrorOnly == null) {
-					backgroundErrors = bgSlice.getSlice();
-				}
-				else {
-					backgroundErrors = backgroundErrorOnly.ipower(2);
-				}
+				backgroundErrors = bgSlice.getSlice();
 			}
 			bgSlice.setErrorBuffer(backgroundErrors);
 

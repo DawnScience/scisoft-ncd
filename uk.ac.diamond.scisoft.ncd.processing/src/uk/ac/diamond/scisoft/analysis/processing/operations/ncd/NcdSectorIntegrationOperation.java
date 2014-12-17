@@ -146,7 +146,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Dataset myraderrors = null;
 		if (myraddata != null) {
 			if (myraddata.hasErrors()) {
-				myraderrors = mydata[dataIndex].getErrorBuffer();
+				myraderrors = NcdOperationUtils.getErrorBuffer(mydata[dataIndex]);
 			}
 			int[] resRadShape = Arrays.copyOf(slice.getShape(), resLength);
 			resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];

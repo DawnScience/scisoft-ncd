@@ -130,13 +130,9 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			boolean hasError = false;
 			for (int i=0; i < numImages; ++i) {
 				Dataset slice = sliceData[i];
-				if (slice.getErrorBuffer() != null) {
+				errorData[i] = NcdOperationUtils.getErrorBuffer(slice);
+				if (errorData[i] != null) {
 					hasError = true;
-					errorData[i] = slice.getErrorBuffer();
-				}
-				else if (slice.getError() != null) {
-					hasError = true;
-					errorData[i] = slice.getError().ipower(2);
 				}
 			}
 
