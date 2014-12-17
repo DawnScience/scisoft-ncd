@@ -29,6 +29,7 @@ import uk.ac.diamond.scisoft.ncd.core.Invariant;
 import uk.ac.diamond.scisoft.ncd.core.SaxsInvariant;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, OperationData> {
 
@@ -54,7 +55,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		
 		Dataset data = (Dataset) slice;
 		Dataset errors = getErrorBuffer(data);
-		int[] dataShape = data.getShape();
+		int[] dataShape = NcdOperationUtils.addDimension(data.getShape());
 		
 		Dataset inputAxis = null;
 		try {
@@ -81,21 +82,15 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			myobj = inv.process(data.getBuffer(), errors.getBuffer(), axis.getBuffer(), data.getShape());
 		} else {
 			Invariant inv = new Invariant();
-			myobj = inv.process(data.getBuffer(), errors.getBuffer(), data.getShape());
+			myobj = inv.process(data.getBuffer(), errors.getBuffer(), dataShape);
 		}
 		
-		//note: completely different data being returned from the two types - two floats from SaxsInvariant, two datasets from Invariant
 		float[] mydata = (float[]) myobj[0];
 		double[] myerrors = (double[]) myobj[1];
 
-		Dataset myres;
-		if (model.isCalculateSaxsInvariant()) {
-			myres = null;
-		}
-		else {
-			myres = new FloatDataset(mydata, dataShape);
-			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
-		}
+		Dataset myres = new FloatDataset(mydata, new int[]{1});
+		myres.setErrorBuffer(new DoubleDataset(myerrors, new int[]{1}));
+		myres.setName("Invariant");
 
 		Dataset porodDataset = null;
 		if (axis != null) {
@@ -111,12 +106,10 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 			}
 		}
 
-		if (model.isCalculateSaxsInvariant()) {
-			Dataset resultDataset = new FloatDataset(mydata, new int[]{1});
-			Dataset resultError = new DoubleDataset(myerrors, new int[]{1});
-			return new OperationData(null, new Serializable[]{resultDataset, resultError, porodDataset});
+		if (porodDataset != null) {
+			return new OperationData(slice, new Serializable[]{myres, porodDataset});
 		}
-		return new OperationData(myres, new Serializable[]{porodDataset});
+		return new OperationData(slice, new Serializable[]{myres});
 	}
 
 	private Dataset getErrorBuffer(Dataset data) {
