@@ -73,18 +73,28 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
-		IROI roi;
-		try {
-			roi = reader.getROIDataFromFile();
-			if (roi == null) {
-				throw new Exception("ROI must be defined for this operation");
+		IROI roi = model.getRegion();
+		if (model.getRegion() == null) {
+			try {
+				roi = reader.getROIDataFromFile();
+				if (roi == null) {
+					throw new Exception("ROI must be defined for this operation");
+				}
+			} catch (Exception e) {
+				throw new OperationException(this, e);
 			}
-		} catch (Exception e) {
-			throw new OperationException(this, e);
 		}
 
-		((SectorROI)roi).setAverageArea(false);
-		model.setRegion(roi);
+		if (!(roi instanceof SectorROI)) {
+			throw new OperationException(this, new IllegalArgumentException("The ROI must be a sector ROI"));
+		}
+		SectorROI sectorRoi = (SectorROI) roi;
+		if (!sectorRoi.checkSymmetry(sectorRoi.getSymmetry())){
+			throw new OperationException(this, new IllegalArgumentException("The symmetry is not compatible with the ROI"));
+		}
+		sectorRoi.setAverageArea(false);
+		sectorRoi.setClippingCompensation(true);
+		model.setRegion(sectorRoi);
 		
 		SectorIntegration sec = new SectorIntegration();
 		int[] frames = NcdOperationUtils.addDimension(slice.getShape());
@@ -113,9 +123,6 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			DoubleDataset inputErrorsBuffer = new DoubleDataset(sliceDataset);
 			sliceDataset.setErrorBuffer(inputErrorsBuffer);
 		}
-		
-		SectorROI sectorRoi = (SectorROI) model.getRegion();
-		sectorRoi.setClippingCompensation(true);
 
 		boolean calculateAzimuthal;
 		if (model.getAzimuthalOrRadialIntegration().equals(NcdSectorIntegrationModel.IntegrationOperationName.azimuthal)) {
@@ -159,6 +166,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 
 		Dataset qaxis = null;
 		try {
+			if (slice.getMetadata(IDiffractionMetadata.class) == null) {
+				throw new Exception("Diffraction metadata is required for this operation - add an Import Detector Calibration operation before this sector integration");
+			}
 			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), slice.getMetadata(IDiffractionMetadata.class).get(0), myraddata.getShape(), (SectorROI)model.getRegion());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
