@@ -12,9 +12,9 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
-import uk.ac.diamond.scisoft.analysis.processing.operations.SectorIntegrationModel;
+import uk.ac.diamond.scisoft.analysis.processing.operations.IntegrationModel;
 
-public class NcdSectorIntegrationModel extends SectorIntegrationModel {
+public class NcdSectorIntegrationModel extends IntegrationModel {
 
 	public enum IntegrationOperationName {
 		azimuthal, radial;
