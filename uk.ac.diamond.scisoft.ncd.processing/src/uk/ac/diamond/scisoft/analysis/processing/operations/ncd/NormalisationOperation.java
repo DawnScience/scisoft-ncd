@@ -112,9 +112,9 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			throw new OperationException(this, e);
 		}
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
-		Slice[] newInitialSlice = getSmallerSlice(ssm.getSliceInfo().getViewSlice(), ArrayUtils.toObject(ssm.getShapeInfo().getDataDimensions()));
-		Slice[] newCurrentSlice = getSmallerSlice(ssm.getSliceInfo().getCurrentSlice(), ArrayUtils.toObject(ssm.getShapeInfo().getDataDimensions()));
-		Dataset calibrationSlice = (Dataset) calibration.getSliceView(newInitialSlice).getSlice(newCurrentSlice);
+//		Slice[] newInitialSlice = getSmallerSlice(ssm.getSliceInfo().getViewSlice(), ArrayUtils.toObject(ssm.getDataDimensions()));
+//		Slice[] newCurrentSlice = getSmallerSlice(ssm.getSliceInfo().getCurrentSlice(), ArrayUtils.toObject(ssm.getDataDimensions()));
+		Dataset calibrationSlice = (Dataset) calibration.getSlice(ssm.getSliceInfo().getInputSliceWithoutDataDimensions().convertToSlice());
 		
 		if (errors == null) {
 			errors = DatasetUtils.cast(data.clone(), Dataset.FLOAT64);

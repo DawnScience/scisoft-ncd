@@ -89,7 +89,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 				}
 				else {
 					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
-					bgSlice = (Dataset)backgroundToProcess.getSliceView(ssm.getSliceInfo().getViewSlice()).getSlice(ssm.getSliceInfo().getCurrentSlice());
+					bgSlice = (Dataset)backgroundToProcess.getSlice(ssm.getSliceFromInput());
 
 					//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
 					if (slice.getShape().length < bgSlice.getSliceView().squeeze().getShape().length) {
@@ -152,7 +152,7 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 		//find location of data dimensions in origin, see if we have them in background
 		ILazyDataset origin = ssm.getParent();
 		List<Integer>backgroundDataDims = new ArrayList<Integer>();
-		for (int dataDim : ssm.getShapeInfo().getDataDimensions()) {
+		for (int dataDim : ssm.getDataDimensions()) {
 			int dataDimSize = origin.getShape()[dataDim];
 			for (int i = 0; i < backgroundToProcess2.getShape().length; ++i) {
 				if (backgroundToProcess2.getShape()[i] == dataDimSize) {
@@ -173,16 +173,16 @@ public abstract class AbstractNcdBackgroundSubtractionOperation<T extends NcdBac
 
 	private int getNumberOfSliceImages(SliceFromSeriesMetadata ssm) {
 		int totalSize = 1;
-		for (int i = 0; i < ssm.getShapeInfo().getSubSampledShape().length; ++i) {
+		for (int i = 0; i < ssm.getSubSampledShape().length; ++i) {
 			boolean isADataDimension = false;
-			for (int j=0; j < ssm.getShapeInfo().getDataDimensions().length; ++j) {
-				if (ssm.getShapeInfo().getDataDimensions()[j] == i) {
+			for (int j=0; j < ssm.getDataDimensions().length; ++j) {
+				if (ssm.getDataDimensions()[j] == i) {
 					isADataDimension = true;
 					break;
 				}
 			}
 			if (!isADataDimension) {
-				totalSize *= ssm.getShapeInfo().getSubSampledShape()[i];
+				totalSize *= ssm.getSubSampledShape()[i];
 			}
 		}
 		return totalSize;

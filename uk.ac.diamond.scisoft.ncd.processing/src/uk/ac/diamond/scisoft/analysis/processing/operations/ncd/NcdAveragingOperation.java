@@ -63,7 +63,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 		Dataset d = DatasetUtils.cast(input,Dataset.FLOAT64);
 		
 		if (sliceData == null) {
-			sliceData = new Dataset[ssm.getShapeInfo().getTotalSlices()];
+			sliceData = new Dataset[ssm.getTotalSlices()];
 			counter = 0;
 		}
 		
@@ -71,7 +71,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 		sliceData[counter] = d;
 		counter++;
 		
-		if (counter == ssm.getShapeInfo().getTotalSlices()) {
+		if (counter == ssm.getTotalSlices()) {
 
 			Serializable[] filterData = null;
 			if (model.isUseFiltering()) {
@@ -147,7 +147,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {
 				
-				if (!outsmm.getShapeInfo().isDataDimension(i)) outsmm.reducedDimensionToSingular(i);
+				if (!outsmm.isDataDimension(i)) outsmm.reducedDimensionToSingular(i);
 				
 			}
 			out.setMetadata(outsmm);
