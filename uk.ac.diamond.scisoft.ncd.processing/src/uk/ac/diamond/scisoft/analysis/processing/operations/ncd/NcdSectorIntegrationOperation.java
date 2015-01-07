@@ -72,10 +72,10 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 	
 	@Override
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
-		NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
 		IROI roi = model.getRegion();
 		if (model.getRegion() == null) {
 			try {
+				NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
 				roi = reader.getROIDataFromFile();
 				if (roi == null) {
 					throw new Exception("ROI must be defined for this operation");
@@ -104,14 +104,14 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		List<MaskMetadata> mask;
 		try {
 			mask = slice.getMetadata(MaskMetadata.class);
-			if (mask == null) {
-				throw new Exception("Mask must be defined for this operation");
-			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
 		
-		Dataset maskDataset = (Dataset) mask.get(0).getMask().getSlice();
+		Dataset maskDataset = null;
+		if (mask != null) {
+			maskDataset = (Dataset) mask.get(0).getMask().getSlice();
+		}
 		Dataset sliceDataset = (Dataset) slice.getSliceView();
 		
 		sliceDataset.resize(NcdOperationUtils.addDimension(sliceDataset.getShape()));
@@ -169,6 +169,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			if (slice.getMetadata(IDiffractionMetadata.class) == null) {
 				throw new Exception("Diffraction metadata is required for this operation - add an Import Detector Calibration operation before this sector integration");
 			}
+			NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
 			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), slice.getMetadata(IDiffractionMetadata.class).get(0), myraddata.getShape(), (SectorROI)model.getRegion());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
