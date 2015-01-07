@@ -205,7 +205,11 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		if (cal == null) {
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
 			try {
-				ncdCalibrationSourceProvider = getSourceProviderAdapter(model.getCalibrationPath()).getNcdCalibrationSourceProvider();
+				String calibPath = model.getCalibrationPath();
+				if (calibPath == null || calibPath.isEmpty()) {
+					throw new Exception("No calibration available");
+				}
+				ncdCalibrationSourceProvider = getSourceProviderAdapter(calibPath).getNcdCalibrationSourceProvider();
 			} catch (Exception e) {
 				throw new OperationException(this, e);
 			}
@@ -246,6 +250,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 	//from NcdDataReductionTransformer
 	private NcdSourceProviderAdapter getSourceProviderAdapter(final String xmlPath) throws Exception {
 		
+		if (xmlPath == null || xmlPath.isEmpty()) {
+			return null;
+		}
 		final File file = new File(xmlPath);
 		FileReader reader=null;
 		try {
