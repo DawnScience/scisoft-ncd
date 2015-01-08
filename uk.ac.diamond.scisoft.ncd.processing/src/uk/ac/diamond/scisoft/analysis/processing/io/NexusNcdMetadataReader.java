@@ -205,6 +205,9 @@ public class NexusNcdMetadataReader {
 	
 	@SuppressWarnings("unchecked")
 	public QAxisCalibration getQAxisCalibrationFromFile() throws Exception {
+		if (filePath == null || filePath.isEmpty()) {
+			return null;
+		}
 		IDataHolder loader = LoaderFactory.getData(filePath);
 		IHierarchicalDataFile hiFile = HierarchicalDataFactory.getReader(filePath);
 
