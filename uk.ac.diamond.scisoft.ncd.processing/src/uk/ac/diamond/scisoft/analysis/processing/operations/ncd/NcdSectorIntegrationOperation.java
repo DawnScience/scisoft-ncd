@@ -170,7 +170,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 				throw new Exception("Diffraction metadata is required for this operation - add an Import Detector Calibration operation before this sector integration");
 			}
 			NexusNcdMetadataReader reader = new NexusNcdMetadataReader(model.getFilePath());
-			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), slice.getMetadata(IDiffractionMetadata.class).get(0), myraddata.getShape(), (SectorROI)model.getRegion());
+			qaxis = calculateQaxisDataset(reader.getQAxisCalibrationFromFile(), getFirstDiffractionMetadata(slice), myraddata.getShape(), (SectorROI)model.getRegion());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
