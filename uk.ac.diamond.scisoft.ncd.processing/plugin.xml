@@ -55,13 +55,6 @@
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
-             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsDataStatsOperation"
-             id="uk.ac.diamond.scisoft.analysis.processing.SaxsDataStats"
-             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsDataStatsModel"
-             name="SAXS Filtering">
-       </operation>
-       <operation
-             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingOperation"
              description="Rg calculation, filtering, then averaging"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdAveraging"
