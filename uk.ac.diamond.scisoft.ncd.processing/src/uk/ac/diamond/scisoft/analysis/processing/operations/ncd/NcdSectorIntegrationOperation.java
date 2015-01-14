@@ -197,6 +197,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Dataset qaxis = null;
 		Dataset qaxisErr = null;
 		
+		if (dif == null) {
+			throw new OperationException(this, new Exception("No diffraction metadata available"));
+		}
 		Amount<ScatteringVectorOverDistance> gradient = null;
 		Amount<ScatteringVector> intercept = null;
 		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
