@@ -20,7 +20,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
 	private int calibChannel;
 	
-	@OperationModelField(hint="Location of calibration data in Nexus file", label = "Calibration data location" )
+	@OperationModelField(dataset="filePath", hint="Location of calibration data in Nexus file", label = "Calibration data location" )
 	private String calibDataPath = "";
 
 	@OperationModelField(hint="If true, calibration data will be extracted from the default location, /entry1/It/data. If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
