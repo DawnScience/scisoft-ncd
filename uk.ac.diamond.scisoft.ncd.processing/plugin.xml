@@ -47,6 +47,14 @@
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionFromDataOperation"
+             icon="icons/ncdsubtract.png"
+             id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionFromData"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionFromDataModel"
+             name="NCD Background Subtraction From Current Data">
+       </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GuinierOperation"
              description="Calculate Guinier plot and derived Rg and range, I0"
              id="uk.ac.diamond.scisoft.analysis.processing.Guinier"
