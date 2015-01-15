@@ -26,28 +26,6 @@ public class NcdBackgroundSubtractionModel extends AbstractOperationModel {
 		firePropertyChange("filePath", this.filePath, this.filePath = filePath);
 	}
 
-	@OperationModelField(hint="Selection of image numbers to use in background subtraction. Use slicing syntax separated by commas", label="Selection of Images for Background")
-	private String imageSelectionString = "";
-
-	public String getImageSelectionString() {
-		return imageSelectionString;
-	}
-
-	public void setImageSelectionString(String imageSelectionString) {
-		this.imageSelectionString = imageSelectionString;
-	}
-
-	@OperationModelField(hint="Use the current data file as the background", label = "Use Current Data File for Background" )
-	private boolean useCurrentFileForBackground = false;
-
-	public boolean isUseCurrentFileForBackground() {
-		return useCurrentFileForBackground;
-	}
-
-	public void setUseCurrentFileForBackground(boolean useCurrentFileForBackground) {
-		this.useCurrentFileForBackground = useCurrentFileForBackground;
-	}
-
 	@OperationModelField(hint="Value to scale the background data", label = "Background Scale" )
 	private double bgScale = 1.0;
 

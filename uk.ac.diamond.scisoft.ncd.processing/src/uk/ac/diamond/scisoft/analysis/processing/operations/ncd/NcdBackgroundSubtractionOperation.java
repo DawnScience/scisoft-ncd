@@ -13,7 +13,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
@@ -22,7 +21,6 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
@@ -30,7 +28,6 @@ import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 /**
@@ -41,8 +38,6 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractionModel> extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
 	
 	public ILazyDataset background;
-	
-	public ILazyDataset backgroundToProcess;
 	
 	@Override
 	public String getId() {
@@ -72,20 +67,17 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 	@SuppressWarnings("serial")
 	@Override
 	public OperationData process(final IDataset slice, IMonitor monitor) throws OperationException {
-		String fileToRead = "";
-		if (model.isUseCurrentFileForBackground()) {
-			fileToRead = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
+		if (model.getFilePath() == null || model.getFilePath().isEmpty()) {
+			throw new OperationException(this, new Exception("Background file not defined"));
 		}
-		else {
-			fileToRead = model.getFilePath();
-		}
+		
+		String fileToRead = model.getFilePath();
+
 		try {
 			background = NcdOperationUtils.getDataset(fileToRead, new ArrayList<String>(){{add(getDataPath(slice));}});
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
-			
-			backgroundToProcess = getImageSelection(slice);
 			
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
@@ -96,23 +88,23 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 			
 			//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-			if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(backgroundToProcess.getShape(), false))) {
-				bgSlice = (Dataset) backgroundToProcess.getSlice();
+			if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(background.getShape(), false))) {
+				bgSlice = (Dataset) background.getSlice();
 			}
 			else {
 				//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
-				int backgroundImages = getNumberOfImages(backgroundToProcess, ssm);
+				int backgroundImages = getNumberOfImages(background, ssm);
 				int sampleImages = getNumberOfSliceImages(ssm);
 				if (backgroundImages == sampleImages) {
-					bgSlice = (Dataset)backgroundToProcess.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
+					bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
 				}
 				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
 				else if (sampleImages % backgroundImages == 0) {
-					bgSlice = (Dataset)backgroundToProcess.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
+					bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
 				}
 				else {
 					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
-					bgSlice = (Dataset)backgroundToProcess.getSlice(ssm.getSliceFromInput());
+					bgSlice = (Dataset)background.getSlice(ssm.getSliceFromInput());
 
 					//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
 					if (slice.getShape().length < bgSlice.getSliceView().squeeze().getShape().length) {
@@ -210,45 +202,5 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 		}
 		return totalSize;
 	}
-	/**
-	 * Get images based on a user selection written in Irakli's format - note the latter number is inclusive (for 0-10, 11 images are selected)
-	 * @param slice
-	 * @return
-	 * @throws Exception
-	 */
-	private ILazyDataset getImageSelection(IDataset slice) throws Exception {
-		//append ; to fill out the dimensions for image selection
-		String selectionString = model.getImageSelectionString();
-		int rank = getInputRank().equals(OperationRank.ONE) ? 1 : 2; 
-		int toAdd= background.getShape().length - rank - model.getImageSelectionString().split(";").length;
-		if (toAdd>0) {
-			selectionString = StringUtils.leftPad(selectionString, toAdd + model.getImageSelectionString().length(), ";");
-		}
-		int[] reshaped = Arrays.copyOf(background.getShape(), background.getShape().length - slice.getShape().length);
-		ArrayList<int[]> sliceList= NcdDataUtils.createSliceList(selectionString, reshaped); //only get image slices, not image data
-		ArrayList<int[]> combinations = NcdDataUtils.generateCombinations(sliceList);
 
-		return getByCombinations(background.getSliceView(), combinations);
-	}
-
-	/**
-	 * Create a dataset whose images match the positions listed in combinations.
-	 * @param data
-	 * @param combinations
-	 * @return
-	 * @throws Exception
-	 */
-	private ILazyDataset getByCombinations(ILazyDataset data, ArrayList<int[]> combinations) throws Exception {
-		ILazyDataset[] toReturn = new ILazyDataset[combinations.size()];
-		int i=0;
-		for (int[] combo : combinations) {
-			Slice[] sliceList = new Slice[combo.length];
-			for (int i1=0; i1<combo.length; ++i1){
-				sliceList[i1] = new Slice(combo[i1], combo[i1]+1);
-			}
-			toReturn[i++] = data.getSliceView(sliceList);
-		}
-		AggregateDataset agg = new AggregateDataset(false, toReturn);
-		return agg;
-	}
 }
