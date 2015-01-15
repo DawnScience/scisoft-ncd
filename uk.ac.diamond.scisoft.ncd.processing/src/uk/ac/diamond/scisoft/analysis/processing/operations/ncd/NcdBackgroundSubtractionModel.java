@@ -49,7 +49,7 @@ public class NcdBackgroundSubtractionModel extends AbstractOperationModel {
 	}
 
 	@OperationModelField(hint="Value to scale the background data", label = "Background Scale" )
-	private double bgScale;
+	private double bgScale = 1.0;
 
 	public double getBgScale() {
 		return bgScale;
