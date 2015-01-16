@@ -121,7 +121,7 @@ public class NcdOperationUtils {
 		}
 		else {
 			//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
-			int backgroundImages = getNumberOfImages(background, ssm);
+			int backgroundImages = getNumberOfImages(background, ssm, slice);
 			int sampleImages = getNumberOfSliceImages(ssm);
 			if (backgroundImages == sampleImages) {
 				bgSlice = (Dataset) ssm.getMatchingSlice(background);
@@ -143,16 +143,25 @@ public class NcdOperationUtils {
 		return bgSlice;
 	}
 	
-	private static int getNumberOfImages(ILazyDataset backgroundToProcess2, SliceFromSeriesMetadata ssm) {
+	private static int getNumberOfImages(ILazyDataset backgroundToProcess2, SliceFromSeriesMetadata ssm, IDataset slice) {
 		//find location of data dimensions in origin, see if we have them in background
 		ILazyDataset origin = ssm.getParent();
 		List<Integer>backgroundDataDims = new ArrayList<Integer>();
-		for (int dataDim : ssm.getDataDimensions()) {
-			int dataDimSize = origin.getShape()[dataDim];
-			for (int i = 0; i < backgroundToProcess2.getShape().length; ++i) {
-				if (backgroundToProcess2.getShape()[i] == dataDimSize) {
-					backgroundDataDims.add(i);
-				}
+		List<Integer> dimensionList = new ArrayList<Integer>();
+		if (origin.getRank()== backgroundToProcess2.getRank()) {
+			for (int dataDim : ssm.getDataDimensions()) {
+				dimensionList.add(origin.getShape()[dataDim]);
+			}
+		}
+		else {
+			for (int i = 0; i < slice.getShape().length; ++i) {
+				dimensionList.add(slice.getShape()[i]);
+			}
+		}
+		
+		for (int i = 0; i < backgroundToProcess2.getShape().length; ++i) {
+			if (dimensionList.contains(backgroundToProcess2.getShape()[i])) {
+				backgroundDataDims.add(i);
 			}
 		}
 		
