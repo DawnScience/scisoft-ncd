@@ -15,7 +15,6 @@ import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
@@ -125,7 +124,7 @@ public class NcdOperationUtils {
 			int backgroundImages = getNumberOfImages(background, ssm);
 			int sampleImages = getNumberOfSliceImages(ssm);
 			if (backgroundImages == sampleImages) {
-				bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
+				bgSlice = (Dataset) ssm.getMatchingSlice(background);
 			}
 			else {
 				throw new IllegalArgumentException("Background data not compatible with subtraction from data - consider averaging the background data before background subtraction");
