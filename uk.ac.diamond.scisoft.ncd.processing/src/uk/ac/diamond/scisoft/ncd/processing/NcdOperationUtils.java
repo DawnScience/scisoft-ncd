@@ -127,18 +127,8 @@ public class NcdOperationUtils {
 			if (backgroundImages == sampleImages) {
 				bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
 			}
-			//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
-			else if (sampleImages % backgroundImages == 0) {
-				bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
-			}
 			else {
-				System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
-				bgSlice = (Dataset)background.getSlice(ssm.getSliceFromInput());
-
-				//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
-				if (slice.getShape().length < bgSlice.getSliceView().squeeze().getShape().length) {
-					throw new IllegalArgumentException("Data reduced/BG unreduced background subtraction is currently not supported");
-				}
+				throw new IllegalArgumentException("Background data not compatible with subtraction from data - consider averaging the background data before background subtraction");
 			}
 		}
 		//data slice must not be larger than BG data slice! we have not done enough reduction on slices in this case!
