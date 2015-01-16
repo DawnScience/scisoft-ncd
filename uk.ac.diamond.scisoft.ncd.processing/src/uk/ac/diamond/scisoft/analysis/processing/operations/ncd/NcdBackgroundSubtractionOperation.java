@@ -10,17 +10,13 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
@@ -83,48 +79,13 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 			throw new OperationException(this, e1);
 		}
 		
+		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
+
 		Dataset bgSlice;
 		try {
-			SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
-			
-			//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-			if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(background.getShape(), false))) {
-				bgSlice = (Dataset) background.getSlice();
-			}
-			else {
-				//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
-				int backgroundImages = getNumberOfImages(background, ssm);
-				int sampleImages = getNumberOfSliceImages(ssm);
-				if (backgroundImages == sampleImages) {
-					bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber(), ssm.getSliceInfo().getSliceNumber() + 1));
-				}
-				//if number of BG images is a clean divisor of number of data images, use BG images repeatedly based on mod numBGimages
-				else if (sampleImages % backgroundImages == 0) {
-					bgSlice = (Dataset)background.getSlice(new Slice(ssm.getSliceInfo().getSliceNumber() % backgroundImages, ssm.getSliceInfo().getSliceNumber() % backgroundImages + 1));
-				}
-				else {
-					System.out.println("has gotten through everything. what have I missed?"); //TODO average or is this illegal?
-					bgSlice = (Dataset)background.getSlice(ssm.getSliceFromInput());
-
-					//if background image is the same shape as parent slice (but slice is reduced), then run a process on the background files
-					if (slice.getShape().length < bgSlice.getSliceView().squeeze().getShape().length) {
-						throw new IllegalArgumentException("Data reduced/BG unreduced background subtraction is currently not supported");
-					}
-				}
-			}
-			//data slice must not be larger than BG data slice! we have not done enough reduction on slices in this case!
-			if (slice.getShape().length > bgSlice.getShape().length) {
-				throw new Exception("Slice should not have bigger dimensionality than the background data");
-			}
-			
-			Dataset backgroundErrors = NcdOperationUtils.getErrorBuffer(bgSlice.getSlice());
-			if (backgroundErrors == null) {
-				backgroundErrors = bgSlice.getSlice();
-			}
-			bgSlice.setErrorBuffer(backgroundErrors);
-
-		} catch (Exception e) {
-			throw new OperationException(this, e);
+			bgSlice = NcdOperationUtils.getBackgroundSlice(ssm, slice, background);
+		} catch (Exception e1) {
+			throw new OperationException(this, e1);
 		}
 		
 		if (model.getBgScale() != 0 && model.getBgScale() != Double.NaN) {
@@ -161,46 +122,6 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 		copyMetadata(slice, bgDataset);
 		toReturn.setData(bgDataset);
 		return toReturn;
-	}
-
-	private int getNumberOfImages(ILazyDataset backgroundToProcess2, SliceFromSeriesMetadata ssm) {
-		//find location of data dimensions in origin, see if we have them in background
-		ILazyDataset origin = ssm.getParent();
-		List<Integer>backgroundDataDims = new ArrayList<Integer>();
-		for (int dataDim : ssm.getDataDimensions()) {
-			int dataDimSize = origin.getShape()[dataDim];
-			for (int i = 0; i < backgroundToProcess2.getShape().length; ++i) {
-				if (backgroundToProcess2.getShape()[i] == dataDimSize) {
-					backgroundDataDims.add(i);
-				}
-			}
-		}
-		
-		int backgroundImages = 1;
-		for (int i=0; i < backgroundToProcess2.getShape().length; ++i) {
-			int backgroundDim = backgroundToProcess2.getShape()[i];
-			if (backgroundDim != 1 && !backgroundDataDims.contains(i)) {
-				backgroundImages *= backgroundDim;
-			}
-		}
-		return backgroundImages;
-	}
-
-	private int getNumberOfSliceImages(SliceFromSeriesMetadata ssm) {
-		int totalSize = 1;
-		for (int i = 0; i < ssm.getSubSampledShape().length; ++i) {
-			boolean isADataDimension = false;
-			for (int j=0; j < ssm.getDataDimensions().length; ++j) {
-				if (ssm.getDataDimensions()[j] == i) {
-					isADataDimension = true;
-					break;
-				}
-			}
-			if (!isADataDimension) {
-				totalSize *= ssm.getSubSampledShape()[i];
-			}
-		}
-		return totalSize;
 	}
 
 }
