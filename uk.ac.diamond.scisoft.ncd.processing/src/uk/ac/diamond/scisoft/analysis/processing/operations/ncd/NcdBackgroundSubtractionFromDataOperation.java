@@ -88,7 +88,7 @@ public class NcdBackgroundSubtractionFromDataOperation<T extends NcdBackgroundSu
 
 		Dataset bgSlice;
 		try {
-			bgSlice = NcdOperationUtils.getBackgroundSlice(ssm, slice, background);
+			bgSlice = NcdOperationUtils.getBackgroundSlice(ssm, slice, backgroundToProcess);
 		} catch (Exception e1) {
 			throw new OperationException(this, e1);
 		}
