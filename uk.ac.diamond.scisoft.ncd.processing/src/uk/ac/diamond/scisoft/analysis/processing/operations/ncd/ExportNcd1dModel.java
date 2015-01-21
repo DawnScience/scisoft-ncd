@@ -9,6 +9,7 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.dawnsci.conversion.converters.CustomNCDConverter.SAS_FORMAT;
 import org.eclipse.dawnsci.analysis.api.processing.model.AbstractOperationModel;
 import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
@@ -22,14 +23,17 @@ public class ExportNcd1dModel extends AbstractOperationModel {
 	public void setOutputDirectoryPath(String outputDirectoryPath) {
 		this.outputDirectoryPath = outputDirectoryPath;
 	}
-	private String extension = "dat";
-	public String getExtension() {
-		return extension;
-	}
-	public void setExtension(String extension) {
-		this.extension = extension;
-	}
+
+	@OperationModelField(hint="Select the export type", label="Export Format")
+	private SAS_FORMAT exportFormat = SAS_FORMAT.ASCII;
 	
+	public SAS_FORMAT getExportFormat() {
+		return exportFormat;
+	}
+	public void setExportFormat(SAS_FORMAT exportFormat) {
+		this.exportFormat = exportFormat;
+	}
+
 	@OperationModelField(dataset="outputDirectoryPath", hint="Select the dataset to export", label = "Select Dataset to Export")
 	private String datasetName;
 	public String getDatasetName() {
