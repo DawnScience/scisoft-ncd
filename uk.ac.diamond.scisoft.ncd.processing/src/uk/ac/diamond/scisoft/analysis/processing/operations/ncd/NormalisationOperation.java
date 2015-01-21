@@ -47,8 +47,16 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
 		double absScale = model.getAbsScale();
-		if (model.isUseThisThickness() && model.getThickness() != 0) {
-			absScale /= model.getThickness();
+		if (model.isUseThisThickness()) {
+			if (model.getThickness() > 0) {
+				absScale /= model.getThickness();
+			}
+			else if (model.getThickness() == 0.0) {
+				throw new IllegalArgumentException("The sample thickness cannot be 0");
+			}
+			else { //should not be negative or NaN
+				throw new IllegalArgumentException("Unexpected value for sample thickness - " + model.getThickness());
+			}
 		}
 		else {
 			//use value from dataset if > 0
@@ -66,6 +74,12 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			}
 			if (thickness > 0) {
 				absScale /= thickness;
+			}
+			else if (Double.isNaN(thickness)) {
+				throw new IllegalArgumentException("Thickness has a value of NaN");
+			}
+			else {
+				throw new IllegalArgumentException("Thickness is not a positive value");
 			}
 		}
 
