@@ -85,6 +85,14 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="Degree of Orientation">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ExportNcd1dOperation"
+             description="Allow users to export the results to several different formats"
+             id="uk.ac.diamond.scisoft.analysis.processing.ExportNcd1d"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ExportNcd1dModel"
+             name="Export NCD 1-D Data">
+       </operation>
        <category
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              name="NCD">
