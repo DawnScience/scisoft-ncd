@@ -20,12 +20,16 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NormalisationOperation<T extends NormalisationModel> extends AbstractOperation<NormalisationModel, OperationData> {
+
+	private final static Logger logger = LoggerFactory.getLogger(NormalisationOperation.class);
 
 	@Override
 	public String getId() {
@@ -52,10 +56,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 				absScale /= model.getThickness();
 			}
 			else if (model.getThickness() == 0.0) {
-				throw new IllegalArgumentException("The sample thickness cannot be 0");
+				logger.info("The sample thickness cannot be 0 - will be ignored");
 			}
 			else { //should not be negative or NaN
-				throw new IllegalArgumentException("Unexpected value for sample thickness - " + model.getThickness());
+				logger.info("Unexpected value for sample thickness - " + model.getThickness() + " so it will be ignored");
 			}
 		}
 		else {
@@ -76,10 +80,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 				absScale /= thickness;
 			}
 			else if (Double.isNaN(thickness)) {
-				throw new IllegalArgumentException("Thickness has a value of NaN");
+				logger.info("Sample thickness has a value of NaN (it may not have been set during data collection) - it will be ignored");
 			}
 			else {
-				throw new IllegalArgumentException("Thickness is not a positive value");
+				logger.info("Sample thickness is not a positive value - it will be ignored");
 			}
 		}
 
