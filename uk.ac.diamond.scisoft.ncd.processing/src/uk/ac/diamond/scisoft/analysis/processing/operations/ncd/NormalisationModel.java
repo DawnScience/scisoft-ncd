@@ -14,7 +14,7 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
+	@OperationModelField(min=0,hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
 	private double absScale = 1;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
@@ -32,7 +32,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint="If true, calibration data will be extracted from the current data file. If false, data will be from the calibration file defined here", label = "Calibration file is current data file")
 	private boolean useCurrentDataForCalibration = true;
 
-	@OperationModelField(hint="Thickness (mm)", label = "Thickness of sample" )
+	@OperationModelField(min=0, hint="Thickness (mm)", label = "Thickness of sample" )
 	private double thickness = 0;
 
 	@OperationModelField(hint="Use Thickness Value in This Form", label = "Use This Thickness" )
