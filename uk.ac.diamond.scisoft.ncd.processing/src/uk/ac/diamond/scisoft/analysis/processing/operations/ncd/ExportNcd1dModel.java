@@ -34,12 +34,4 @@ public class ExportNcd1dModel extends AbstractOperationModel {
 		this.exportFormat = exportFormat;
 	}
 
-	@OperationModelField(dataset="outputDirectoryPath", hint="Select the dataset to export", label = "Select Dataset to Export")
-	private String datasetName;
-	public String getDatasetName() {
-		return datasetName;
-	}
-	public void setDatasetName(String datasetName) {
-		this.datasetName = datasetName;
-	}
 }
