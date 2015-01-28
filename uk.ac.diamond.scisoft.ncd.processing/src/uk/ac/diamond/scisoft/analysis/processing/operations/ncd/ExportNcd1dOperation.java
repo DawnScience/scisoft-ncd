@@ -82,9 +82,8 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 			}
 
 			IConversionContext context = service.open("/dls/path_to_some_hdf5_file.nxs"); //a dummy file to create context - TODO provide file-free way to create context!
-			AggregateDataset ag = new AggregateDataset(false, sliceData);
+			AggregateDataset ag = new AggregateDataset(true, sliceData);
 			context.setLazyDataset(ag);
-			context.setDatasetName(model.getDatasetName());
 			context.setOutputPath(model.getOutputDirectoryPath());
 			context.setConversionScheme(ConversionScheme.CUSTOM_NCD);
 			context.setUserObject(model.getExportFormat());
