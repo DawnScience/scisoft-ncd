@@ -83,6 +83,11 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 			context.setOutputPath(model.getOutputDirectoryPath());
 			context.setConversionScheme(ConversionScheme.CUSTOM_NCD);
 			context.setUserObject(model.getExportFormat());
+			String filePath = ssm.getFilePath();
+			filePath = filePath.replace('\\', '/');
+			filePath = filePath.substring(filePath.lastIndexOf('/'));
+			String outputPath = filePath.substring(1, filePath.lastIndexOf('.'))+"_processed";
+			context.setDatasetName(outputPath);
 
 			try {
 				service.process(context);
