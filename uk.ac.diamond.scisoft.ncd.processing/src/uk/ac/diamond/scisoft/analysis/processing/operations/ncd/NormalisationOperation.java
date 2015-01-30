@@ -133,6 +133,11 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		// now set up normalization
 		//check dimension
 		data.resize(NcdOperationUtils.addDimension(data.getShape()));
+		//then resize calibration data if necessary
+		while (data.getRank() > calibrationSlice.getRank()) {
+			calibrationSlice.resize(NcdOperationUtils.addDimension(calibrationSlice.getShape()));
+		}
+		
 		Object[] normData = norm.process(data.getBuffer(), errors.getBuffer(),
 				calibrationSlice.getBuffer(), 1, data.getShape(), calibrationSlice.getShape());
 		OperationData toReturn = new OperationData();
