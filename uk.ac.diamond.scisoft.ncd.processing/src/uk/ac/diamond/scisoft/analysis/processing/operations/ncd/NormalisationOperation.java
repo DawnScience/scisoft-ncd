@@ -50,7 +50,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
-		double absScale = model.getAbsScale();
+		double absScale = getAbsScale(slice);
 		if (model.isUseThisThickness()) {
 			if (model.getThickness() > 0) {
 				absScale /= model.getThickness();
@@ -150,5 +150,22 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		toReturn.setData(myres);
 		return toReturn;
 		
+	}
+
+	private double getAbsScale(IDataset slice) {
+		if (model.isUseScaleValueFromOriginalFile()) {
+			String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
+			Dataset d = null;
+			try {
+				d = (Dataset) LoaderFactory.getDataSet(originalFile, "/entry1/detector/scaling_factor", null);
+			} catch (Exception e) {
+				throw new OperationException(this, "Unable to retrieve scaling factor from file");
+			}
+			if (d == null) {
+				throw new OperationException(this, "Empty scaling factor dataset");
+			}
+			return d.getDouble();
+		}
+		return model.getAbsScale();
 	}
 }
