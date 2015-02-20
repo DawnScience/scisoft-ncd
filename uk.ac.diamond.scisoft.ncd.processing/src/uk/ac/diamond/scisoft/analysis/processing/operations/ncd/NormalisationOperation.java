@@ -29,6 +29,9 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NormalisationOperation<T extends NormalisationModel> extends AbstractOperation<NormalisationModel, OperationData> {
 
+	private static final String ENTRY1_SAMPLE_THICKNESS = "/entry1/sample/thickness";
+	private static final String ENTRY1_IT_DATA = "/entry1/It/data";
+	private static final String ENTRY1_DETECTOR_SCALING_FACTOR = "/entry1/detector/scaling_factor";
 	private final static Logger logger = LoggerFactory.getLogger(NormalisationOperation.class);
 
 	@Override
@@ -68,7 +71,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			try {
 
 				String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-				IDataset thicknessDataset = LoaderFactory.getDataSet(dataFile, "/entry1/sample/thickness", null);
+				IDataset thicknessDataset = LoaderFactory.getDataSet(dataFile, ENTRY1_SAMPLE_THICKNESS, null);
 				if (thicknessDataset == null) {
 					throw new IllegalArgumentException("File does not contain the required thickness information");
 				}
@@ -106,7 +109,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 
 		String calibDataPath;
 		if (model.isUseDefaultPathForCalibration()) {
-			calibDataPath = "/entry1/It/data";
+			calibDataPath = ENTRY1_IT_DATA;
 		}
 		else {
 			if (model.getCalibDataPath() != null || model.getCalibDataPath().isEmpty()) {
@@ -157,7 +160,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
 			Dataset d = null;
 			try {
-				d = (Dataset) LoaderFactory.getDataSet(originalFile, "/entry1/detector/scaling_factor", null);
+				d = (Dataset) LoaderFactory.getDataSet(originalFile, ENTRY1_DETECTOR_SCALING_FACTOR, null);
 			} catch (Exception e) {
 				throw new OperationException(this, "Unable to retrieve scaling factor from file");
 			}
