@@ -54,7 +54,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
 		double absScale = getAbsScale(slice);
-		if (model.isUseThisThickness()) {
+		if (!model.isThicknessFromFileIsDefault()) {
 			if (model.getThickness() > 0) {
 				absScale /= model.getThickness();
 			}

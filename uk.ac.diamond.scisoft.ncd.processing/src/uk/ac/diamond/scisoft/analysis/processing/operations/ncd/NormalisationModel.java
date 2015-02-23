@@ -38,8 +38,8 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(min=0, hint="Thickness (mm)", label = "Thickness of sample" )
 	private double thickness = 0;
 
-	@OperationModelField(hint="Use Thickness Value in This Form", label = "Use This Thickness" )
-	private boolean useThisThickness = false;
+	@OperationModelField(hint="The thickness value in the file is default - ignore value in this form", label = "Thickness in file is default" )
+	private boolean thicknessFromFileIsDefault = true;
 
 	public String getFilePath() {
 		return filePath;
@@ -106,12 +106,12 @@ public class NormalisationModel extends AbstractOperationModel {
 		this.thickness = thickness;
 	}
 
-	public boolean isUseThisThickness() {
-		return useThisThickness;
+	public boolean isThicknessFromFileIsDefault() {
+		return thicknessFromFileIsDefault;
 	}
 
-	public void setUseThisThickness(boolean useThisThickness) {
-		this.useThisThickness = useThisThickness;
+	public void setThicknessFromFileIsDefault(boolean thicknessFromFileIsDefault) {
+		this.thicknessFromFileIsDefault = thicknessFromFileIsDefault;
 	}
 
 }
