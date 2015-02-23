@@ -88,8 +88,8 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			}
 		}
 
-		if (thickness == null) {
-			logger.error("Thickness is null, skipping absolute scaling calculation");
+		if (thickness == null || thickness.isNaN() || thickness <= 0) {
+			logger.error("Thickness is invalid, skipping absolute scaling calculation");
 		}
 		else {
 			norm.setNormvalue(absScale / thickness);
