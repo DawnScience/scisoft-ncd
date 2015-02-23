@@ -54,9 +54,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
 		double absScale = getAbsScale(slice);
+		Double thickness = null;
 		if (!model.isThicknessFromFileIsDefault()) {
 			if (model.getThickness() > 0) {
-				absScale /= model.getThickness();
+				thickness = model.getThickness();
 			}
 			else if (model.getThickness() == 0.0) {
 				logger.info("The sample thickness cannot be 0 - will be ignored");
@@ -67,7 +68,6 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		}
 		else {
 			//use value from dataset if > 0
-			double thickness;
 			try {
 
 				String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
@@ -79,18 +79,21 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			} catch (Exception e) {
 				throw new OperationException(this, e);
 			}
-			if (thickness > 0) {
-				absScale /= thickness;
-			}
-			else if (Double.isNaN(thickness)) {
+			
+			if (Double.isNaN(thickness)) {
 				logger.info("Sample thickness has a value of NaN (it may not have been set during data collection) - it will be ignored");
 			}
-			else {
+			else if (thickness <= 0) {
 				logger.info("Sample thickness is not a positive value - it will be ignored");
 			}
 		}
 
-		norm.setNormvalue(absScale);
+		if (thickness == null) {
+			logger.error("Thickness is null, skipping absolute scaling calculation");
+		}
+		else {
+			norm.setNormvalue(absScale / thickness);
+		}
 		Dataset errors = (Dataset) slice.getError();
 		Dataset data = (Dataset) slice.getSliceView();
 		
