@@ -17,7 +17,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(min=0,hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
 	private double absScale = 1;
 
-	@OperationModelField(hint="Use absolute scaling value /entry1/detector/scaling_factor from original Nexus file", label = "Absolute scaling value from Nexus file by default")
+	@OperationModelField(hint="Use absolute scaling value " + NormalisationOperation.ENTRY1_DETECTOR_SCALING_FACTOR + " from original Nexus file. If false, use scaling value defined here", label = "Absolute scaling value from Nexus file by default")
 	private boolean useScaleValueFromOriginalFile = true;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
@@ -26,7 +26,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(dataset="filePath", hint="Location of calibration data in Nexus file", label = "Calibration data location" )
 	private String calibDataPath = "";
 
-	@OperationModelField(hint="If true, calibration data will be extracted from the default location, /entry1/It/data. If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
+	@OperationModelField(hint="If true, calibration data will be extracted from the default location, " + NormalisationOperation.ENTRY1_IT_DATA + ". If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
 	private boolean useDefaultPathForCalibration = true;
 
 	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
@@ -38,7 +38,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(min=0, hint="Thickness (mm)", label = "Thickness of sample" )
 	private double thickness = 0;
 
-	@OperationModelField(hint="The thickness value in the file is default - ignore value in this form", label = "Thickness in file is default" )
+	@OperationModelField(hint="The thickness value in the file at " + NormalisationOperation.ENTRY1_SAMPLE_THICKNESS + " is default. If false, use the thickness value in defined here", label = "Thickness in file is default" )
 	private boolean thicknessFromFileIsDefault = true;
 
 	public String getFilePath() {

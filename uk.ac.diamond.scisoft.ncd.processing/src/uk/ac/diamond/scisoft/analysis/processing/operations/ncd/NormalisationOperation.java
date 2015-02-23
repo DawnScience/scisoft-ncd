@@ -29,9 +29,9 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class NormalisationOperation<T extends NormalisationModel> extends AbstractOperation<NormalisationModel, OperationData> {
 
-	private static final String ENTRY1_SAMPLE_THICKNESS = "/entry1/sample/thickness";
-	private static final String ENTRY1_IT_DATA = "/entry1/It/data";
-	private static final String ENTRY1_DETECTOR_SCALING_FACTOR = "/entry1/detector/scaling_factor";
+	public static final String ENTRY1_SAMPLE_THICKNESS = "/entry1/sample/thickness";
+	public static final String ENTRY1_IT_DATA = "/entry1/It/data";
+	public static final String ENTRY1_DETECTOR_SCALING_FACTOR = "/entry1/detector/scaling_factor";
 	private final static Logger logger = LoggerFactory.getLogger(NormalisationOperation.class);
 
 	@Override
