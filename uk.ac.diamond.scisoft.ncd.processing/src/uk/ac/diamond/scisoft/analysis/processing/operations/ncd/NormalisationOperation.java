@@ -53,7 +53,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
 		Normalisation norm = new Normalisation();
 		norm.setCalibChannel(model.getCalibChannel());
-		double absScale = getAbsScale(slice);
+		Double absScale = getAbsScale(slice);
+		if (absScale.isNaN() || absScale <= 0) {
+			throw new OperationException(this, "Absolute scale value must be a number and positive");
+		}
 		Double thickness = null;
 		if (!model.isThicknessFromFileIsDefault()) {
 			if (model.getThickness() > 0) {
