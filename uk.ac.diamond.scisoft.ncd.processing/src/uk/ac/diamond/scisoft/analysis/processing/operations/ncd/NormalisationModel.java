@@ -17,7 +17,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(min=0,hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
 	private double absScale = 1;
 
-	@OperationModelField(hint="", label = "Use absolute scaling value /entry1/detector/scaling_factor from original Nexus file")
+	@OperationModelField(hint="Use absolute scaling value /entry1/detector/scaling_factor from original Nexus file", label = "Absolute scaling value from Nexus file by default")
 	private boolean useScaleValueFromOriginalFile = false;
 
 	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
