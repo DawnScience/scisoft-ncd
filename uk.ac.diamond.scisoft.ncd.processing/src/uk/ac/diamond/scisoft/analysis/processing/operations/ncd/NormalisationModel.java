@@ -14,31 +14,37 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(min=0,hint="Absolute scaling value",max=1e10,label = "Absolute scale value" )
+	@OperationModelField(min = 0, hint = "Absolute scaling value", max = 1e10, label = "Absolute scale value")
 	private double absScale = 1;
 
-	@OperationModelField(hint="Use absolute scaling value " + NormalisationOperation.ENTRY1_DETECTOR_SCALING_FACTOR + " from original Nexus file. If false, use scaling value defined here", label = "Absolute scaling value from Nexus file by default")
+	@OperationModelField(hint = "Use absolute scaling value "
+			+ NormalisationOperation.ENTRY1_DETECTOR_SCALING_FACTOR
+			+ " from original Nexus file. If false, use scaling value defined here", label = "Absolute scaling value from Nexus file by default")
 	private boolean useScaleValueFromOriginalFile = true;
 
-	@OperationModelField(hint="Calibration channel location in scan data",label = "Calibration channel number" )
+	@OperationModelField(hint = "Calibration channel location in scan data", label = "Calibration channel number")
 	private int calibChannel;
-	
-	@OperationModelField(dataset="filePath", hint="Location of calibration data in Nexus file", label = "Calibration data location" )
+
+	@OperationModelField(dataset = "filePath", hint = "Location of calibration data in Nexus file", label = "Calibration data location")
 	private String calibDataPath = "";
 
-	@OperationModelField(hint="If true, calibration data will be extracted from the default location, " + NormalisationOperation.ENTRY1_IT_DATA + ". If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
+	@OperationModelField(hint = "If true, calibration data will be extracted from the default location, "
+			+ NormalisationOperation.ENTRY1_IT_DATA
+			+ ". If false, data will be from the calibration data location defined here", label = "Calibration data path is default path (It)")
 	private boolean useDefaultPathForCalibration = true;
 
-	@OperationModelField(hint="File containing calibration data",file = FileType.EXISTING_FILE, label = "Calibration file" )
+	@OperationModelField(hint = "File containing calibration data", file = FileType.EXISTING_FILE, label = "Calibration file")
 	private String filePath = "";
 
-	@OperationModelField(hint="If true, calibration data will be extracted from the current data file. If false, data will be from the calibration file defined here", label = "Calibration file is current data file")
+	@OperationModelField(hint = "If true, calibration data will be extracted from the current data file. If false, data will be from the calibration file defined here", label = "Calibration file is current data file")
 	private boolean useCurrentDataForCalibration = true;
 
-	@OperationModelField(min=0, hint="Thickness (mm)", label = "Thickness of sample" )
+	@OperationModelField(min = 0, hint = "Thickness (mm)", label = "Thickness of sample")
 	private double thickness = 0;
 
-	@OperationModelField(hint="The thickness value in the file at " + NormalisationOperation.ENTRY1_SAMPLE_THICKNESS + " is default. If false, use the thickness value in defined here", label = "Thickness in file is default" )
+	@OperationModelField(hint = "The thickness value in the file at "
+			+ NormalisationOperation.ENTRY1_SAMPLE_THICKNESS
+			+ " is default. If false, use the thickness value in defined here", label = "Thickness in file is default")
 	private boolean thicknessFromFileIsDefault = true;
 
 	public String getFilePath() {
