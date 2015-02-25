@@ -524,10 +524,10 @@ public class NcdModelBuilderParametersView extends AbstractAlgorithmProcessPage 
 
 		qMinBounds = new FloatDecorator(qMin);
 		doubleNumberFormat.setMinimumFractionDigits(4);
-		qMinBounds.setNumberFormat(doubleNumberFormat);
+		qMinBounds.setNumberFormat(null, doubleNumberFormat);
 		qMinBounds.setMinimum(0);
 		qMaxBounds = new FloatDecorator(qMax);
-		qMaxBounds.setNumberFormat(doubleNumberFormat);
+		qMaxBounds.setNumberFormat(null, doubleNumberFormat);
 		qMinBounds.addValueChangeListener(valueChangeListener);
 		qMaxBounds.addValueChangeListener(valueChangeListener);
 
