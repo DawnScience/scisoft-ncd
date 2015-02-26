@@ -86,6 +86,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private Button runCalibratioin, clearCalibratioin;
 	private NcdProcessingSourceProvider ncdSampleThicknessSourceProvider;
 	private NcdProcessingSourceProvider ncdAbsScaleSourceProvider;
+	private NcdProcessingSourceProvider ncdAbsScaleStdDevSourceProvider;
 	private static final Logger logger = LoggerFactory.getLogger(AbsoluteIntensityCalibration.class);
 
 	private IMemento memento;
@@ -162,9 +163,11 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
-		
+		ncdAbsScaleStdDevSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STDDEV_STATE);
+
 		ncdAbsScaleSourceProvider.addSourceProviderListener(this);
-		
+		ncdAbsScaleStdDevSourceProvider.addSourceProviderListener(this);
+
 		Composite c = new Composite(parent, SWT.NONE);
 		c.setLayout(new GridLayout(2, false));
 		c.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
@@ -293,9 +296,15 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
 			Double tmpAbsScaling = ncdAbsScaleSourceProvider.getAbsScaling();
+			Double tmpAbsScalingStdDev = ncdAbsScaleStdDevSourceProvider.getAbsScalingStdDev();
 			if (tmpAbsScaling != null) {
-				absScale.setText(tmpAbsScaling.toString());
+				String absScaleText = tmpAbsScaling.toString();
+				if (tmpAbsScalingStdDev != null) {
+					absScaleText += " +/- " + tmpAbsScalingStdDev.toString();
+				}
+				absScale.setText(absScaleText);
 			}
+
 			
 			absoluteCalibrationListener = new NcdAbsoluteCalibrationListener(REEFRENCE_PLOT_NAME, RESULTS_PLOT_NAME);
 			
@@ -316,6 +325,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 				public void widgetSelected(SelectionEvent e) {
 					ncdSampleThicknessSourceProvider.setSampleThickness(null, true);
 					ncdAbsScaleSourceProvider.setAbsScaling(null, true);
+					ncdAbsScaleSourceProvider.setAbsScalingStdDev(null, true);
 					plottingSystem.clear();
 				}
 			});
@@ -424,6 +434,20 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 				String sourceText = sForm.format(sourceValue);
 				if (sourceText != null) {
 					absScale.setText(sourceText);
+				}
+			} else {
+				absScale.setText("");
+			}
+		}
+		
+		if (sourceName.equals(NcdProcessingSourceProvider.ABSSCALING_STDDEV_STATE)) {
+			if (sourceValue != null) {
+			    DecimalFormat sForm = new DecimalFormat("0.####E0");
+				String sourceText = sForm.format(sourceValue);
+				if (sourceText != null) {
+					if (!absScale.getText().isEmpty() && !absScale.getText().contains(sourceText)) {
+						absScale.setText(absScale.getText() + " +/- " + sourceText);
+					}
 				}
 			} else {
 				absScale.setText("");

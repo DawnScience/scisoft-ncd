@@ -35,6 +35,7 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 public class NCDAbsoluteCalibration {
 	
 	private double absScale;
+	private double absScaleStdDev;
 	
 	private Dataset dataI, absI, calibratedI;
 	private Dataset dataQ, absQ;
@@ -47,6 +48,10 @@ public class NCDAbsoluteCalibration {
 
 	public double getAbsoluteScale() {
 		return absScale;
+	}
+
+	public double getAbsScaleStdDev() {
+		return absScaleStdDev;
 	}
 
 	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, Dataset absI, Unit<ScatteringVector> unit) {
@@ -91,6 +96,7 @@ public class NCDAbsoluteCalibration {
 		}
 
 		absScale = stats.getMean();
+		absScaleStdDev = stats.getStandardDeviation();
 		
 		String msg = StringUtils.join(new String[] {
 				"scale", Double.toString(absScale)
@@ -100,6 +106,7 @@ public class NCDAbsoluteCalibration {
 		
 		System.out.println("NCD Absolute Instensity Scaler");
 		System.out.println(Double.toString(absScale));
+		System.out.println("standard deviation:" + Double.toString(absScaleStdDev));
 		
 		calibratedData(dataI);
 	}
