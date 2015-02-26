@@ -192,6 +192,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		final ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		final NcdProcessingSourceProvider ncdSampleThicknessSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAMPLETHICKNESS_STATE);
 		final NcdProcessingSourceProvider ncdAbsScaleSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STATE);
+		final NcdProcessingSourceProvider ncdAbsScaleStdDevSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ABSSCALING_STDDEV_STATE);
 		final NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		final NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		final NcdProcessingSourceProvider ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
@@ -349,6 +350,9 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 						
 						double absScale = ncdAbsoluteCalibration.getAbsoluteScale();
 						ncdAbsScaleSourceProvider.setAbsScaling(absScale * thickness, true);
+						
+						double absScaleStdDev = ncdAbsoluteCalibration.getAbsScaleStdDev();
+						ncdAbsScaleStdDevSourceProvider.setAbsScalingStdDev(absScaleStdDev * thickness, true);
 					}
 				});
 				monitor.done();	
