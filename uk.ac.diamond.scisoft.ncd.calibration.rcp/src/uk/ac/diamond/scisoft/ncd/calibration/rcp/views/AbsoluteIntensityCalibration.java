@@ -80,6 +80,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private Combo standard;
 	private Text sampleThickness;
 	private Label absScale;
+	private Label absScaleStdDev;
 
 	private Text selectedFile, selectedEmptyCellFile;
 	private NcdAbsoluteCalibrationListener absoluteCalibrationListener;
@@ -145,6 +146,14 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	
 	private Double getAbsScale() {
 		String input = absScale.getText();
+		if (NumberUtils.isNumber(input)) {
+			return Double.valueOf(input);
+		}
+		return null;
+	}
+	
+	private Double getAbsScaleStdDev() {
+		String input = absScaleStdDev.getText();
 		if (NumberUtils.isNumber(input)) {
 			return Double.valueOf(input);
 		}
@@ -295,14 +304,19 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			absScale = new Label(g, SWT.NONE);
 			absScale.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
 			absScale.setToolTipText("Select absolute scaling factor for calibration data");
+			Label absScaleStdDevLabel = new Label(g, SWT.NONE);
+			absScaleStdDevLabel.setText("Absolute Instensity Scale Standard Deviation");
+			absScaleStdDevLabel.setLayoutData(new GridData(SWT.LEFT, SWT.CENTER, true, false));
+			absScaleStdDev = new Label(g, SWT.NONE);
+			absScaleStdDev.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, false));
+			absScaleStdDev.setToolTipText("Standard deviation of absolute scaling factor");
 			Double tmpAbsScaling = ncdAbsScaleSourceProvider.getAbsScaling();
 			Double tmpAbsScalingStdDev = ncdAbsScaleStdDevSourceProvider.getAbsScalingStdDev();
 			if (tmpAbsScaling != null) {
-				String absScaleText = tmpAbsScaling.toString();
-				if (tmpAbsScalingStdDev != null) {
-					absScaleText += " +/- " + tmpAbsScalingStdDev.toString();
-				}
-				absScale.setText(absScaleText);
+				absScale.setText(tmpAbsScaling.toString());
+			}
+			if (tmpAbsScalingStdDev != null) {
+				absScaleStdDev.setText(tmpAbsScalingStdDev.toString());
 			}
 
 			
@@ -379,6 +393,10 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			if (absScaleVal != null) {
 				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALE, absScaleVal.floatValue());
 			}
+			Double absScaleStdDevVal = getAbsScaleStdDev();
+			if (absScaleStdDevVal != null) {
+				memento.putFloat(NcdPreferences.NCD_ABSOLUTESCALESTDDEV, absScaleStdDevVal.floatValue());
+			}
 		}
 	}
 		
@@ -395,6 +413,12 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			if (flt != null) {
 				sampleThickness.setText(flt.toString());
 				ncdSampleThicknessSourceProvider.setSampleThickness(new Double(flt), true);
+			}
+
+			flt = memento.getFloat(NcdPreferences.NCD_ABSOLUTESCALESTDDEV);
+			if (flt != null) {
+				absScaleStdDev.setText(flt.toString());
+				ncdAbsScaleStdDevSourceProvider.setAbsScalingStdDev(new Double(flt), true);
 			}
 		}
 	}
@@ -445,12 +469,10 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 			    DecimalFormat sForm = new DecimalFormat("0.####E0");
 				String sourceText = sForm.format(sourceValue);
 				if (sourceText != null) {
-					if (!absScale.getText().isEmpty() && !absScale.getText().contains(sourceText)) {
-						absScale.setText(absScale.getText() + " +/- " + sourceText);
-					}
+					absScaleStdDev.setText(sourceText);
 				}
 			} else {
-				absScale.setText("");
+				absScaleStdDev.setText("");
 			}
 		}
 		
