@@ -14,7 +14,7 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(min = 0, hint = "Absolute scaling value", max = 1e10, label = "Absolute scale value")
+	@OperationModelField(min = 0, hint = "Absolute scaling value", max = 1e10, label = "Absolute scale value", numberFormat="0.#####E0")
 	private double absScale = 1;
 
 	@OperationModelField(hint = "Use absolute scaling value "
