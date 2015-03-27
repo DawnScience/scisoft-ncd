@@ -349,7 +349,8 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 								"1. Complete q-axis calibration stage, i.e. check that correct values for\n" +
 								"   beam center, distance, wavelength are set in the \"Diffraction\" tool page.\n" +
 								"2. Make sure that sector region is locked to beam center by pressing the\n" +
-								"   \"Lock to Metadata\" button on the toolbar of the \"Radial Profile\" tool page.\n" +
+								"   \"Lock to Metadata\" button on the toolbar of the \"Radial Profile\" tool page\n" +
+								"   and that the radial range of the sector for Glassy Carbon is between 0.03 and 0.45Å-1.\n" + 
 								"3. Apply detector mask.\n" +
 								"4. Drag&&Drop files with a calibrant and an empty cell image from the \"Project Explorer\" view.\n" + 
 								"5. Check that correct \"Normalisation Dataset\" is selected in \"NCD Detector Parameters\" view.\n"+
