@@ -349,12 +349,12 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 								"1. Complete q-axis calibration stage, i.e. check that correct values for\n" +
 								"   beam center, distance, wavelength are set in the \"Diffraction\" tool page.\n" +
 								"2. Make sure that sector region is locked to beam center by pressing the\n" +
-								"   \"Lock to Metadata\" button on the toolbar of the \"Raidal Profile\" tool page.\n" +
+								"   \"Lock to Metadata\" button on the toolbar of the \"Radial Profile\" tool page.\n" +
 								"3. Apply detector mask.\n" +
 								"4. Drag&&Drop files with a calibrant and an empty cell image from the \"Project Explorer\" view.\n" + 
 								"5. Check that correct \"Normalisation Dataset\" is selected in \"NCD Detector Parameters\" view.\n"+
 								"   Reload detector information if you need to refresh the list of available normalisation datasets.\n"+
-								"6. Specify the selected calibrant sample thinckness in millimeters.\n" +
+								"6. Specify the selected calibrant sample thickness in millimeters.\n" +
 								"7. Press \"Run Absolute Intensity Calibration\" button to calculate absolute intensity scaling factor.\n"+
 								"8. To override absolute scale factor used in the \"Normalisation\" stage of the NCD Data Reduction\n" +
 								"   pipeline, press \"Clear Calibration Data\" button.");
