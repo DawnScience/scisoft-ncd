@@ -105,8 +105,14 @@ public class AveragingTest {
 	
 	@Test
 	public void testJunJakeDatasets() throws Exception {
-		assert(junResultDataset != null && jakeResultDataset != null);
-		assert(Comparisons.allCloseTo(junResultDataset, jakeResultDataset, 0.0001, 0.1));
-		assert(Comparisons.allCloseTo(junResultDataset.getError(), jakeResultDataset.getError(), 0.0001, 0.1));
+		if (junResultDataset == null || jakeResultDataset == null) {
+			throw new Exception("datasets should not be null");
+		}
+		if (!Comparisons.allCloseTo(junResultDataset, jakeResultDataset, 0.0001, 0.1)) {
+			throw new Exception("the values of the two datasets are not close to one another");
+		}
+		if (!Comparisons.allCloseTo(junResultDataset.getError(), jakeResultDataset.getError(), 0.0001, 0.1)) {
+			throw new Exception("the values of the errors of the two datasets are not close to one another");
+		}
 	}
 }
