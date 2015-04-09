@@ -8,6 +8,8 @@
  */
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.io.File;
+
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
@@ -21,8 +23,12 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Comparisons;
 import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
+import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
+import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.junit.BeforeClass;
+import org.junit.Rule;
 import org.junit.Test;
+import org.junit.rules.TemporaryFolder;
 
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
 import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
@@ -35,6 +41,8 @@ public class BackgroundSubtractionTest {
 	private static ILazyDataset randomDataset;
 	private static int datasetNumFrames = 24;
 	private static ILazyDataset jakeResultDataset, junResultDataset;
+	@Rule
+	public static TemporaryFolder folder = new TemporaryFolder();
 	/**
 	 * Manually creates the service so that no extension points have to be read.
 	 * 
@@ -52,10 +60,13 @@ public class BackgroundSubtractionTest {
 		OperationTransformer.setOperationService(service);
 		
 		int datasetLength = 1000;
-		randomDataset = Random.rand(0.0, 1000.0, datasetNumFrames, datasetLength);
+		randomDataset = Random.rand(0.0, 1000.0, datasetNumFrames, datasetLength, datasetLength);
 		randomDataset.setName("random");
 		randomDataset.setError(randomDataset.clone());
-		SourceInformation si = new SourceInformation("filepath", randomDataset.getName(), randomDataset);
+		//set this correctly for this file because Jun's background subtraction uses it
+		File newFolder = folder.newFolder();
+		IHierarchicalDataFile write = HierarchicalDataFactory.getWriter(newFolder.getAbsolutePath() + "/random.nxs");
+		SourceInformation si = new SourceInformation(write.getPath(), randomDataset.getName(), randomDataset);
 		randomDataset.setMetadata(new SliceFromSeriesMetadata(si));
 		
 		setupBgSubtractionJake();
@@ -94,9 +105,9 @@ public class BackgroundSubtractionTest {
 
 	@SuppressWarnings("unchecked")
 	public static void setupBgSubtractionJun() throws Exception {
-		final IOperation bgSubtractionJun = service.create("uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionFromDataOperation");
+		final IOperation bgSubtractionJun = service.create("uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionFromData");
 		NcdBackgroundSubtractionFromDataModel model = new NcdBackgroundSubtractionFromDataModel();
-		model.setImageSelectionString("0");
+		model.setImageSelectionString("0-1");
 		bgSubtractionJun.setModel(model);
 		final IOperationContext context = service.createContext();
 
