@@ -10,6 +10,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.io.File;
 
+import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
@@ -65,8 +66,13 @@ public class BackgroundSubtractionTest {
 		randomDataset.setError(randomDataset.clone());
 		//set this correctly for this file because Jun's background subtraction uses it
 		File newFolder = folder.newFolder();
-		IHierarchicalDataFile write = HierarchicalDataFactory.getWriter(newFolder.getAbsolutePath() + "/random.nxs");
-		SourceInformation si = new SourceInformation(write.getPath(), randomDataset.getName(), randomDataset);
+		IHierarchicalDataFile writer = HierarchicalDataFactory.getWriter(newFolder.getAbsolutePath() + "/random.nxs");
+		@SuppressWarnings("unused")
+		String group1   = writer.group("/entry");
+		String group   = writer.group("/entry/result");
+		writer.createDataset("data", (IDataset) randomDataset, group);
+		writer.close();
+		SourceInformation si = new SourceInformation(writer.getPath(), randomDataset.getName(), randomDataset);
 		randomDataset.setMetadata(new SliceFromSeriesMetadata(si));
 		
 		setupBgSubtractionJake();
@@ -107,7 +113,7 @@ public class BackgroundSubtractionTest {
 	public static void setupBgSubtractionJun() throws Exception {
 		final IOperation bgSubtractionJun = service.create("uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionFromData");
 		NcdBackgroundSubtractionFromDataModel model = new NcdBackgroundSubtractionFromDataModel();
-		model.setImageSelectionString("0-1");
+		model.setImageSelectionString("0");
 		bgSubtractionJun.setModel(model);
 		final IOperationContext context = service.createContext();
 
