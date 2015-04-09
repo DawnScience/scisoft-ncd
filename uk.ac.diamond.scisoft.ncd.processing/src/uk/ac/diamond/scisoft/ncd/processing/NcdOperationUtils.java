@@ -54,8 +54,8 @@ public class NcdOperationUtils {
 	public static ILazyDataset getDataset(String fileToRead, List<String> dataPathsToTry) throws Exception {
 		dataPathsToTry.add("/entry/result/data");
 		ILazyDataset toReturn = null;
+		IDataHolder holder = LoaderFactory.getData(fileToRead);
 		for (String location : dataPathsToTry) {
-			IDataHolder holder = LoaderFactory.getData(fileToRead);
 			toReturn = holder.getLazyDataset(location);
 			if (toReturn != null) {
 				break;
