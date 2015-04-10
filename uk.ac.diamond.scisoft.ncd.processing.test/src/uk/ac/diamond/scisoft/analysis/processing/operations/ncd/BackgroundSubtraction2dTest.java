@@ -37,7 +37,7 @@ import uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtractio
 import uk.ac.diamond.scisoft.analysis.processing.runner.OperationRunnerImpl;
 import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
 
-public class BackgroundSubtractionTest {
+public class BackgroundSubtraction2dTest {
 	private static IOperationService service;
 	private static ILazyDataset randomDataset;
 	private static int datasetNumFrames = 24;
