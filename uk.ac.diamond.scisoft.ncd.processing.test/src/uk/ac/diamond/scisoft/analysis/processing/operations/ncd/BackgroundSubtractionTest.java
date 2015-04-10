@@ -33,7 +33,6 @@ import org.junit.rules.TemporaryFolder;
 
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
 import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
-import uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtraction.SubtractBlankFrameModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.externaldata.ExternalDataSelectedFramesModel;
 import uk.ac.diamond.scisoft.analysis.processing.runner.OperationRunnerImpl;
 import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
@@ -89,7 +88,7 @@ public class BackgroundSubtractionTest {
 		final IOperationContext context = service.createContext();
 		ExternalDataSelectedFramesModel model = new ExternalDataSelectedFramesModel();
 		model.setStartFrame(0);
-		model.setEndFrame(1);
+		model.setEndFrame(0);
 		model.setFilePath(randomFilename);
 		model.setDatasetName("/entry/result/data");
 		bgSubtractionJake.setModel(model);
