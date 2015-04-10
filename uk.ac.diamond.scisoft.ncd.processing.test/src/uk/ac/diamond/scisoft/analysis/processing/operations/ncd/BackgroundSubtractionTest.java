@@ -34,6 +34,7 @@ import org.junit.rules.TemporaryFolder;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
 import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
 import uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtraction.SubtractBlankFrameModel;
+import uk.ac.diamond.scisoft.analysis.processing.operations.externaldata.ExternalDataSelectedFramesModel;
 import uk.ac.diamond.scisoft.analysis.processing.runner.OperationRunnerImpl;
 import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
 
@@ -66,27 +67,31 @@ public class BackgroundSubtractionTest {
 		randomDataset.setError(randomDataset.clone());
 		//set this correctly for this file because Jun's background subtraction uses it
 		File newFolder = folder.newFolder();
-		IHierarchicalDataFile writer = HierarchicalDataFactory.getWriter(newFolder.getAbsolutePath() + "/random.nxs");
+		String randomFilename = newFolder.getAbsolutePath() + "/random.nxs";
+		IHierarchicalDataFile writer = HierarchicalDataFactory.getWriter(randomFilename);
 		@SuppressWarnings("unused")
 		String group1   = writer.group("/entry");
 		String group   = writer.group("/entry/result");
 		writer.createDataset("data", (IDataset) randomDataset, group);
+		writer.createDataset("errors", (IDataset) randomDataset.getError(), group);
 		writer.close();
 		SourceInformation si = new SourceInformation(writer.getPath(), randomDataset.getName(), randomDataset);
 		randomDataset.setMetadata(new SliceFromSeriesMetadata(si));
 		
-		setupBgSubtractionJake();
+		setupBgSubtractionJake(randomFilename);
 		setupBgSubtractionJun();
 	}
 
 	private volatile static int counter;
 	@SuppressWarnings("unchecked")
-	public static void setupBgSubtractionJake() throws Exception {
-		final IOperation bgSubtractionJake = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtraction.SubtractBlankFrameOperation");
+	public static void setupBgSubtractionJake(String randomFilename) throws Exception {
+		final IOperation bgSubtractionJake = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtraction.SubtractDataOperation");
 		final IOperationContext context = service.createContext();
-		SubtractBlankFrameModel model = new SubtractBlankFrameModel();
+		ExternalDataSelectedFramesModel model = new ExternalDataSelectedFramesModel();
 		model.setStartFrame(0);
 		model.setEndFrame(1);
+		model.setFilePath(randomFilename);
+		model.setDatasetName("/entry/result/data");
 		bgSubtractionJake.setModel(model);
 
 		context.setData(randomDataset);
