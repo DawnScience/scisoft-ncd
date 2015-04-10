@@ -71,6 +71,7 @@ public class BackgroundSubtraction2dTest {
 		String group1   = writer.group("/entry");
 		String group   = writer.group("/entry/result");
 		writer.createDataset("data", (IDataset) randomDataset, group);
+		writer.createDataset("errors", (IDataset) randomDataset.getError(), group);
 		writer.close();
 		SourceInformation si = new SourceInformation(writer.getPath(), randomDataset.getName(), randomDataset);
 		randomDataset.setMetadata(new SliceFromSeriesMetadata(si));
