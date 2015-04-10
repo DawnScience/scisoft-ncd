@@ -54,7 +54,6 @@ public class BackgroundSubtraction2dTest {
 	public static void before() throws Exception {
 		service = (IOperationService)Activator.getService(IOperationService.class);
 		service.createOperations(service.getClass().getClassLoader(), "uk.ac.diamond.scisoft.analysis.processing.operations");
-		service.createOperations(service.getClass().getClassLoader(), "uk.ac.diamond.scisoft.analysis.processing.operations.ncd");
 
 		OperationRunnerImpl.setRunner(ExecutionType.SERIES,   new SeriesRunner());
 	
