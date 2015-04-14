@@ -16,5 +16,4 @@
 <stringAttribute key="org.eclipse.jdt.junit.TEST_KIND" value="org.eclipse.jdt.junit.loader.junit4"/>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value=""/>
 <stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="uk.ac.diamond.scisoft.ncd.core.test"/>
-<stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-DGDALargeTestFilesLocation=${project_loc:GDALargeTestFiles}/ -XX:MaxPermSize=256m -Xms256m -Xmx1536m -Djava.library.path=${project_loc:ncsa.hdf}/lib/${target.os}-${target.arch}"/>
 </launchConfiguration>
