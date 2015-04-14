@@ -31,9 +31,9 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -82,7 +82,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		int input_datasize_id = H5.H5Tget_size(input_datatype_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_dataspace_id);
-		int dtype = HDF5Loader.getDtype(input_dataclass_id, input_datasize_id);
+		int dtype = HDF5Utils.getDtype(input_dataclass_id, input_datasize_id);
 		
 		long[] drFrames = new long[rank];
 		H5.H5Sget_simple_extent_dims(input_dataspace_id, drFrames, null);

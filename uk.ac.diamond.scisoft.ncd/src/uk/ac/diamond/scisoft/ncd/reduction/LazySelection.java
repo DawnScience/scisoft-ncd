@@ -32,8 +32,8 @@ import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
@@ -77,7 +77,7 @@ public class LazySelection extends LazyDataReduction {
 		long[] count = new long[frames.length];
 		Arrays.fill(count, 1);
 		
-		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
+		int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
 		Dataset data = DatasetFactory.zeros(block_int, dtype);
 		int output_data_id = NcdNexusUtils.makedata(output_group_id, "data", ids.datatype_id, framesTotal, true, "counts");
 		int output_dataspace_id = H5.H5Dget_space(output_data_id);

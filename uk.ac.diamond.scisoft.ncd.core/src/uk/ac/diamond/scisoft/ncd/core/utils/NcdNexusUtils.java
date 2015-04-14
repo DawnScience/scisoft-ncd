@@ -29,8 +29,8 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 
@@ -323,7 +323,7 @@ public final class NcdNexusUtils {
 			}
 			
 			int rank = block_data.length;
-			int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
+			int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
 			int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
 			data = DatasetFactory.zeros(block_data_int, dtype);
 			memspace_id = H5.H5Screate_simple(rank, ids.block, null);
