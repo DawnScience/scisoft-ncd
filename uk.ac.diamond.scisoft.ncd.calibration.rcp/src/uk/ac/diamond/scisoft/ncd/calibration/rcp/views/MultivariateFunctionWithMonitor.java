@@ -34,6 +34,7 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dawnsci.analysis.api.fitting.functions.IParameter;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.LinearROI;
@@ -143,10 +144,10 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 					null);
 			try {
 				CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
-						new Gaussian(peak.getParameters()));
+						peak.copy());
 				//CompositeFunction peakFit = Fitter.fit(axisSlice, peakSlice, new GeneticAlg(0.0001),
 				//		new PseudoVoigt(peak.getParameters()));
-				peak = new Gaussian(peakFit.getParameters());
+				peak = createNewPeak(peakFit.getParameters());
 				//logger.info("idx {} peak fitting result {}", idx, peakFit.getParameterValues());
 				peaks.add(peak);
 				error += Math.log(1.0 + peak.getHeight() / peak.getFWHM());
@@ -171,6 +172,30 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		return error;
 	}
 	
+	private IPeak createNewPeak(IParameter[] parameters) throws Exception {
+		IParameter posn = null, fwhm = null, area = null;
+		Gaussian newPeak = new Gaussian();
+		for (IParameter parameter : parameters) {
+			if (parameter.getName().equals("posn")) {
+				posn = parameter;
+			}
+			else if (parameter.getName().equals("fwhm") || parameter.getName().equals("g_fwhm")) {
+				fwhm = parameter;
+			}
+			else if (parameter.getName().equals("area")) {
+				area = parameter;
+			}
+		}
+		if (posn == null || fwhm == null || area == null) {
+			throw new Exception("position, fwhm, or area not defined");
+		}
+		newPeak.setParameter(0, posn);
+		newPeak.setParameter(1, fwhm);
+		newPeak.setParameter(2, area);
+
+		return newPeak;
+	}
+
 	@SuppressWarnings("unused")
 	private boolean checkPeakOverlap(ArrayList<IPeak> peaks) {
 		if (peaks.size() < 2)
