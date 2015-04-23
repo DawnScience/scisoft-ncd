@@ -92,7 +92,12 @@ public class NCDAbsoluteCalibration {
 		SummaryStatistics stats = new SummaryStatistics();
 		for (int i = dataQStart; i <= dataQStop; i++) {
 			double qval = dataQ.getDouble(i);
-			stats.addValue(absInterpolate.value(qval) / dataI.getDouble(i));
+			if (dataI.getDouble(i) != 0) {
+				stats.addValue(absInterpolate.value(qval) / dataI.getDouble(i));
+			}
+			else {
+				System.out.println("throwing out data point at q = " + qval + " because dataI is zero, resulting in an infinite ratio");
+			}
 		}
 
 		absScale = stats.getMean();
