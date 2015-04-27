@@ -98,7 +98,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		else {
 			norm.setNormvalue(absScale / thickness);
 		}
-		Dataset errors = (Dataset) slice.getError();
+		Dataset errors = NcdOperationUtils.getErrorBuffer((Dataset) slice);
 		Dataset data = (Dataset) slice.getSliceView();
 		
 		IDataset calibration;
@@ -165,7 +165,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		double[] myerrors = (double[]) normData[1];
 
 		Dataset myres = new FloatDataset(mydata, slice.getShape());
-		myres.setError(new DoubleDataset(myerrors, slice.getShape()));
+		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
 		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;
