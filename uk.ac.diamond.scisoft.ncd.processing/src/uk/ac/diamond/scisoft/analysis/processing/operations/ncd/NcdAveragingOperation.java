@@ -17,7 +17,6 @@ import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -38,7 +37,6 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, OperationData> implements IExportOperation {
 
 	private Dataset[] sliceData;
-	private ILazyDataset parent;
 	private int counter;
 
 	@Override
@@ -46,25 +44,21 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 		return "uk.ac.diamond.scisoft.analysis.processing.NcdAveraging";
 	}
 
+	@Override
+	public void init() {
+		sliceData = null;
+		counter = 0;
+	}
+
 	@SuppressWarnings("unchecked")
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 		
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(input);
 		
-		if (ssm == null) throw new OperationException(this, "Pipeline metadata not present!");
-		
-		if (parent != ssm.getSourceInfo().getParent()) {
-			parent = ssm.getSourceInfo().getParent();
-			sliceData = null;
-			counter = 0;
-		}
-		
-		
 		Dataset d = DatasetUtils.cast(input,Dataset.FLOAT64);
 		
 		if (sliceData == null) {
 			sliceData = new Dataset[ssm.getTotalSlices()];
-			counter = 0;
 		}
 		
 		//first accumulate all data

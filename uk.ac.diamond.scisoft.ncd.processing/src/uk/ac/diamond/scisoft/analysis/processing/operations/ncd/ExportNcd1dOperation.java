@@ -14,7 +14,6 @@ import org.dawb.common.services.conversion.IConversionContext;
 import org.dawb.common.services.conversion.IConversionContext.ConversionScheme;
 import org.dawb.common.services.conversion.IConversionService;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -28,7 +27,6 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 @SuppressWarnings("deprecation")
 public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, OperationData> implements IExportOperation {
 	private Dataset[] sliceData;
-	private ILazyDataset parent;
 	private int counter;
 	
 	@Override
@@ -46,6 +44,12 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 		return "uk.ac.diamond.scisoft.analysis.processing.ExportNcd1d";
 	}
 
+	@Override
+	public void init() {
+		sliceData = null;
+		counter = 0;
+	}
+
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 		if (model.getOutputDirectoryPath() == null) throw new OperationException(this, "Output directory not set!");
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(input);
@@ -53,11 +57,6 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 		
 		if (model.getOutputDirectoryPath() == null || model.getOutputDirectoryPath().isEmpty()) {
 			throw new OperationException(this, "output directory cannot be empty");
-		}
-		if (parent != ssm.getSourceInfo().getParent()) {
-			parent = ssm.getSourceInfo().getParent();
-			sliceData = null;
-			counter = 0;
 		}
 		
 		if (sliceData == null) {
