@@ -106,7 +106,7 @@ public class NcdOperationUtils {
 	 */
 	public static Dataset getErrorBuffer(Dataset data) {
 		if (data.getErrorBuffer() == null) {
-			Dataset error = data.getError();
+			Dataset error = data.getError() == null ? data.clone() : data.getError();
 			return error.ipower(2);
 		}
 		return data.getErrorBuffer();
