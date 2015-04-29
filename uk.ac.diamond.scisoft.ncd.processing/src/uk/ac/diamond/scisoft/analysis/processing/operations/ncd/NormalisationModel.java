@@ -14,7 +14,8 @@ import org.eclipse.dawnsci.analysis.api.processing.model.FileType;
 import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 
 public class NormalisationModel extends AbstractOperationModel {
-	@OperationModelField(min = 0, hint = "Absolute scaling value", max = 1e10, label = "Absolute scale value", numberFormat="0.#####E0")
+	@OperationModelField(min = 0, hint = "Absolute scaling value", max = 1e10, label = "Absolute scale value", numberFormat="0.#####E0",
+			enableif = "useScaleValueFromOriginalFile == false")
 	private double absScale = 1;
 
 	@OperationModelField(hint = "Use absolute scaling value "
@@ -25,7 +26,8 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint = "Calibration channel location in scan data", label = "Calibration channel number")
 	private int calibChannel;
 
-	@OperationModelField(dataset = "filePath", hint = "Location of calibration data in Nexus file", label = "Calibration data location")
+	@OperationModelField(dataset = "filePath", hint = "Location of calibration data in Nexus file", label = "Calibration data location",
+			enableif = "useDefaultPathForCalibration == false")
 	private String calibDataPath = "";
 
 	@OperationModelField(hint = "If true, calibration data will be extracted from the default location, "
@@ -39,7 +41,7 @@ public class NormalisationModel extends AbstractOperationModel {
 	@OperationModelField(hint = "If true, calibration data will be extracted from the current data file. If false, data will be from the calibration file defined here", label = "Calibration file is current data file")
 	private boolean useCurrentDataForCalibration = true;
 
-	@OperationModelField(min = 0, hint = "Thickness (mm)", label = "Thickness of sample")
+	@OperationModelField(min = 0, hint = "Thickness (mm)", label = "Thickness of sample", enableif = "thicknessFromFileIsDefault == false")
 	private double thickness = 0;
 
 	@OperationModelField(hint = "The thickness value in the file at "
