@@ -24,7 +24,7 @@ import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtils;
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
@@ -85,17 +85,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		
 		if (model.isThicknessFromFileIsDefault()) {
 			//use value from dataset if > 0
-			try {
-
-				String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-				IDataset thicknessDataset = LoaderFactory.getDataSet(dataFile, ENTRY1_SAMPLE_THICKNESS, null);
-				if (thicknessDataset == null) {
-					throw new IllegalArgumentException("File does not contain the required thickness information");
-				}
-				thickness = thicknessDataset.getDouble();
-			} catch (Exception e) {
-				throw new OperationException(this, e);
-			}
+			String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
+			IDataset thicknessDataset = ProcessingUtils.getLazyDataset(this, dataFile, ENTRY1_SAMPLE_THICKNESS).getSlice();
+			
+			thickness = thicknessDataset.getDouble();
 			
 			if (Double.isNaN(thickness)) {
 				if (userWarned == false) {
@@ -146,14 +139,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 				throw new IllegalArgumentException("Calibration default path not used, but no data path defined");
 			}
 		}
-		try {
-			calibration = LoaderFactory.getDataSet(calibDataFile, calibDataPath, null);
-			if (calibration == null) {
-				throw new Exception("Dataset not found: " + calibDataPath);
-			}
-		} catch (Exception e) {
-			throw new OperationException(this, e);
-		}
+		calibration = ProcessingUtils.getLazyDataset(this, calibDataFile, calibDataPath).getSlice();
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 		
 		//handle special case of 1 image and calibration data not being created with large enough rank - SCATTER-444
@@ -194,15 +180,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 
 	private double getAbsScale(IDataset slice) {
 		String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-		Dataset d = null;
-		try {
-			d = (Dataset) LoaderFactory.getDataSet(originalFile, ENTRY1_DETECTOR_SCALING_FACTOR, null);
-		} catch (Exception e) {
-			throw new OperationException(this, "Unable to retrieve scaling factor from file");
-		}
-		if (d == null) {
-			throw new OperationException(this, "Empty scaling factor dataset");
-		}
+		Dataset d = (Dataset) ProcessingUtils.getLazyDataset(this, originalFile, ENTRY1_DETECTOR_SCALING_FACTOR);
 		return d.getDouble();
 	}
 }

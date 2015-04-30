@@ -27,9 +27,9 @@ import org.eclipse.dawnsci.analysis.dataset.metadata.MaskMetadataImpl;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 
-import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskOperation;
+import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtils;
 
 public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel> {
 
@@ -112,12 +112,7 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	}
 
 	private OperationData getNcdMask(IDataset input) {
-		IDataset mask;
-		try {
-			mask = LoaderFactory.getDataSet(model.getFilePath(), getDetectorFormattedPath(), null);
-		} catch (Exception e) {
-			throw new OperationException(this, e);
-		}
+		IDataset mask = ProcessingUtils.getLazyDataset(this, model.getFilePath(), getDetectorFormattedPath()).getSlice();
 		mask = DatasetUtils.cast(mask, Dataset.BOOL);
 		MaskMetadata mm = new MaskMetadataImpl(mask);
 		input.setMetadata(mm);
