@@ -50,7 +50,8 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		DetectorResponse response = new DetectorResponse();
 		try {
 			@SuppressWarnings("serial")
-			IDataset loadedSet = (IDataset) NcdOperationUtils.getDataset(model.getFilePath(), new ArrayList<String>() {{add("/entry1/instrument/detector/data");}});;
+			IDataset loadedSet = (IDataset) NcdOperationUtils.getDataset(this, model.getFilePath(),
+					new ArrayList<String>() {{add("/entry1/instrument/detector/data");}});;
 			if (loadedSet == null) {
 				throw new Exception("No detector response dataset found");
 			}

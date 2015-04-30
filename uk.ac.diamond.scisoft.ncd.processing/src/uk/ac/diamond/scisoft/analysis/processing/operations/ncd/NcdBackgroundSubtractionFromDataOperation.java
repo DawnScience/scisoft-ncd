@@ -73,7 +73,7 @@ public class NcdBackgroundSubtractionFromDataOperation<T extends NcdBackgroundSu
 		String fileToRead = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
 
 		try {
-			background = NcdOperationUtils.getDataset(fileToRead, new ArrayList<String>(){{add(getDataPath(slice));}});
+			background = NcdOperationUtils.getDataset(this, fileToRead, new ArrayList<String>(){{add(getDataPath(slice));}});
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}

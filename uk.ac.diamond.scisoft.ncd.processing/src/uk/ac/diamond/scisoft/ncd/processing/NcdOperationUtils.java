@@ -17,11 +17,13 @@ import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
+import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtils;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.ClusterOutlierRemoval;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.FilterData;
@@ -51,12 +53,11 @@ public class NcdOperationUtils {
 	 * @return
 	 * @throws Exception
 	 */
-	public static ILazyDataset getDataset(String fileToRead, List<String> dataPathsToTry) throws Exception {
+	public static ILazyDataset getDataset(IOperation<?, ?> op, String fileToRead, List<String> dataPathsToTry) throws Exception {
 		dataPathsToTry.add("/entry/result/data");
 		ILazyDataset toReturn = null;
-		IDataHolder holder = LoaderFactory.getData(fileToRead);
 		for (String location : dataPathsToTry) {
-			toReturn = holder.getLazyDataset(location);
+			toReturn = ProcessingUtils.getLazyDataset(op, fileToRead, location);
 			if (toReturn != null) {
 				break;
 			}

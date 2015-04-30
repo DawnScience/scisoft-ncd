@@ -70,7 +70,7 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 		String fileToRead = model.getFilePath();
 
 		try {
-			background = NcdOperationUtils.getDataset(fileToRead, new ArrayList<String>(){{add(getDataPath(slice));}});
+			background = NcdOperationUtils.getDataset(this, fileToRead, new ArrayList<String>(){{add(getDataPath(slice));}});
 			if (background == null) {
 				throw new Exception("No background dataset found");
 			}
