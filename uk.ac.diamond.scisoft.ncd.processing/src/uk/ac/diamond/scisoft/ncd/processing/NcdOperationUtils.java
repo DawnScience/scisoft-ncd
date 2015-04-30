@@ -131,6 +131,9 @@ public class NcdOperationUtils {
 				throw new IllegalArgumentException("Background data not compatible with subtraction from data - consider averaging the background data before background subtraction");
 			}
 		}
+		if (bgSlice ==  null) {
+			throw new Exception("Background slice is null. Make sure a selection of background image(s) has been specified.");
+		}
 		//data slice must not be larger than BG data slice! we have not done enough reduction on slices in this case!
 		if (slice.getShape().length > bgSlice.getShape().length) {
 			throw new Exception("Slice should not have bigger dimensionality than the background data");
