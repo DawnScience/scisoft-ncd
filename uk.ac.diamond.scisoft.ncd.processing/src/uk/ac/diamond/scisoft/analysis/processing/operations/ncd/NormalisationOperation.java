@@ -35,6 +35,10 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 	public static final String ENTRY1_DETECTOR_SCALING_FACTOR = "/entry1/detector/scaling_factor";
 	private final static Logger logger = LoggerFactory.getLogger(NormalisationOperation.class);
 
+	Double thickness = null;
+	Double absScale = null;
+	boolean userWarned = false;
+	
 	@Override
 	public String getId() {
 		return "uk.ac.diamond.scisoft.analysis.processing.Normalisation";
@@ -51,14 +55,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 	}
 	
 	@Override
-	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
-		Normalisation norm = new Normalisation();
-		norm.setCalibChannel(model.getCalibChannel());
-		Double absScale = getAbsScale(slice);
-		if (absScale.isNaN() || absScale <= 0) {
-			throw new OperationException(this, "Absolute scale value must be a number and positive");
-		}
-		Double thickness = null;
+	public void init() {
 		if (!model.isThicknessFromFileIsDefault()) {
 			if (model.getThickness() > 0) {
 				thickness = model.getThickness();
@@ -70,7 +67,23 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 				logger.info("Unexpected value for sample thickness - " + model.getThickness() + " so it will be ignored");
 			}
 		}
-		else {
+		
+		if (!model.isUseScaleValueFromOriginalFile()) {
+			absScale = model.getAbsScale();
+		}
+	}
+	@Override
+	public OperationData process(IDataset slice, IMonitor monitor) throws OperationException {
+		Normalisation norm = new Normalisation();
+		norm.setCalibChannel(model.getCalibChannel());
+		if (model.isUseScaleValueFromOriginalFile()) {
+			absScale = getAbsScale(slice);
+		}
+		if (absScale.isNaN() || absScale <= 0) {
+			throw new OperationException(this, "Absolute scale value must be a number and positive");
+		}
+		
+		if (model.isThicknessFromFileIsDefault()) {
 			//use value from dataset if > 0
 			try {
 
@@ -85,15 +98,22 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			}
 			
 			if (Double.isNaN(thickness)) {
-				logger.info("Sample thickness has a value of NaN (it may not have been set during data collection) - it will be ignored");
+				if (userWarned == false) {
+					logger.info("Sample thickness has a value of NaN (it may not have been set during data collection) - it will be ignored");
+				}
 			}
 			else if (thickness <= 0) {
-				logger.info("Sample thickness is not a positive value - it will be ignored");
+				if (userWarned == false) {
+					logger.info("Sample thickness is not a positive value - it will be ignored");
+				}
 			}
 		}
 
 		if (thickness == null || thickness.isNaN() || thickness <= 0) {
-			logger.error("Thickness is invalid, skipping absolute scaling calculation");
+			if (userWarned == false) {
+				logger.error("Thickness is invalid, skipping absolute scaling calculation");
+				userWarned = true;
+			}
 		}
 		else {
 			norm.setNormvalue(absScale / thickness);
@@ -173,19 +193,16 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 	}
 
 	private double getAbsScale(IDataset slice) {
-		if (model.isUseScaleValueFromOriginalFile()) {
-			String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-			Dataset d = null;
-			try {
-				d = (Dataset) LoaderFactory.getDataSet(originalFile, ENTRY1_DETECTOR_SCALING_FACTOR, null);
-			} catch (Exception e) {
-				throw new OperationException(this, "Unable to retrieve scaling factor from file");
-			}
-			if (d == null) {
-				throw new OperationException(this, "Empty scaling factor dataset");
-			}
-			return d.getDouble();
+		String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
+		Dataset d = null;
+		try {
+			d = (Dataset) LoaderFactory.getDataSet(originalFile, ENTRY1_DETECTOR_SCALING_FACTOR, null);
+		} catch (Exception e) {
+			throw new OperationException(this, "Unable to retrieve scaling factor from file");
 		}
-		return model.getAbsScale();
+		if (d == null) {
+			throw new OperationException(this, "Empty scaling factor dataset");
+		}
+		return d.getDouble();
 	}
 }
