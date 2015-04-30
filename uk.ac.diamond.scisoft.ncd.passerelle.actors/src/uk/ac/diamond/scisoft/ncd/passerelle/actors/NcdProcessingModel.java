@@ -50,6 +50,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 
@@ -60,7 +61,6 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -514,7 +514,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				int drDatasizeID = H5.H5Tget_size(drDatatypeID);
 
 				int rank = H5.H5Sget_simple_extent_ndims(drDataspaceID);
-				int dtype = HDF5Loader.getDtype(drDataclassID, drDatasizeID);
+				int dtype = HDF5Utils.getDtype(drDataclassID, drDatasizeID);
 
 				long[] drFrames = new long[rank];
 				H5.H5Sget_simple_extent_dims(drDataspaceID, drFrames, null);

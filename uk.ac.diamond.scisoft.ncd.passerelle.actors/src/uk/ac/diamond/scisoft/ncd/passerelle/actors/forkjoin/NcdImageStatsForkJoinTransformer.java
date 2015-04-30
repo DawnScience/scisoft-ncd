@@ -46,13 +46,13 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.PointROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.PointROIList;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
@@ -248,7 +248,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 							throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 						}
 						
-						int dtype = HDF5Loader.getDtype(dataclass_id, datasize_id);
+						int dtype = HDF5Utils.getDtype(dataclass_id, datasize_id);
 						data = DatasetFactory.zeros(grid, dtype);
 						if ((dataspace_id > 0) && (memspace_id > 0)) {
 							int read_id = H5.H5Dread(

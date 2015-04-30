@@ -37,6 +37,7 @@ import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -195,7 +196,7 @@ public class NcdNexusUtilsTest {
 		long[] count = new long[frames.length];
 		Arrays.fill(count, 1);
 		
-		int dtype = HDF5Loader.getDtype(ids.dataclass_id, ids.datasize_id);
+		int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
 		Dataset data = DatasetFactory.zeros(block_int, dtype);
 		Dataset result = null;
 		
