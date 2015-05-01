@@ -164,8 +164,13 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 			calibrationSlice.resize(NcdOperationUtils.addDimension(calibrationSlice.getShape()));
 		}
 		
-		Object[] normData = norm.process(data.getBuffer(), errors.getBuffer(),
-				calibrationSlice.getBuffer(), 1, data.getShape(), calibrationSlice.getShape());
+		Object[] normData = null;
+		try {
+			normData = norm.process(data.getBuffer(), errors.getBuffer(),
+					calibrationSlice.getBuffer(), 1, data.getShape(), calibrationSlice.getShape());
+		} catch (Exception e) {
+			throw new OperationException(this, "Exception during normalisation - are the correct dataset and channel number being used for normalisation? " + e.getMessage());
+		}
 		OperationData toReturn = new OperationData();
 		float[] mydata = (float[]) normData[0];
 		double[] myerrors = (double[]) normData[1];
