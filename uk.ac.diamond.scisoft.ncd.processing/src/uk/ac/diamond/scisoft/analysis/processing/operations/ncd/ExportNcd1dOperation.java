@@ -93,7 +93,7 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 				throw new OperationException(this, e);
 			}
 		}
-		return null;
+		return new OperationData(input);
 
 	}
 }
