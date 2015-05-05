@@ -53,7 +53,6 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 		if (model.getOutputDirectoryPath() == null) throw new OperationException(this, "Output directory not set!");
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(input);
-		if (ssm == null) throw new OperationException(this, "Dataset has not Origin!");
 		
 		if (model.getOutputDirectoryPath() == null || model.getOutputDirectoryPath().isEmpty()) {
 			throw new OperationException(this, "output directory cannot be empty");
