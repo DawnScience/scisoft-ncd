@@ -21,9 +21,6 @@ import java.util.Arrays;
 import java.util.List;
 
 import org.dawb.common.services.ServiceManager;
-import org.dawb.common.services.conversion.IConversionContext;
-import org.dawb.common.services.conversion.IConversionContext.ConversionScheme;
-import org.dawb.common.services.conversion.IConversionService;
 import org.dawb.passerelle.common.actors.AbstractDataMessageTransformer;
 import org.dawb.passerelle.common.message.IVariable;
 import org.dawb.passerelle.common.message.IVariable.VARIABLE_TYPE;
@@ -31,6 +28,9 @@ import org.dawb.passerelle.common.message.MessageUtils;
 import org.dawb.passerelle.common.message.Variable;
 import org.dawb.passerelle.common.parameter.ParameterUtils;
 import org.dawnsci.conversion.converters.CustomNCDConverter;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionService;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext.ConversionScheme;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
 
 import ptolemy.data.expr.StringParameter;

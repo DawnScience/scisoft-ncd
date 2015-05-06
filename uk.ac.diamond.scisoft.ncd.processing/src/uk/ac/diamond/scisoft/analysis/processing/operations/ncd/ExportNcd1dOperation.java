@@ -10,9 +10,9 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.dawb.common.services.ServiceManager;
-import org.dawb.common.services.conversion.IConversionContext;
-import org.dawb.common.services.conversion.IConversionContext.ConversionScheme;
-import org.dawb.common.services.conversion.IConversionService;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionService;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext.ConversionScheme;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
