@@ -9,24 +9,31 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.dawb.common.services.ServiceManager;
 import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext;
-import org.eclipse.dawnsci.analysis.api.conversion.IConversionService;
 import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext.ConversionScheme;
+import org.eclipse.dawnsci.analysis.api.conversion.IConversionService;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
+import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
+
 @SuppressWarnings("deprecation")
 public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, OperationData> implements IExportOperation {
-	private Dataset[] sliceData;
+	private List<Dataset> sliceData;
 	private int counter;
 	
 	@Override
@@ -59,12 +66,12 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 		}
 		
 		if (sliceData == null) {
-			sliceData = new Dataset[ssm.getTotalSlices()];
+			sliceData = new ArrayList<Dataset>(ssm.getTotalSlices());
 			counter = 0;
 		}
 		
 		//first accumulate all data
-		sliceData[counter] = (Dataset) input;
+		sliceData.add(counter, (Dataset) input.clone().squeeze());
 		counter++;
 				
 		if (counter == ssm.getTotalSlices()) {
@@ -76,7 +83,27 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 			}
 
 			IConversionContext context = service.open("/dls/path_to_some_hdf5_file.nxs"); //a dummy file to create context - TODO provide file-free way to create context!
-			AggregateDataset ag = new AggregateDataset(true, sliceData);
+			Dataset ag = null;
+			try {
+				ag = NcdOperationUtils.convertListOfDatasetsToDataset(sliceData);
+				
+				//copy errors from input datasets
+				List<Dataset> errorDatasets = new ArrayList<Dataset>(ssm.getTotalSlices());
+				for (int i=0; i < ssm.getTotalSlices(); ++i) {
+					errorDatasets.add(i, sliceData.get(i).getError());
+				}
+				Dataset errorDataset = NcdOperationUtils.convertListOfDatasetsToDataset(errorDatasets);
+				ag.setError(errorDataset);
+				
+				//now set other metadata
+				ILazyDataset qAxis = sliceData.get(0).getMetadata(AxesMetadata.class).get(0).getAxis(0)[0];
+				AxesMetadataImpl axes = new AxesMetadataImpl(2);
+				axes.setAxis(1, qAxis);
+				ag.setMetadata(axes);
+			} catch (Exception e1) {
+				throw new OperationException(this, "exception while converting datasets into an aggregate: " + e1);
+			}
+			
 			context.setLazyDataset(ag);
 			context.setOutputPath(model.getOutputDirectoryPath());
 			context.setConversionScheme(ConversionScheme.CUSTOM_NCD);
