@@ -15,14 +15,13 @@ import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.io.IDataHolder;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
-import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtils;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.ClusterOutlierRemoval;
@@ -194,6 +193,26 @@ public class NcdOperationUtils {
 			}
 		}
 		return totalSize;
+	}
+	
+	public static Dataset convertListOfDatasetsToDataset(List<Dataset> ag) throws Exception {
+		Dataset first = null;
+		for (Dataset dataset : ag) {
+			if (first == null) {
+				first = dataset;
+			}
+			if (dataset.getSize() != first.getSize()) {
+				throw new Exception("all component datasets must be the same size");
+			}
+		}
+		Dataset newDataset = DatasetFactory.zeros(new int[] {ag.size(), first.getSize()}, first.getDtype());
+		for (int i=0; i < ag.size(); ++i) {
+			Dataset dataset = ag.get(i);
+			for (int j=0; j < dataset.getSize(); ++j) {
+				newDataset.set(dataset.getObject(j), i, j);
+			}
+		}
+		return newDataset;
 	}
 
 }
