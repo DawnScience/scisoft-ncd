@@ -21,7 +21,8 @@ Require-Bundle: org.eclipse.ui,
  org.dawnsci.common.widgets.gda;bundle-version="1.2.0",
  org.eclipse.dawnsci.plotting.api;bundle-version="1.2.0",
  org.eclipse.dawnsci.hdf5;bundle-version="1.2.0"
-Import-Package: org.eclipse.ui.navigator.resources,
+Import-Package: org.dawb.common.ui.perspective,
+ org.eclipse.ui.navigator.resources,
  org.slf4j;version="[1.7.6,1.7.7)",
  uk.ac.diamond.scisoft.analysis.rcp.views
 Bundle-Activator: uk.ac.diamond.scisoft.ncd.ws.rcp.Activator

@@ -13,42 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package uk.ac.diamond.scisoft.ncd.rcp;
 
-import org.eclipse.jface.action.IAction;
-import org.eclipse.jface.viewers.ISelection;
-import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.IWorkbenchWindowActionDelegate;
-import org.eclipse.ui.PlatformUI;
-import org.eclipse.ui.WorkbenchException;
+import org.dawb.common.ui.perspective.AbstractPerspectiveLaunch;
 
-public class NcdPerspectiveLaunch implements IWorkbenchWindowActionDelegate {
+public class NcdPerspectiveLaunch extends AbstractPerspectiveLaunch {
 
 	@Override
-	public void run(IAction action) {
-
-		try {
-			PlatformUI.getWorkbench().showPerspective(NcdPerspective.ID,PlatformUI.getWorkbench().getActiveWorkbenchWindow());
-		} catch (WorkbenchException e) {
-			e.printStackTrace();
-		} 		
-
+	public String getID() {
+		return NcdPerspective.ID;
 	}
-
-	@Override
-	public void selectionChanged(IAction action, ISelection selection) {
-
-	}
-
-	@Override
-	public void dispose() {
-
-	}
-
-	@Override
-	public void init(IWorkbenchWindow window) {
-
-	}
-
 }
