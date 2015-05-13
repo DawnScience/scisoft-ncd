@@ -111,7 +111,7 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 			String filePath = ssm.getFilePath();
 			filePath = filePath.replace('\\', '/');
 			filePath = filePath.substring(filePath.lastIndexOf('/'));
-			String outputPath = filePath.substring(1, filePath.lastIndexOf('.'))+"_processed";
+			String outputPath = filePath.substring(1, filePath.lastIndexOf('.'))+"_export";
 			context.setDatasetName(outputPath);
 
 			try {
