@@ -26,7 +26,7 @@ Require-Bundle: org.eclipse.core.resources,
  org.dawb.passerelle.common.ui;bundle-version="1.0.0",
  org.dawnsci.conversion;bundle-version="1.2.0",
  com.isencia.passerelle.workbench.starter;bundle-version="8.7.0"
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.dawnsci.analysis.api.monitor,
  org.junit;version="4.10.0",

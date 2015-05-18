@@ -3,7 +3,7 @@ Bundle-ManifestVersion: 2
 Bundle-Name: Ncd
 Bundle-SymbolicName: uk.ac.diamond.scisoft.ncd
 Bundle-Version: 3.0.0.qualifier
-Bundle-RequiredExecutionEnvironment: JavaSE-1.6
+Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Eclipse-BuddyPolicy: registered
 Eclipse-RegisterBuddy: uk.ac.diamond.scisoft.analysis
 Export-Package: uk.ac.diamond.scisoft.ncd.calibration,
