@@ -64,6 +64,7 @@ public class SaxsAnalysisTool extends AbstractToolPage {
 
 		setTitle("SAXS Analysis ("+delegate.getPlotType().getName()+")");
 		
+		super.createControl(parent);
 	}
 
 	
