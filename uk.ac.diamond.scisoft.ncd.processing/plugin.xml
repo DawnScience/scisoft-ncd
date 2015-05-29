@@ -57,6 +57,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GuinierOperation"
              description="Calculate Guinier plot and derived Rg and range, I0"
+             icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Guinier"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="Guinier calculation">
@@ -65,6 +66,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingOperation"
              description="Rg calculation, filtering, then averaging"
+             icon="icons/meanfilt.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdAveraging"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingModel"
              name="NCD Averaging">
@@ -73,6 +75,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdInvariantOperation"
              description="Invariant Calculation"
+             icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Invariant"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="NCD Invariant">
@@ -81,6 +84,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.OrientationOperation"
              description="Degree of Orientation"
+             icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Orientation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
              name="Degree of Orientation">
@@ -89,6 +93,7 @@
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ExportNcd1dOperation"
              description="Allow users to export the results to several different formats"
+             icon="icons/exptext.png"
              id="uk.ac.diamond.scisoft.analysis.processing.ExportNcd1d"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ExportNcd1dModel"
              name="Export NCD 1-D Data">
