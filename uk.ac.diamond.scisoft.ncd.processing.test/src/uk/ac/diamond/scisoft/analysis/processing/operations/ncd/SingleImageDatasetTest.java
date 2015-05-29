@@ -21,7 +21,9 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
+import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
 import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
@@ -32,7 +34,9 @@ import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
 
 public class SingleImageDatasetTest {
 	private static IOperationService service;
-	private static ILazyDataset resultDataset;
+	private static ILazyDataset inputDataset, resultDataset;
+	private static String rawPath;
+	private static String maskPath;
 	
 	/**
 	 * Manually creates the service so that no extension points have to be read.
@@ -51,30 +55,40 @@ public class SingleImageDatasetTest {
 		
 		setupFiles();
 		
+		inputDataset = LoaderFactory.getDataSet(rawPath, "/entry1/detector/data", null);
+		SourceInformation si = new SourceInformation(rawPath, inputDataset.getName(), inputDataset);
+		inputDataset.setMetadata(new SliceFromSeriesMetadata(si));
 		setupPipeline();
 	}
 	
 	public static void setupFiles() throws Exception {
-		final String rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.processing.test", "data/i22-217330.nxs");
-		final String maskPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.processing.test", "data/mask_9m.nxs");
+		rawPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.processing.test", "data/i22-217330.nxs");
+		maskPath  = TestUtils.getAbsolutePath("uk.ac.diamond.scisoft.ncd.processing.test", "data/mask_9m.nxs");
 	}
 	
 	@SuppressWarnings("unchecked")
 	public static void setupPipeline() throws Exception {
 		//Import Detector Calibration, Import Mask from File, Set Poisson Errors, Azimuthal Integration, Normalisation for NCD
-		final IOperation detCalib = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.twod.DiffractionMetadataImportOperation");
-		final IOperation importMask = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskOperation");
+		final IOperation detCalib = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.DiffractionMetadataImportOperation");
+		final IOperation importMask = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.ImportMaskOperation");
 		final IOperation setPoisson = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.PhotonCountingErrorOperation");
 		final IOperation integration = service.create("uk.ac.diamond.scisoft.analysis.processing.operations.powder.AzimuthalPixelIntegrationOperation");
 		final IOperation normalization = service.create("uk.ac.diamond.scisoft.analysis.processing.Normalisation");
-		detCalib.setModel(new DiffractionMetadataImportModel());
-		importMask.setModel(new ImportMaskModel());
+		
+		DiffractionMetadataImportModel detCalibModel = new DiffractionMetadataImportModel();
+		detCalibModel.setFilePath(rawPath);
+		detCalib.setModel(detCalibModel);
+		ImportMaskModel importMaskModel = new ImportMaskModel();
+		importMaskModel.setFilePath(maskPath);
+		importMask.setModel(importMaskModel);
 		integration.setModel(new AzimuthalPixelIntegrationModel());
-		normalization.setModel(new NormalisationModel());
+		NormalisationModel normalizationModel = new NormalisationModel();
+		normalizationModel.setUseScaleValueFromOriginalFile(false);
+		normalization.setModel(normalizationModel);
 
 		final IOperationContext context = service.createContext();
 
-//		context.setData(randomDataset);
+		context.setData(inputDataset);
 		context.setSlicing("all");
 		context.setSeries(detCalib, importMask, setPoisson, integration, normalization);
 		
@@ -86,5 +100,12 @@ public class SingleImageDatasetTest {
 		});
 		context.setExecutionType(ExecutionType.SERIES);
 		service.execute(context);
+	}
+	
+	@Test
+	public void testSingleImageDatasets() throws Exception {
+		if (resultDataset ==  null) {
+			throw new Exception("Pipeline should have succeeded with a single image");
+		}
 	}
 }
