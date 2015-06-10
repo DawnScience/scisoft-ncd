@@ -184,7 +184,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				}
 			}
 
-			doRadial = true;
+			doRadial = ((BooleanToken) doRadialParam.getToken()).booleanValue();
 			doAzimuthal = ((BooleanToken) doAzimuthalParam.getToken()).booleanValue();
 			doFast = ((BooleanToken) doFastParam.getToken()).booleanValue();
 			
