@@ -28,9 +28,12 @@ import org.apache.commons.math3.analysis.interpolation.UnivariateInterpolator;
 import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.util.MathUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class DegreeOfOrientation {
-	
+	private static final Logger logger = LoggerFactory.getLogger(DegreeOfOrientation.class);
+
 	private static final int INTEGRATION_POINTS = 1000000;
 
 	public Object[] process(Serializable buffer, Serializable axis, final int[] dimensions) {
@@ -87,8 +90,10 @@ public class DegreeOfOrientation {
 			return output;
 			
 		} catch (TooManyEvaluationsException e) {
+			logger.error("Too many evaluations:" + e);
 			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
 		} catch (MaxCountExceededException e) {
+			logger.error("Max count exceeded:" + e);
 			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
 		}
 	}
