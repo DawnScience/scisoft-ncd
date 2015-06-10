@@ -91,10 +91,10 @@ public class DegreeOfOrientation {
 			
 		} catch (TooManyEvaluationsException e) {
 			logger.error("Too many evaluations:" + e);
-			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
+			return new Object[] { new float[] { Float.NaN }, new float[] { Float.NaN }, new float[] { Float.NaN } };
 		} catch (MaxCountExceededException e) {
 			logger.error("Max count exceeded:" + e);
-			return new Object[] { new float[] { Float.NaN }, new double[] { Double.NaN } };
+			return new Object[] { new float[] { Float.NaN }, new float[] { Float.NaN }, new float[] { Float.NaN } };
 		}
 	}
 	
