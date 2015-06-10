@@ -647,7 +647,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			standardise = new NcdMessageForwarder(flow, "StandardisedIntensity");
 		}
 		
-		if (flags.isEnableNormalisation()) {
+		if (flags.isEnableNormalisation() && flags.isEnableRadial()) {
 			normalisation = new NcdNormalisationForkJoinTransformer(flow, "Normalisation");
 			props.put("Normalisation.calibrationParam", calibration);
 			props.put("Normalisation.absScalingParam", Double.toString(absScaling));
@@ -656,7 +656,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			normalisation = new NcdMessageForwarder(flow, "Normalisation");
 		}
 		
-		if (flags.isEnableBackground()) {
+		if (flags.isEnableBackground() && flags.isEnableRadial()) {
 			backgroundSubtraction = new NcdBackgroundSubtractionForkJoinTransformer(flow, "BackgroundSubtraction");
 			if (bgScaling != null) {
 				props.put("BackgroundSubtraction.bgScalingParam", Double.toString(bgScaling));
@@ -693,7 +693,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			backgroundSubtraction = new NcdMessageForwarder(flow, "BackgroundSubtraction");
 		}
 		
-		if (flags.isEnableInvariant()) {
+		if (flags.isEnableInvariant() && flags.isEnableRadial()) {
 			invariant = new NcdInvariantForkJoinTransformer(flow, "Invariant");
 		} else {
 			invariant = new NcdMessageForwarder(flow, "Invariant");
