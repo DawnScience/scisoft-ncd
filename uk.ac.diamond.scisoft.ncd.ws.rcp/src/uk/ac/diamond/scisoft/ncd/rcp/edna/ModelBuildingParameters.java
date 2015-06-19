@@ -187,7 +187,7 @@ public class ModelBuildingParameters {
 	@Override
 	public String toString() {
 		// return parameters for use by the EDNA plugin directly
-		String commandLineParameters = "\"" + workingDirectory + "\" --data \"" + dataFilename + "\" " + 
+		String commandLineParameters = "\"" + getEscapedPaths(workingDirectory) + "\" --data \"" + getEscapedPaths(dataFilename) + "\" " + 
 				" --rMaxStart " + startDistanceAngstrom + " --rMaxStop " + endDistanceAngstrom +
 				" --rMaxIntervals " + numberOfSearch + " --rMaxAbsTol " + tolerance + " --columns " + numberOfFrames + " --threads " + numberOfThreads +
 				" --qmin " + qMinAngstrom + " --qmax " + qMaxAngstrom;
@@ -203,6 +203,9 @@ public class ModelBuildingParameters {
 		return commandLineParameters;
 	}
 	
+	private String getEscapedPaths(String path) {
+		return path.replaceAll(" ", "\\\\ ");
+	}
 	public boolean isValid() {
 		if (!invalidMessage().isEmpty()) {
 			return false;
