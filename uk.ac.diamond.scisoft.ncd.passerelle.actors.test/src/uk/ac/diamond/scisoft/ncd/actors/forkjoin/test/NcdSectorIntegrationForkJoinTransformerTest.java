@@ -35,6 +35,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.apache.commons.lang.StringUtils;
 import org.dawb.common.services.ServiceManager;
+import org.dawb.passerelle.common.PersistenceServiceHolder;
 import org.dawnsci.persistence.PersistenceServiceCreator;
 import org.eclipse.dawnsci.analysis.api.persistence.IPersistenceService;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -108,7 +109,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 	public static void setUp() throws Exception {
 		
 		// This is required for ROIParameter class to work		
-		ServiceManager.setService(IPersistenceService.class, PersistenceServiceCreator.createPersistenceService());		
+		PersistenceServiceHolder.getInstance().setPersistenceService(PersistenceServiceCreator.createPersistenceService());		
 		
 		flow = new Flow("unit test", null);
 		flowMgr = new FlowManager();
