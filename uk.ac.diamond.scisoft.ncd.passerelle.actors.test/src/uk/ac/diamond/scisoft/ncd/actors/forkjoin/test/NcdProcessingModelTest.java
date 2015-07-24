@@ -32,6 +32,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 
 import org.apache.commons.io.IOUtils;
 import org.dawb.common.services.ServiceManager;
+import org.dawb.passerelle.common.PersistenceServiceHolder;
 import org.dawnsci.persistence.PersistenceServiceCreator;
 import org.dawnsci.plotting.tools.preference.detector.DiffractionDetector;
 import org.eclipse.core.runtime.Path;
@@ -121,7 +122,7 @@ public class NcdProcessingModelTest {
 	public static void setUp() throws Exception {
 
 		// This is required for ROIParameter class to work		
-		ServiceManager.setService(IPersistenceService.class, PersistenceServiceCreator.createPersistenceService());		
+		PersistenceServiceHolder.getInstance().setPersistenceService(PersistenceServiceCreator.createPersistenceService());		
 		
 		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(NcdProcessingModelTest.class.getCanonicalName());
 		TestUtils.makeScratchDirectory(testScratchDirectoryName);
