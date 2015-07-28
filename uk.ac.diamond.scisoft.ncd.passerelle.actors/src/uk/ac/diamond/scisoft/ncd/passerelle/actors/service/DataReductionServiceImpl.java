@@ -355,10 +355,10 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		String detNames = "_" + ((context.isEnableWaxs()) ? context.getWaxsDetectorName() : "") + ((context.isEnableSaxs()) ? context.getSaxsDetectorName() : "") + "_";
 		final String filename = context.getWorkingDir() + File.separator + prefix + "_" + FilenameUtils.getBaseName(inputfileName) + detNames + datetime + ".nxs";
 		
-		int fid = -1;
-		int entry_id = -1;
+		long fid = -1;
+		long entry_id = -1;
 		try {
-			int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+			long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 			fid = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);
 			H5.H5Pclose(fapl);
@@ -377,7 +377,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 			final String calibration = context.getCalibrationName();
 			if (calibration != null) {
-				int calib_id = NcdNexusUtils.makegroup(entry_id, calibration, Nexus.DATA);
+				long calib_id = NcdNexusUtils.makegroup(entry_id, calibration, Nexus.DATA);
 				H5.H5Lcreate_external(inputfilePath, "/entry1/" + calibration + "/data", calib_id, "data",
 						HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 				H5.H5Gclose(calib_id);
@@ -416,7 +416,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 	}
 
 
-	private void writeNCDMetadata(int entry_id, String inputfilePath) {
+	private void writeNCDMetadata(long entry_id, String inputfilePath) {
 		try {
 			Tree inputFileTree = new HDF5Loader(inputfilePath).loadTree();
 
@@ -429,11 +429,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			String dawnString = (dawnVersion != null ?
 					"DAWN" + " " + dawnVersion:
 					"DAWN");
-			int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			long text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(text_type, dawnString.length());
-			int text_id = NcdNexusUtils.makedata(entry_id, "program_name", text_type, new long[] {1});
-			int filespace_id = H5.H5Dget_space(text_id);
-			int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+			long text_id = NcdNexusUtils.makedata(entry_id, "program_name", text_type, new long[] {1});
+			long filespace_id = H5.H5Dget_space(text_id);
+			long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 			H5.H5Sselect_all(filespace_id);
 			H5.H5Dwrite(text_id, text_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, dawnString.getBytes());
 		} catch (Exception e) {
@@ -441,7 +441,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 	}
 	
-	private void writeStringMetadata(String nodeName, String textName, int entry_id, Tree inputFileTree) throws HDF5Exception {
+	private void writeStringMetadata(String nodeName, String textName, long entry_id, Tree inputFileTree) throws HDF5Exception {
 		
 		Node node;
 		NodeLink nodeLink;
@@ -451,11 +451,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			if (node instanceof DataNode) {
 				String text = ((Dataset) ((DataNode) node).getDataset()).getString(0);
 				
-				int text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				long text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());
-				int text_id = NcdNexusUtils.makedata(entry_id, textName, text_type, new long[] {1});
-				int filespace_id = H5.H5Dget_space(text_id);
-				int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+				long text_id = NcdNexusUtils.makedata(entry_id, textName, text_type, new long[] {1});
+				long filespace_id = H5.H5Dget_space(text_id);
+				long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 				H5.H5Sselect_all(filespace_id);
 				H5.H5Dwrite(text_id, text_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, text.getBytes());
 					
@@ -467,11 +467,11 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 	}
 
-	private void createInstrumentNode(int entry_id, String inputfilePath) throws HDF5Exception {
+	private void createInstrumentNode(long entry_id, String inputfilePath) throws HDF5Exception {
 		
-		int file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
 		
 	    H5.H5Lcreate_external(inputfilePath, "/entry1/instrument/", entry_id, "instrument/", HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 		
@@ -480,19 +480,19 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		H5.H5Fclose(file_handle);
 	}
 	
-	private void createDetectorNode(String detector, int entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
+	private void createDetectorNode(String detector, long entry_id, String inputfilePath) throws HDF5Exception, URISyntaxException {
 		
-		int detector_id = NcdNexusUtils.makegroup(entry_id, detector, Nexus.DATA);
+		long detector_id = NcdNexusUtils.makegroup(entry_id, detector, Nexus.DATA);
 		
-		int file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		
 		boolean isNAPImount = H5.H5Aexists(input_data_id, "napimount");
 		if (isNAPImount) {
-			int attr_id = H5.H5Aopen(input_data_id, "napimount", HDF5Constants.H5P_DEFAULT);
-			int type_id = H5.H5Aget_type(attr_id);
+			long attr_id = H5.H5Aopen(input_data_id, "napimount", HDF5Constants.H5P_DEFAULT);
+			long type_id = H5.H5Aget_type(attr_id);
 			int size = H5.H5Tget_size(type_id);
 			byte[] link = new byte[size];
 			H5.H5Aread(attr_id, type_id, link);
@@ -547,9 +547,9 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		H5.H5Fclose(file_handle);
 	}
 	
-	private void putattr(int dataset_id, String name, Object value) throws HDF5Exception {
-		int attr_type = -1;
-		int dataspace_id = -1;
+	private void putattr(long dataset_id, String name, Object value) throws HDF5Exception {
+		long attr_type = -1;
+		long dataspace_id = -1;
 		byte[] data = null;
 		
 		if (value instanceof String) {
@@ -563,7 +563,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 			attr_type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
 		}
 		dataspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-		int attribute_id = H5.H5Acreate(dataset_id, name, attr_type,
+		long attribute_id = H5.H5Acreate(dataset_id, name, attr_type,
 				dataspace_id, HDF5Constants.H5P_DEFAULT,
 				HDF5Constants.H5P_DEFAULT);
 		

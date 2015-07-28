@@ -46,17 +46,17 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 
 	protected String groupName, dataName, variableName;
 	
-	public void execute(int entry_group_id, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
+	public void execute(long entry_group_id, DataSliceIdentifiers input_ids, DataSliceIdentifiers input_errors_ids) throws HDF5Exception {
 		
 		long[] frames = NcdNexusUtils.getIdsDatasetShape(input_ids.dataspace_id);
 		int[] frames_int = (int[]) ConvertUtils.convert(frames, int[].class);
 		
-	    int group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
-	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
-	    int data_id = NcdNexusUtils.makedata(group_id, "data", type, frames, true, "a.u.");
+		long group_id = NcdNexusUtils.makegroup(entry_group_id, detector + "_" + groupName, Nexus.DATA);
+		long type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
+		long data_id = NcdNexusUtils.makedata(group_id, "data", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 	    type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
-	    int errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames, true, "a.u.");
+	    long errors_id = NcdNexusUtils.makedata(group_id, "errors", type, frames, true, "a.u.");
 		H5.H5Tclose(type);
 		
     	SliceSettings sliceSettings = new SliceSettings(frames, frames.length - 2, 1);
@@ -73,13 +73,13 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 			data_slice.setError(errors_slice);
 			Dataset tmpFrame = getSaxsPlotDataset(data_slice, qaxis);
 			
-			int filespace_id = H5.H5Dget_space(data_id);
-			int type_id = H5.H5Dget_type(data_id);
+			long filespace_id = H5.H5Dget_space(data_id);
+			long type_id = H5.H5Dget_type(data_id);
 			long[] ave_start = (long[]) ConvertUtils.convert(slice, long[].class);
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 			long[] ave_count_data = new long[frames.length];
 			Arrays.fill(ave_count_data, 1);
-			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+			long memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 			
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
 					ave_step);
@@ -108,11 +108,11 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		
 		// add long_name attribute
 		{
-			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(attrtype_id, dataName.getBytes().length);
 			
-			int attr_id = H5.H5Acreate(data_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+			long attr_id = H5.H5Acreate(data_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
@@ -133,29 +133,29 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		H5.H5Gclose(group_id);
 	}
 	
-	private void writeAxisData(int group_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	private void writeAxisData(long group_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] axisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		Dataset qaxisNew = getSaxsPlotAxis(qaxis);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
+		long qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);
 
-		int filespace_id = H5.H5Dget_space(qaxis_id);
-		int type_id = H5.H5Dget_type(qaxis_id);
-		int memspace_id = H5.H5Screate_simple(qaxisNew.getRank(), axisShape, null);
+		long filespace_id = H5.H5Dget_space(qaxis_id);
+		long type_id = H5.H5Dget_type(qaxis_id);
+		long memspace_id = H5.H5Screate_simple(qaxisNew.getRank(), axisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxisNew.getBuffer());
 		
 		// add long_name attribute
 		{
-			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(attrtype_id, variableName.getBytes().length);
 			
-			int attr_id = H5.H5Acreate(qaxis_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+			long attr_id = H5.H5Acreate(qaxis_id, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
@@ -175,7 +175,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		H5.H5Dclose(qaxis_id);
 		
 		if (qaxisNew.hasErrors()) {
-			int qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape, false, units);
+			long qaxis_error_id = NcdNexusUtils.makedata(group_id, "variable_errors", HDF5Constants.H5T_NATIVE_DOUBLE, axisShape, false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
 			type_id = H5.H5Dget_type(qaxis_error_id);

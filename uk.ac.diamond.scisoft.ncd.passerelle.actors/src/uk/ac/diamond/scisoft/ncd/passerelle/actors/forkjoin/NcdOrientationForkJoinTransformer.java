@@ -58,8 +58,8 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 	private Dataset inputAxis;
 	private long[] axisShape;
 	
-	private int angleDataID;
-	private int mapDataID;
+	private long angleDataID;
+	private long mapDataID;
 	
 	public NcdOrientationForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -86,7 +86,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 	
 	@Override
 	protected void configureActorParameters() throws HDF5Exception {
-		int inputDataSpaceID = H5.H5Dget_space(inputDataID);
+		long inputDataSpaceID = H5.H5Dget_space(inputDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(inputDataSpaceID);
 		frames = new long[rank];
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
@@ -95,7 +95,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 		hasErrors = false;
 		long[] resultFrames = getResultDataShape();
 		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, getName(), Nexus.DETECT);
-		int type = getResultDataType();
+		long type = getResultDataType();
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "dimensionless");
 		resultErrorsID = -1;
 		
@@ -104,7 +104,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 		mapDataID = NcdNexusUtils.makedata(resultGroupID, "vector_map", type, mapFrames, true, "dimensionless");
 		
 		if (inputAxisDataID != -1) {
-			int spaceID = H5.H5Dget_space(inputAxisDataID);
+			long spaceID = H5.H5Dget_space(inputAxisDataID);
 			int axisRank = H5.H5Sget_simple_extent_ndims(spaceID);
 			axisShape = new long[axisRank];
 			H5.H5Sget_simple_extent_dims(spaceID, axisShape, null);
@@ -167,11 +167,11 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				return;
 			}
 
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
-			int selectID = -1;
-			int writeID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
+			long selectID = -1;
+			long writeID = -1;
 			try {
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -283,7 +283,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				}
 				try {
 					NcdNexusUtils.closeH5idList(
-							new ArrayList<Integer>(Arrays.asList(
+							new ArrayList<Long>(Arrays.asList(
 									memspaceID,
 									typeID,
 									filespaceID)));
@@ -306,7 +306,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 	protected void doWrapUp() throws TerminationException {
 		try {
 			NcdNexusUtils.closeH5idList(
-					new ArrayList<Integer>(Arrays.asList(
+					new ArrayList<Long>(Arrays.asList(
 							angleDataID,
 							mapDataID)));
 		} catch (HDF5LibraryException e) {

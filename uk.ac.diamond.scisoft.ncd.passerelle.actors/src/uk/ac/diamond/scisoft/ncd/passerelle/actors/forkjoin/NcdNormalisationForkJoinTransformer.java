@@ -73,8 +73,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	public StringParameter calibrationParam;
 	public Parameter absScalingParam, normChannelParam;
 
-	private int linkFileID = -1;
-	private int calibrationGroupID, inputCalibrationID;
+	private long linkFileID = -1;
+	private long calibrationGroupID, inputCalibrationID;
 
 	private DataSliceIdentifiers calibrationIDs;
 
@@ -192,9 +192,9 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				return;
 			}
 
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
 			try {
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -280,7 +280,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 					throw new HDF5Exception("Failed to write Normalisation data into the results file");
 				}
 
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 
 				filespaceID = H5.H5Dget_space(resultErrorsID);
 				typeID = H5.H5Dget_type(resultErrorsID);
@@ -307,7 +307,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 					lock.unlock();
 				}
 				try {
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
 					task.completeExceptionally(e);
 				}
@@ -318,7 +318,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 	@Override
 	protected void doWrapUp() throws TerminationException {
 		try {
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+			List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 					inputCalibrationID,
 					calibrationGroupID,
 					linkFileID));

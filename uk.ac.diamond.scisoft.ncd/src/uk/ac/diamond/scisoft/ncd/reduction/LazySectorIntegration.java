@@ -61,7 +61,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	private boolean calculateAzimuthal = true;
 	private boolean fast = true;
 	
-	public int sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
+	public long sec_group_id, sec_data_id, sec_errors_id, az_data_id, az_errors_id;
 	public long[] secFrames;
 
 	public static String name = "SectorIntegration";
@@ -118,10 +118,10 @@ public class LazySectorIntegration extends LazyDataReduction {
 		}
 	}
 
-	public void configure(int dim, long[] frames, int processing_group_id) throws HDF5Exception {
+	public void configure(int dim, long[] frames, long processing_group_id) throws HDF5Exception {
 	    sec_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySectorIntegration.name, Nexus.DETECT);
-		int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
-		int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
+	    long typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
+	    long typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
 		int[] intRadii = intSector.getIntRadii();
 		double[] radii = intSector.getRadii();
 		double dpp = intSector.getDpp();
@@ -237,8 +237,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 	
 	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim) throws HDF5Exception {
-		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
-		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
+		long filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
+		long type_id = H5.H5Dget_type(dataIDs.dataset_id);
 		
 		int resLength =  dataShape.length - dim + 1;
 		int integralLength = data.getShape()[data.getRank() - 1];
@@ -248,7 +248,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 		long[] res_block = Arrays.copyOf(dataIDs.block, resLength);
 		res_block[resLength - 1] = integralLength;
 		
-		int memspace_id = H5.H5Screate_simple(resLength, res_block, null);
+		long memspace_id = H5.H5Screate_simple(resLength, res_block, null);
 		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
 				res_start, res_block, res_count, res_block);
 		
@@ -257,7 +257,7 @@ public class LazySectorIntegration extends LazyDataReduction {
 	}
 	
 	@Override
-	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	public void writeNcdMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		super.writeNcdMetadata(datagroup_id);
 
 		if (intSector != null) {
@@ -280,11 +280,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 		}
 	}
 
-	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
-		int filespace_id = H5.H5Dget_space(beamcenter_id);
-		int type = H5.H5Dget_type(beamcenter_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeBeamCenterMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		long filespace_id = H5.H5Dget_space(beamcenter_id);
+		long type = H5.H5Dget_type(beamcenter_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(beamcenter_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getPoint());
 		
@@ -294,13 +294,13 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(beamcenter_id);
 	}
 	
-	private void writeCameraLengthMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int cameralength_id = NcdNexusUtils.makegroup(datagroup_id, "camera length", Nexus.DATA);
-		int cameralength_data_id = NcdNexusUtils.makedata(cameralength_id, "data", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
-		int cameralength_error_id = NcdNexusUtils.makedata(cameralength_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
-		int filespace_id = H5.H5Dget_space(cameralength_data_id);
-		int type = H5.H5Dget_type(cameralength_data_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+	private void writeCameraLengthMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long cameralength_id = NcdNexusUtils.makegroup(datagroup_id, "camera length", Nexus.DATA);
+		long cameralength_data_id = NcdNexusUtils.makedata(cameralength_id, "data", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		long cameralength_error_id = NcdNexusUtils.makedata(cameralength_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		long filespace_id = H5.H5Dget_space(cameralength_data_id);
+		long type = H5.H5Dget_type(cameralength_data_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(cameralength_data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getEstimatedValue()});
 		H5.H5Sclose(filespace_id);
@@ -320,11 +320,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Gclose(cameralength_id);
 	}
 	
-	private void writeEnergyMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "keV");
-		int filespace_id = H5.H5Dget_space(energy_id);
-		int type = H5.H5Dget_type(energy_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+	private void writeEnergyMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "keV");
+		long filespace_id = H5.H5Dget_space(energy_id);
+		long type = H5.H5Dget_type(energy_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))});
 		
@@ -334,11 +334,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(energy_id);
 	}
 	
-	private void writeIntegrationAnglesMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "Deg");
-		int filespace_id = H5.H5Dget_space(angles_id);
-		int type = H5.H5Dget_type(angles_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeIntegrationAnglesMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "Deg");
+		long filespace_id = H5.H5Dget_space(angles_id);
+		long type = H5.H5Dget_type(angles_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(angles_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getAnglesDegrees());
 		
@@ -348,11 +348,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(angles_id);
 	}
 	
-	private void writeIntegrationRadiiMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
-		int filespace_id = H5.H5Dget_space(radii_id);
-		int type = H5.H5Dget_type(radii_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeIntegrationRadiiMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		long filespace_id = H5.H5Dget_space(radii_id);
+		long type = H5.H5Dget_type(radii_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(radii_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getRadii());
 		
@@ -362,13 +362,13 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(radii_id);
 	}
 	
-	private void writeIntegrationSymmetryMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+	private void writeIntegrationSymmetryMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		String sym = intSector.getSymmetryText();
 		H5.H5Tset_size(symmetry_type, sym.length());
-		int symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, new long[] {1});
-		int filespace_id = H5.H5Dget_space(symmetry_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		long symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, new long[] {1});
+		long filespace_id = H5.H5Dget_space(symmetry_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(symmetry_id, symmetry_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, sym.getBytes());
 		
@@ -378,12 +378,12 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(symmetry_id);
 	}
 	
-	private void writeMaskMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	private void writeMaskMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] maskShape = (long []) ConvertUtils.convert(mask.getShape(), long[].class);
-		int mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, maskShape, false, "pixels");
-		int filespace_id = H5.H5Dget_space(mask_id);
-		int type = H5.H5Dget_type(mask_id);
-		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
+		long mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, maskShape, false, "pixels");
+		long filespace_id = H5.H5Dget_space(mask_id);
+		long type = H5.H5Dget_type(mask_id);
+		long memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, Dataset.INT8)).getBuffer());
 		
@@ -393,9 +393,9 @@ public class LazySectorIntegration extends LazyDataReduction {
 		H5.H5Dclose(mask_id);
 	}
 	
-	private void writeQcalibrationMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException,	HDF5Exception {
+	private void writeQcalibrationMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException,	HDF5Exception {
 
-		int qcalibration_id = NcdNexusUtils.makegroup(datagroup_id, "qaxis calibration", Nexus.DATA);
+		long qcalibration_id = NcdNexusUtils.makegroup(datagroup_id, "qaxis calibration", Nexus.DATA);
 
 		List<Object[]> data = new ArrayList<Object[]>();
 		data.add(new Object[] { "gradient", gradient.getEstimatedValue(), gradient.getUnit() });
@@ -408,11 +408,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 			double[] value = new double[] { (Double) element[1] };
 			Unit<?> unit = (Unit<?>) element[2];
 
-			int data_id = NcdNexusUtils.makedata(qcalibration_id, name, HDF5Constants.H5T_NATIVE_DOUBLE,
+			long data_id = NcdNexusUtils.makedata(qcalibration_id, name, HDF5Constants.H5T_NATIVE_DOUBLE,
 					new long[] { 1 });
-			int filespace_id = H5.H5Dget_space(data_id);
-			int type = H5.H5Dget_type(data_id);
-			int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			long filespace_id = H5.H5Dget_space(data_id);
+			long type = H5.H5Dget_type(data_id);
+			long memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 			H5.H5Sselect_all(filespace_id);
 
 			H5.H5Dwrite(data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, value);
@@ -421,11 +421,11 @@ public class LazySectorIntegration extends LazyDataReduction {
 			{
 				UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 				String unitString = unitFormat.format(unit);
-				int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-				int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+				long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(attrtype_id, unitString.length());
 
-				int attr_id = H5.H5Acreate(data_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+				long attr_id = H5.H5Acreate(data_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 						HDF5Constants.H5P_DEFAULT);
 				if (attr_id < 0) {
 					throw new HDF5Exception("H5 putattr write error: can't create attribute");

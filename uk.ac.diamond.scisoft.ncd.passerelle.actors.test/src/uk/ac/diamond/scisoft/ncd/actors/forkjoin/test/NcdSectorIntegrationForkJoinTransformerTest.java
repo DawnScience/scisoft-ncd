@@ -126,14 +126,14 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		{
 			filename = testScratchDirectoryName + "ncd_sda_test.nxs";
 
-			int nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,
+			long nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true,
+			long datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true,
 					"counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape,
+			long errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape,
 					true, "counts");
 
 			for (int m = 0; m < shape[0]; m++)
@@ -153,9 +153,9 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 							long[] start = new long[] { m, n, frames, 0, 0 };
 							long[] count = new long[] { 1, 1, 1, 1, 1 };
 							long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
-							int filespace_id = H5.H5Dget_space(data_id);
-							int type_id = H5.H5Dget_type(data_id);
-							int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+							long filespace_id = H5.H5Dget_space(data_id);
+							long type_id = H5.H5Dget_type(data_id);
+							long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 							H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count,
 									block);
 							H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
@@ -183,11 +183,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 			H5.H5Fclose(nxsFile);
 		}
 
-		int file_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_group_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(entry_group_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 
 		DataSliceIdentifiers data_id = new DataSliceIdentifiers();
 		data_id.setIDs(detector_group_id, input_data_id);
@@ -225,9 +225,9 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 					Object obj = message.getBodyContent();
 					if (obj instanceof NcdProcessingObject) {
 						NcdProcessingObject content = (NcdProcessingObject) obj;
-						int result_group_id = content.getInputGroupID();
-						int result_data_id = content.getInputDataID();
-						int result_errors_id = content.getInputErrorsID();
+						long result_group_id = content.getInputGroupID();
+						long result_data_id = content.getInputDataID();
+						long result_errors_id = content.getInputErrorsID();
 						
 						lock.lock();
 						DataSliceIdentifiers result_ids = new DataSliceIdentifiers();
@@ -235,8 +235,8 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						DataSliceIdentifiers result_error_ids = new DataSliceIdentifiers();
 						result_error_ids.setIDs(result_group_id, result_errors_id);
 						
-						int azimuthal_data_id = H5.H5Dopen(result_group_id, "azimuth", HDF5Constants.H5P_DEFAULT);
-						int azimuthal_errors_id = H5.H5Dopen(result_group_id, "azimuth_errors", HDF5Constants.H5P_DEFAULT);
+						long azimuthal_data_id = H5.H5Dopen(result_group_id, "azimuth", HDF5Constants.H5P_DEFAULT);
+						long azimuthal_errors_id = H5.H5Dopen(result_group_id, "azimuth_errors", HDF5Constants.H5P_DEFAULT);
 						
 						DataSliceIdentifiers azimuthal_ids = new DataSliceIdentifiers();
 						azimuthal_ids.setIDs(result_group_id, azimuthal_data_id);
@@ -316,11 +316,11 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 					Object obj = message.getBodyContent();
 					if (obj instanceof NcdProcessingObject) {
 						NcdProcessingObject content = (NcdProcessingObject) obj;
-						int result_group_id = content.getInputGroupID();
-						int result_data_id = content.getInputDataID();
-						int result_errors_id = content.getInputErrorsID();
-						int axis_data_id = content.getInputAxisDataID();
-						int axis_errors_id = content.getInputAxisErrorsID();
+						long result_group_id = content.getInputGroupID();
+						long result_data_id = content.getInputDataID();
+						long result_errors_id = content.getInputErrorsID();
+						long axis_data_id = content.getInputAxisDataID();
+						long axis_errors_id = content.getInputAxisErrorsID();
 						
 						lock.lock();
 						DataSliceIdentifiers result_ids = new DataSliceIdentifiers();

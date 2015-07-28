@@ -78,8 +78,8 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 
 	public static final String dataName = "Normalisation";
 
-	private int calibrationGroupID, inputCalibrationID;
-	private int normGroupID, normDataID, normErrorsID;
+	private long calibrationGroupID, inputCalibrationID;
+	private long normGroupID, normDataID, normErrorsID;
 
 	private DataSliceIdentifiers calibrationIDs;
 
@@ -127,7 +127,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 			}
 
 			normGroupID = NcdNexusUtils.makegroup(processingGroupID, dataName, Nexus.DETECT);
-			int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			long type = HDF5Constants.H5T_NATIVE_FLOAT;
 			normDataID = NcdNexusUtils.makedata(normGroupID, "data", type, frames, true, "counts");
 			type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			normErrorsID = NcdNexusUtils.makedata(normGroupID, "errors", type, frames, true, "counts");
@@ -159,9 +159,9 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 
 		NcdProcessingSliceObject receivedObject;
 
-		int filespaceID = -1;
-		int typeID = -1;
-		int memspaceID = -1;
+		long filespaceID = -1;
+		long typeID = -1;
+		long memspaceID = -1;
 		try {
 			receivedObject = (NcdProcessingSliceObject) receivedMsg.getBodyContent();
 			lock = receivedObject.getLock();
@@ -226,7 +226,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 				throw new HDF5Exception("Failed to write Normalisation data into the results file");
 			}
 
-			NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+			NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 
 			filespaceID = H5.H5Dget_space(normErrorsID);
 			typeID = H5.H5Dget_type(normErrorsID);
@@ -256,7 +256,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 				lock.unlock();
 			}
 			try {
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 			} catch (HDF5LibraryException e) {
 				throw new ProcessingException(ErrorCode.ACTOR_EXECUTION_ERROR, e.getMessage(), this, e.getCause());
 			}

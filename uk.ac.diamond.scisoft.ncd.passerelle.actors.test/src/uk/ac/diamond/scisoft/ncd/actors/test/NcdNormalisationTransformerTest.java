@@ -96,17 +96,17 @@ public class NcdNormalisationTransformerTest {
 		{
 			filename = testScratchDirectoryName + "ncd_sda_test.nxs";
 
-			int nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,
+			long nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true,
+			long datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			long normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true,
 					"counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape,
+			long errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape,
 					true, "counts");
-			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape, true,
+			long norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape, true,
 					"counts");
 
 			for (int m = 0; m < shape[0]; m++)
@@ -127,9 +127,9 @@ public class NcdNormalisationTransformerTest {
 							long[] start = new long[] { m, n, frames, 0, 0 };
 							long[] count = new long[] { 1, 1, 1, 1, 1 };
 							long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
-							int filespace_id = H5.H5Dget_space(data_id);
-							int type_id = H5.H5Dget_type(data_id);
-							int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+							long filespace_id = H5.H5Dget_space(data_id);
+							long type_id = H5.H5Dget_type(data_id);
+							long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 							H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count,
 									block);
 							H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
@@ -152,9 +152,9 @@ public class NcdNormalisationTransformerTest {
 							long[] start = new long[] { m, n, frames, 0 };
 							long[] count = new long[] { 1, 1, 1, 1 };
 							long[] block = new long[] { 1, 1, 1, 1 };
-							int filespace_id = H5.H5Dget_space(norm_id);
-							int type_id = H5.H5Dget_type(norm_id);
-							int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+							long filespace_id = H5.H5Dget_space(norm_id);
+							long type_id = H5.H5Dget_type(norm_id);
+							long memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 							H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count,
 									block);
 							H5.H5Dwrite(norm_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, norm);
@@ -173,11 +173,11 @@ public class NcdNormalisationTransformerTest {
 			H5.H5Fclose(nxsFile);
 		}
 
-		int file_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_group_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(entry_group_id, testDatasetName, HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 
 		DataSliceIdentifiers data_id = new DataSliceIdentifiers();
 		data_id.setIDs(detector_group_id, input_data_id);
@@ -290,9 +290,9 @@ public class NcdNormalisationTransformerTest {
 		flow.connect(source.output, normalisation.input);
 		flow.connect(normalisation.output, sink.input);
 
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 
 		Map<String, String> props = new HashMap<String, String>();
 
@@ -302,8 +302,8 @@ public class NcdNormalisationTransformerTest {
 		props.put("Normalisation.normChannelParam", Integer.toString(normChannel));
 		props.put("Normalisation.dimensionParam", Integer.toString(dim));
 		props.put("Normalisation.framesParam", Arrays.toString(shape));
-		props.put("Normalisation.entryGroupParam", Integer.toString(entry_id));
-		props.put("Normalisation.processingGroupParam", Integer.toString(processing_group_id));
+		props.put("Normalisation.entryGroupParam", Long.toString(entry_id));
+		props.put("Normalisation.processingGroupParam", Long.toString(processing_group_id));
 
 		flowMgr.executeBlockingLocally(flow, props);
 	}

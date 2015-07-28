@@ -176,9 +176,9 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		int[] newShape = ArrayUtils.addAll(new int[] {1, 1}, data.getShape());
 		data = data.reshape(newShape);
 		
-		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_STRONG);
-		int nxsfile_handle = H5.H5Fcreate(filePath, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);
+		long nxsfile_handle = H5.H5Fcreate(filePath, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, fapl);
 		H5.H5Pclose(fapl);
 		int[] libversion = new int[3];
 		H5.H5get_libversion(libversion);
@@ -191,12 +191,12 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		String dt =  format.format(date);
 		putattr(nxsfile_handle, "file_time", dt);
 		
-		int entry_group_id = makegroup(nxsfile_handle, "entry1", "NXentry");
+		long entry_group_id = makegroup(nxsfile_handle, "entry1", "NXentry");
 		
-		int instrument_group_id = makegroup(entry_group_id, "instrument", "NXinstrument");
-		int detector_group_id = makegroup(instrument_group_id, detector, "NXdetector");
+		long instrument_group_id = makegroup(entry_group_id, "instrument", "NXinstrument");
+		long detector_group_id = makegroup(instrument_group_id, detector, "NXdetector");
 		
-		int datatype = -1;
+		long datatype = -1;
 		if (data instanceof ShortDataset) {
 			datatype = HDF5Constants.H5T_NATIVE_SHORT;			
 		} else if (data instanceof IntegerDataset) {
@@ -209,12 +209,12 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			datatype = HDF5Constants.H5T_NATIVE_DOUBLE;
 		}
 		
-		int input_data_id = makedata(detector_group_id, "data", datatype, data);
+		long input_data_id = makedata(detector_group_id, "data", datatype, data);
 		putattr(input_data_id, "signal", 1);
 		putattr(input_data_id, "units", "counts");
 		make_sas_type(detector_group_id);
 		
-		int link_group_id = makegroup(entry_group_id, detector, "NXdata");
+		long link_group_id = makegroup(entry_group_id, detector, "NXdata");
 		H5.H5Lcreate_hard(detector_group_id, "./data", link_group_id, "./data", HDF5Constants.H5P_DEFAULT,  HDF5Constants.H5P_DEFAULT);
 		
 		H5.H5Dclose(input_data_id);
@@ -225,11 +225,11 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		H5.H5Fclose(nxsfile_handle);
 	}
 
-	private int makegroup(int handle, String name, String nxclass) throws NullPointerException, HDF5Exception {
-		int open_group_id = -1;
-		int dataspace_id = -1;
-		int datatype_id = -1;
-		int attribute_id = -1;
+	private long makegroup(long handle, String name, String nxclass) throws NullPointerException, HDF5Exception {
+		long open_group_id = -1;
+		long dataspace_id = -1;
+		long datatype_id = -1;
+		long attribute_id = -1;
 		open_group_id = H5.H5Gcreate(handle, name, HDF5Constants.H5P_DEFAULT,
 				HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
@@ -250,13 +250,13 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	}
 	
 	
-	private int makedata(int open_group_id, String name, int type, Dataset data) throws NullPointerException, HDF5Exception {
+	private long makedata(long open_group_id, String name, long type, Dataset data) throws NullPointerException, HDF5Exception {
 		int rank = data.getRank();
 		int[] dim = data.getShape();
 
 		long[] ldim = new long[rank];
 		long[] lmaxdim = new long[rank];
-		int dataspace_id = -1;
+		long dataspace_id = -1;
 		for (int idx = 0; idx < rank; idx++) {
 			if (dim[idx] == HDF5Constants.H5S_UNLIMITED) {
 				ldim[idx] = 1;
@@ -268,11 +268,11 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		}
 		dataspace_id = H5.H5Screate_simple(rank, ldim, lmaxdim);
 
-		int dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
+		long dcpl_id = H5.H5Pcreate(HDF5Constants.H5P_DATASET_CREATE);
 		if (dcpl_id >= 0)
 			H5.H5Pset_chunk(dcpl_id, rank, ldim);
 
-		int dataset_id = H5.H5Dcreate(open_group_id, name, type, dataspace_id,
+		long dataset_id = H5.H5Dcreate(open_group_id, name, type, dataspace_id,
 				HDF5Constants.H5P_DEFAULT, dcpl_id, HDF5Constants.H5P_DEFAULT);
 
 		H5.H5Dwrite(dataset_id, type, HDF5Constants.H5S_ALL,
@@ -284,12 +284,12 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		return dataset_id;
 	}
 	
-	private void make_sas_type(int dataset_id) throws NullPointerException, HDF5Exception {
-		int sas_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+	private void make_sas_type(long dataset_id) throws NullPointerException, HDF5Exception {
+		long sas_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		byte[] saxs = "SAXS".getBytes();
 		H5.H5Tset_size(sas_type, saxs.length);
-		int dataspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
-		int saxs_id = H5.H5Dcreate(dataset_id, "sas_type", sas_type, dataspace_id,
+		long dataspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		long saxs_id = H5.H5Dcreate(dataset_id, "sas_type", sas_type, dataspace_id,
 				HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
 
 		H5.H5Dwrite(saxs_id, sas_type, HDF5Constants.H5S_ALL,
@@ -298,9 +298,9 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 		
 	}
 	
-	private void putattr(int dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
-		int attr_type = -1;
-		int dataspace_id = -1;
+	private void putattr(long dataset_id, String name, Object value) throws NullPointerException, HDF5Exception {
+		long attr_type = -1;
+		long dataspace_id = -1;
 		byte[] data = null;
 		
 		if (value instanceof String) {
@@ -314,7 +314,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 			attr_type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
 		}
 		dataspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-		int attribute_id = H5.H5Acreate(dataset_id, name, attr_type,
+		long attribute_id = H5.H5Acreate(dataset_id, name, attr_type,
 				dataspace_id, HDF5Constants.H5P_DEFAULT,
 				HDF5Constants.H5P_DEFAULT);
 		

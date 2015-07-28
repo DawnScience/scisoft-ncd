@@ -44,8 +44,8 @@ public class LazyNormalisation extends LazyDataReduction {
 	
 	public static String name = "Normalisation";
 	
-	private int calibration_group_id, input_calibration_id;
-	public int norm_group_id, norm_data_id, norm_errors_id;
+	private long calibration_group_id, input_calibration_id;
+	public long norm_group_id, norm_data_id, norm_errors_id;
 	private DataSliceIdentifiers calibration_ids;
 
 	// Normalisation data shapes
@@ -64,7 +64,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		this.normChannel = normChannel;
 	}
 
-	public void configure(int dim, long[] frames, int entry_group_id, int processing_group_id) throws HDF5Exception {
+	public void configure(int dim, long[] frames, long entry_group_id, long processing_group_id) throws HDF5Exception {
 		calibration_group_id = H5.H5Gopen(entry_group_id, calibration, HDF5Constants.H5P_DEFAULT);
 		input_calibration_id = H5.H5Dopen(calibration_group_id, "data", HDF5Constants.H5P_DEFAULT);
 		calibration_ids = new DataSliceIdentifiers();
@@ -92,7 +92,7 @@ public class LazyNormalisation extends LazyDataReduction {
 		}
 		
 	    norm_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyNormalisation.name, Nexus.DETECT);
-	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+	    long type = HDF5Constants.H5T_NATIVE_FLOAT;
 		norm_data_id = NcdNexusUtils.makedata(norm_group_id, "data", type, frames, true, "counts");
 	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		norm_errors_id = NcdNexusUtils.makedata(norm_group_id, "errors", type, frames, true, "counts");
@@ -130,11 +130,11 @@ public class LazyNormalisation extends LazyDataReduction {
 			Dataset myres = new FloatDataset(mydata, dataShape);
 			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
 
-			int filespace_id = -1;
-			int type_id = -1;
-			int memspace_id = -1;
-			int select_id = -1;
-			int write_id = -1;
+			long filespace_id = -1;
+			long type_id = -1;
+			long memspace_id = -1;
+			long select_id = -1;
+			long write_id = -1;
 			
 			try{
 				lock.acquire();
@@ -169,7 +169,7 @@ public class LazyNormalisation extends LazyDataReduction {
 					throw new HDF5Exception("Failed to write Normalisation data into the results file");
 				}
 				
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, type_id, filespace_id)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspace_id, type_id, filespace_id)));
 				
 				filespace_id = H5.H5Dget_space(norm_errors_id);
 				type_id = H5.H5Dget_type(norm_errors_id);
@@ -187,7 +187,7 @@ public class LazyNormalisation extends LazyDataReduction {
 				
 			} finally {
 				lock.release();
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspace_id, type_id, filespace_id)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspace_id, type_id, filespace_id)));
 			}
 			
 			return myres;

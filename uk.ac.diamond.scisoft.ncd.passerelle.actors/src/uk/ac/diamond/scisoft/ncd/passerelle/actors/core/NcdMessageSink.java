@@ -41,12 +41,12 @@ public class NcdMessageSink extends Sink {
 	private static final long serialVersionUID = 3041949805554006209L;
 	
 	public StringParameter detectorParam;
-	private int entryGroupID;
-	private int inputDataID;
-	private int inputErrorsID;
-	private int inputAxisDataID;
-	private int inputAxisErrorsID;
-	private int outputGroupID;
+	private long entryGroupID;
+	private long inputDataID;
+	private long inputErrorsID;
+	private long inputAxisDataID;
+	private long inputAxisErrorsID;
+	private long outputGroupID;
 
 	public NcdMessageSink(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {

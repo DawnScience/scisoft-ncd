@@ -74,9 +74,9 @@ public class NcdProcessingObjectTransformer extends Actor {
 	public Port input;
 	public Port output;
 
-	private int inputGroupID;
-	private int inputDataID;
-	private int inputErrorsID;
+	private long inputGroupID;
+	private long inputDataID;
+	private long inputErrorsID;
 
 	private ReentrantLock lock;
 
@@ -195,7 +195,7 @@ public class NcdProcessingObjectTransformer extends Actor {
 	}
 
 	private void configureActorParameters() throws HDF5Exception {
-		int inputDataSpaceID = H5.H5Dget_space(inputDataID);
+		long inputDataSpaceID = H5.H5Dget_space(inputDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(inputDataSpaceID);
 		frames = new long[rank];
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
@@ -211,7 +211,7 @@ public class NcdProcessingObjectTransformer extends Actor {
 		hasErrors = false;
 		if (inputErrorsID > 0) {
 			try {
-				final int type = H5.H5Iget_type(inputErrorsID);
+				final long type = H5.H5Iget_type(inputErrorsID);
 				if (type != HDF5Constants.H5I_BADID) {
 					hasErrors = true;
 				}

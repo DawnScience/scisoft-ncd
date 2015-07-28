@@ -474,12 +474,12 @@ public class LazyNcdProcessingTest {
 	}
 	
 	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result) throws HDF5Exception {
-		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long input_errors_id = H5.H5Dopen(detector_group_id, "errors", HDF5Constants.H5P_DEFAULT);
 		
 		DataSliceIdentifiers ids = new DataSliceIdentifiers();
 		ids.setIDs(detector_group_id, input_data_id);
@@ -489,12 +489,12 @@ public class LazyNcdProcessingTest {
 	}
 	
 	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result, String data, String errors) throws HDF5Exception {
-		int file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, (data == null ? "data" : data), HDF5Constants.H5P_DEFAULT);
-		int input_errors_id = H5.H5Dopen(detector_group_id, (errors == null ? "errors" : errors), HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, (data == null ? "data" : data), HDF5Constants.H5P_DEFAULT);
+		long input_errors_id = H5.H5Dopen(detector_group_id, (errors == null ? "errors" : errors), HDF5Constants.H5P_DEFAULT);
 		
 		DataSliceIdentifiers ids = new DataSliceIdentifiers();
 		ids.setIDs(detector_group_id, input_data_id);

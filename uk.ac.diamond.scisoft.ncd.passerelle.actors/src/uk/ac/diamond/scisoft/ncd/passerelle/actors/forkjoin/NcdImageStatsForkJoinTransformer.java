@@ -203,11 +203,11 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 			int[] grid = (int[]) ConvertUtils
 					.convert(Arrays.copyOf(frames, frames.length - dimension), int[].class);
 			
-			int dataspace_id = -1;
-			int datatype_id = -1;
-			int dataclass_id = -1;
-			int datasize_id = -1;
-			int memspace_id = -1;
+			long dataspace_id = -1;
+			long datatype_id = -1;
+			int dataclass = -1;
+			int datasize = -1;
+			long memspace_id = -1;
 			
 			for (int idx = 0; idx < numBins; idx++) {
 				
@@ -235,8 +235,8 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						
 						dataspace_id = H5.H5Dget_space(inputDataID);
 						datatype_id = H5.H5Dget_type(inputDataID);
-						dataclass_id = H5.H5Tget_class(datatype_id);
-						datasize_id = H5.H5Tget_size(datatype_id);
+						dataclass = H5.H5Tget_class(datatype_id);
+						datasize = H5.H5Tget_size(datatype_id);
 						memspace_id = H5.H5Screate_simple(block.length, block, null);
 						
 						lock.lock();
@@ -248,7 +248,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 							throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 						}
 						
-						int dtype = HDF5Utils.getDtype(dataclass_id, datasize_id);
+						int dtype = HDF5Utils.getDtype(dataclass, datasize);
 						data = DatasetFactory.zeros(grid, dtype);
 						if ((dataspace_id > 0) && (memspace_id > 0)) {
 							int read_id = H5.H5Dread(
@@ -272,9 +272,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						task.completeExceptionally(e);
 						return;
 					} finally {
-						List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
-								dataclass_id,
-								datasize_id,
+						List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 								dataspace_id,
 								datatype_id,
 								memspace_id));
@@ -336,8 +334,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 				} catch (HDF5Exception e) {
 					task.completeExceptionally(e);
 				} finally {
-					List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
-							datasize_id,
+					List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 							dataspace_id,
 							datatype_id,
 							memspace_id));

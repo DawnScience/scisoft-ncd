@@ -70,7 +70,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 	private Double bgScaling;
 	public Parameter bgScalingParam;
 
-	private int bgDetectorGroupID, bgDataID, bgErrorsID;
+	private long bgDetectorGroupID, bgDataID, bgErrorsID;
 
 	private long[] bgFrames;
 
@@ -111,7 +111,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		hasBgErrors = false;
 		if (bgErrorsID > 0) {
 			try {
-				final int type = H5.H5Iget_type(bgErrorsID);
+				final long type = H5.H5Iget_type(bgErrorsID);
 				if (type != HDF5Constants.H5I_BADID) {
 					hasBgErrors = true;
 				}
@@ -125,7 +125,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 	protected void configureActorParameters() throws HDF5Exception {
 		super.configureActorParameters();
 		
-		int bgDataSpaceID = H5.H5Dget_space(bgDataID);
+		long bgDataSpaceID = H5.H5Dget_space(bgDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(bgDataSpaceID);
 		bgFrames = new long[rank];
 		H5.H5Sget_simple_extent_dims(bgDataSpaceID, bgFrames, null);
@@ -139,12 +139,12 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 		String bgFileName = H5.H5Fget_name(bgDataID);
 		
 		// Store background filename used in data reduction
-		int strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		long strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(strType, bgFileName.length());
-		int metadataID = NcdNexusUtils.makedata(resultGroupID, "background_filename", strType, new long[] {1});
+		long metadataID = NcdNexusUtils.makedata(resultGroupID, "background_filename", strType, new long[] {1});
 		
-		int filespaceID = H5.H5Dget_space(metadataID);
-		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		long filespaceID = H5.H5Dget_space(metadataID);
+		long memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespaceID);
 		H5.H5Dwrite(metadataID, strType, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, bgFileName.getBytes());
 		
@@ -207,11 +207,11 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				return;
 			}
 
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
-			int selectID = -1;
-			int writeID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
+			long selectID = -1;
+			long writeID = -1;
 
 			try {
 				if (monitor.isCanceled()) {
@@ -325,7 +325,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					throw new HDF5Exception("Failed to write BackgroundSubtraction data into the results file");
 				}
 
-				NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+				NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				
 				filespaceID = H5.H5Dget_space(resultErrorsID);
 				typeID = H5.H5Dget_type(resultErrorsID);
@@ -352,7 +352,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					lock.unlock();
 				}
 				try {
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
 					task.completeExceptionally(e);
 				}

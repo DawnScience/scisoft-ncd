@@ -89,12 +89,12 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		super.configureActorParameters();
 		
 		// Store selection format string
-		int strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		long strType = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(strType, format.length());
-		int metadataID = NcdNexusUtils.makedata(resultGroupID, "selection", strType, new long[] {1});
+		long metadataID = NcdNexusUtils.makedata(resultGroupID, "selection", strType, new long[] {1});
 		
-		int filespaceID = H5.H5Dget_space(metadataID);
-		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		long filespaceID = H5.H5Dget_space(metadataID);
+		long memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespaceID);
 		H5.H5Dwrite(metadataID, strType, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, format.getBytes());
 		
@@ -105,10 +105,10 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	}
 	
 	@Override
-	protected int getResultDataType() throws HDF5LibraryException {
+	protected long getResultDataType() throws HDF5LibraryException {
 		if (inputDataID > 0) {
 			try {
-				int typeID = H5.H5Dget_type(inputDataID);
+				long typeID = H5.H5Dget_type(inputDataID);
 				return H5.H5Tcopy(typeID);
 			} catch (HDF5LibraryException e) {
 				getLogger().info("Setting default results dataset type", e);
@@ -118,10 +118,10 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	}
 	
 	@Override
-	protected int getResultErrorsType() throws HDF5LibraryException {
+	protected long getResultErrorsType() throws HDF5LibraryException {
 		if (inputErrorsID > 0) {
 			try {
-				int typeID = H5.H5Dget_type(inputErrorsID);
+				long typeID = H5.H5Dget_type(inputErrorsID);
 				return H5.H5Tcopy(typeID);
 			} catch (HDF5LibraryException e) {
 				getLogger().info("Setting default result errors dataset type", e);
@@ -159,11 +159,11 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 			MultidimensionalCounter frameCounter = new MultidimensionalCounter((int[]) ConvertUtils.convert(
 					selectedShape, int[].class));
 			Iterator iter = frameCounter.iterator();
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
-			int selectID = -1;
-			int writeID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
+			long selectID = -1;
+			long writeID = -1;
 
 			while (iter.hasNext()) {
 				iter.next();
@@ -218,7 +218,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						throw new HDF5Exception("Failed to write selected data into the results file");
 					}
 
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 
 					filespaceID = H5.H5Dget_space(resultErrorsID);
 					typeID = H5.H5Dget_type(resultErrorsID);
@@ -248,7 +248,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						lock.unlock();
 					}
 					try {
-						NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(
+						NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(
 								memspaceID,
 								typeID,
 								filespaceID)));

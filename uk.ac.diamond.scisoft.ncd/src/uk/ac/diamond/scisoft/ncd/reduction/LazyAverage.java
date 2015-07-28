@@ -46,7 +46,7 @@ public class LazyAverage extends LazyDataReduction {
 	public static final String name = "Average";
 	
 	private int[] averageIndices;
-	private int ave_group_id, ave_data_id, ave_errors_id;
+	private long ave_group_id, ave_data_id, ave_errors_id;
 	
 	private IProgressMonitor monitor = new NullProgressMonitor();
 
@@ -72,7 +72,7 @@ public class LazyAverage extends LazyDataReduction {
 		this.monitor = monitor;
 	}
 
-	public void configure(int dimension, int[] inputFrames, int processing_group_id, int frameBatch) throws HDF5Exception {
+	public void configure(int dimension, int[] inputFrames, long processing_group_id, int frameBatch) throws HDF5Exception {
 		
 		dim = dimension;
 		frames_int = inputFrames;
@@ -87,7 +87,7 @@ public class LazyAverage extends LazyDataReduction {
 		framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
 	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
-	    int type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
+	    long type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
 		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve, true, "counts");
 		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve, true, "counts");
 		H5.H5Tclose(type);
@@ -212,13 +212,13 @@ public class LazyAverage extends LazyDataReduction {
 				return;
 			}
 			
-			int filespace_id = H5.H5Dget_space(ave_data_id);
-			int type_id = H5.H5Dget_type(ave_data_id);
+			long filespace_id = H5.H5Dget_space(ave_data_id);
+			long type_id = H5.H5Dget_type(ave_data_id);
 			long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
 			long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 			long[] ave_count_data = new long[frames.length];
 			Arrays.fill(ave_count_data, 1);
-			int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+			long memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 			
 			H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
 					ave_step);
@@ -250,7 +250,7 @@ public class LazyAverage extends LazyDataReduction {
 	}
 
 	public void complete() throws HDF5LibraryException {
-		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(ave_data_id,
+		List<Long> identifiers = new ArrayList<Long>(Arrays.asList(ave_data_id,
 				ave_errors_id,
 				ave_group_id));
 		

@@ -259,13 +259,13 @@ public class NcdAverageForkJoinTransformer extends NcdAbstractDataForkJoinTransf
 					ave_frame =  ave_frame.idivide(totalFrames);
 					ave_errors_frame =  ave_errors_frame.ipower(0.5).idivide(totalFrames);
 					
-					int filespace_id = H5.H5Dget_space(resultDataID);
-					int type_id = H5.H5Dget_type(resultDataID);
+					long filespace_id = H5.H5Dget_space(resultDataID);
+					long type_id = H5.H5Dget_type(resultDataID);
 					long[] ave_start = (long[]) ConvertUtils.convert(currentFrame, long[].class);
 					long[] ave_step = (long[]) ConvertUtils.convert(step, long[].class);
 					long[] ave_count_data = new long[frames.length];
 					Arrays.fill(ave_count_data, 1);
-					int memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
+					long memspace_id = H5.H5Screate_simple(ave_step.length, ave_step, null);
 					
 					H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
 							ave_step);

@@ -150,10 +150,10 @@ public class DataReductionPipelinePluginTest {
 
 	private void testSumAndAverage(double expectedMean, double toleranceMean, double expectedSum, double toleranceSum) throws Exception {
 		IFile h5 = getH5File();
-		int file_handle = H5.H5Fopen(h5.getLocation().toString(), HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
-		int entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int detector_group_id = H5.H5Gopen(entry_group_id, "Pilatus2M_result", HDF5Constants.H5P_DEFAULT);
-		int input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long file_handle = H5.H5Fopen(h5.getLocation().toString(), HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long detector_group_id = H5.H5Gopen(entry_group_id, "Pilatus2M_result", HDF5Constants.H5P_DEFAULT);
+		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
 
 		DataSliceIdentifiers data_id = new DataSliceIdentifiers();
 		data_id.setIDs(detector_group_id, input_data_id);

@@ -81,14 +81,14 @@ public class NcdLazyDataReductionTest {
 		{
 			filename = testScratchDirectoryName + "ncd_sda_test.nxs"; 
 
-			int nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long nxsFile = H5.H5Fcreate(filename, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
 			NcdNexusUtils.makegroup(entry_id, "results", NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape, true, "counts");
-			int norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape, true, "counts");
+			long datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			long normgroup_id = NcdNexusUtils.makegroup(entry_id, testNormName, NXDataClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
+			long errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, shape, true, "counts");
+			long norm_id = NcdNexusUtils.makedata(normgroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, normShape, true, "counts");
 
 			for (int m = 0; m < shape[0]; m++)
 			  for (int n = 0; n < shape[1]; n++) {
@@ -108,9 +108,9 @@ public class NcdLazyDataReductionTest {
 						long[] start = new long[] { m, n, frames, 0, 0 };
 						long[] count = new long[] { 1, 1, 1, 1, 1 };
 						long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
-						int filespace_id = H5.H5Dget_space(data_id);
-						int type_id = H5.H5Dget_type(data_id);
-						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+						long filespace_id = H5.H5Dget_space(data_id);
+						long type_id = H5.H5Dget_type(data_id);
+						long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 						H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
 						H5.H5Sclose(memspace_id);
@@ -130,9 +130,9 @@ public class NcdLazyDataReductionTest {
 						long[] start = new long[] { m, n, frames, 0 };
 						long[] count = new long[] { 1, 1, 1, 1 };
 						long[] block = new long[] { 1, 1, 1, 1 };
-						int filespace_id = H5.H5Dget_space(norm_id);
-						int type_id = H5.H5Dget_type(norm_id);
-						int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+						long filespace_id = H5.H5Dget_space(norm_id);
+						long type_id = H5.H5Dget_type(norm_id);
+						long memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 						H5.H5Dwrite(norm_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, norm);
 						H5.H5Sclose(memspace_id);
@@ -154,11 +154,11 @@ public class NcdLazyDataReductionTest {
 		{
 			bgFile = testScratchDirectoryName + "bgfile_ncd_sda_test.nxs"; 
 
-			int nxsFile = H5.H5Fcreate(bgFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape, true, "counts");
-			int errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, bgShape, true, "counts");
+			long nxsFile = H5.H5Fcreate(bgFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, bgShape, true, "counts");
+			long errors_id = NcdNexusUtils.makedata(datagroup_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, bgShape, true, "counts");
 
 			for (int k = 0; k < bgShape[0]; k++) {
 				for (int frames = 0; frames < bgShape[1]; frames++) {
@@ -175,9 +175,9 @@ public class NcdLazyDataReductionTest {
 					long[] start = new long[] { k, frames, 0, 0 };
 					long[] count = new long[] { 1, 1, 1, 1 };
 					long[] block = new long[] { 1, 1, imageShape[0], imageShape[1] };
-					int filespace_id = H5.H5Dget_space(data_id);
-					int type_id = H5.H5Dget_type(data_id);
-					int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+					long filespace_id = H5.H5Dget_space(data_id);
+					long type_id = H5.H5Dget_type(data_id);
+					long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 					H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 					H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
 					H5.H5Sclose(memspace_id);
@@ -205,11 +205,11 @@ public class NcdLazyDataReductionTest {
 		{
 			drFile = testScratchDirectoryName + "drfile_ncd_sda_test.nxs"; 
         
-			int nxsFile = H5.H5Fcreate(drFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
-			int processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NXInstrumentClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NXDetectorClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape, true, "counts");
+			long nxsFile = H5.H5Fcreate(drFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long processing_group_id = NcdNexusUtils.makegroup(entry_id, "instrument", NXInstrumentClassName);
+			long datagroup_id = NcdNexusUtils.makegroup(processing_group_id, testDatasetName, NXDetectorClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, imageShape, true, "counts");
 
 			float[] data = new float[points];
 			for (int i = 0; i < imageShape[0]; i++) {
@@ -220,9 +220,9 @@ public class NcdLazyDataReductionTest {
 				}
 			}
 
-			int filespace_id = H5.H5Dget_space(data_id);
-			int type_id = H5.H5Dget_type(data_id);
-			int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+			long filespace_id = H5.H5Dget_space(data_id);
+			long type_id = H5.H5Dget_type(data_id);
+			long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 			H5.H5Sselect_all(filespace_id);
 			H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
 			H5.H5Sclose(memspace_id);
@@ -239,10 +239,10 @@ public class NcdLazyDataReductionTest {
 		{
 			secFile = testScratchDirectoryName + "secfile_ncd_sda_test.nxs"; 
 			
-			int nxsFile = H5.H5Fcreate(secFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
-			int entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
-			int datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
-			int data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
+			long nxsFile = H5.H5Fcreate(secFile, HDF5Constants.H5F_ACC_TRUNC, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT);
+			long entry_id = NcdNexusUtils.makegroup(nxsFile, "entry1", NXEntryClassName);
+			long datagroup_id = NcdNexusUtils.makegroup(entry_id, testDatasetName, NXDataClassName);
+			long data_id = NcdNexusUtils.makedata(datagroup_id, "data", HDF5Constants.H5T_NATIVE_FLOAT, shape, true, "counts");
 
 			for (int m = 0; m < shape[0]; m++) {
 			  for (int n = 0; n < shape[1]; n++) {
@@ -259,9 +259,9 @@ public class NcdLazyDataReductionTest {
 						long[] start = new long[] { m, n, frames, 0, 0 };
 						long[] count = new long[] { 1, 1, 1, 1, 1 };
 						long[] block = new long[] { 1, 1, 1, imageShape[0], imageShape[1] };
-						int filespace_id = H5.H5Dget_space(data_id);
-						int type_id = H5.H5Dget_type(data_id);
-						int memspace_id = H5.H5Screate_simple(dim, imageShape, null);
+						long filespace_id = H5.H5Dget_space(data_id);
+						long type_id = H5.H5Dget_type(data_id);
+						long memspace_id = H5.H5Screate_simple(dim, imageShape, null);
 						H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 						H5.H5Dwrite(data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, data);
 						H5.H5Sclose(memspace_id);
@@ -292,9 +292,9 @@ public class NcdLazyDataReductionTest {
 	public void testLazyNormalisation() throws HDF5Exception {
 		
 		LazyNormalisation lazyNormalisation = new LazyNormalisation();
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 
 		lazyNormalisation.setAbsScaling((double) absScale);
 		lazyNormalisation.setNormChannel(0);
@@ -329,9 +329,9 @@ public class NcdLazyDataReductionTest {
 	public void testLazyBackgroundSubtraction() throws HDF5Exception {
 		
 		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 			
 		DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(bgFile, testDatasetName, "data", "errors");
 		DataSliceIdentifiers bgIds = ids[0];
@@ -381,9 +381,9 @@ public class NcdLazyDataReductionTest {
 	public void testLazyDetectorResponse() throws HDF5Exception {
 		
 		LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, testDatasetName);
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
 		lazyDetectorResponse.setDrFile(drFile);
 		
@@ -413,9 +413,9 @@ public class NcdLazyDataReductionTest {
 	public void testLazyInvariant() throws HDF5Exception {
 
 		LazyInvariant lazyInvariant = new LazyInvariant();
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
     
 		SliceSettings slice = new SliceSettings(invShape, 0, (int) invShape[0]);
 		slice.setStart(new int[] {0, 0, 0});
@@ -447,9 +447,9 @@ public class NcdLazyDataReductionTest {
 	public void testLazySectorIntegration() throws Exception {
 		
 		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		SectorROI intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
 
 		intSector.setClippingCompensation(true);
@@ -502,9 +502,9 @@ public class NcdLazyDataReductionTest {
 	@Test
 	public void testLazyAverage() throws Exception {
 		
-		int nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
-		int entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
-		int processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
+		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
+		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
 	    DataSliceIdentifiers[] ids = NcdNexusUtilsTest.readDataId(filename, testDatasetName, "data", "errors");
 	    DataSliceIdentifiers input_ids = ids[0];

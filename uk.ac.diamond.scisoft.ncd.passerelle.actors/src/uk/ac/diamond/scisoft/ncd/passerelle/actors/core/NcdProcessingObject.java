@@ -38,9 +38,9 @@ public class NcdProcessingObject extends DataMessageComponent {
 	private static final String MONITOR = "Monitor";
 
 	public NcdProcessingObject(int dimension,
-			int entryGroupID, int processingGroupID,	int inputGroupID,
-			int inputDataID, int inputErrorsID,
-			int inputAxisDataID, int inputAxisErrorsID,
+			long entryGroupID, long processingGroupID,	long inputGroupID,
+			long inputDataID, long inputErrorsID,
+			long inputAxisDataID, long inputAxisErrorsID,
 			ReentrantLock lock, IProgressMonitor monitor) {
 		super();
 
@@ -68,87 +68,87 @@ public class NcdProcessingObject extends DataMessageComponent {
 		addUserObject(DIMENSION, dimension);
 	}
 
-	public int getEntryGroupID() {
+	public long getEntryGroupID() {
 		Object obj = getUserObject(ENTRY_GROUP_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setEntryGroupID(int entryGroupID) {
+	public void setEntryGroupID(long entryGroupID) {
 		addUserObject(ENTRY_GROUP_ID, entryGroupID);
 	}
 
-	public int getProcessingGroupID() {
+	public long getProcessingGroupID() {
 		Object obj = getUserObject(PROCESSING_GROUP_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setProcessingGroupID(int processingGroupID) {
+	public void setProcessingGroupID(long processingGroupID) {
 		addUserObject(PROCESSING_GROUP_ID, processingGroupID);
 	}
 
-	public int getInputGroupID() {
+	public long getInputGroupID() {
 		Object obj = getUserObject(INPUT_GROUP_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setInputGroupID(int inputGroupID) {
+	public void setInputGroupID(long inputGroupID) {
 		addUserObject(INPUT_GROUP_ID, inputGroupID);
 	}
 
-	public int getInputDataID() {
+	public long getInputDataID() {
 		Object obj = getUserObject(INPUT_DATA_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setInputDataID(int inputDataID) {
+	public void setInputDataID(long inputDataID) {
 		addUserObject(INPUT_DATA_ID, inputDataID);
 	}
 
-	public int getInputErrorsID() {
+	public long getInputErrorsID() {
 		Object obj = getUserObject(INPUT_ERRORS_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setInputErrorsID(int inputErrorsID) {
+	public void setInputErrorsID(long inputErrorsID) {
 		addUserObject(INPUT_ERRORS_ID, inputErrorsID);
 	}
 
-	public int getInputAxisDataID() {
+	public long getInputAxisDataID() {
 		Object obj = getUserObject(INPUT_AXIS_DATA_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setInputAxisDataID(int inputAxisDataID) {
+	public void setInputAxisDataID(long inputAxisDataID) {
 		addUserObject(INPUT_AXIS_DATA_ID, inputAxisDataID);
 	}
 
-	public int getInputAxisErrorsID() {
+	public long getInputAxisErrorsID() {
 		Object obj = getUserObject(INPUT_AXIS_ERRORS_ID);
-		if (obj instanceof Integer) {
-			return (Integer) obj;
+		if (obj instanceof Long) {
+			return (Long) obj;
 		}
 		return -1;
 	}
 
-	public void setInputAxisErrorsID(int inputAxisErrorsID) {
+	public void setInputAxisErrorsID(long inputAxisErrorsID) {
 		addUserObject(INPUT_AXIS_ERRORS_ID, inputAxisErrorsID);
 	}
 

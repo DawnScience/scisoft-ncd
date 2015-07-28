@@ -99,8 +99,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	public Parameter axisUnitParam, pxSizeParam;
 	public ROIParameter sectorROIParam;
 	
-	private int azimuthalDataID, azimuthalErrorsID;
-	private int azimuthalAxisID;
+	private long azimuthalDataID, azimuthalErrorsID;
+	private long azimuthalAxisID;
 
 	public Port portAzimuthal;
 
@@ -220,8 +220,8 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		
 		if (doAzimuthal) {
 			long[] azFrames = getAzimuthalDataShape();
-			int typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
-			int typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
+			long typeFloat = HDF5Constants.H5T_NATIVE_FLOAT;
+			long typeDouble = HDF5Constants.H5T_NATIVE_DOUBLE;
 			azimuthalDataID = NcdNexusUtils.makedata(resultGroupID, "azimuth", typeFloat, azFrames, false, "counts");
 			azimuthalErrorsID = NcdNexusUtils.makedata(resultGroupID, "azimuth_errors", typeDouble, azFrames, false,
 					"counts");
@@ -479,9 +479,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		long[] resBlock = Arrays.copyOf(dataIDs.block, resRank);
 		resBlock[resRank - 1] = integralLength;
 
-		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
-		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
-		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		long filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		long typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		long memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
 		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
 		if (selectID < 0) {
 			throw new HDF5Exception("Error allocating space for writing sector integration results");
@@ -511,9 +511,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		resultAxisDataID = NcdNexusUtils.makeaxis(resultGroupID, axisName, HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, qaxisRank,
 				1, units);
 
-		int filespace_id = H5.H5Dget_space(resultAxisDataID);
-		int type_id = H5.H5Dget_type(resultAxisDataID);
-		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
+		long filespace_id = H5.H5Dget_space(resultAxisDataID);
+		long type_id = H5.H5Dget_type(resultAxisDataID);
+		long memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(resultAxisDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
 		
@@ -552,9 +552,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		azimuthalAxisID = NcdNexusUtils.makeaxis(resultGroupID, axisName, HDF5Constants.H5T_NATIVE_DOUBLE, azAxisShape, azAxisRank,
 				1, units);
 
-		int filespace_id = H5.H5Dget_space(azimuthalAxisID);
-		int type_id = H5.H5Dget_type(azimuthalAxisID);
-		int memspace_id = H5.H5Screate_simple(azAxis.getRank(), azAxisShape, null);
+		long filespace_id = H5.H5Dget_space(azimuthalAxisID);
+		long type_id = H5.H5Dget_type(azimuthalAxisID);
+		long memspace_id = H5.H5Screate_simple(azAxis.getRank(), azAxisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(azimuthalAxisID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, azAxis.getBuffer());
 		
@@ -587,11 +587,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		}
 	}
 
-	private void writeBeamCenterMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
-		int filespace_id = H5.H5Dget_space(beamcenter_id);
-		int type = H5.H5Dget_type(beamcenter_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeBeamCenterMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long beamcenter_id = NcdNexusUtils.makedata(datagroup_id, "beam centre", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		long filespace_id = H5.H5Dget_space(beamcenter_id);
+		long type = H5.H5Dget_type(beamcenter_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(beamcenter_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getPoint());
 		
@@ -601,13 +601,13 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(beamcenter_id);
 	}
 	
-	private void writeCameraLengthMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int cameralength_id = NcdNexusUtils.makegroup(datagroup_id, "camera length", Nexus.DATA);
-		int cameralength_data_id = NcdNexusUtils.makedata(cameralength_id, "data", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
-		int cameralength_error_id = NcdNexusUtils.makedata(cameralength_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
-		int filespace_id = H5.H5Dget_space(cameralength_data_id);
-		int type = H5.H5Dget_type(cameralength_data_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+	private void writeCameraLengthMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long cameralength_id = NcdNexusUtils.makegroup(datagroup_id, "camera length", Nexus.DATA);
+		long cameralength_data_id = NcdNexusUtils.makedata(cameralength_id, "data", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		long cameralength_error_id = NcdNexusUtils.makedata(cameralength_id, "errors", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "mm");
+		long filespace_id = H5.H5Dget_space(cameralength_data_id);
+		long type = H5.H5Dget_type(cameralength_data_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(cameralength_data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getEstimatedValue()});
 		H5.H5Sclose(filespace_id);
@@ -627,11 +627,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Gclose(cameralength_id);
 	}
 	
-	private void writeEnergyMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "keV");
-		int filespace_id = H5.H5Dget_space(energy_id);
-		int type = H5.H5Dget_type(energy_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+	private void writeEnergyMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long energy_id = NcdNexusUtils.makedata(datagroup_id, "energy", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {1}, false, "keV");
+		long filespace_id = H5.H5Dget_space(energy_id);
+		long type = H5.H5Dget_type(energy_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))});
 		
@@ -641,11 +641,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(energy_id);
 	}
 	
-	private void writeIntegrationAnglesMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "Deg");
-		int filespace_id = H5.H5Dget_space(angles_id);
-		int type = H5.H5Dget_type(angles_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeIntegrationAnglesMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long angles_id = NcdNexusUtils.makedata(datagroup_id, "integration angles", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "Deg");
+		long filespace_id = H5.H5Dget_space(angles_id);
+		long type = H5.H5Dget_type(angles_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(angles_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getAnglesDegrees());
 		
@@ -655,11 +655,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(angles_id);
 	}
 	
-	private void writeIntegrationRadiiMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
-		int filespace_id = H5.H5Dget_space(radii_id);
-		int type = H5.H5Dget_type(radii_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
+	private void writeIntegrationRadiiMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long radii_id = NcdNexusUtils.makedata(datagroup_id, "integration radii", HDF5Constants.H5T_NATIVE_DOUBLE, new long[] {2}, false, "pixels");
+		long filespace_id = H5.H5Dget_space(radii_id);
+		long type = H5.H5Dget_type(radii_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {2}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(radii_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, intSector.getRadii());
 		
@@ -669,13 +669,13 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(radii_id);
 	}
 	
-	private void writeIntegrationSymmetryMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
-		int symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+	private void writeIntegrationSymmetryMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+		long symmetry_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		String sym = intSector.getSymmetryText();
 		H5.H5Tset_size(symmetry_type, sym.length());
-		int symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, new long[] {1});
-		int filespace_id = H5.H5Dget_space(symmetry_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		long symmetry_id = NcdNexusUtils.makedata(datagroup_id, "integration symmetry", symmetry_type, new long[] {1});
+		long filespace_id = H5.H5Dget_space(symmetry_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(symmetry_id, symmetry_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, sym.getBytes());
 		
@@ -685,12 +685,12 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(symmetry_id);
 	}
 	
-	private void writeMaskMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	private void writeMaskMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		long[] maskShape = (long []) ConvertUtils.convert(mask.getShape(), long[].class);
-		int mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, maskShape, false, "pixels");
-		int filespace_id = H5.H5Dget_space(mask_id);
-		int type = H5.H5Dget_type(mask_id);
-		int memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
+		long mask_id = NcdNexusUtils.makedata(datagroup_id, "mask", HDF5Constants.H5T_NATIVE_INT8, maskShape, false, "pixels");
+		long filespace_id = H5.H5Dget_space(mask_id);
+		long type = H5.H5Dget_type(mask_id);
+		long memspace_id = H5.H5Screate_simple(mask.getRank(), maskShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(mask_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, (DatasetUtils.cast(mask, Dataset.INT8)).getBuffer());
 		
@@ -700,9 +700,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		H5.H5Dclose(mask_id);
 	}
 	
-	private void writeQcalibrationMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException,	HDF5Exception {
+	private void writeQcalibrationMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException,	HDF5Exception {
 
-		int qcalibration_id = NcdNexusUtils.makegroup(datagroup_id, "qaxis calibration", Nexus.DATA);
+		long qcalibration_id = NcdNexusUtils.makegroup(datagroup_id, "qaxis calibration", Nexus.DATA);
 
 		List<Object[]> data = new ArrayList<Object[]>();
 		data.add(new Object[] { "gradient", gradient.getEstimatedValue(), gradient.getUnit() });
@@ -715,11 +715,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			double[] value = new double[] { (Double) element[1] };
 			Unit<?> unit = (Unit<?>) element[2];
 
-			int data_id = NcdNexusUtils.makedata(qcalibration_id, name, HDF5Constants.H5T_NATIVE_DOUBLE,
+			long data_id = NcdNexusUtils.makedata(qcalibration_id, name, HDF5Constants.H5T_NATIVE_DOUBLE,
 					new long[] { 1 });
-			int filespace_id = H5.H5Dget_space(data_id);
-			int type = H5.H5Dget_type(data_id);
-			int memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			long filespace_id = H5.H5Dget_space(data_id);
+			long type = H5.H5Dget_type(data_id);
+			long memspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 			H5.H5Sselect_all(filespace_id);
 
 			H5.H5Dwrite(data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, value);
@@ -728,11 +728,11 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			{
 				UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 				String unitString = unitFormat.format(unit);
-				int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-				int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+				long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(attrtype_id, unitString.length());
 
-				int attr_id = H5.H5Acreate(data_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+				long attr_id = H5.H5Acreate(data_id, "units", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 						HDF5Constants.H5P_DEFAULT);
 				if (attr_id < 0) {
 					throw new HDF5Exception("H5 putattr write error: can't create attribute");
@@ -758,7 +758,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 	protected void doWrapUp() throws TerminationException {
 		if (doAzimuthal) {
 			try {
-				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+				List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 						azimuthalDataID,
 						azimuthalErrorsID,
 						azimuthalAxisID));

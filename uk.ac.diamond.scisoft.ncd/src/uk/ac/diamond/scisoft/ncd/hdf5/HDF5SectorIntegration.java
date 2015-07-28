@@ -192,8 +192,8 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 	}
 	
 	private void writeResults(DataSliceIdentifiers dataIDs, Dataset data, int[] dataShape, int dim) throws HDF5Exception {
-		int filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
-		int type_id = H5.H5Dget_type(dataIDs.dataset_id);
+		long filespace_id = H5.H5Dget_space(dataIDs.dataset_id);
+		long type_id = H5.H5Dget_type(dataIDs.dataset_id);
 		
 		int resLength =  dataShape.length - dim + 1;
 		int integralLength = data.getShape()[data.getRank() - 1];
@@ -203,7 +203,7 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 		long[] res_block = Arrays.copyOf(dataIDs.block, resLength);
 		res_block[resLength - 1] = integralLength;
 		
-		int memspace_id = H5.H5Screate_simple(resLength, res_block, null);
+		long memspace_id = H5.H5Screate_simple(resLength, res_block, null);
 		H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
 				res_start, res_block, res_count, res_block);
 		

@@ -61,7 +61,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 	private Dataset inputAxis;
 	private long[] axisShape;
 
-	private int porodDataID, porodErrorsID;
+	private long porodDataID, porodErrorsID;
 	
 	public NcdInvariantForkJoinTransformer(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -91,7 +91,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		super.configureActorParameters();
 		
 		if (inputAxisDataID != -1) {
-			int spaceID = H5.H5Dget_space(inputAxisDataID);
+			long spaceID = H5.H5Dget_space(inputAxisDataID);
 			int rank = H5.H5Sget_simple_extent_ndims(spaceID);
 			axisShape = new long[rank];
 			H5.H5Sget_simple_extent_dims(spaceID, axisShape, null);
@@ -111,7 +111,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				inputAxis.setError(inputAxisErrors);
 			}
 
-			int type = HDF5Constants.H5T_NATIVE_FLOAT;
+			long type = HDF5Constants.H5T_NATIVE_FLOAT;
 			porodDataID = NcdNexusUtils.makedata(resultGroupID, "porod_fit", type, frames, false, "N/A");
 			type = HDF5Constants.H5T_NATIVE_DOUBLE;
 			porodErrorsID = NcdNexusUtils.makedata(resultGroupID, "porod_fit_errors", type, frames, false, "N/A");
@@ -161,11 +161,11 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				return;
 			}
 
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
-			int selectID = -1;
-			int writeID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
+			long selectID = -1;
+			long writeID = -1;
 			try {
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -286,7 +286,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					lock.unlock();
 				}
 				try {
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
 					task.completeExceptionally(e);
 				}
@@ -305,9 +305,9 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 		long[] resBlock = Arrays.copyOf(dataIDs.block, resRank);
 		resBlock[resRank - 1] = integralLength;
 
-		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
-		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
-		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		long filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		long typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		long memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
 		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
 		if (selectID < 0) {
 			throw new HDF5Exception("Error allocating space for writing SAXS plot data");

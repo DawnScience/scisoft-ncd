@@ -40,13 +40,13 @@ public class LazyInvariant extends LazyDataReduction {
 
 	public static String name = "Invariant";
 	
-	private int inv_group_id, inv_data_id, inv_errors_id;
+	private long inv_group_id, inv_data_id, inv_errors_id;
 
 	public long[] invFrames;
 	
-	public void configure(int dim, long[] frames, int entry_group_id, int processing_group_id) throws HDF5Exception {
+	public void configure(int dim, long[] frames, long entry_group_id, long processing_group_id) throws HDF5Exception {
 	    inv_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyInvariant.name, Nexus.DETECT);
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+	    long type = HDF5Constants.H5T_NATIVE_FLOAT;
 		invFrames = Arrays.copyOf(frames, frames.length - dim);
 		inv_data_id = NcdNexusUtils.makedata(inv_group_id, "data", type, invFrames, true, "counts");
 	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
@@ -87,9 +87,9 @@ public class LazyInvariant extends LazyDataReduction {
 				long[] count = new long[frames.length];
 				Arrays.fill(count, 1);
 
-				int filespace_id = H5.H5Dget_space(inv_data_id);
-				int type_id = H5.H5Dget_type(inv_data_id);
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				long filespace_id = H5.H5Dget_space(inv_data_id);
+				long type_id = H5.H5Dget_type(inv_data_id);
+				long memspace_id = H5.H5Screate_simple(block.length, block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count,	block);
 				H5.H5Dwrite(inv_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
 				
@@ -107,7 +107,7 @@ public class LazyInvariant extends LazyDataReduction {
 	
 	
 	public void complete() throws HDF5LibraryException {
-		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(inv_data_id,
+		List<Long> identifiers = new ArrayList<Long>(Arrays.asList(inv_data_id,
 				inv_errors_id,
 				inv_group_id));
 		

@@ -340,12 +340,12 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	}
 	
 	private long[] readDataShape(String detector, String filename) throws HDF5Exception {
-		int fapl = -1;
-		int fileID = -1;
-		int entryGroupID = -1;
-		int detectorGroupID = -1;
-		int dataID = -1;
-		int dataspaceID = -1;
+		long fapl = -1;
+		long fileID = -1;
+		long entryGroupID = -1;
+		long detectorGroupID = -1;
+		long dataID = -1;
+		long dataspaceID = -1;
 		try {
 			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
@@ -368,7 +368,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			if (fapl > 0) {
 				H5.H5Pclose(fapl);
 			}
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+			List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 					dataspaceID,
 					dataID,
 					detectorGroupID,
@@ -405,11 +405,11 @@ public class NcdProcessingModel implements IDataReductionProcess {
 	private void configure(String filename) throws HDF5LibraryException, HDF5Exception {
 		IDiffractionMetadata dm = null;
 		{
-			int detectorGroupID = -1;
-			int entryGroupID = -1;
-			int fileID = -1;
+			long detectorGroupID = -1;
+			long entryGroupID = -1;
+			long fileID = -1;
 			try {
-				int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+				long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 				fileID = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
 				H5.H5Pclose(fapl);
@@ -439,7 +439,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					}
 				}
 			} finally {
-				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+				List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 						detectorGroupID,
 						entryGroupID,
 						fileID));
@@ -489,16 +489,16 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		}
 		
 		if (flags.isEnableDetectorResponse()) {
-			int drEntryGroupID = -1;
-			int drInstrumentGroupID = -1;
-			int drDetectorGroupID = -1;
-			int drDataID = -1;
-			int drDataspaceID = -1;
-			int drDatatypeID = -1;
-			int memspaceID = -1;
-			int drFileID = -1;
+			long drEntryGroupID = -1;
+			long drInstrumentGroupID = -1;
+			long drDetectorGroupID = -1;
+			long drDataID = -1;
+			long drDataspaceID = -1;
+			long drDatatypeID = -1;
+			long memspaceID = -1;
+			long drFileID = -1;
 			try {
-				int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+				long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 				drFileID = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 				H5.H5Pclose(fapl);
@@ -532,7 +532,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 					throw new HDF5Exception("Failed to read detector response dataset");
 				}
 			} finally {
-				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+				List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 						memspaceID,
 						drDataspaceID,
 						drDatatypeID,

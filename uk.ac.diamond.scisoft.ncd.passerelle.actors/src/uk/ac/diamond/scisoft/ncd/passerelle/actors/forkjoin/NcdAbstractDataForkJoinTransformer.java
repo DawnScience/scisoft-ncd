@@ -71,9 +71,9 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	
 	protected int dimension;
 	protected long[] frames;
-	protected int entryGroupID, processingGroupID;
-	protected int inputGroupID, inputDataID, inputErrorsID, inputAxisDataID, inputAxisErrorsID;
-	protected int resultGroupID, resultDataID, resultErrorsID, resultAxisDataID, resultAxisErrorsID;
+	protected long entryGroupID, processingGroupID;
+	protected long inputGroupID, inputDataID, inputErrorsID, inputAxisDataID, inputAxisErrorsID;
+	protected long resultGroupID, resultDataID, resultErrorsID, resultAxisDataID, resultAxisErrorsID;
 
 	protected RecursiveAction task;
 	
@@ -166,7 +166,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	@Override
 	protected void doWrapUp() throws TerminationException {
 		try {
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+			List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 					resultDataID,
 					resultErrorsID,
 					resultAxisDataID,
@@ -188,7 +188,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 	}
 
 	protected void configureActorParameters() throws HDF5Exception {
-		int inputDataSpaceID = H5.H5Dget_space(inputDataID);
+		long inputDataSpaceID = H5.H5Dget_space(inputDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(inputDataSpaceID);
 		frames = new long[rank];
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
@@ -197,7 +197,7 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		hasErrors = false;
 		if (inputErrorsID > 0) {
 			try {
-				final int type = H5.H5Iget_type(inputErrorsID);
+				final long type = H5.H5Iget_type(inputErrorsID);
 				if (type != HDF5Constants.H5I_BADID) {
 					hasErrors = true;
 				}
@@ -207,17 +207,17 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		}
 		long[] resultFrames = getResultDataShape();
 		resultGroupID = NcdNexusUtils.makegroup(processingGroupID, getName(), Nexus.DETECT);
-		int type = getResultDataType();
+		long type = getResultDataType();
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "data", type, resultFrames, true, "counts");
 		type = getResultErrorsType();
 		resultErrorsID = NcdNexusUtils.makedata(resultGroupID, "errors", type, resultFrames, true, "counts");
 	}
 
-	protected int getResultDataType() throws HDF5LibraryException {
+	protected long getResultDataType() throws HDF5LibraryException {
 		return H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
 	}
 	
-	protected int getResultErrorsType() throws HDF5LibraryException {
+	protected long getResultErrorsType() throws HDF5LibraryException {
 		return H5.H5Tcopy(HDF5Constants.H5T_NATIVE_DOUBLE);
 	}
 	
@@ -241,12 +241,12 @@ public abstract class NcdAbstractDataForkJoinTransformer extends Actor {
 		writeAxisData();
 		
 		String detType = DetectorTypes.REDUCTION_DETECTOR;
-		int typeID = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		long typeID = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(typeID, detType.length());
-		int metadataID = NcdNexusUtils.makedata(resultGroupID, "sas_type", typeID, new long[] {1});
+		long metadataID = NcdNexusUtils.makedata(resultGroupID, "sas_type", typeID, new long[] {1});
 		
-		int filespaceID = H5.H5Dget_space(metadataID);
-		int memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
+		long filespaceID = H5.H5Dget_space(metadataID);
+		long memspaceID = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespaceID);
 		H5.H5Dwrite(metadataID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, detType.getBytes());
 		

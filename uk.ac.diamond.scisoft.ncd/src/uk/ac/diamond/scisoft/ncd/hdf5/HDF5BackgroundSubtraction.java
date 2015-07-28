@@ -76,17 +76,17 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			try {
 				lock.acquire();
 				
-				int filespace_id = H5.H5Dget_space(ids.dataset_id);
-				int type_id = H5.H5Dget_type(ids.dataset_id);
-				int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+				long filespace_id = H5.H5Dget_space(ids.dataset_id);
+				long type_id = H5.H5Dget_type(ids.dataset_id);
+				long memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getBuffer());
 				
 				
-				int err_filespace_id = H5.H5Dget_space(errIds.dataset_id);
-				int err_type_id = H5.H5Dget_type(errIds.dataset_id);
-				int err_memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
+				long err_filespace_id = H5.H5Dget_space(errIds.dataset_id);
+				long err_type_id = H5.H5Dget_type(errIds.dataset_id);
+				long err_memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
 				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
 						errIds.block);
 				H5.H5Dwrite(errIds.dataset_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());

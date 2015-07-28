@@ -45,7 +45,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 	
 	public static String name = "DetectorResponse";
 
-	public int dr_group_id, dr_data_id, dr_errors_id;
+	public long dr_group_id, dr_data_id, dr_errors_id;
 	
 	public void setDrFile(String drFile) {
 		this.drFile = drFile;
@@ -58,26 +58,26 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		this.detector = detector;
 	}
 	
-	public void configure(int dim, long[] frames, int entry_group_id, int processing_group_id) throws HDF5Exception {
+	public void configure(int dim, long[] frames, long entry_group_id, long processing_group_id) throws HDF5Exception {
 		
 	    dr_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyDetectorResponse.name, Nexus.DETECT);
-	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+	    long type = HDF5Constants.H5T_NATIVE_FLOAT;
 		dr_data_id = NcdNexusUtils.makedata(dr_group_id, "data", type, frames, true, "counts");
 	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		dr_errors_id = NcdNexusUtils.makedata(dr_group_id, "errors", type, frames, true, "counts");
 		
-		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-		int nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		long nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 		H5.H5Pclose(fapl);
 		
-		int dr_entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
-		int dr_instrument_group_id = H5.H5Gopen(dr_entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
-		int dr_detector_group_id = H5.H5Gopen(dr_instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
+		long dr_entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
+		long dr_instrument_group_id = H5.H5Gopen(dr_entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
+		long dr_detector_group_id = H5.H5Gopen(dr_instrument_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		
-		int input_data_id = H5.H5Dopen(dr_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
-		int input_dataspace_id = H5.H5Dget_space(input_data_id);
-		int input_datatype_id = H5.H5Dget_type(input_data_id);
+		long input_data_id = H5.H5Dopen(dr_detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
+		long input_dataspace_id = H5.H5Dget_space(input_data_id);
+		long input_datatype_id = H5.H5Dget_type(input_data_id);
 		int input_dataclass_id = H5.H5Tget_class(input_datatype_id);
 		int input_datasize_id = H5.H5Tget_size(input_datatype_id);
 		
@@ -86,7 +86,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		
 		long[] drFrames = new long[rank];
 		H5.H5Sget_simple_extent_dims(input_dataspace_id, drFrames, null);
-		int memspace_id = H5.H5Screate_simple(rank, drFrames, null);
+		long memspace_id = H5.H5Screate_simple(rank, drFrames, null);
 		
 		int[] drFrames_int = (int[]) ConvertUtils.convert(drFrames, int[].class);
 		drData = DatasetFactory.zeros(drFrames_int, dtype);
@@ -147,9 +147,9 @@ public class LazyDetectorResponse extends LazyDataReduction {
 				long[] count = new long[frames.length];
 				Arrays.fill(count, 1);
 
-				int filespace_id = H5.H5Dget_space(dr_data_id);
-				int type_id = H5.H5Dget_type(dr_data_id);
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				long filespace_id = H5.H5Dget_space(dr_data_id);
+				long type_id = H5.H5Dget_type(dr_data_id);
+				long memspace_id = H5.H5Screate_simple(block.length, block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				H5.H5Dwrite(dr_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);
 				
@@ -167,7 +167,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 	
 	
 	public void complete() throws HDF5LibraryException {
-		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(dr_data_id,
+		List<Long> identifiers = new ArrayList<Long>(Arrays.asList(dr_data_id,
 				dr_errors_id,
 				dr_group_id));
 

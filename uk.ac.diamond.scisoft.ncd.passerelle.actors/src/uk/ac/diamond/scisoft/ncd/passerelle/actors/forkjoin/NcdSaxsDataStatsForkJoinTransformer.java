@@ -99,7 +99,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 
 	@Override
 	protected void configureActorParameters() throws HDF5Exception {
-		int inputDataSpaceID = H5.H5Dget_space(inputDataID);
+		long inputDataSpaceID = H5.H5Dget_space(inputDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(inputDataSpaceID);
 		frames = new long[rank];
 		H5.H5Sget_simple_extent_dims(inputDataSpaceID, frames, null);
@@ -108,7 +108,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 		hasErrors = false;
 		if (inputErrorsID > 0) {
 			try {
-				final int type = H5.H5Iget_type(inputErrorsID);
+				final long type = H5.H5Iget_type(inputErrorsID);
 				if (type != HDF5Constants.H5I_BADID) {
 					hasErrors = true;
 				}
@@ -117,7 +117,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 			}
 		}
 		long[] resultFrames = Arrays.copyOf(frames, frames.length);
-		int type = HDF5Constants.H5T_NATIVE_INT;
+		long type = HDF5Constants.H5T_NATIVE_INT;
 		resultGroupID = inputGroupID;
 		resultDataID = NcdNexusUtils.makedata(resultGroupID, "outliers", type, resultFrames, true, "counts");
 		resultErrorsID = -1;
@@ -209,9 +209,9 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 
 		lock.lock();
 		
-		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
-		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
-		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		long filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		long typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		long memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
 		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
 		if (selectID < 0) {
 			throw new HDF5Exception("Error allocating space for writing SAXS stats data");

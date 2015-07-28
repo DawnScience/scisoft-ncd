@@ -73,9 +73,9 @@ public class HDF5Invariant extends HDF5ReductionDetector {
 			try {
 				lock.acquire();
 				
-				int filespace_id = H5.H5Dget_space(ids.dataset_id);
-				int type_id = H5.H5Dget_type(ids.dataset_id);
-				int memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
+				long filespace_id = H5.H5Dget_space(ids.dataset_id);
+				long type_id = H5.H5Dget_type(ids.dataset_id);
+				long memspace_id = H5.H5Screate_simple(ids.block.length, ids.block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ids.start, ids.stride, ids.count,
 						ids.block);
 				H5.H5Dwrite(ids.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, mydata);

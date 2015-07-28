@@ -39,15 +39,15 @@ public final class NcdNexusUtils {
 	private NcdNexusUtils() {
 	}
 
-	public static int makegroup(int parent_id, String name, String nxclass) throws HDF5Exception {
+	public static long makegroup(long parent_id, String name, String nxclass) throws HDF5Exception {
 
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
-		int open_group_id = -1;
-		int dataspace_id = -1;
-		int datatype_id = -1;
-		int attribute_id = -1;
+		long open_group_id = -1;
+		long dataspace_id = -1;
+		long datatype_id = -1;
+		long attribute_id = -1;
 
 		try {
 			open_group_id = H5.H5Gcreate(parent_id, name, HDF5Constants.H5P_DEFAULT, HDF5Constants.H5P_DEFAULT,
@@ -70,20 +70,20 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create NXclass attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attribute_id, dataspace_id, datatype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attribute_id, dataspace_id, datatype_id)));
 		}
 
 		return open_group_id;
 	}
 
-	public static int makedata(int parent_id, String name, int type, long[] dim) throws HDF5Exception {
+	public static long makedata(long parent_id, String name, long type, long[] dim) throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
 
-		int dcpl_id = -1;
-		int dataspace_id = -1;
-		int dataset_id = -1;
+		long dcpl_id = -1;
+		long dataspace_id = -1;
+		long dataset_id = -1;
 
 		try {
 			dataspace_id = H5.H5Screate_simple(dim.length, dim, null);
@@ -111,19 +111,19 @@ public final class NcdNexusUtils {
 		return dataset_id;
 	}
 
-	public static int makedata(int parent_id, String name, int type, long[] dim, boolean signal, String units)
+	public static long makedata(long parent_id, String name, long type, long[] dim, boolean signal, String units)
 			throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
-		int dataset_id = makedata(parent_id, name, type, dim);
+		long dataset_id = makedata(parent_id, name, type, dim);
 		if (dataset_id < 0) {
 			throw new HDF5Exception("H5 makedata error: failed to create dataset");
 		}
 		// add signal attribute
-		int attrspace_id = -1;
-		int attrtype_id = -1;
-		int attr_id = -1;
+		long attrspace_id = -1;
+		long attrtype_id = -1;
+		long attr_id = -1;
 		try {
 			attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
 			attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
@@ -138,7 +138,7 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
 		}
 
 		// add units attribute
@@ -157,20 +157,20 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
 		}
 		return dataset_id;
 	}
 
-	public static int makeaxis(int parent_id, String name, int type, long[] dim, int[] axis, int primary, String units)
+	public static long makeaxis(long parent_id, String name, long type, long[] dim, int[] axis, int primary, String units)
 			throws HDF5Exception {
 		if (parent_id < 0) {
 			throw new HDF5Exception("Illegal parent group id");
 		}
 		
-		int dataspace_id = -1;
-		int dcpl_id = -1;
-		int dataset_id = -1;
+		long dataspace_id = -1;
+		long dcpl_id = -1;
+		long dataset_id = -1;
 
 		try {
 			dataspace_id = H5.H5Screate_simple(dim.length, dim, null);
@@ -197,9 +197,9 @@ public final class NcdNexusUtils {
 		}
 
 		// add axis attribute
-		int attrspace_id = -1;
-		int attrtype_id = -1;
-		int attr_id = -1;
+		long attrspace_id = -1;
+		long attrtype_id = -1;
+		long attr_id = -1;
 		try {
 			attrspace_id = H5.H5Screate_simple(1, new long[] { axis.length }, null);
 			attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_INT32);
@@ -214,7 +214,7 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
 		}
 
 		// add primary attribute
@@ -232,7 +232,7 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
 		}
 
 		// add units attribute
@@ -251,14 +251,14 @@ public final class NcdNexusUtils {
 				throw new HDF5Exception("H5 makegroup attribute write error: can't create signal attribute");
 			}
 		} finally {
-			closeH5idList(new ArrayList<Integer>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
+			closeH5idList(new ArrayList<Long>(Arrays.asList(attr_id, attrspace_id, attrtype_id)));
 		}
 		return dataset_id;
 	}
 
-	public static void makelink(int inputDataset, int resultGroup) throws HDF5LibraryException {
+	public static void makelink(long inputDataset, long resultGroup) throws HDF5LibraryException {
 		if (inputDataset > 0) {
-			final int type = H5.H5Iget_type(inputDataset);
+			final long type = H5.H5Iget_type(inputDataset);
 			if (type != HDF5Constants.H5I_BADID) {
 				String[] name = new String[] {""};
 				final long nameSize = H5.H5Iget_name(inputDataset, name, 1L) + 1;
@@ -287,7 +287,7 @@ public final class NcdNexusUtils {
 		}
 	}
 	
-	public static long[] getIdsDatasetShape(int dataspace_id) throws HDF5LibraryException {
+	public static long[] getIdsDatasetShape(long dataspace_id) throws HDF5LibraryException {
 		final int ndims = H5.H5Sget_simple_extent_ndims(dataspace_id);
 		long[] dims = new long[ndims];
 		long[] maxdims = new long[ndims];
@@ -314,7 +314,7 @@ public final class NcdNexusUtils {
 		ids.setSlice(start_data, block_data, count_data, block_data);
 		
 		Dataset data;
-		int memspace_id = -1;
+		long memspace_id = -1;
 		try {
 			int select_id = H5.H5Sselect_hyperslab(ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, ids.start,
 					ids.stride, ids.count, ids.block);
@@ -341,9 +341,9 @@ public final class NcdNexusUtils {
 		return data;
 	}
 
-	public static void closeH5id(int id) throws HDF5LibraryException {
+	public static void closeH5id(long id) throws HDF5LibraryException {
 		if (id > 0) {
-			final int type = H5.H5Iget_type(id);
+			final long type = H5.H5Iget_type(id);
 			if (type != HDF5Constants.H5I_BADID) {
 				final int ref = H5.H5Iget_ref(id);
 				if (ref > 0) {
@@ -376,14 +376,14 @@ public final class NcdNexusUtils {
 		}
 	}
 
-	public static void closeH5idList(List<Integer> identifiers) throws HDF5LibraryException {
+	public static void closeH5idList(List<Long> identifiers) throws HDF5LibraryException {
 
 		if (identifiers == null || identifiers.isEmpty()) {
 			return;
 		}
 
-		Iterator<Integer> itr = identifiers.iterator();
-		Integer id = itr.next();
+		Iterator<Long> itr = identifiers.iterator();
+		Long id = itr.next();
 		try {
 			NcdNexusUtils.closeH5id(id);
 		} finally {

@@ -90,17 +90,17 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	private String inputAxisUnit;
 	private long[] axisShape;
 
-	private int rgDataID = -1;
-	private int rgErrorsID = -1;
-	private int rgRangeDataID = -1;
-	private int I0DataID = -1;
-	private int I0ErrorsID = -1;
+	private long rgDataID = -1;
+	private long rgErrorsID = -1;
+	private long rgRangeDataID = -1;
+	private long I0DataID = -1;
+	private long I0ErrorsID = -1;
 
-	private int guinierFitDataID = -1;
-	private int loglogFitDataID = -1;
+	private long guinierFitDataID = -1;
+	private long loglogFitDataID = -1;
 	
-	private int q4AxisDataID = -1;
-	private int q4AxisErrorsID = -1;
+	private long q4AxisDataID = -1;
+	private long q4AxisErrorsID = -1;
 
 	public Port portRg, portRgRange, portI0;
 	
@@ -139,7 +139,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	protected void configureActorParameters() throws HDF5Exception {
 		super.configureActorParameters();
 		
-		int spaceID = H5.H5Dget_space(inputAxisDataID);
+		long spaceID = H5.H5Dget_space(inputAxisDataID);
 		int rank = H5.H5Sget_simple_extent_ndims(spaceID);
 		axisShape = new long[rank];
 		H5.H5Sget_simple_extent_dims(spaceID, axisShape, null);
@@ -159,8 +159,8 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			inputAxis.setError(inputAxisErrors);
 		}
 		
-		int attrID = H5.H5Aopen(inputAxisDataID, "units", HDF5Constants.H5P_DEFAULT);
-		int typeID = H5.H5Aget_type(attrID);
+		long attrID = H5.H5Aopen(inputAxisDataID, "units", HDF5Constants.H5P_DEFAULT);
+		long typeID = H5.H5Aget_type(attrID);
 		int size = H5.H5Tget_size(typeID);
 		byte[] link = new byte[size];
 		int readID = H5.H5Aread(attrID, typeID, link);
@@ -182,7 +182,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		long[] resultFrames = Arrays.copyOf(frames, frames.length - dimension);
 		long[] rgRangeFrames = Arrays.copyOf(frames, frames.length - dimension + 1);
 		rgRangeFrames[rgRangeFrames.length - 1] = 2;
-		int type = HDF5Constants.H5T_NATIVE_DOUBLE;
+		long type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		rgDataID = NcdNexusUtils.makedata(resultGroupID, "Rg", type, resultFrames, false, inputAxisUnit);
 		rgErrorsID = NcdNexusUtils.makedata(resultGroupID, "Rg_errors", type, resultFrames, false, inputAxisUnit);
 		rgRangeDataID = NcdNexusUtils.makedata(resultGroupID, "Rg_range", type, rgRangeFrames, false, inputAxisUnit);
@@ -196,7 +196,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 	private void createLogLogFitPlotDataset() throws HDF5Exception {
 		long[] resultFrames = Arrays.copyOf(frames, frames.length);
-		int type = HDF5Constants.H5T_NATIVE_FLOAT;
+		long type = HDF5Constants.H5T_NATIVE_FLOAT;
 		loglogFitDataID = NcdNexusUtils.makedata(resultGroupID, "fit", type, resultFrames, false, inputAxisUnit);
 	}
 
@@ -406,9 +406,9 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 
 		lock.lock();
 		
-		int filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
-		int typeID = H5.H5Dget_type(dataIDs.dataset_id);
-		int memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
+		long filespaceID = H5.H5Dget_space(dataIDs.dataset_id);
+		long typeID = H5.H5Dget_type(dataIDs.dataset_id);
+		long memspaceID = H5.H5Screate_simple(resRank, resBlock, null);
 		int selectID = H5.H5Sselect_hyperslab(filespaceID, HDF5Constants.H5S_SELECT_SET, resStart, resBlock, resCount, resBlock);
 		if (selectID < 0) {
 			throw new HDF5Exception("Error allocating space for writing SAXS plot data");
@@ -482,20 +482,20 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		resultAxisDataID = NcdNexusUtils.makeaxis(resultGroupID, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { axisNew.getRank() }, 1, inputAxisUnit);
 
-		int filespace_id = H5.H5Dget_space(resultAxisDataID);
-		int type_id = H5.H5Dget_type(resultAxisDataID);
-		int memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
+		long filespace_id = H5.H5Dget_space(resultAxisDataID);
+		long type_id = H5.H5Dget_type(resultAxisDataID);
+		long memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(resultAxisDataID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, axisNew.getBuffer());
 		
 		// add long_name attribute
 		{
 			String variableName = plotData.getVariableName();
-			int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-			int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+			long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+			long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 			H5.H5Tset_size(attrtype_id, variableName.getBytes().length);
 			
-			int attr_id = H5.H5Acreate(resultAxisDataID, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+			long attr_id = H5.H5Acreate(resultAxisDataID, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 					HDF5Constants.H5P_DEFAULT);
 			if (attr_id < 0) {
 				throw new HDF5Exception("H5 putattr write error: can't create attribute");
@@ -544,11 +544,11 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			
 			// add long_name attribute
 			{
-				int attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
-				int attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+				long attrspace_id = H5.H5Screate_simple(1, new long[] { 1 }, null);
+				long attrtype_id = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(attrtype_id, variableName.getBytes().length);
 				
-				int attr_id = H5.H5Acreate(q4AxisDataID, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
+				long attr_id = H5.H5Acreate(q4AxisDataID, "long_name", attrtype_id, attrspace_id, HDF5Constants.H5P_DEFAULT,
 						HDF5Constants.H5P_DEFAULT);
 				if (attr_id < 0) {
 					throw new HDF5Exception("H5 putattr write error: can't create attribute");
@@ -613,7 +613,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 	protected void doWrapUp() throws TerminationException {
 		if (plotData instanceof GuinierPlotData) {
 			try {
-				List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+				List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 						rgDataID,
 						rgErrorsID,
 						rgRangeDataID,

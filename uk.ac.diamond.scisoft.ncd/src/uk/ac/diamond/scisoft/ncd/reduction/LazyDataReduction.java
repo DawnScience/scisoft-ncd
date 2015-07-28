@@ -56,17 +56,17 @@ public abstract class LazyDataReduction {
 		this.mask = mask;
 	}
 
-	public void writeQaxisData(int dim, int datagroup_id) throws HDF5Exception {
+	public void writeQaxisData(int dim, long datagroup_id) throws HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
 		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
-		int qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, new int[] { dim },
+		long qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, new int[] { dim },
 				1, units);
 
-		int filespace_id = H5.H5Dget_space(qaxis_id);
-		int type_id = H5.H5Dget_type(qaxis_id);
-		int memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
+		long filespace_id = H5.H5Dget_space(qaxis_id);
+		long type_id = H5.H5Dget_type(qaxis_id);
+		long memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShape, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(qaxis_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getBuffer());
 		
@@ -77,7 +77,7 @@ public abstract class LazyDataReduction {
 		
 		if (qaxis.hasErrors()) {
 			long[] qaxisShapeError = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
-			int qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError,
+			long qaxis_error_id = NcdNexusUtils.makedata(datagroup_id, "q_errors", HDF5Constants.H5T_NATIVE_DOUBLE, qaxisShapeError,
 				false, units);
 		
 			filespace_id = H5.H5Dget_space(qaxis_error_id);
@@ -94,14 +94,14 @@ public abstract class LazyDataReduction {
 		
 	}
 	
-	public void writeNcdMetadata(int datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
+	public void writeNcdMetadata(long datagroup_id) throws HDF5LibraryException, NullPointerException, HDF5Exception {
 		String detType = DetectorTypes.REDUCTION_DETECTOR;
-		int type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		long type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(type, detType.length());
-		int metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, new long[] {1});
+		long metadata_id = NcdNexusUtils.makedata(datagroup_id, "sas_type", type, new long[] {1});
 		
-		int filespace_id = H5.H5Dget_space(metadata_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		long filespace_id = H5.H5Dget_space(metadata_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(metadata_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, detType.getBytes());
 		

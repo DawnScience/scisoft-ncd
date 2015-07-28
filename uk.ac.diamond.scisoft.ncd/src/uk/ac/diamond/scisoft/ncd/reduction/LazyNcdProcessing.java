@@ -109,9 +109,9 @@ public class LazyNcdProcessing {
 	private int cores;
     private long maxMemory;
     
-	private int nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id, input_errors_id;
-	private int inputfile_handle;
-	private int result_group_id;
+	private long nxsfile_handle, entry_group_id, processing_group_id, detector_group_id, input_data_id, input_errors_id;
+	private long inputfile_handle;
+	private long result_group_id;
 	
 	private DataSliceIdentifiers input_ids, input_errors_ids;
 	
@@ -303,7 +303,7 @@ public class LazyNcdProcessing {
 		monitorFile = tmpName[1];
 		detector = detectorName;
 		
-		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
 		H5.H5Pclose(fapl);
@@ -349,7 +349,7 @@ public class LazyNcdProcessing {
 		}
 		
 		if (frameSelection != null) {
-		    int sel_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySelection.name, Nexus.DETECT);
+			long sel_group_id = NcdNexusUtils.makegroup(processing_group_id, LazySelection.name, Nexus.DETECT);
 		    
 			monitor.beginTask(monitorFile + " : Slicing Input Data", IProgressMonitor.UNKNOWN);
 		    LazySelection selection = new LazySelection(frames_int);
@@ -802,7 +802,7 @@ public class LazyNcdProcessing {
 		} catch (HDF5LibraryException e) {
 			throw e;
 		} finally {
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(input_data_id,
+			List<Long> identifiers = new ArrayList<Long>(Arrays.asList(input_data_id,
 					input_errors_id,
 					detector_group_id,
 					processing_group_id,

@@ -132,9 +132,9 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				return;
 			}
 
-			int filespaceID = -1;
-			int typeID = -1;
-			int memspaceID = -1;
+			long filespaceID = -1;
+			long typeID = -1;
+			long memspaceID = -1;
 			try {
 				if (monitor.isCanceled()) {
 					throw new OperationCanceledException(getName() + " stage has been cancelled.");
@@ -196,9 +196,9 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				Arrays.fill(count, 1);
 
 				lock.lock();
-				int filespace_id = H5.H5Dget_space(resultDataID);
-				int type_id = H5.H5Dget_type(resultDataID);
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				long filespace_id = H5.H5Dget_space(resultDataID);
+				long type_id = H5.H5Dget_type(resultDataID);
+				long memspace_id = H5.H5Screate_simple(block.length, block, null);
 				int selectID = H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count,
 						block);
 				if (selectID < 0) {
@@ -234,7 +234,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 					lock.unlock();
 				}
 				try {
-					NcdNexusUtils.closeH5idList(new ArrayList<Integer>(Arrays.asList(memspaceID, typeID, filespaceID)));
+					NcdNexusUtils.closeH5idList(new ArrayList<Long>(Arrays.asList(memspaceID, typeID, filespaceID)));
 				} catch (HDF5LibraryException e) {
 					task.completeExceptionally(e);
 				}

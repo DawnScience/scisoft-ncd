@@ -64,17 +64,17 @@ public class NcdMessageSource extends Source {
 	public StringParameter filenameParam, detectorParam, processingParam;
 	
 	private int dimension = -1;
-	private int nxsFileID = -1;
-	private int linkFileID = -1;
-	private int linkErrorsFileID = -1;
-	private int entryGroupID = -1;
-	private int processingGroupID = -1;
-	private int detectorGroupID = -1;
-	private int inputDataID = -1;
-	private int inputErrorsID = -1;
+	private long nxsFileID = -1;
+	private long linkFileID = -1;
+	private long linkErrorsFileID = -1;
+	private long entryGroupID = -1;
+	private long processingGroupID = -1;
+	private long detectorGroupID = -1;
+	private long inputDataID = -1;
+	private long inputErrorsID = -1;
 	//TODO: Add support for reading axis dataset
-	private int inputAxisDataID = -1;
-	private int inputAxisErrorsID = -1;
+	private long inputAxisDataID = -1;
+	private long inputAxisErrorsID = -1;
 
 	public NcdMessageSource(CompositeEntity container, String name) throws NameDuplicationException,
 			IllegalActionException {
@@ -226,7 +226,7 @@ public class NcdMessageSource extends Source {
 	@Override
 	protected void doWrapUp() throws TerminationException {
 		try {
-			List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(
+			List<Long> identifiers = new ArrayList<Long>(Arrays.asList(
 					inputDataID,
 					inputErrorsID,
 					inputAxisDataID,

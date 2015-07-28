@@ -25,11 +25,11 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 public class DataSliceIdentifiers {
 	
-	public int datagroup_id = -1;
-	public int dataset_id = -1;
-	public int dataspace_id = -1;
+	public long datagroup_id = -1;
+	public long dataset_id = -1;
+	public long dataspace_id = -1;
 	public int dataclass_id = -1;
-	public int datatype_id = -1;
+	public long datatype_id = -1;
 	public int datasize_id = -1;
 	public long[] start, stride, count, block;
 	
@@ -64,7 +64,7 @@ public class DataSliceIdentifiers {
 	}
 	
 	
-	public void setIDs(int datagroup_id, int dataset_id) throws HDF5LibraryException {
+	public void setIDs(long datagroup_id, long dataset_id) throws HDF5LibraryException {
 		this.datagroup_id = datagroup_id;
 		this.dataset_id = dataset_id;
 		if (dataset_id != -1) {

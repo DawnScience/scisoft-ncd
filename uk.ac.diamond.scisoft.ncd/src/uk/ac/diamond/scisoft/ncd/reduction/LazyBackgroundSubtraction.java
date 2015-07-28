@@ -47,9 +47,9 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 	
 	public static String name = "BackgroundSubtraction";
 	
-	public int bg_group_id, bg_data_id, bg_errors_id;
-	private int background_file_handle, background_entry_group_id, background_detector_group_id;
-	private int background_input_data_id, background_input_errors_id;
+	public long bg_group_id, bg_data_id, bg_errors_id;
+	private long background_file_handle, background_entry_group_id, background_detector_group_id;
+	private long background_input_data_id, background_input_errors_id;
 	
 	// Background data shapes
 	public long[] bgFrames;
@@ -69,16 +69,16 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		this.bgScaling = (bgScaling != null) ? new Double(bgScaling) : null;
 	}
 	
-	public void configure(int dim, long[] frames, int processing_group_id) throws HDF5Exception {
+	public void configure(int dim, long[] frames, long processing_group_id) throws HDF5Exception {
 	    bg_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyBackgroundSubtraction.name, Nexus.DETECT);
-	    int type = HDF5Constants.H5T_NATIVE_FLOAT;
+	    long type = HDF5Constants.H5T_NATIVE_FLOAT;
 		bg_data_id = NcdNexusUtils.makedata(bg_group_id, "data", type,
 				frames, true, "counts");
 	    type = HDF5Constants.H5T_NATIVE_DOUBLE;
 		bg_errors_id = NcdNexusUtils.makedata(bg_group_id, "errors", type,
 				frames, true, "counts");
 		
-		int fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
+		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 		H5.H5Pclose(fapl);
@@ -102,12 +102,12 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		writeNcdMetadata(bg_group_id);
 		
 		// Store background filename used in data reduction
-		int str_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
+		long str_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 		H5.H5Tset_size(str_type, bgFile.length());
-		int metadata_id = NcdNexusUtils.makedata(bg_group_id, "filename", str_type, new long[] {1});
+		long metadata_id = NcdNexusUtils.makedata(bg_group_id, "filename", str_type, new long[] {1});
 		
-		int filespace_id = H5.H5Dget_space(metadata_id);
-		int memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
+		long filespace_id = H5.H5Dget_space(metadata_id);
+		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
 		H5.H5Dwrite(metadata_id, str_type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, bgFile.getBytes());
 		
@@ -205,16 +205,16 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 				long[] count = new long[frames.length];
 				Arrays.fill(count, 1);
 				
-				int filespace_id = H5.H5Dget_space(bg_data_id);
-				int type_id = H5.H5Dget_type(bg_data_id);
-				int memspace_id = H5.H5Screate_simple(block.length, block, null);
+				long filespace_id = H5.H5Dget_space(bg_data_id);
+				long type_id = H5.H5Dget_type(bg_data_id);
+				long memspace_id = H5.H5Screate_simple(block.length, block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				H5.H5Dwrite(bg_data_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getBuffer());
 				
 				
-				int err_filespace_id = H5.H5Dget_space(bg_errors_id);
-				int err_type_id = H5.H5Dget_type(bg_errors_id);
-				int err_memspace_id = H5.H5Screate_simple(block.length, block, null);
+				long err_filespace_id = H5.H5Dget_space(bg_errors_id);
+				long err_type_id = H5.H5Dget_type(bg_errors_id);
+				long err_memspace_id = H5.H5Screate_simple(block.length, block, null);
 				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				H5.H5Dwrite(bg_errors_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
 				
@@ -227,7 +227,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 	}	
 	
 	public void complete() throws HDF5LibraryException {
-		List<Integer> identifiers = new ArrayList<Integer>(Arrays.asList(bg_data_id,
+		List<Long> identifiers = new ArrayList<Long>(Arrays.asList(bg_data_id,
 				bg_errors_id,
 				bg_group_id,
 				background_input_data_id,
