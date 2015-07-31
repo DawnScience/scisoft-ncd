@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
@@ -80,7 +81,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 		
 		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-		background_file_handle = H5.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		background_file_handle = HDF5Utils.H5Fopen(bgFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 		H5.H5Pclose(fapl);
 		background_entry_group_id = H5.H5Gopen(background_file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		background_detector_group_id = H5.H5Gopen(background_entry_group_id, bgDetector, HDF5Constants.H5P_DEFAULT);

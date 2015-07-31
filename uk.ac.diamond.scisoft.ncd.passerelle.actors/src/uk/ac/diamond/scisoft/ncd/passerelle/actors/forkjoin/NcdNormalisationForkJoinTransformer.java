@@ -35,6 +35,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
@@ -118,7 +119,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 			if (buff[0] != null && buff[1] != null) {
 				String linkData = buff[0];
 				String linkFilename = buff[1];
-				linkFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+				linkFileID = HDF5Utils.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 				inputCalibrationID = H5.H5Dopen(linkFileID, linkData, HDF5Constants.H5P_DEFAULT);
 			} else {
 				throw new HDF5Exception("Invalid external link data for Normalisation dataset.");

@@ -27,6 +27,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -292,7 +293,7 @@ public class NcdLazyDataReductionTest {
 	public void testLazyNormalisation() throws HDF5Exception {
 		
 		LazyNormalisation lazyNormalisation = new LazyNormalisation();
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 
@@ -329,7 +330,7 @@ public class NcdLazyDataReductionTest {
 	public void testLazyBackgroundSubtraction() throws HDF5Exception {
 		
 		LazyBackgroundSubtraction lazyBackgroundSubtraction = new LazyBackgroundSubtraction();
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 			
@@ -381,7 +382,7 @@ public class NcdLazyDataReductionTest {
 	public void testLazyDetectorResponse() throws HDF5Exception {
 		
 		LazyDetectorResponse lazyDetectorResponse = new LazyDetectorResponse(drFile, testDatasetName);
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		
@@ -413,7 +414,7 @@ public class NcdLazyDataReductionTest {
 	public void testLazyInvariant() throws HDF5Exception {
 
 		LazyInvariant lazyInvariant = new LazyInvariant();
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
     
@@ -447,7 +448,7 @@ public class NcdLazyDataReductionTest {
 	public void testLazySectorIntegration() throws Exception {
 		
 		LazySectorIntegration lazySectorIntegration = new LazySectorIntegration();
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		SectorROI intSector = new SectorROI(0, 0, 0, imageShape[1], 0, 90);
@@ -502,7 +503,7 @@ public class NcdLazyDataReductionTest {
 	@Test
 	public void testLazyAverage() throws Exception {
 		
-		long nxsFile = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+		long nxsFile = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 		long entry_id = H5.H5Gopen(nxsFile, "entry1", HDF5Constants.H5P_DEFAULT);
 		long processing_group_id = H5.H5Gopen(entry_id, "results", HDF5Constants.H5P_DEFAULT);
 		

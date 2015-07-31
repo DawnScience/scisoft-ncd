@@ -35,6 +35,7 @@ import org.eclipse.core.runtime.Path;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -474,7 +475,7 @@ public class LazyNcdProcessingTest {
 	}
 	
 	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result) throws HDF5Exception {
-		long file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long file_handle = HDF5Utils.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		long instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		long detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);
@@ -489,7 +490,7 @@ public class LazyNcdProcessingTest {
 	}
 	
 	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result, String data, String errors) throws HDF5Exception {
-		long file_handle = H5.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long file_handle = HDF5Utils.H5Fopen(dataFile, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		long instrument_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		long detector_group_id = H5.H5Gopen(instrument_group_id, result, HDF5Constants.H5P_DEFAULT);

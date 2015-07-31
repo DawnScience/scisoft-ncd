@@ -68,7 +68,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		
 		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-		long nxsfile_handle = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		long nxsfile_handle = HDF5Utils.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 		H5.H5Pclose(fapl);
 		
 		long dr_entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);

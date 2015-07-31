@@ -29,6 +29,7 @@ import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ptolemy.data.BooleanToken;
@@ -135,7 +136,7 @@ public class NcdMessageSource extends Source {
 			}
 
 			lock.lock();
-			nxsFileID = H5.H5Fopen(filename, readOnly ? HDF5Constants.H5F_ACC_RDONLY : HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
+			nxsFileID = HDF5Utils.H5Fopen(filename, readOnly ? HDF5Constants.H5F_ACC_RDONLY : HDF5Constants.H5F_ACC_RDWR, HDF5Constants.H5P_DEFAULT);
 			entryGroupID = H5.H5Gopen(nxsFileID, "entry1", HDF5Constants.H5P_DEFAULT);
 			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
 			
@@ -158,7 +159,7 @@ public class NcdMessageSource extends Source {
 					if (buff[0] != null && buff[1] != null) {
 						String linkData = buff[0];
 						String linkFilename = buff[1];
-						linkFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+						linkFileID = HDF5Utils.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 						inputDataID = H5.H5Dopen(linkFileID, linkData, HDF5Constants.H5P_DEFAULT);
 					} else {
 						throw new HDF5Exception("Invalid external link data for input dataset.");
@@ -177,7 +178,7 @@ public class NcdMessageSource extends Source {
 					if (buff[0] != null && buff[1] != null) {
 						String linkData = buff[0];
 						String linkFilename = buff[1];
-						linkErrorsFileID = H5.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY,
+						linkErrorsFileID = HDF5Utils.H5Fopen(linkFilename, HDF5Constants.H5F_ACC_RDONLY,
 								HDF5Constants.H5P_DEFAULT);
 						inputErrorsID = H5.H5Dopen(linkErrorsFileID, linkData, HDF5Constants.H5P_DEFAULT);
 					} else {

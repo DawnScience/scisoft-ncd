@@ -54,6 +54,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
@@ -305,7 +306,7 @@ public class LazyNcdProcessing {
 		
 		long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-		nxsfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
+		nxsfile_handle = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDWR, fapl);
 		H5.H5Pclose(fapl);
 		entry_group_id = H5.H5Gopen(nxsfile_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		
@@ -313,7 +314,7 @@ public class LazyNcdProcessing {
 		H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 		// Need to use read-only file handle to safely access
 		// input data linked into the result file
-		inputfile_handle = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+		inputfile_handle = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
 		H5.H5Pclose(fapl);
 		detector_group_id = H5.H5Gopen(inputfile_handle, "entry1/" + detector, HDF5Constants.H5P_DEFAULT);
 		input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);

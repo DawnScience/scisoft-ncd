@@ -350,7 +350,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 			H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
 			
-			fileID = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+			fileID = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
 
 			entryGroupID = H5.H5Gopen(fileID, "entry1", HDF5Constants.H5P_DEFAULT);
 			detectorGroupID = H5.H5Gopen(entryGroupID, detector, HDF5Constants.H5P_DEFAULT);
@@ -411,7 +411,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			try {
 				long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-				fileID = H5.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
+				fileID = HDF5Utils.H5Fopen(filename, HDF5Constants.H5F_ACC_RDONLY, fapl);
 				H5.H5Pclose(fapl);
 
 				entryGroupID = H5.H5Gopen(fileID, "entry1", HDF5Constants.H5P_DEFAULT);
@@ -500,7 +500,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			try {
 				long fapl = H5.H5Pcreate(HDF5Constants.H5P_FILE_ACCESS);
 				H5.H5Pset_fclose_degree(fapl, HDF5Constants.H5F_CLOSE_WEAK);
-				drFileID = H5.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
+				drFileID = HDF5Utils.H5Fopen(drFile, HDF5Constants.H5F_ACC_RDONLY, fapl);
 				H5.H5Pclose(fapl);
 
 				drEntryGroupID = H5.H5Gopen(drFileID, "entry1", HDF5Constants.H5P_DEFAULT);

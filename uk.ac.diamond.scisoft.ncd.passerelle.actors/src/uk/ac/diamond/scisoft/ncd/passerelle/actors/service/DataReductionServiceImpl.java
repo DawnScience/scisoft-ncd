@@ -47,6 +47,7 @@ import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
 import org.eclipse.dawnsci.hdf5.Nexus;
@@ -469,7 +470,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 
 	private void createInstrumentNode(long entry_id, String inputfilePath) throws HDF5Exception {
 		
-		long file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long file_handle = HDF5Utils.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		long instrument_group_id = H5.H5Gopen(entry_group_id, "instrument", HDF5Constants.H5P_DEFAULT);
 		
@@ -484,7 +485,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		
 		long detector_id = NcdNexusUtils.makegroup(entry_id, detector, Nexus.DATA);
 		
-		long file_handle = H5.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
+		long file_handle = HDF5Utils.H5Fopen(inputfilePath, HDF5Constants.H5F_ACC_RDONLY, HDF5Constants.H5P_DEFAULT);
 		long entry_group_id = H5.H5Gopen(file_handle, "entry1", HDF5Constants.H5P_DEFAULT);
 		long detector_group_id = H5.H5Gopen(entry_group_id, detector, HDF5Constants.H5P_DEFAULT);
 		long input_data_id = H5.H5Dopen(detector_group_id, "data", HDF5Constants.H5P_DEFAULT);
