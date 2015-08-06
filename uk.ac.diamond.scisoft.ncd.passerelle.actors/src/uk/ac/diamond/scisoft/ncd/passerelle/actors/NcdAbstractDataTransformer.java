@@ -24,6 +24,7 @@ import org.apache.commons.beanutils.ConvertUtils;
 import ptolemy.data.BooleanToken;
 import ptolemy.data.IntMatrixToken;
 import ptolemy.data.IntToken;
+import ptolemy.data.LongToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
@@ -54,7 +55,7 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 	protected int dimension;
 	protected long[] frames;
 	protected int[] grid;
-	protected int entryGroupID, processingGroupID;
+	protected long entryGroupID, processingGroupID;
 	
 	public NcdAbstractDataTransformer(CompositeEntity container, String name) throws IllegalActionException,
 			NameDuplicationException {
@@ -68,8 +69,8 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 		dimensionParam = new Parameter(this, "dimensionParam", new IntToken(-1));
 		framesParam = new Parameter(this, "framesParam", new IntMatrixToken());
 
-		entryGroupParam = new Parameter(this, "entryGroupParam", new IntToken(-1));
-		processingGroupParam = new Parameter(this, "processingGroupParam", new IntToken(-1));
+		entryGroupParam = new Parameter(this, "entryGroupParam", new LongToken(-1));
+		processingGroupParam = new Parameter(this, "processingGroupParam", new LongToken(-1));
 	}
 	
 	@Override
@@ -84,8 +85,8 @@ public abstract class NcdAbstractDataTransformer extends Actor {
 			
 			dimension = ((IntToken) dimensionParam.getToken()).intValue();
 			
-			entryGroupID = ((IntToken) entryGroupParam.getToken()).intValue();
-			processingGroupID = ((IntToken) processingGroupParam.getToken()).intValue();
+			entryGroupID = ((LongToken) entryGroupParam.getToken()).longValue();
+			processingGroupID = ((LongToken) processingGroupParam.getToken()).longValue();
 			
 			int[][] framesMatrix = ((IntMatrixToken) framesParam.getToken()).intMatrix();
 			if (framesMatrix == null || framesMatrix.length != 1) {
