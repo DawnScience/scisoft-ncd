@@ -10,7 +10,6 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
@@ -142,16 +141,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		calibration = ProcessingUtils.getLazyDataset(this, calibDataFile, calibDataPath).getSlice();
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 		
-		//handle special case of 1 image and calibration data not being created with large enough rank - SCATTER-444
-		if (ssm.getTotalSlices() == 1 && (ssm.getSliceInfo().getInputSliceWithoutDataDimensions().convertToSlice().length - calibration.getRank() == 1)) {
-			int[] newShape = NcdOperationUtils.addDimension(calibration.getShape());
-			Dataset newCalib = (Dataset) calibration.getSlice();
-			newCalib.resize(newShape);
-			newCalib.clearMetadata(AxesMetadata.class); //to prevent "Slice dimensions do not match dataset!" exception
-			calibration = newCalib;
-		}
-
-		Dataset calibrationSlice = (Dataset) calibration.getSlice(ssm.getSliceInfo().getInputSliceWithoutDataDimensions().convertToSlice());
+		Dataset calibrationSlice = (Dataset) ssm.getMatchingSlice(calibration);
 		
 		if (errors == null) {
 			errors = DatasetUtils.cast(data.clone(), Dataset.FLOAT64);
