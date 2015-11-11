@@ -256,9 +256,9 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		dataQ = new ArrayList<Amount<ScatteringVector>>();
 		
 		final SectorROI sroi;
-		Collection<IRegion> rois = plottingSystemRef.getRegions(RegionType.SECTOR);
-		if (rois != null && !(rois.isEmpty())) {
-			IROI tmpRoi = rois.iterator().next().getROI();			
+		Collection<IRegion> regions = plottingSystemRef.getRegions(RegionType.SECTOR);
+		if (regions != null && !(regions.isEmpty())) {
+			IROI tmpRoi = regions.iterator().next().getROI();			
 			if (tmpRoi != null && (tmpRoi instanceof SectorROI)) {
 				sroi = (SectorROI) tmpRoi;
 			} else {
