@@ -1687,14 +1687,14 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	/**
 	 * 
 	 */
-	private IPlottingSystem getCurrentPlottingSystem() {
+	private IPlottingSystem<Composite> getCurrentPlottingSystem() {
 		IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow()
 				.getActivePage();
 		if (page == null)
 			return null;
 		IViewPart activePlot = page.findView(PlotView.ID + "DP");
 		if (activePlot instanceof PlotView) {
-			IPlottingSystem activePlotSystem = PlottingFactory
+			IPlottingSystem<Composite> activePlotSystem = PlottingFactory
 					.getPlottingSystem(((PlotView) activePlot).getPartName());
 			return activePlotSystem;
 		}
@@ -1706,7 +1706,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 	 * @return Current ImageTrace if any, null otherwise
 	 */
 	private IImageTrace getCurrentTrace() {
-		IPlottingSystem system = getCurrentPlottingSystem();
+		IPlottingSystem<Composite> system = getCurrentPlottingSystem();
 		if (system == null)
 			return null;
 		Collection<ITrace> traces = system.getTraces();
@@ -1739,7 +1739,7 @@ public class NcdDataReductionParameters extends ViewPart implements ISourceProvi
 				maskFileSelector.setText("");
 				return;
 			}
-			final IPlottingSystem system = getCurrentPlottingSystem();
+			final IPlottingSystem<Composite> system = getCurrentPlottingSystem();
 			if (system == null) {
 				logger.error("The plotting system is NULL.");
 			}

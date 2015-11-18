@@ -55,7 +55,7 @@ class SaxsAnalysisDelegate {
     private static final String PLOT_TYPE_PROP = "uk.ac.diamond.scisoft.ncd.rcp.plotting.tools.plotType";
     
 
-	private IPlottingSystem<Composite> linkage;
+	private IPlottingSystem<?> linkage;
 	private IPlottingSystem<Composite> saxsPlottingSystem;
 	private SaxsAnalysisPlotType  plotType;
 	private SaxsJob               saxsUpdateJob;
@@ -83,7 +83,7 @@ class SaxsAnalysisDelegate {
 
 	}
 	
-	protected void setLinkedPlottingSystem(IPlottingSystem linkage) {
+	protected void setLinkedPlottingSystem(IPlottingSystem<?> linkage) {
 		this.linkage = linkage;
 	}
 	

@@ -174,7 +174,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 
 			final boolean runRefinement = beamRefineButton.getSelection();
 
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+			IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions == null || sectorRegions.isEmpty()) {
 				throw new IllegalArgumentException(NcdMessages.NO_SEC_DATA);
@@ -231,7 +231,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		plottingSystem.clear();
 		
 		Amount<Length> px = getPixel();
-		IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+		IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		Dataset xAxis = DatasetFactory.createRange(sroi.getIntRadius(1), Dataset.FLOAT32);
 		xAxis.imultiply(px.getEstimatedValue());
@@ -305,7 +305,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
 					try {
-						IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+						IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 						
 						 
 						IRegion sector = plotSystem.getRegions(RegionType.SECTOR).iterator().next();

@@ -228,7 +228,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			return;
 		}
 		
-		IPlottingSystem plottingSystemRef = PlottingFactory.getPlottingSystem(referencePlotName);
+		IPlottingSystem<?> plottingSystemRef = PlottingFactory.getPlottingSystem(referencePlotName);
 		
 		final String scaler = ncdScalerSourceProvider.getScaler();
 		if (scaler == null) {
@@ -329,7 +329,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 					
 					@Override
 					public void run() {
-						IPlottingSystem plottingSystemRes = PlottingFactory.getPlottingSystem(resultsPlotName);
+						IPlottingSystem<?> plottingSystemRes = PlottingFactory.getPlottingSystem(resultsPlotName);
 						plottingSystemRes.clear();
 						
 						ILineTrace refTrace = plottingSystemRes.createLineTrace("Reference Glassy Carbon Profile");

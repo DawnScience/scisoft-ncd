@@ -76,7 +76,7 @@ public class AbsoluteIntensityCalibration extends ViewPart implements ISourcePro
 	private static final String REEFRENCE_PLOT_NAME = "Dataset Plot";
 	private static final String RESULTS_PLOT_NAME = "Absolute Calibration Plot";
 	
-	private IPlottingSystem plottingSystem;
+	private IPlottingSystem<Composite> plottingSystem;
 	private Combo standard;
 	private Text sampleThickness;
 	private Label absScale;

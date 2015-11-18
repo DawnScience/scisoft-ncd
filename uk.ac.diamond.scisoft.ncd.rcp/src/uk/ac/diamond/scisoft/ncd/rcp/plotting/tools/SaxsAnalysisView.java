@@ -63,7 +63,7 @@ public class SaxsAnalysisView extends ViewPart {
 				Display.getDefault().asyncExec(new Runnable() {
 					@Override
 					public void run() {
-		                final IPlottingSystem sys = PlottingFactory.getPlottingSystem(plotName);
+		                final IPlottingSystem<Composite> sys = PlottingFactory.getPlottingSystem(plotName);
 		                if (sys!=null) {
 		                	delegate.setLinkedPlottingSystem(sys);
 		                	delegate.activate(false);
@@ -78,7 +78,7 @@ public class SaxsAnalysisView extends ViewPart {
 	
 	public void setLinkage(final IWorkbenchPart linkedPart, final SaxsAnalysisPlotType plotType) {
 		
-        final IPlottingSystem linked = (IPlottingSystem)linkedPart.getAdapter(IPlottingSystem.class);
+        final IPlottingSystem<Composite> linked = (IPlottingSystem<Composite>)linkedPart.getAdapter(IPlottingSystem.class);
         delegate.setLinkedPlottingSystem(linked);
         delegate.activate(false);
 		delegate.process(plotType);

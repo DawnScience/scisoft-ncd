@@ -261,7 +261,7 @@ public class DataReductionHandler extends AbstractHandler {
 		if (activePlot instanceof PlotView) {
 			BooleanDataset mask = null;
 			SectorROI intSector = null;
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+			IPlottingSystem<?> plotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 			if (context.isEnableSector()) {
 				Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 				if (sectorRegions == null || sectorRegions.isEmpty()) {
@@ -279,7 +279,7 @@ public class DataReductionHandler extends AbstractHandler {
 				}
 			}
 			if (context.isEnableMask()) {
-				IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
+				IPlottingSystem<?> activePlotSystem = PlottingFactory.getPlottingSystem(((PlotView) activePlot).getPartName());
 				Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
 				if (imageTraces == null || imageTraces.isEmpty()) {
 					mask = MaskingTool.getSavedMask();

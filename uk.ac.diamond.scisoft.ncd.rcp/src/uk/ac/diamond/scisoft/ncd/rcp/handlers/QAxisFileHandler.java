@@ -254,7 +254,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				IWorkbenchPage page = PlatformUI.getWorkbench().getActiveWorkbenchWindow().getActivePage();
 				IViewPart activePlot = page.findView(PlotView.ID + "DP");
 				if (activePlot instanceof PlotView) {
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
+					IPlottingSystem<?> plotSystem = PlottingFactory.getPlottingSystem("Dataset Plot");
 					plotSystem.setPlotType(PlotType.IMAGE);
 					IRegion sector = plotSystem.getRegion(NcdQAxisCalibration.SECTOR_NAME);
 					if (sector != null) {

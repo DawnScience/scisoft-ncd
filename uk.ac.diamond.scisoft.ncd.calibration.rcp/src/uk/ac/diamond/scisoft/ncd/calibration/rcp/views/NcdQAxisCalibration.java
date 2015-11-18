@@ -71,7 +71,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	protected IJobManager jobManager;
 	
-	protected IPlottingSystem plottingSystem;
+	protected IPlottingSystem<Composite> plottingSystem;
 	public static final  String SECTOR_NAME = "Calibration";
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
@@ -195,7 +195,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				}
 			}
 
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+			IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 			Collection<IRegion> sectorRegions = plotSystem.getRegions(RegionType.SECTOR);
 			if (sectorRegions != null && !(sectorRegions.isEmpty())) {
 				IROI intBase = sectorRegions.iterator().next().getROI();
@@ -349,7 +349,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						roiMemento.getFloat(CalibrationPreferences.QAXIS_ROIPTY));
 				roiData.setSymmetry(roiMemento.getInteger(CalibrationPreferences.QAXIS_ROISYM));
 				try {
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+					IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 					if (plotSystem != null) {
 						plotSystem.setPlotType(PlotType.IMAGE);
 						IRegion sector = plotSystem.createRegion(SECTOR_NAME, RegionType.SECTOR);

@@ -124,7 +124,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 										.getActivePage();
 								IViewPart activePlot = page.findView(PlotView.ID + "DP");
 								if (activePlot instanceof PlotView) {
-									IPlottingSystem activePlotSystem = PlottingFactory
+									IPlottingSystem<?> activePlotSystem = PlottingFactory
 											.getPlottingSystem(((PlotView) activePlot).getPartName());
 									Collection<ITrace> imageTraces = activePlotSystem.getTraces(IImageTrace.class);
 									if (imageTraces == null || imageTraces.isEmpty()) {

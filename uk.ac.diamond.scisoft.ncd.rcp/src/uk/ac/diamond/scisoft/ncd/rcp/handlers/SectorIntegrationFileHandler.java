@@ -129,12 +129,12 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					Dataset data = (Dataset) node.getDataset()
 							.getSlice(start, stop, null).clone().squeeze();
 
-					IPlottingSystem activePlotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
+					IPlottingSystem<?> activePlotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
 					if (activePlotSystem != null) {
 						activePlotSystem.createPlot2D(data, null, new NullProgressMonitor());
 					}
 
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
+					IPlottingSystem<?> plotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
 					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
 					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 					if (lockedMeta == null) {

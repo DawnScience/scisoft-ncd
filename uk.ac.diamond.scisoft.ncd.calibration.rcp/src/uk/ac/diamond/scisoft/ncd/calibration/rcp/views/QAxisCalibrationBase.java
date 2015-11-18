@@ -337,7 +337,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 
 	private boolean checkCalibrationObjectInput() {
 		try {
-			IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+			IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 
 			Collection<ITrace> traces = plotSystem.getTraces();
 			if (traces == null || traces.isEmpty()) {
@@ -452,7 +452,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 					calTable.refresh();
 
 					// update locked diffraction metadata in Diffraction tool
-					IPlottingSystem plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
+					IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 					if (lockedMeta == null) {
 						Collection<ITrace> traces = plotSystem.getTraces();
