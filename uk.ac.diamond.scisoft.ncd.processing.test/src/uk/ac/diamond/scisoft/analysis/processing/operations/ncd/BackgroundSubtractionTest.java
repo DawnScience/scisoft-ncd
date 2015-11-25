@@ -87,13 +87,14 @@ public class BackgroundSubtractionTest {
 		final IOperationContext context = service.createContext();
 		ExternalDataSelectedFramesModel model = new ExternalDataSelectedFramesModel();
 		model.setStartFrame(0);
-		model.setEndFrame(0);
+//		model.setEndFrame();
 		model.setFilePath(randomFilename);
 		model.setDatasetName("/entry/result/data");
 		bgSubtractionJake.setModel(model);
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1});
 		context.setSeries(bgSubtractionJake);
 		counter = 0;
 		
@@ -121,7 +122,8 @@ public class BackgroundSubtractionTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1});
 		context.setSeries(bgSubtractionJun);
 		counter = 0;
 		

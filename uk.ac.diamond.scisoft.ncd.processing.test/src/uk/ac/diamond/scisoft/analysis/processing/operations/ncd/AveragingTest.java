@@ -68,7 +68,8 @@ public class AveragingTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1});
 		context.setSeries(averageJake);
 		counter = 0;
 		
@@ -93,7 +94,8 @@ public class AveragingTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1});
 		context.setSeries(averageJun);
 		counter = 0;
 		

@@ -13,6 +13,7 @@ import junit.framework.Assert;
 
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.ExecutionType;
 import org.eclipse.dawnsci.analysis.api.processing.IExecutionVisitor;
@@ -94,7 +95,10 @@ public class NormalizationTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(inputDataset);
-		context.setSlicing("all", "0");
+//		context.setSlicing("all", "0");
+		context.setDataDimensions(new int[]{2,3});
+		context.setSlicing(new SliceND(inputDataset.getShape()));
+		context.getSlicing().setSlice(1, 0, 1, 1);
 		context.setSeries(detCalib, importMask, setPoisson, integration, normalization);
 		
 		context.setVisitor(new IExecutionVisitor.Stub() {

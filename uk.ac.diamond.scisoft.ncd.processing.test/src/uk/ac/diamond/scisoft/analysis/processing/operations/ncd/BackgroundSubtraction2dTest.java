@@ -90,7 +90,8 @@ public class BackgroundSubtraction2dTest {
 		bgSubtractionJake.setModel(model);
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1,2});
 		context.setSeries(bgSubtractionJake);
 		counter = 0;
 		
@@ -118,7 +119,8 @@ public class BackgroundSubtraction2dTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(randomDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1,2});
 		context.setSeries(bgSubtractionJun);
 		counter = 0;
 		

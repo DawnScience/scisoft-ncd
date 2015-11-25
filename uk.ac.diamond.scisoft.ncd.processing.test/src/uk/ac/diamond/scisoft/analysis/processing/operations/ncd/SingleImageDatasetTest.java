@@ -89,7 +89,8 @@ public class SingleImageDatasetTest {
 		final IOperationContext context = service.createContext();
 
 		context.setData(inputDataset);
-		context.setSlicing("all");
+//		context.setSlicing("all");
+		context.setDataDimensions(new int[]{1,2});
 		context.setSeries(detCalib, importMask, setPoisson, integration, normalization);
 		
 		context.setVisitor(new IExecutionVisitor.Stub() {
