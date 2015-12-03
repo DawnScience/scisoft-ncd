@@ -17,6 +17,8 @@
 package uk.ac.diamond.scisoft.ncd.rcp;
 
 import org.eclipse.core.runtime.preferences.InstanceScope;
+import org.eclipse.dawnsci.plotting.api.preferences.BasePlottingConstants;
+import org.eclipse.dawnsci.plotting.api.preferences.PlottingConstants;
 import org.eclipse.ui.IFolderLayout;
 import org.eclipse.ui.IPageLayout;
 import org.eclipse.ui.IPerspectiveFactory;
@@ -71,7 +73,7 @@ public class NcdCalibrationPerspective implements IPerspectiveFactory {
 		layout.setEditorAreaVisible(false);
 		
 		final ScopedPreferenceStore store = new ScopedPreferenceStore(InstanceScope.INSTANCE, "org.dawnsci.plotting");
-	    store.setValue("org.dawb.plotting.system.colourSchemeName", "NCD");
+	    store.setValue(BasePlottingConstants.COLOUR_SCHEME, "NCD");
 
 	}
 
