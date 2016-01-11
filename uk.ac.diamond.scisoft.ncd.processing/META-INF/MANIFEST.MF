@@ -21,7 +21,7 @@ Require-Bundle: org.eclipse.core.runtime,
  uk.ac.diamond.scisoft.ncd.core.rcp,
  org.dawnsci.persistence,
  org.eclipse.ui.workbench,
- org.apache.commons.math3;bundle-version="[3.2.0,3.6.0)",
+ org.apache.commons.math3;bundle-version="[3.2.0,4.0.0)",
  slf4j.api,
  org.dawnsci.conversion
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
