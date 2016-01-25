@@ -23,10 +23,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
-
-import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 
 public class MultivariateFunctionSourceProvider extends AbstractSourceProvider {
 

@@ -29,6 +29,7 @@ import javax.measure.unit.Unit;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
+import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
@@ -39,14 +40,13 @@ import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 
 public class CalibrationMethods {
 	
 	private static final Logger logger = LoggerFactory.getLogger(CalibrationMethods.class);
 	
-	private ArrayList<IPeak> peaks;
+	private List<IPeak> peaks;
 	private CalibrantSpacing spacing;
 	private Amount<Length> wavelength;
 	private Amount<Length> pixelSize;
@@ -63,7 +63,7 @@ public class CalibrationMethods {
     
 	private SimpleRegression regression;
 
-	public CalibrationMethods(ArrayList<IPeak> peaks, CalibrantSpacing calibrantSpacing, Amount<Length> wavelength,
+	public CalibrationMethods(List<IPeak> peaks, CalibrantSpacing calibrantSpacing, Amount<Length> wavelength,
 			Amount<Length> pixelSize, Unit<Length> unit) {
 		
 		this.peaks = peaks;

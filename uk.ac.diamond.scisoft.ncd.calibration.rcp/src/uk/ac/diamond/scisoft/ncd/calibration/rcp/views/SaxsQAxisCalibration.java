@@ -32,6 +32,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
@@ -66,7 +67,6 @@ import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.IPeak;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.Parameter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
 import uk.ac.diamond.scisoft.ncd.calibration.CalibrationMethods;
@@ -345,7 +345,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 
 				@Override
 				public IStatus runInUIThread(IProgressMonitor monitor) {
-					ArrayList<IPeak> newPeaks = (ArrayList<IPeak>) sourceValue;
+					List<IPeak> newPeaks = (List<IPeak>) sourceValue;
 					try {
 						if (newPeaks.size() < 2) {
 							logger.error("SCISOFT NCD: Error running q-axis calibration procedure");
