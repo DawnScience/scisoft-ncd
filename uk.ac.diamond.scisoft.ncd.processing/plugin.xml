@@ -102,6 +102,14 @@
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              name="NCD">
        </category>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotOperation"
+             icon="icons/saxs_tool.png"
+             id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotModel"
+             name="SAXS Tools">
+       </operation>
    </extension>
 
 </plugin>
