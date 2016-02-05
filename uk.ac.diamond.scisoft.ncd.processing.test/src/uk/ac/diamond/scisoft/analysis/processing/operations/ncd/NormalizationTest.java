@@ -9,8 +9,6 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
-import junit.framework.Assert;
-
 import org.eclipse.core.runtime.Path;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
@@ -23,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
+import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
