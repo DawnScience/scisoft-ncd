@@ -30,6 +30,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.KratkyPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.LogNormPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.LogLogPlotData;
+import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodBackgroundPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.SaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.ZimmPlotData;
@@ -43,8 +44,9 @@ public enum SaxsAnalysisPlotType {
 	POROD_PLOT("Porod Plot",                new Pair<String, String>("q", "Iq\u2074"),                            new int[]{204, 0, 204}),
 	KRATKY_PLOT("Kratky Plot",              new Pair<String, String>("q", "Iq\u00b2"),                            new int[]{204, 0, 0}),
 	ZIMM_PLOT("Zimm Plot",                  new Pair<String, String>("q\u00b2", "1/I"),                           new int[]{0, 153, 51}),
-	DEBYE_BUECHE_PLOT("Debye-Bueche Plot",  new Pair<String, String>("q\u00b2", "1/\u221AI"),                     new int[]{102, 0, 102});
-	
+	DEBYE_BUECHE_PLOT("Debye-Bueche Plot",  new Pair<String, String>("q\u00b2", "1/\u221AI"),                     new int[]{102, 0, 102}),
+	POROD_BACKGROUND_PLOT("Porod Background Plot",
+											new Pair<String, String>("q^4", "Iq^4"),								  new int[]{153, 0, 153});
 	
 	private final String name;
 	private final Pair<String, String> axisNames;
@@ -152,6 +154,8 @@ public enum SaxsAnalysisPlotType {
 			plotData = new ZimmPlotData();
 		} else if (this.equals(SaxsAnalysisPlotType.DEBYE_BUECHE_PLOT)) {
 			plotData = new DebyeBuechePlotData();
+		} else if (this.equals(SaxsAnalysisPlotType.POROD_BACKGROUND_PLOT)) {
+			plotData = new PorodBackgroundPlotData();
 		}
 		return plotData;
 	}

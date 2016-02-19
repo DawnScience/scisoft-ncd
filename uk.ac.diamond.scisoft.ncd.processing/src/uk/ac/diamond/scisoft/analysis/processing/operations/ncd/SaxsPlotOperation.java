@@ -88,6 +88,11 @@ public class SaxsPlotOperation extends AbstractOperation<SaxsPlotModel, Operatio
 		newAxis = Maths.square(oldAxis);
 		newData = Maths.divide(1, Maths.sqrt(oldData));
 		break;
+	case POROD_BACKGROUND_PLOT:
+// x⁴, x⁴y
+		newAxis = Maths.square(Maths.square(oldAxis));
+		newData = Maths.multiply(newAxis, oldData);
+		break;
 	default:
 		newAxis = oldAxis;
 		newData = oldData;
