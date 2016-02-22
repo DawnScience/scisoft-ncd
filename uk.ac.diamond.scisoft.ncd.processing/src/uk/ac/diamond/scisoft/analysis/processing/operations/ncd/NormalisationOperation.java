@@ -175,7 +175,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 
 	private double getAbsScale(IDataset slice) {
 		String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-		Dataset d = (Dataset) ProcessingUtils.getLazyDataset(this, originalFile, ENTRY1_DETECTOR_SCALING_FACTOR);
+		IDataset d = ProcessingUtils.getLazyDataset(this, originalFile, ENTRY1_DETECTOR_SCALING_FACTOR).getSlice();
 		return d.getDouble();
 	}
 }
