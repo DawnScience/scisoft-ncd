@@ -57,7 +57,7 @@ public class SaxsPlotOperation extends AbstractOperation<SaxsPlotModel, Operatio
 	Dataset oldAxis;
 	try {
 		AxesMetadata axes = input.getFirstMetadata(AxesMetadata.class);
-		oldAxis = DatasetUtils.convertToDataset((IDataset) axes.getAxis(0)[0]);
+		oldAxis = DatasetUtils.sliceAndConvertLazyDataset(axes.getAxis(0)[0]);
 	} catch (Exception e) {
 		throw new OperationException(this, "Error getting axis: " + e.toString());
 	}
