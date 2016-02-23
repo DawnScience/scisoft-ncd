@@ -263,9 +263,9 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 		long[] azShape = getAzimuthalDataShape(); 
 		int azSize = (int) azShape[azShape.length - 1];
 		if (intSector.getSymmetry() != SectorROI.FULL) {
-			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(1), azSize, Dataset.FLOAT64);
+			xi = DatasetFactory.createLinearSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(1), azSize, Dataset.FLOAT64);
 		} else {
-			xi = DatasetUtils.linSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(0) + 360., azSize, Dataset.FLOAT64);
+			xi = DatasetFactory.createLinearSpace(intSector.getAngleDegrees(0), intSector.getAngleDegrees(0) + 360., azSize, Dataset.FLOAT64);
 		}
 		xi.setName("degrees");
 		
