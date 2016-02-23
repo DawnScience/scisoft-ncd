@@ -37,6 +37,7 @@ import org.eclipse.core.runtime.jobs.Job;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IParameter;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.LinearROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -128,7 +129,7 @@ public class MultivariateFunctionWithMonitor implements MultivariateFunction {
 		
 		SectorROI tmpRoi = new SectorROI(beamxy[0], beamxy[1], sroi.getRadius(0), sroi.getRadius(1), sroi.getAngle(0), sroi.getAngle(1), 1.0, true, sroi.getSymmetry());
 		Dataset[] intresult = ROIProfile.sector(dataset, mask, tmpRoi, true, false, true);
-		Dataset axis = DatasetUtils.linSpace(tmpRoi.getRadius(0), tmpRoi.getRadius(1),
+		Dataset axis = DatasetFactory.createLinearSpace(tmpRoi.getRadius(0), tmpRoi.getRadius(1),
 				intresult[0].getSize(), Dataset.INT32);
 		double error = 0.0;
 		for (int idx = 0; idx < initPeaks.size(); idx++) {
