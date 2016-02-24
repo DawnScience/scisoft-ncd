@@ -35,6 +35,7 @@ import org.apache.commons.lang.StringUtils;
 import org.dawb.passerelle.common.message.MessageUtils;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -201,7 +202,7 @@ public class NcdProcessingObjectTransformerTest {
 				    slice.setStart(start);
 				    
 					DataMessageComponent dataMsgComp = MessageUtils.coerceMessage(message);
-					Dataset outDataset = (Dataset) dataMsgComp.getList(testDatasetName);
+					Dataset outDataset = DatasetFactory.createFromObject(dataMsgComp.getList(testDatasetName));
 					Dataset outErrors = outDataset.getErrorBuffer();
 					for (int k = 0; k < shapeRes[0]; k++) {
 						for (int l = 0; l < shapeRes[1]; l++) {

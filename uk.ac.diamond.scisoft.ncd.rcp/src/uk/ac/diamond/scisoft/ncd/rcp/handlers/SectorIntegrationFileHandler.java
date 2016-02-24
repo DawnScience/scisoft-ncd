@@ -40,6 +40,7 @@ import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
@@ -126,8 +127,8 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					if (shape.length > 2) {
 						Arrays.fill(stop, 0, shape.length - 2, 1);
 					}
-					Dataset data = (Dataset) node.getDataset()
-							.getSlice(start, stop, null).clone().squeeze();
+					Dataset data = DatasetUtils.convertToDataset(node.getDataset()
+							.getSlice(start, stop, null).clone()).squeeze();
 
 					IPlottingSystem<?> activePlotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
 					if (activePlotSystem != null) {

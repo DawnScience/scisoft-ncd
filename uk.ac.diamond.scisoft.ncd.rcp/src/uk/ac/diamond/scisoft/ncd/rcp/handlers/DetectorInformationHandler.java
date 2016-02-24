@@ -36,6 +36,7 @@ import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.hdf5.Nexus;
 import org.eclipse.dawnsci.hdf5.nexus.NexusUtils;
 import org.eclipse.jface.viewers.IStructuredSelection;
@@ -168,7 +169,7 @@ public class DetectorInformationHandler extends AbstractHandler {
 	        NodeLink dataNode = detector.getValue().getNodeLink("data");
 	        if (sasNode != null && dataNode != null) {
 				try {
-					String type = ((Dataset)((DataNode)sasNode.getDestination()).getDataset()).getString(0);
+					String type = DatasetUtils.sliceAndConvertLazyDataset(((DataNode)sasNode.getDestination()).getDataset()).getString(0);
 					
 		        	if (type.equals(DetectorTypes.CALIBRATION_DETECTOR)) {
 		        		NcdDetectorSettings tmpDet = new NcdDetectorSettings(detName, type, 1);

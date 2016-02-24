@@ -133,10 +133,10 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			Dataset errorSum = null;
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
-				errorSum = (Dataset) ((Dataset) aggregateErrors.getSlice()).sum(false, 0);
+				errorSum = aggregateErrors.getSlice().sum(false, 0);
 			}
 
-			Dataset out = ((Dataset)aggregate.getSlice()).mean(false, 0);
+			Dataset out = aggregate.getSlice().mean(false, 0);
 			copyMetadata(input, out);
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {

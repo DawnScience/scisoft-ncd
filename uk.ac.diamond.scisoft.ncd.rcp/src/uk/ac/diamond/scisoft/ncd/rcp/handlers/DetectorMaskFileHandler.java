@@ -93,7 +93,7 @@ public class DetectorMaskFileHandler extends AbstractHandler {
 					throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_MASK_DATA, maskFileName));
 				}
 				
-				mask = (Dataset) ((DataNode) node.getDestination()).getDataset().getSlice();
+				mask = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node.getDestination()).getDataset());
 				final BooleanDataset boolMask = (BooleanDataset) DatasetUtils.cast(mask, Dataset.BOOL);
 				final BooleanDataset savedMask = MaskingTool.getSavedMask();
 

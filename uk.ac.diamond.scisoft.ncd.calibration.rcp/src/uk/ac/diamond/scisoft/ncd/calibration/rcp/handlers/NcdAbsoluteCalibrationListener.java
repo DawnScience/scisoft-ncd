@@ -161,7 +161,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			if (shape.length > 2) {
 				Arrays.fill(stop, 0, shape.length - 2, 1);
 			}
-			Dataset imageIntDataset = (Dataset) node.getDataset().getSlice(start, stop, null).clone()
+			Dataset imageIntDataset = DatasetUtils.convertToDataset(node.getDataset().getSlice(start, stop, null)).clone()
 					.squeeze();
 			imageDataset = DatasetUtils.cast(imageIntDataset, Dataset.FLOAT32);
 			imageDataset.idivide(norm);

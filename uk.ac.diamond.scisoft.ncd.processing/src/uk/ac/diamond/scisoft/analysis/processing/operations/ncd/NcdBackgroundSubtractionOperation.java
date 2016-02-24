@@ -18,6 +18,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
@@ -99,17 +100,17 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 		BackgroundSubtraction bgSubtraction = new BackgroundSubtraction();
 		bgSubtraction.setBackground(bgSlice);
 
-		Dataset errorBuffer = ((Dataset) slice).getErrorBuffer();
+		Dataset data = DatasetUtils.convertToDataset(slice);
+		Dataset errorBuffer = data.getErrorBuffer();
 		if (errorBuffer == null) {
-			Dataset error = (Dataset) slice.getError();
+			Dataset error = data.getError();
 			if (error == null) {
-				errorBuffer = (Dataset) slice.getSlice();
+				errorBuffer = data.getSlice();
 			}
 			else {
 				errorBuffer = error.ipower(2);
 			}
 		}
-		Dataset data = (Dataset)slice.getSlice();
 
 		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), errorBuffer.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
 		float[] bgData = (float[])bgDataAndError[0];

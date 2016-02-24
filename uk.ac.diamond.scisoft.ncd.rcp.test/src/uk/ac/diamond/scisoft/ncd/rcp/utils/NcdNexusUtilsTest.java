@@ -22,15 +22,10 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Arrays;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
@@ -42,6 +37,9 @@ import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
 import uk.ac.diamond.scisoft.analysis.TestUtils;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -100,7 +98,7 @@ public class NcdNexusUtilsTest {
 		stop[sliceDim] = Math.min(frameStart + sliceBatch, frames[sliceDim]);
 		
 		int[] step = new int[] {1, 1, 1, 1};
-		IDataset data = lazyDataset.getSlice(start, stop, step);
+		Dataset data = DatasetUtils.convertToDataset(lazyDataset.getSlice(start, stop, step));
 		
 	    DataSliceIdentifiers dr_id = readDataId(inputPath, detector, "data", null)[0];
 	    long[] frames_long = (long[]) ConvertUtils.convert(frames, long[].class);
@@ -113,7 +111,7 @@ public class NcdNexusUtilsTest {
 				start = new int[] { idx, frame, 0, 0 };
 				stop = new int[] { idx + 1, frame + 1, image[0], image[1] };
 				Dataset testResult = result.getSlice(start, stop, null);
-				Dataset testData = (Dataset) data.getSlice(start, stop, null);
+				Dataset testData = data.getSlice(start, stop, null);
 				float valResult = testResult.max().floatValue();
 				float valData = testData.max().floatValue();
 				float acc = (float) Math.max(1e-6 * Math.abs(Math.sqrt(valResult * valResult + valData * valData)),

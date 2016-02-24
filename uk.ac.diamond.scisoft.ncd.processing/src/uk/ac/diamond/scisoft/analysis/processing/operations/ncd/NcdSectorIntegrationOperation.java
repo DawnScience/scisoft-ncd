@@ -110,9 +110,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		
 		Dataset maskDataset = null;
 		if (mask != null) {
-			maskDataset = (Dataset) mask.get(0).getMask().getSlice();
+			maskDataset = DatasetUtils.convertToDataset(mask.get(0).getMask()).getSlice();
 		}
-		Dataset sliceDataset = (Dataset) slice.getSliceView();
+		Dataset sliceDataset = DatasetUtils.convertToDataset(slice.getSliceView());
 		
 		sliceDataset.resize(NcdOperationUtils.addDimension(sliceDataset.getShape()));
 		Dataset sliceErrors = sliceDataset.getError();

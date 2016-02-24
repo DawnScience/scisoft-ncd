@@ -21,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
@@ -53,7 +54,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		Object[] myobj;
 		Dataset axis = null;
 		
-		Dataset data = (Dataset) slice;
+		Dataset data = DatasetUtils.convertToDataset(slice);
 		Dataset errors = NcdOperationUtils.getErrorBuffer(data);
 		int[] dataShape = NcdOperationUtils.addDimension(data.getShape());
 		
@@ -61,7 +62,7 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		try {
 			List<AxesMetadata> axes = slice.getMetadata(AxesMetadata.class);
 			if (axes != null) {
-				inputAxis = (Dataset) axes.get(0).getAxes()[0].getSlice(); //assume q is first axis
+				inputAxis = DatasetUtils.sliceAndConvertLazyDataset(axes.get(0).getAxes()[0]); //assume q is first axis
 			}
 		} catch (Exception e) {
 			throw new OperationException(this, e);

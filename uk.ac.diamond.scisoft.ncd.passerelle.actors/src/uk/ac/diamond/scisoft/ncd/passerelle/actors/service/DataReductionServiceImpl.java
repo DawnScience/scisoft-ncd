@@ -46,6 +46,7 @@ import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
@@ -450,7 +451,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (nodeLink != null) {
 			node = nodeLink.getDestination();
 			if (node instanceof DataNode) {
-				String text = ((Dataset) ((DataNode) node).getDataset()).getString(0);
+				String text = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset()).getString(0);
 				
 				long text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());

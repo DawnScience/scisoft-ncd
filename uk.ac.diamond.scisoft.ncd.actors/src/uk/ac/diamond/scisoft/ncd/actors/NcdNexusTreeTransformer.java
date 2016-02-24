@@ -40,6 +40,7 @@ import org.eclipse.core.resources.IResource;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
@@ -170,7 +171,7 @@ public class NcdNexusTreeTransformer extends AbstractDataMessageTransformer {
 	private void writeNxsFile(String filePath, List<DataMessageComponent> cache, DataMessageComponent comp) throws NullPointerException, HDF5Exception {
 		
 		final List<IDataset>        sets = MessageUtils.getDatasets(cache);
-		Dataset data = (Dataset) sets.get(0);
+		Dataset data = DatasetUtils.convertToDataset(sets.get(0));
 		
 		// add frame dimension
 		int[] newShape = ArrayUtils.addAll(new int[] {1, 1}, data.getShape());

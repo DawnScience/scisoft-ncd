@@ -46,6 +46,7 @@ import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlotType;
@@ -127,7 +128,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				Amount<Energy> energy = null;
 				Node node = nodeLink.getDestination();
 				if (node instanceof DataNode) {
-					Dataset qaxis = (Dataset) ((DataNode) node).getDataset().getSlice();
+					Dataset qaxis = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset());
 					double gradient = qaxis.getDouble(0);
 					double intercept = qaxis.getDouble(1);
 
@@ -216,7 +217,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof DataNode) {
-						Dataset beam = (Dataset) ((DataNode) node).getDataset().getSlice();
+						Dataset beam = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset());
 						roiData.setPoint(beam.getDouble(0), beam.getDouble(1));
 					}
 				}
@@ -225,7 +226,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof DataNode) {
-						Dataset angles = (Dataset) ((DataNode) node).getDataset().getSlice();
+						Dataset angles = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset());
 						roiData.setAnglesDegrees(angles.getDouble(0), angles.getDouble(1));
 					}
 				}
@@ -234,7 +235,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof DataNode) {
-						Dataset radii = (Dataset) ((DataNode) node).getDataset().getSlice();
+						Dataset radii = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset());
 						roiData.setRadii(radii.getDouble(0), radii.getDouble(1));
 					}
 				}
@@ -243,7 +244,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				if (nodeLink != null) {
 					node = nodeLink.getDestination();
 					if (node instanceof DataNode) {
-						String symmetryText = ((Dataset) ((DataNode) node).getDataset()).getString(0);
+						String symmetryText = ((DataNode) node).getDataset().getSlice().getString(0);
 						int symmetry = SectorROI.getSymmetry(symmetryText);
 						if (roiData.checkSymmetry(symmetry)) {
 							roiData.setSymmetry(symmetry);

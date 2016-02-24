@@ -110,8 +110,9 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		else {
 			norm.setNormvalue(absScale / thickness);
 		}
-		Dataset errors = NcdOperationUtils.getErrorBuffer((Dataset) slice);
-		Dataset data = (Dataset) slice.getSliceView();
+		Dataset s = DatasetUtils.convertToDataset(slice);
+		Dataset errors = NcdOperationUtils.getErrorBuffer(s);
+		Dataset data = s.getSliceView();
 		
 		IDataset calibration;
 		String calibDataFile;
@@ -141,7 +142,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		calibration = ProcessingUtils.getLazyDataset(this, calibDataFile, calibDataPath).getSlice();
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 		
-		Dataset calibrationSlice = (Dataset) ssm.getMatchingSlice(calibration);
+		Dataset calibrationSlice = DatasetUtils.convertToDataset(ssm.getMatchingSlice(calibration));
 		
 		if (errors == null) {
 			errors = DatasetUtils.cast(data.clone(), Dataset.FLOAT64);

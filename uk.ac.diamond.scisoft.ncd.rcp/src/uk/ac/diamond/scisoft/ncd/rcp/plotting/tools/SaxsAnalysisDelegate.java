@@ -25,6 +25,7 @@ import org.eclipse.core.runtime.Status;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlotType;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
@@ -156,11 +157,11 @@ class SaxsAnalysisDelegate {
 					yErrors = ((IErrorDataset) yData).getError().clone();
 				}
 				
-				Dataset xTraceData = (Dataset) xData.clone();
+				Dataset xTraceData = DatasetUtils.convertToDataset(xData.clone());
 				if (xErrors != null) {
 					xTraceData.setError(xErrors);
 				}
-				Dataset yTraceData = (Dataset) yData.clone();
+				Dataset yTraceData = DatasetUtils.convertToDataset(yData.clone());
 				if (yErrors != null) {
 					yTraceData.setError(yErrors);
 				}

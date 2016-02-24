@@ -36,6 +36,7 @@ import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
@@ -185,8 +186,8 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 			final SectorROI sroi = (SectorROI) sectorRegions.iterator().next().getROI();
 			if (runRefinement) {
 				IImageTrace trace = (IImageTrace) plotSystem.getTraces().iterator().next();
-				final Dataset dataset = (Dataset) trace.getData();
-				final Dataset mask = (Dataset) trace.getMask();
+				final Dataset dataset = DatasetUtils.convertToDataset(trace.getData());
+				final Dataset mask = DatasetUtils.convertToDataset(trace.getMask());
 
 				final MultivariateFunctionWithMonitor beamOffset = new MultivariateFunctionWithMonitor(dataset, mask,
 						sroi);

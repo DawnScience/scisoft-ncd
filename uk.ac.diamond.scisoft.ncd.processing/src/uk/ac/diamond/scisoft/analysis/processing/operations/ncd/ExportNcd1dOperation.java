@@ -25,6 +25,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
@@ -71,7 +72,7 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 		}
 		
 		//first accumulate all data
-		sliceData.add(counter, (Dataset) input.clone().squeeze());
+		sliceData.add(counter, DatasetUtils.convertToDataset(input.clone()).squeeze());
 		counter++;
 				
 		if (counter == ssm.getTotalSlices()) {

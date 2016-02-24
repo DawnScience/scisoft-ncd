@@ -20,6 +20,7 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
 import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtils;
@@ -117,14 +118,14 @@ public class NcdOperationUtils {
 
 		//if the background image is the same shape as the sliced image, then do simple subtraction on the background
 		if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(background.getShape(), false))) {
-			bgSlice = (Dataset) background.getSlice();
+			bgSlice = DatasetUtils.sliceAndConvertLazyDataset(background);
 		}
 		else {
 			//if number of images between background and parent dataset are the same, subtract each BG from corresponding data slice
 			int backgroundImages = getNumberOfImages(background, ssm, slice);
 			int sampleImages = getNumberOfSliceImages(ssm);
 			if (backgroundImages == sampleImages) {
-				bgSlice = (Dataset) ssm.getMatchingSlice(background);
+				bgSlice = DatasetUtils.convertToDataset(ssm.getMatchingSlice(background));
 			}
 			else {
 				throw new IllegalArgumentException("Background data not compatible with subtraction from data - consider averaging the background data before background subtraction");

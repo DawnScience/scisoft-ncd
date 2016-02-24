@@ -18,6 +18,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
@@ -50,12 +51,12 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		DetectorResponse response = new DetectorResponse();
 		try {
 			@SuppressWarnings("serial")
-			IDataset loadedSet = (IDataset) NcdOperationUtils.getDataset(this, model.getFilePath(),
-					new ArrayList<String>() {{add("/entry1/instrument/detector/data");}});;
+			Dataset loadedSet = DatasetUtils.sliceAndConvertLazyDataset(NcdOperationUtils.getDataset(this, model.getFilePath(),
+					new ArrayList<String>() {{add("/entry1/instrument/detector/data");}}));
 			if (loadedSet == null) {
 				throw new Exception("No detector response dataset found");
 			}
-			response.setResponse((Dataset)loadedSet.squeeze().getSlice());
+			response.setResponse(loadedSet.squeeze().getSlice());
 		} catch (Exception e) {
 			throw new OperationException(this, e);
 		}
