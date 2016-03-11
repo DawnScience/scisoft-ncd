@@ -30,4 +30,4 @@ Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Import-Package: org.eclipse.dawnsci.analysis.api.monitor,
  org.junit;version="4.10.0",
- org.slf4j;version="[1.7.6,1.7.7)"
+ org.slf4j;version="[1.7.2,2.0.0)"

@@ -22,7 +22,7 @@ Require-Bundle: org.eclipse.core.runtime,
  org.dawnsci.persistence,
  org.eclipse.ui.workbench,
  org.apache.commons.math3;bundle-version="[3.2.0,4.0.0)",
- slf4j.api,
+ slf4j.api;bundle-version="[1.7.2,2.0.0)",
  org.dawnsci.conversion
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
