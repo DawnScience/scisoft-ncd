@@ -30,7 +30,7 @@ import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;

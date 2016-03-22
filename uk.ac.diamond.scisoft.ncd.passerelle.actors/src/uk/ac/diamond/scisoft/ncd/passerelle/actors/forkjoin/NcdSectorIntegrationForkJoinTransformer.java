@@ -43,7 +43,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
-import org.eclipse.dawnsci.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.jscience.physics.amount.Amount;
 
 import ptolemy.data.BooleanToken;

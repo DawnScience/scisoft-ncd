@@ -54,8 +54,8 @@ import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
-import org.eclipse.dawnsci.hdf5.Nexus;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 

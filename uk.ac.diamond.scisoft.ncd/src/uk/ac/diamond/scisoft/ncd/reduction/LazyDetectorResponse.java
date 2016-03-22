@@ -31,8 +31,8 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
-import org.eclipse.dawnsci.hdf5.Nexus;
 
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;

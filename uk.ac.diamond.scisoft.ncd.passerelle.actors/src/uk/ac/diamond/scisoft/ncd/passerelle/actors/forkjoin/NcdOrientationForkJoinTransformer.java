@@ -32,7 +32,7 @@ import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
-import org.eclipse.dawnsci.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;

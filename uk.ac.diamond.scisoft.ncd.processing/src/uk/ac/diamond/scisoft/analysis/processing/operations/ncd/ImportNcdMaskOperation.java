@@ -24,8 +24,8 @@ import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.metadata.MaskMetadataImpl;
-import org.eclipse.dawnsci.hdf5.HierarchicalDataFactory;
-import org.eclipse.dawnsci.hdf5.IHierarchicalDataFile;
+import org.eclipse.dawnsci.hdf.object.HierarchicalDataFactory;
+import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
 
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskOperation;

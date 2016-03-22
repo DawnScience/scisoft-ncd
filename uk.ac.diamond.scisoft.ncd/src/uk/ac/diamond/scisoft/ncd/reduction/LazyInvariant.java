@@ -30,7 +30,7 @@ import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.hdf5.Nexus;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 
 import uk.ac.diamond.scisoft.ncd.core.Invariant;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;

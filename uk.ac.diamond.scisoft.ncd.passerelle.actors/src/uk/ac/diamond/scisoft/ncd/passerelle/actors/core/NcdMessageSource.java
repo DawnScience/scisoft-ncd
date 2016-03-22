@@ -29,8 +29,8 @@ import ncsa.hdf.hdf5lib.structs.H5L_info_t;
 
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
+import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
-import org.eclipse.dawnsci.hdf5.Nexus;
 
 import ptolemy.data.BooleanToken;
 import ptolemy.data.IntToken;
