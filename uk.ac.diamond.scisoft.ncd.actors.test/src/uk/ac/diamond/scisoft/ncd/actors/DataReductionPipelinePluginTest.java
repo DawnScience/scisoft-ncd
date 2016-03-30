@@ -14,9 +14,6 @@ import java.io.FileInputStream;
 import java.util.Arrays;
 import java.util.List;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-
 import org.dawb.common.util.eclipse.BundleUtils;
 import org.dawb.common.util.io.FileUtils;
 import org.dawb.common.util.io.IFileUtils;
@@ -55,6 +52,9 @@ import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.workbench.model.launch.ModelRunner;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
 
 public class DataReductionPipelinePluginTest {
 	

@@ -20,8 +20,8 @@ import java.util.Arrays;
 
 import org.apache.commons.beanutils.ConvertUtils;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 public class DataSliceIdentifiers {
 	

@@ -16,9 +16,6 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
-
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.hdf.object.Nexus;
 
@@ -35,6 +32,9 @@ import com.isencia.passerelle.actor.TerminationException;
 import com.isencia.passerelle.core.ErrorCode;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.message.MessageException;
+
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 public class NcdMessageSink extends Sink {
 

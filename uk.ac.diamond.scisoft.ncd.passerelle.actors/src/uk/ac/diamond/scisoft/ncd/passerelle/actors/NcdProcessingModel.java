@@ -29,12 +29,6 @@ import javax.measure.unit.NonSI;
 import javax.measure.unit.SI;
 import javax.measure.unit.Unit;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
-import ncsa.hdf.hdf5lib.structs.H5L_info_t;
-
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.StringUtils;
 import org.dawb.passerelle.common.actors.AbstractDataMessageSource;
@@ -95,6 +89,12 @@ import com.isencia.passerelle.domain.et.ETDirector;
 import com.isencia.passerelle.message.ManagedMessage;
 import com.isencia.passerelle.model.Flow;
 import com.isencia.passerelle.model.FlowManager;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import hdf.hdf5lib.structs.H5L_info_t;
 
 public class NcdProcessingModel implements IDataReductionProcess {
 

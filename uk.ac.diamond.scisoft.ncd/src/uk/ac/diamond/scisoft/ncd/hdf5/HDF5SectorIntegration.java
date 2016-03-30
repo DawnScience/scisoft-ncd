@@ -18,10 +18,6 @@ package uk.ac.diamond.scisoft.ncd.hdf5;
 
 import java.util.Arrays;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
@@ -29,6 +25,9 @@ import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 

@@ -22,11 +22,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.RecursiveAction;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import ncsa.hdf.hdf5lib.exceptions.HDF5LibraryException;
-
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -47,6 +42,11 @@ import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.core.ErrorCode;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 /**
  * Actor for correcting input data for detector response
