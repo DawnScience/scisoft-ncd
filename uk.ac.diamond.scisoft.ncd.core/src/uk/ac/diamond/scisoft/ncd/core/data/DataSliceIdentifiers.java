@@ -71,7 +71,7 @@ public class DataSliceIdentifiers {
 			dataspace_id = H5.H5Dget_space(dataset_id);
 			datatype_id = H5.H5Dget_type(dataset_id);
 			dataclass_id = H5.H5Tget_class(datatype_id);
-			datasize_id = H5.H5Tget_size(datatype_id);
+			datasize_id = (int) H5.H5Tget_size(datatype_id);
 		}
 	}
 	

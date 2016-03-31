@@ -422,7 +422,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				int[] shape = new int[] { (int) frames[frames.length - 2], (int) frames[frames.length - 1] };
 				if (link_info.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
 					String[] buff = new String[(int) link_info.address_val_size];
-					H5.H5Lget_val(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+					H5.H5Lget_value(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
 					if (buff[1] != null) {
 						NexusDiffractionMetaReader nexusDiffReader = new NexusDiffractionMetaReader(buff[1]);
 						dm = nexusDiffReader.getDiffractionMetadataFromNexus(shape);
@@ -511,7 +511,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				drDataspaceID = H5.H5Dget_space(drDataID);
 				drDatatypeID = H5.H5Dget_type(drDataID);
 				int drDataclassID = H5.H5Tget_class(drDatatypeID);
-				int drDatasizeID = H5.H5Tget_size(drDatatypeID);
+				int drDatasizeID = (int) H5.H5Tget_size(drDatatypeID);
 
 				int rank = H5.H5Sget_simple_extent_ndims(drDataspaceID);
 				int dtype = HDF5Utils.getDtype(drDataclassID, drDatasizeID);

@@ -112,7 +112,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					dataspace_id = H5.H5Dget_space(inputDataID);
 					datatype_id = H5.H5Dget_type(inputDataID);
 					dataclass = H5.H5Tget_class(datatype_id);
-					datasize = H5.H5Tget_size(datatype_id);
+					datasize = (int) H5.H5Tget_size(datatype_id);
 					memspace_id = H5.H5Screate_simple(block.length, block, null);
 					
 					lock.lock();
@@ -142,7 +142,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 					errorspace_id = H5.H5Dget_space(inputErrorsID);
 					errortype_id = H5.H5Dget_type(inputErrorsID);
 					errorclass = H5.H5Tget_class(errortype_id);
-					errorsize = H5.H5Tget_size(errortype_id);
+					errorsize = (int) H5.H5Tget_size(errortype_id);
 					errormemspace_id = H5.H5Screate_simple(block.length, block, null);
 					
 					select_id = H5.H5Sselect_hyperslab(

@@ -494,7 +494,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (isNAPImount) {
 			long attr_id = H5.H5Aopen(input_data_id, "napimount", HDF5Constants.H5P_DEFAULT);
 			long type_id = H5.H5Aget_type(attr_id);
-			int size = H5.H5Tget_size(type_id);
+			int size = (int) H5.H5Tget_size(type_id);
 			byte[] link = new byte[size];
 			H5.H5Aread(attr_id, type_id, link);
 			

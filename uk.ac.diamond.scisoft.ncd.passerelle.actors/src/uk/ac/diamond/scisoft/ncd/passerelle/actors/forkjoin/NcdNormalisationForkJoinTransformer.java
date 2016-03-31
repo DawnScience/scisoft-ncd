@@ -115,7 +115,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 		H5L_info_t linkInfo = H5.H5Lget_info(calibrationGroupID, "data", HDF5Constants.H5P_DEFAULT);
 		if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
 			String[] buff = new String[(int) linkInfo.address_val_size];
-			H5.H5Lget_val(calibrationGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+			H5.H5Lget_value(calibrationGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
 			if (buff[0] != null && buff[1] != null) {
 				String linkData = buff[0];
 				String linkFilename = buff[1];
