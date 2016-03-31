@@ -236,7 +236,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 						dataspace_id = H5.H5Dget_space(inputDataID);
 						datatype_id = H5.H5Dget_type(inputDataID);
 						dataclass = H5.H5Tget_class(datatype_id);
-						datasize = H5.H5Tget_size(datatype_id);
+						datasize = (int) H5.H5Tget_size(datatype_id);
 						memspace_id = H5.H5Screate_simple(block.length, block, null);
 						
 						lock.lock();
