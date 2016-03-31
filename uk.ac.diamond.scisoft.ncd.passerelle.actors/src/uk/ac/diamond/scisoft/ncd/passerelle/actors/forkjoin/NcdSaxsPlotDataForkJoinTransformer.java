@@ -161,7 +161,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 		
 		long attrID = H5.H5Aopen(inputAxisDataID, "units", HDF5Constants.H5P_DEFAULT);
 		long typeID = H5.H5Aget_type(attrID);
-		int size = H5.H5Tget_size(typeID);
+		int size = (int) H5.H5Tget_size(typeID);
 		byte[] link = new byte[size];
 		int readID = H5.H5Aread(attrID, typeID, link);
 		if (readID > 0) {
