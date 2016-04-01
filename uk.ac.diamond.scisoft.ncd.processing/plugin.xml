@@ -110,6 +110,27 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotModel"
              name="SAXS Tools">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodBackgroundOperation"
+             id="uk.ac.diamond.scisoft.ncd.processing.PorodBackgroundOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodBackgroundModel"
+             name="Porod Operation">
+       </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyLinearizationOperation"
+             id="uk.ac.diamond.scisoft.ncd.processing.KratkyLinearizationOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
+             name="Kratky Line Fitting">
+       </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.TParameterOperation"
+             id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.TParameterOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.EmptyModel"
+             name="T parameter calculation">
+       </operation>
    </extension>
 
 </plugin>
