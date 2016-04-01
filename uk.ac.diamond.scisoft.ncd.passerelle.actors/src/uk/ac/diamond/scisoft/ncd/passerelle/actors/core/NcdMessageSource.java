@@ -155,7 +155,7 @@ public class NcdMessageSource extends Source {
 				H5L_info_t linkInfo = H5.H5Lget_info(detectorGroupID, "data", HDF5Constants.H5P_DEFAULT);
 				if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
 					String[] buff = new String[(int) linkInfo.address_val_size];
-					H5.H5Lget_val(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
+					H5.H5Lget_value(detectorGroupID, "data", buff, HDF5Constants.H5P_DEFAULT);
 					if (buff[0] != null && buff[1] != null) {
 						String linkData = buff[0];
 						String linkFilename = buff[1];
@@ -174,7 +174,7 @@ public class NcdMessageSource extends Source {
 				H5L_info_t linkInfo = H5.H5Lget_info(detectorGroupID, "errors", HDF5Constants.H5P_DEFAULT);
 				if (linkInfo.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
 					String[] buff = new String[(int) linkInfo.address_val_size];
-					H5.H5Lget_val(detectorGroupID, "errors", buff, HDF5Constants.H5P_DEFAULT);
+					H5.H5Lget_value(detectorGroupID, "errors", buff, HDF5Constants.H5P_DEFAULT);
 					if (buff[0] != null && buff[1] != null) {
 						String linkData = buff[0];
 						String linkFilename = buff[1];

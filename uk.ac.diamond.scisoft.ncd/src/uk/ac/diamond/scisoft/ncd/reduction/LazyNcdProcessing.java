@@ -845,7 +845,7 @@ public class LazyNcdProcessing {
 		int[] shape = new int[] {(int) frames[frames.length - 2], (int) frames[frames.length - 1]};
 		if (link_info.type == HDF5Constants.H5L_TYPE_EXTERNAL) {
 			String[] buff = new String[(int) link_info.address_val_size];
-			H5.H5Lget_val(detector_group_id, "data", buff, HDF5Constants.H5P_DEFAULT);
+			H5.H5Lget_value(detector_group_id, "data", buff, HDF5Constants.H5P_DEFAULT);
 			if (buff[1] != null) {
 				NexusDiffractionMetaReader nexusDiffReader = new NexusDiffractionMetaReader(buff[1]);
 				dm = nexusDiffReader.getDiffractionMetadataFromNexus(shape);

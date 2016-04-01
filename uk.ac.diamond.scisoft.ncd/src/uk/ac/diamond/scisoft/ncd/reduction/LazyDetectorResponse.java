@@ -79,7 +79,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		long input_dataspace_id = H5.H5Dget_space(input_data_id);
 		long input_datatype_id = H5.H5Dget_type(input_data_id);
 		int input_dataclass_id = H5.H5Tget_class(input_datatype_id);
-		int input_datasize_id = H5.H5Tget_size(input_datatype_id);
+		int input_datasize_id = (int) H5.H5Tget_size(input_datatype_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_dataspace_id);
 		int dtype = HDF5Utils.getDtype(input_dataclass_id, input_datasize_id);
