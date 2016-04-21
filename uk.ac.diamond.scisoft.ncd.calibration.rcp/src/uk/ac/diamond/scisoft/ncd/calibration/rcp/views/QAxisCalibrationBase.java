@@ -179,7 +179,7 @@ public class QAxisCalibrationBase extends ViewPart implements ISourceProviderLis
 				.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		ncdEnergySourceProvider = (NcdProcessingSourceProvider) service
 				.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
-		loaderService = (ILoaderService) PlatformUI.getWorkbench().getService(ILoaderService.class);
+		loaderService = Activator.getService(ILoaderService.class);
 
 		ScrolledComposite scrolledComposite = new ScrolledComposite(parent, SWT.BORDER | SWT.H_SCROLL | SWT.V_SCROLL);
 		scrolledComposite.setExpandHorizontal(true);

@@ -136,7 +136,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					}
 
 					IPlottingSystem<?> plotSystem = PlottingFactory.getPlottingSystem(PLOT_NAME);
-					ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+					ILoaderService loaderService = Activator.getService(ILoaderService.class);
 					IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 					if (lockedMeta == null) {
 						loaderService.setLockedDiffractionMetaData(DiffractionDefaultMetadata.getDiffractionMetadata(data.getShape()));

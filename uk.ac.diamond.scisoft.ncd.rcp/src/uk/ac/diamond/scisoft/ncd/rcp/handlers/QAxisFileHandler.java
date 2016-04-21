@@ -269,7 +269,7 @@ public class QAxisFileHandler extends AbstractHandler {
 				}
 				
 				// update locked diffraction metadata in Diffraction tool
-				ILoaderService loaderService = (ILoaderService)PlatformUI.getWorkbench().getService(ILoaderService.class);
+				ILoaderService loaderService = Activator.getService(ILoaderService.class);
 				IDiffractionMetadata lockedMeta = loaderService.getLockedDiffractionMetaData();
 				if (lockedMeta == null) {
 					nodeLink = qaxisFile.findNodeLink("/entry1/" + detectorSaxs	+ "/data");
