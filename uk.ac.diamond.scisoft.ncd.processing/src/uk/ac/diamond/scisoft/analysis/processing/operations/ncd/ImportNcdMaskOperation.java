@@ -120,7 +120,7 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	}
 	
 	@Override
-	public Class<? extends IOperationModel> getModelClass() {
+	public Class<ImportMaskModel> getModelClass() {
 		return ImportMaskModel.class;
 	}
 }
