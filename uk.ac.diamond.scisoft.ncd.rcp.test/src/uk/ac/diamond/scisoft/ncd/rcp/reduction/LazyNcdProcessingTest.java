@@ -24,10 +24,6 @@ import java.io.FileOutputStream;
 import javax.measure.quantity.Length;
 import javax.measure.unit.SI;
 
-import ncsa.hdf.hdf5lib.H5;
-import ncsa.hdf.hdf5lib.HDF5Constants;
-import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.Path;
@@ -37,11 +33,13 @@ import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.diamond.scisoft.analysis.TestUtils;
+import ncsa.hdf.hdf5lib.H5;
+import ncsa.hdf.hdf5lib.HDF5Constants;
+import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
@@ -99,15 +97,12 @@ public class LazyNcdProcessingTest {
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
 
-		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(LazyNcdProcessingTest.class.getCanonicalName());
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		testScratchDirectoryName = IOTestUtils.generateDirectorynameFromClassname(LazyNcdProcessingTest.class.getCanonicalName());
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 		filename = testScratchDirectoryName + "ncd_processing_test.nxs"; 
 		bgFilename = testScratchDirectoryName + "ncd_bg_test.nxs"; 
 
-		String testFileFolder = TestUtils.getGDALargeTestFilesLocation();
-		if( testFileFolder == null){
-			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
-		}
+		String testFileFolder = IOTestUtils.getGDALargeTestFilesLocation();
 
 		Path bgPath = new Path(testFileFolder + "NCDReductionTest/i22-24132.nxs");
 		Path drPath = new Path(testFileFolder + "NCDReductionTest/i22-24125.nxs");
@@ -471,7 +466,7 @@ public class LazyNcdProcessingTest {
 	@AfterClass
 	public static void removeTmpFiles() throws Exception {
 		//Clear scratch directory 
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
 	
 	private static DataSliceIdentifiers[] readResultsIds(String dataFile, String detector, String result) throws HDF5Exception {

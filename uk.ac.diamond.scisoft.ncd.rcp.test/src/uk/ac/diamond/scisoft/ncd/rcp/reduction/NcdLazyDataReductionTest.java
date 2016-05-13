@@ -32,7 +32,7 @@ import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -74,8 +74,8 @@ public class NcdLazyDataReductionTest {
 	public static void writeTestNexusFile() throws Exception {
 		
 		
-		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(NcdLazyDataReductionTest.class.getCanonicalName());
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		testScratchDirectoryName = IOTestUtils.generateDirectorynameFromClassname(NcdLazyDataReductionTest.class.getCanonicalName());
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 		
 		for (long n: imageShape) points *= n;
 		
@@ -552,6 +552,6 @@ public class NcdLazyDataReductionTest {
 	@AfterClass
 	public static void removeTmpFiles() throws Exception {
 		//Clear scratch directory 
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
 }

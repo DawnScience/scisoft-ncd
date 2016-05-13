@@ -45,7 +45,7 @@ import ptolemy.data.ObjectToken;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
@@ -92,9 +92,9 @@ public class NcdProcessingObjectTransformerTest {
 		ETDirector director = new ETDirector(flow, "director");
 		flow.setDirector(director);
 
-		testScratchDirectoryName = TestUtils.generateDirectorynameFromClassname(
+		testScratchDirectoryName = IOTestUtils.generateDirectorynameFromClassname(
 				NcdProcessingObjectTransformerTest.class.getCanonicalName());
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 
 		for (long n : imageShape)
 			points *= n;
@@ -280,7 +280,7 @@ public class NcdProcessingObjectTransformerTest {
 	@AfterClass
 	public static void removeTmpFiles() throws Exception {
 		//Clear scratch directory 
-		TestUtils.makeScratchDirectory(testScratchDirectoryName);
+		IOTestUtils.makeScratchDirectory(testScratchDirectoryName);
 	}
 
 }

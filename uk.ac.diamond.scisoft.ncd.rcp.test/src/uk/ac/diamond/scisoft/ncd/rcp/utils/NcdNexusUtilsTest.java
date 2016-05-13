@@ -33,14 +33,13 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
 import ncsa.hdf.hdf5lib.H5;
 import ncsa.hdf.hdf5lib.HDF5Constants;
 import ncsa.hdf.hdf5lib.exceptions.HDF5Exception;
-import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
@@ -62,10 +61,7 @@ public class NcdNexusUtilsTest {
 	@BeforeClass
 	public static void initLazyNcdProcessing() throws Exception {
 
-		String testFileFolder = TestUtils.getGDALargeTestFilesLocation();
-		if( testFileFolder == null){
-			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
-		}
+		String testFileFolder = IOTestUtils.getGDALargeTestFilesLocation();
 
 		inputPath = testFileFolder + "NCDReductionTest/i22-24139.nxs";
 		

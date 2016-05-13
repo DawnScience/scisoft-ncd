@@ -21,11 +21,10 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
-import org.junit.Assert;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import uk.ac.diamond.scisoft.analysis.TestUtils;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
 import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
@@ -49,10 +48,7 @@ public class NormalizationTest {
 	 */
 	@BeforeClass
 	public static void before() throws Exception {
-		String testFileFolder = TestUtils.getGDALargeTestFilesLocation();
-		if( testFileFolder == null){
-			Assert.fail("TestUtils.getGDALargeTestFilesLocation() returned null - test aborted");
-		}
+		String testFileFolder = IOTestUtils.getGDALargeTestFilesLocation();
 		
 		inputPath = new Path(testFileFolder + "/NCDReductionTest/i22-196083.nxs");
 		inputDataset = LoaderFactory.getDataSet(inputPath.toOSString(), "/entry1/detector/data", null);
