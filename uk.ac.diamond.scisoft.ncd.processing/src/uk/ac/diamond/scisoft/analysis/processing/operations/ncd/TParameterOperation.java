@@ -9,6 +9,8 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import java.io.Serializable;
+
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
@@ -91,10 +93,14 @@ public class TParameterOperation extends
 		
 		double t = 4/(Math.PI * tP.getPorodConstant()) * j;
 		System.out.println("T = " + t);
+
+		DoubleDataset tset = new DoubleDataset(new double[] {t}, new int[] {1});
+		tset.setName("Crystallite thickness");
+		tset.squeeze();
 		
 		// Sanitize the input of the calculation metadata
 		input.clearMetadata(TParameterMetadata.class);
-		return new OperationData(input, t);
+		return new OperationData(input, new Serializable[] {tset});
 	}
 
 }
