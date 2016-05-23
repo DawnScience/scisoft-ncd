@@ -134,6 +134,22 @@
              model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
              name="T parameter calculation">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodInteractiveOperation"
+             icon="icons/unchanged.png"
+             id="uk.ac.diamond.scisoft.ncd.processing.PorodInteractiveOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodInteractiveModel"
+             name="Porod Operation (interactive)">
+       </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyFromPorodBackgroundOperation"
+             icon="icons/unchanged.png"
+             id="uk.ac.diamond.scisoft.ncd.processing.KratkyFromPorodBackgroundOperation"
+             model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
+             name="Kratky From Porod Background">
+       </operation>
    </extension>
 
 </plugin>
