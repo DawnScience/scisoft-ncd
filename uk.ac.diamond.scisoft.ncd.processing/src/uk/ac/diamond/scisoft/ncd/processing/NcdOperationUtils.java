@@ -360,7 +360,7 @@ public class NcdOperationUtils {
 	 * 			dependent variable of the data
 	 * @return List of values of the independent variable at the zeros of the data
 	 */
-	private static List<Double> findDatasetZeros(Dataset y) {
+	public static List<Double> findDatasetZeros(Dataset y) {
 		List<Double> zeros = new ArrayList<>(); 
 		IndexIterator searchStartIterator = y.getIterator(), searchingIterator = searchStartIterator;
 		if (!searchStartIterator.hasNext())

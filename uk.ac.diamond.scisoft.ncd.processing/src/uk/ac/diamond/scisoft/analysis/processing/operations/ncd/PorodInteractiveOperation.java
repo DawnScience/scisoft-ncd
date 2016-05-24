@@ -1,6 +1,5 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -14,13 +13,13 @@ import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
 import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils.PorodParameters;
 import uk.ac.diamond.scisoft.ncd.processing.TParameterMetadata;
 
@@ -59,7 +58,7 @@ public class PorodInteractiveOperation extends
 			Dataset dy_dx = Maths.derivative(q4, dInput, 4);
 			
 			// Search for the extrema of the data
-			List<Double> zeros = findDatasetZeros(dy_dx);
+			List<Double> zeros = NcdOperationUtils.findDatasetZeros(dy_dx);
 			// Take the Porod range to be 80% of the gap between the second and
 			// third zeros
 			int iMin = (int) Math.floor(zeros.get(1));
@@ -133,41 +132,5 @@ public class PorodInteractiveOperation extends
 		
 		return new OperationData(baselined, porodCurve);
 	}
-
-	/**
-	 * Returns the floating point indices of the zeros of a Dataset
-	 * @param y
-	 * 			dependent variable of the data
-	 * @return List of values of the independent variable at the zeros of the data
-	 */
-	private static List<Double> findDatasetZeros(Dataset y) {
-		List<Double> zeros = new ArrayList<>(); 
-		IndexIterator searchStartIterator = y.getIterator(), searchingIterator = searchStartIterator;
-		if (!searchStartIterator.hasNext())
-			return zeros;
-		double startValue = y.getElementDoubleAbs(searchStartIterator.index);
-		
-		while(searchingIterator.hasNext()) {
-			double searchValue = y.getElementDoubleAbs(searchingIterator.index);
-			if (searchValue == 0) {
-				// restart the search from the next point
-				if (!searchingIterator.hasNext()) break;
-				searchStartIterator = searchingIterator;
-				startValue = y.getElementDoubleAbs(searchStartIterator.index);
-			}
-			if (Math.signum(searchValue) != Math.signum(startValue)) {
-				// linear interpolation to get the zero
-				double y1 = y.getElementDoubleAbs(searchingIterator.index-1),
-						y2 = y.getElementDoubleAbs(searchingIterator.index);
-				zeros.add(searchingIterator.index - y2/(y2-y1));
-				
-				// restart the search from the searchValue point
-				searchStartIterator = searchingIterator;
-				startValue = searchValue;
-			}
-		}
-		return zeros;
-	}
-
 	
 }
