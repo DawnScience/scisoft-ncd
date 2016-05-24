@@ -112,22 +112,6 @@
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
-             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodBackgroundOperation"
-             icon="icons/unchanged.png"
-             id="uk.ac.diamond.scisoft.ncd.processing.PorodBackgroundOperation"
-             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodBackgroundModel"
-             name="Porod Operation">
-       </operation>
-       <operation
-             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
-             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyLinearizationOperation"
-             icon="icons/unchanged.png"
-             id="uk.ac.diamond.scisoft.ncd.processing.KratkyLinearizationOperation"
-             model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
-             name="Kratky Line Fitting">
-       </operation>
-       <operation
-             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.TParameterOperation"
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.TParameterOperation"
@@ -140,7 +124,7 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.ncd.processing.PorodInteractiveOperation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodInteractiveModel"
-             name="Porod Operation (interactive)">
+             name="Porod Operation (Interactive)">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
