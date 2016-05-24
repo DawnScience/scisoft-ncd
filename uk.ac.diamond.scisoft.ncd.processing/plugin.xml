@@ -150,6 +150,14 @@
              model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
              name="Kratky From Porod Background">
        </operation>
+       <operation
+             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyInteractiveOperation"
+             icon="icons/unchanged.png"
+             id="uk.ac.diamond.scisoft.ncd.processing.KratkyInteractiveOperation"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyInteractiveModel"
+             name="Kratky Fitting (Interactive)">
+       </operation>
    </extension>
 
 </plugin>
