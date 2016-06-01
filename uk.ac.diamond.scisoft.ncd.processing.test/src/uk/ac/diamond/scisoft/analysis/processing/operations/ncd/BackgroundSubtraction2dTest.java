@@ -32,7 +32,7 @@ import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
 
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
-import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
+import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationServiceHolder;
 import uk.ac.diamond.scisoft.analysis.processing.operations.backgroundsubtraction.SubtractBlankFrameModel;
 import uk.ac.diamond.scisoft.analysis.processing.runner.OperationRunnerImpl;
 import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
@@ -57,7 +57,7 @@ public class BackgroundSubtraction2dTest {
 
 		OperationRunnerImpl.setRunner(ExecutionType.SERIES,   new SeriesRunner());
 	
-		OperationTransformer.setOperationService(service);
+		OperationServiceHolder.setOperationService(service);
 		
 		int datasetLength = 1000;
 		randomDataset = Random.rand(0.0, 1000.0, datasetNumFrames, datasetLength, datasetLength);

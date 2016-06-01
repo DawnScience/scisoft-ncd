@@ -17,7 +17,6 @@ import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationContext;
 import org.eclipse.dawnsci.analysis.api.processing.IOperationService;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
-import org.eclipse.dawnsci.analysis.dataset.impl.Random;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SourceInformation;
 import org.junit.BeforeClass;
@@ -25,7 +24,7 @@ import org.junit.Test;
 
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
-import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
+import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationServiceHolder;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.powder.AzimuthalPixelIntegrationModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.twod.DiffractionMetadataImportModel;
@@ -51,7 +50,7 @@ public class SingleImageDatasetTest {
 
 		OperationRunnerImpl.setRunner(ExecutionType.SERIES,   new SeriesRunner());
 	
-		OperationTransformer.setOperationService(service);
+		OperationServiceHolder.setOperationService(service);
 		
 		setupFiles();
 		
