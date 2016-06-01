@@ -27,14 +27,13 @@ import org.junit.Test;
 import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
-import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationTransformer;
+import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationServiceHolder;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.powder.AzimuthalPixelIntegrationModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.twod.DiffractionMetadataImportModel;
 import uk.ac.diamond.scisoft.analysis.processing.runner.OperationRunnerImpl;
 import uk.ac.diamond.scisoft.analysis.processing.runner.SeriesRunner;
 
-@SuppressWarnings("deprecation")
 public class NormalizationTest {
 	private static IOperationService service;
 	private static Path inputPath;
@@ -60,7 +59,7 @@ public class NormalizationTest {
 
 		OperationRunnerImpl.setRunner(ExecutionType.SERIES,   new SeriesRunner());
 	
-		OperationTransformer.setOperationService(service);
+		OperationServiceHolder.setOperationService(service);
 		
 	}
 	
