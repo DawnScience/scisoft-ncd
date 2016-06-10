@@ -9,6 +9,7 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -85,7 +86,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		if (model.isThicknessFromFileIsDefault()) {
 			//use value from dataset if > 0
 			String dataFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-			IDataset thicknessDataset = ProcessingUtils.getLazyDataset(this, dataFile, ENTRY1_SAMPLE_THICKNESS).getSlice();
+			IDataset thicknessDataset = ProcessingUtils.getDataset(this, dataFile, ENTRY1_SAMPLE_THICKNESS);
 			
 			thickness = thicknessDataset.getDouble();
 			
@@ -139,10 +140,15 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 				throw new IllegalArgumentException("Calibration default path not used, but no data path defined");
 			}
 		}
-		calibration = ProcessingUtils.getLazyDataset(this, calibDataFile, calibDataPath).getSlice();
+		calibration = ProcessingUtils.getDataset(this, calibDataFile, calibDataPath);
 		SliceFromSeriesMetadata ssm = getSliceSeriesMetadata(slice);
 		
-		Dataset calibrationSlice = DatasetUtils.convertToDataset(ssm.getMatchingSlice(calibration));
+		Dataset calibrationSlice;
+		try {
+			calibrationSlice = DatasetUtils.convertToDataset(ssm.getMatchingSlice(calibration));
+		} catch (DatasetException e1) {
+			throw new OperationException(this, e1);
+		}
 		
 		if (errors == null) {
 			errors = DatasetUtils.cast(data.clone(), Dataset.FLOAT64);
@@ -176,7 +182,7 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 
 	private double getAbsScale(IDataset slice) {
 		String originalFile = getSliceSeriesMetadata(slice).getSourceInfo().getFilePath();
-		IDataset d = ProcessingUtils.getLazyDataset(this, originalFile, ENTRY1_DETECTOR_SCALING_FACTOR).getSlice();
+		IDataset d = ProcessingUtils.getDataset(this, originalFile, ENTRY1_DETECTOR_SCALING_FACTOR);
 		return d.getDouble();
 	}
 }

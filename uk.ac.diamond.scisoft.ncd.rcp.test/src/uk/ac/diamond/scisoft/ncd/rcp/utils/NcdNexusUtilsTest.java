@@ -26,6 +26,7 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.tree.GroupNode;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
@@ -71,21 +72,21 @@ public class NcdNexusUtilsTest {
 	}
 	
 	@Test
-	public void testSliceInputDim0() throws HDF5Exception {
+	public void testSliceInputDim0() throws HDF5Exception, DatasetException {
 		testSliceInputData(0, 1, 0);
 	}
 
 	@Test
-	public void testSliceInputDim1() throws HDF5Exception {
+	public void testSliceInputDim1() throws HDF5Exception, DatasetException {
 		testSliceInputData(1, totalFrames, 0);
 	}
 
 	@Test
-	public void testSliceInputFrames() throws HDF5Exception {
+	public void testSliceInputFrames() throws HDF5Exception, DatasetException {
 		testSliceInputData(1, 42, 88);
 	}
 
-	public void testSliceInputData(int sliceDim, int sliceBatch, int frameStart) throws HDF5Exception {
+	public void testSliceInputData(int sliceDim, int sliceBatch, int frameStart) throws HDF5Exception, DatasetException {
 		int[] start = new int[] {0, 0, 0, 0};
 		start[sliceDim] = frameStart;
 		

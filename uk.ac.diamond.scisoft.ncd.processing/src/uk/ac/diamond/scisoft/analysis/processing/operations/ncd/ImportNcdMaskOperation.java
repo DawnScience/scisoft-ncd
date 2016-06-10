@@ -20,7 +20,6 @@ import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.api.processing.model.IOperationModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.metadata.MaskMetadataImpl;
@@ -112,7 +111,7 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	}
 
 	private OperationData getNcdMask(IDataset input) {
-		IDataset mask = ProcessingUtils.getLazyDataset(this, model.getFilePath(), getDetectorFormattedPath()).getSlice();
+		IDataset mask = ProcessingUtils.getDataset(this, model.getFilePath(), getDetectorFormattedPath());
 		mask = DatasetUtils.cast(mask, Dataset.BOOL);
 		MaskMetadata mm = new MaskMetadataImpl(mask);
 		input.setMetadata(mm);

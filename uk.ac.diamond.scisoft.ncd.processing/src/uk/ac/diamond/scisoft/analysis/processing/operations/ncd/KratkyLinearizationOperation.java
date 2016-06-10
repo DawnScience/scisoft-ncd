@@ -9,6 +9,7 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -50,7 +51,12 @@ public class KratkyLinearizationOperation extends
 	protected OperationData process(IDataset input, IMonitor monitor)
 			throws OperationException {
 		// Get the Kratky parameters; limit of the fit, gradient and intercept
-		KratkyParameters kPax = NcdOperationUtils.fitKratkyLine(DatasetUtils.convertToDataset(input));
+		KratkyParameters kPax;
+		try {
+			kPax = NcdOperationUtils.fitKratkyLine(DatasetUtils.convertToDataset(input));
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		System.err.println("Kratky parameters: qmin = " + kPax.qMin + ", gradient = " + kPax.gradient + ", intercept = " + kPax.intercept);
 
 		// Create an additional output dataset of the linear fit

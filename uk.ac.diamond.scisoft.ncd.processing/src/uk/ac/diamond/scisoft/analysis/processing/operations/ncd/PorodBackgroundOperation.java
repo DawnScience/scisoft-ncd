@@ -9,6 +9,7 @@
 
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -56,7 +57,12 @@ public class PorodBackgroundOperation extends
 			throws OperationException {
 		
 		Dataset dataInput = DatasetUtils.convertToDataset(input);
-		NcdOperationUtils.PorodParameters params = NcdOperationUtils.fitPorodConstant(dataInput);
+		NcdOperationUtils.PorodParameters params;
+		try {
+			params = NcdOperationUtils.fitPorodConstant(dataInput);
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		Dataset fitQ = DoubleDataset.createRange(params.qMin, params.qMax, (params.qMax-params.qMin)/20);
 		Dataset porodCurve = Maths.add(params.gradient, Maths.divide(params.porodConstant, Maths.square(Maths.square(fitQ))));
 		AxesMetadataImpl porodAxes = new AxesMetadataImpl(1);

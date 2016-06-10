@@ -11,6 +11,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.io.Serializable;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
@@ -67,7 +68,12 @@ public class TParameterOperation extends
 		double jKratky = tP.getKratkyIntegral();
 		// Experimental integral
 		double jExp;
-		Dataset q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q;
+		try {
+			q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		
 		// First index greater than the limit
 		int iPorod = DatasetUtils.findIndexGreaterThan(q, tP.getqPorodMin());

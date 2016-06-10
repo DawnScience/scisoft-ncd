@@ -3,6 +3,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -46,7 +47,12 @@ public class KratkyInteractiveOperation extends
 	protected OperationData process(IDataset input, IMonitor monitor)
 			throws OperationException {
 
-		Dataset q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q;
+		try {
+			q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 	
 		Dataset x = q;
 		Dataset y = DatasetUtils.convertToDataset(input);

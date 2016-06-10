@@ -16,6 +16,7 @@ import java.util.List;
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
@@ -133,10 +134,19 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			Dataset errorSum = null;
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
-				errorSum = aggregateErrors.getSlice().sum(false, 0);
+				try {
+					errorSum = aggregateErrors.getSlice().sum(false, 0);
+				} catch (DatasetException e) {
+					throw new OperationException(this, e);
+				}
 			}
 
-			Dataset out = aggregate.getSlice().mean(false, 0);
+			Dataset out;
+			try {
+				out = aggregate.getSlice().mean(false, 0);
+			} catch (DatasetException e) {
+				throw new OperationException(this, e);
+			}
 			copyMetadata(input, out);
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {

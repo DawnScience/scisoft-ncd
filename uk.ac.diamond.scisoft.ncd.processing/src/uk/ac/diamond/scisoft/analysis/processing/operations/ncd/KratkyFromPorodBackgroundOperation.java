@@ -1,5 +1,6 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
@@ -38,7 +39,12 @@ public class KratkyFromPorodBackgroundOperation extends
 			throws OperationException {
 
 		// The axis is the fourth power of q
-		Dataset q4 = DatasetUtils.convertToDataset(porodInput.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q4;
+		try {
+			q4 = DatasetUtils.convertToDataset(porodInput.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		Dataset porodData = DatasetUtils.convertToDataset(porodInput);
 
 		// Porod: (q^4, I q^4), Kratky (q, I q^2)

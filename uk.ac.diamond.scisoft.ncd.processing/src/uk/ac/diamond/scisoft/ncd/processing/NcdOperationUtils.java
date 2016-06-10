@@ -13,6 +13,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
@@ -235,7 +236,7 @@ public class NcdOperationUtils {
 		public Dataset cubicData;
 	}
 	
-	public static PorodParameters fitPorodConstant(Dataset intensity) {
+	public static PorodParameters fitPorodConstant(Dataset intensity) throws DatasetException {
 		PorodParameters params = new PorodParameters();
 		
 		Dataset q = DatasetUtils.convertToDataset(intensity.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
@@ -285,7 +286,7 @@ public class NcdOperationUtils {
 		return params;
 	}
 
-	public static KratkyParameters fitKratkyLine(Dataset intensity) {
+	public static KratkyParameters fitKratkyLine(Dataset intensity) throws DatasetException {
 		KratkyParameters parameters = new KratkyParameters();
 
 		Dataset q = DatasetUtils.convertToDataset(intensity.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());

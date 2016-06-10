@@ -2,6 +2,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.List;
 
+import org.eclipse.dawnsci.analysis.api.dataset.DatasetException;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.Slice;
 import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
@@ -49,7 +50,12 @@ public class PorodInteractiveOperation extends
 		PorodParameters params = new PorodParameters();
 
 		// The axis is the fourth power of q
-		Dataset q4 = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q4;
+		try {
+			q4 = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e1) {
+			throw new OperationException(this, e1);
+		}
 		Dataset dInput = DatasetUtils.convertToDataset(input);
 		
 		// Get limits of the fit, either automatically, or from the user
