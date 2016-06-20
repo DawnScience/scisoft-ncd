@@ -27,7 +27,6 @@ import org.junit.Test;
 import uk.ac.diamond.scisoft.analysis.IOTestUtils;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
 import uk.ac.diamond.scisoft.analysis.processing.Activator;
-import uk.ac.diamond.scisoft.analysis.processing.actor.actors.OperationServiceHolder;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.powder.AzimuthalPixelIntegrationModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.twod.DiffractionMetadataImportModel;
@@ -58,8 +57,6 @@ public class NormalizationTest {
 		service.createOperations(service.getClass().getClassLoader(), "uk.ac.diamond.scisoft.analysis.processing.operations");
 
 		OperationRunnerImpl.setRunner(ExecutionType.SERIES,   new SeriesRunner());
-	
-		OperationServiceHolder.setOperationService(service);
 		
 	}
 	
