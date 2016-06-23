@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<scr:component xmlns:scr="http://www.osgi.org/xmlns/scr/v1.1.0" immediate="true" name="NCD Data reduction Service">
+   <implementation class="uk.ac.diamond.scisoft.ncd.rcp.ServiceHolder"/>
+   <reference bind="setDataReductionService" cardinality="1..1" interface="uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService" name="IDataReductionService" policy="static"/>
+</scr:component>

@@ -76,8 +76,7 @@ import uk.ac.diamond.scisoft.ncd.core.service.IDataReductionService;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
-
-import com.isencia.passerelle.starter.ActorBundleInitializer;
+import uk.ac.diamond.scisoft.ncd.rcp.ServiceHolder;
 
 public class DataReductionHandler extends AbstractHandler {
 
@@ -162,14 +161,9 @@ public class DataReductionHandler extends AbstractHandler {
 			
 			try {
 				// We get the data reduction service using OSGI
-				service = (IDataReductionService)Activator.getService(IDataReductionService.class);
-		        // This is a workaround for DAWNSCI-858
+				service = ServiceHolder.getDataReductionService();
 		        if (service == null) {
-		        	ActorBundleInitializer initer = com.isencia.passerelle.starter.Activator.getInitializer();
-		        	if (initer!=null) initer.start();
-		        }
-		        if (service == null) {
-		        	throw new RuntimeException("Cannot find IDataReductionService using activator!");
+		        	throw new RuntimeException("Cannot find IDataReductionService using OSGi: the bundle with the implementation might not be loaded");
 		        }
 			
 				// Get data from NcdProcessingSourceProvider's and store in IDataReductionContext
