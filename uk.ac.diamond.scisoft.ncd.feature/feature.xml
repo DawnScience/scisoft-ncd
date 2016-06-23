@@ -58,13 +58,6 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="uk.ac.diamond.scisoft.ncd.actors"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="org.uncommons.maths"
          download-size="0"
          install-size="0"
@@ -114,13 +107,6 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          unpack="false"/>
 
    <plugin
-         id="uk.ac.diamond.scisoft.ncd.passerelle.actors"
-         download-size="0"
-         install-size="0"
-         version="0.0.0"
-         unpack="false"/>
-
-   <plugin
          id="uk.ac.diamond.scisoft.ncd.calibration.rcp"
          download-size="0"
          install-size="0"
@@ -140,5 +126,11 @@ with this software. If not, see &lt;http://www.gnu.org/licenses/&gt;.
          install-size="0"
          version="0.0.0"
          unpack="false"/>
+
+   <plugin
+         id="com.isencia.passerelle.workbench.starter"
+         download-size="0"
+         install-size="0"
+         version="0.0.0"/>
 
 </feature>
