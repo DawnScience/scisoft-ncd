@@ -142,6 +142,13 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyInteractiveModel"
              name="Kratky Fitting (Interactive)">
        </operation>
+       <operation
+             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.FFTOperation"
+             icon="uk.ac.diamond.scisoft.ncd.processing.operation2"
+             id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.FFTOperation"
+             model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
+             name="Fast Fourier Transform">
+       </operation>
    </extension>
 
 </plugin>
