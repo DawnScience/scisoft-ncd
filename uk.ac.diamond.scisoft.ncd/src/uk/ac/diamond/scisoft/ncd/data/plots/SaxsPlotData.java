@@ -22,7 +22,6 @@ import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
@@ -195,7 +194,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Dataset tmpData = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpErrors = null;
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			tmpErrors = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
@@ -220,7 +219,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Dataset tmpAxis = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpAxisErrors = null;
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			tmpAxisErrors = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}

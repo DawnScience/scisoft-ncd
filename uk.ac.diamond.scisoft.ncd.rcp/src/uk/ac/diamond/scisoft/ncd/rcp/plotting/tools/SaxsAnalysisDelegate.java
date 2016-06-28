@@ -23,7 +23,6 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
@@ -150,11 +149,11 @@ class SaxsAnalysisDelegate {
 				
 				IDataset xErrors = null;
 				IDataset yErrors = null;
-				if (xData instanceof IErrorDataset && ((IErrorDataset) xData).hasErrors()) {
-					xErrors = ((IErrorDataset) xData).getError().clone();
+				if (xData.hasErrors()) {
+					xErrors = xData.getError().clone();
 				}
-				if (yData instanceof IErrorDataset && ((IErrorDataset) yData).hasErrors()) {
-					yErrors = ((IErrorDataset) yData).getError().clone();
+				if (yData.hasErrors()) {
+					yErrors = yData.getError().clone();
 				}
 				
 				Dataset xTraceData = DatasetUtils.convertToDataset(xData.clone());

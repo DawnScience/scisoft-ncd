@@ -31,7 +31,6 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.Well19937a;
 import org.apache.commons.math3.util.Pair;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 
@@ -115,9 +114,9 @@ public class LogLogPlotData extends SaxsPlotData {
 
 	@Override
 	public double getDataError(int idx, IDataset axis, IDataset data) {
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError(idx);
+			double err = data.getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
@@ -125,9 +124,9 @@ public class LogLogPlotData extends SaxsPlotData {
 
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError(idx);
+			double err = axis.getError(idx);
 			return err / val;
 		}
 		return Double.NaN;

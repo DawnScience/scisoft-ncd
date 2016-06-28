@@ -17,7 +17,6 @@
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
@@ -43,7 +42,7 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 		Dataset tmpData = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpErrors = null;
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			tmpErrors = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
@@ -68,7 +67,7 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 		Dataset tmpAxis = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpAxisErrors = null;
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			tmpAxisErrors = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}

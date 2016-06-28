@@ -9,30 +9,8 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-//import javax.measure.quantity.Dimensionless;
-
-import org.apache.commons.lang.ArrayUtils;
-import org.apache.commons.lang.StringUtils;
-import org.apache.commons.math3.analysis.MultivariateFunction;
-import org.apache.commons.math3.exception.MaxCountExceededException;
-import org.apache.commons.math3.optim.ConvergenceChecker;
-import org.apache.commons.math3.optim.InitialGuess;
-import org.apache.commons.math3.optim.MaxEval;
-import org.apache.commons.math3.optim.PointValuePair;
-import org.apache.commons.math3.optim.SimpleBounds;
-import org.apache.commons.math3.optim.SimplePointChecker;
-import org.apache.commons.math3.optim.nonlinear.scalar.GoalType;
-import org.apache.commons.math3.optim.nonlinear.scalar.ObjectiveFunction;
-import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
-import org.apache.commons.math3.random.Well19937a;
-import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
@@ -60,12 +38,11 @@ public class PorodBackgroundPlotData extends SaxsPlotData {
 	
 	@Override
 	public double getDataError(int idx, IDataset axis, IDataset data) {
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors() && axis instanceof IErrorDataset
-				&& ((IErrorDataset) axis).hasErrors()) {
+		if (data.hasErrors() && axis.hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError(idx);
+			double err = data.getError(idx);
 			double axval = axis.getDouble(idx);
-			double axerr = ((IErrorDataset) axis).getError(idx);
+			double axerr = axis.getError(idx);
 			return Math.sqrt(Math.pow(4.0*Math.pow(axval, 3.0)*val*axerr, 2.0) + Math.pow(Math.pow(axval, 4.0)*err, 2.0));
 		}
 		return Double.NaN;
@@ -73,9 +50,9 @@ public class PorodBackgroundPlotData extends SaxsPlotData {
 
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError(idx);
+			double err = axis.getError(idx);
 			return 4.0 * Math.pow(val, 3) * err;
 		}
 		return Double.NaN;
