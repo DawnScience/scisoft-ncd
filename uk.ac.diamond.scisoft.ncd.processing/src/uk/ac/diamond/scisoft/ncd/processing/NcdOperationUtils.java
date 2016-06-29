@@ -212,7 +212,7 @@ public class NcdOperationUtils {
 				throw new Exception("all component datasets must be the same size");
 			}
 		}
-		Dataset newDataset = DatasetFactory.zeros(new int[] {ag.size(), first.getSize()}, first.getDtype());
+		Dataset newDataset = DatasetFactory.zeros(new int[] {ag.size(), first.getSize()}, first.getDType());
 		for (int i=0; i < ag.size(); ++i) {
 			Dataset dataset = ag.get(i);
 			for (int j=0; j < dataset.getSize(); ++j) {

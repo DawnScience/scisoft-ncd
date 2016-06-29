@@ -49,7 +49,7 @@ public class FilterData extends SaxsStatsData {
 			
 			for (IDataset idataset : datasets) {
 				Dataset dataset = DatasetUtils.convertToDataset(idataset);
-				final int dt = dataset.getDtype();
+				final int dt = dataset.getDType();
 				final int is = dataset.getElementsPerItem();
 				final int[] ishape = dataset.getShape();
 				
