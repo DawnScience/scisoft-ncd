@@ -14,12 +14,19 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.FFT;
 import org.eclipse.dawnsci.analysis.dataset.impl.LinearAlgebra;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
+import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.roi.RectangularROI;
 
+import uk.ac.diamond.scisoft.analysis.diffraction.FittingUtils;
+import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.Polynomial;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
+import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
+import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class GratingFitOperation extends AbstractOperation<GratingFitModel, OperationData> {
 
@@ -35,7 +42,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.TWO;
+		return OperationRank.ONE;
 	}
 
 	@Override
@@ -43,11 +50,9 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 		int[] beamCentre = model.getBeamCentre();
 		
-		int boxHalfWidth = 25;
+		int boxHalfWidth = 50;
 		int boxHalfLength = Collections.max(Arrays.asList(ArrayUtils.toObject(input.getShape())))/4; // maximum dimension of the image
 		
-		RectangularROI integralBox;
-	
 		// Make the parameters of the integration box
 		Dataset boxCentre = new DoubleDataset(new double[] {beamCentre[0], beamCentre[1]}, new int[] {2});
 		Dataset boxShape = new DoubleDataset(new double[] {boxHalfLength*2, boxHalfWidth*2}, new int[] {2});
@@ -57,34 +62,108 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		List<Dataset> longIntegrals = new ArrayList<Dataset>();
 		
 		int idTheta = 10;
-		for (int iTheta = 0; iTheta < 180; iTheta += idTheta) {
-			double theta = Math.toRadians(iTheta);
-			Dataset thisBoxShape = new DoubleDataset(boxShape);
-			// Get the centre and possibly altered shape of the box at this angle.
-			Dataset newBoxCentre = fitInBounds(boxCentre, theta, bounds, thisBoxShape);
-			Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
-			// Create the ROI covering this box 
-			integralBox = new RectangularROI(newBoxOrigin.getDouble(0), newBoxOrigin.getDouble(1), thisBoxShape.getDouble(0), thisBoxShape.getDouble(1), theta);
-			System.out.println("ROI:" + newBoxOrigin.getDouble(0) + ", " + newBoxOrigin.getDouble(1) + ", " + thisBoxShape.getDouble(0) + ", " + thisBoxShape.getDouble(1) + ", " + (double) iTheta);
-			// box profiles from this ROI
-			Dataset[] boxes = ROIProfile.box(DatasetUtils.convertToDataset(input), DatasetUtils.convertToDataset(getFirstMask(input)), integralBox);
-			// Get only the ROI in the first dimension
-			longIntegrals.add(boxes[0]);
-		}
+		for (int iTheta = 0; iTheta < 180; iTheta += idTheta)
+			longIntegrals.add(boxIntegrationAtDegreeAngle(input, iTheta, boxShape, boxCentre, bounds));
 		
 		// Make longIntegrals into a Dataset, so that I can see it
 		int maxLong = 0;
 		for (Dataset longProfile : longIntegrals)
 			if (longProfile.getSize() > maxLong) maxLong  = longProfile.getSize();
 		
-		Dataset allIntegrals = new DoubleDataset(maxLong, longIntegrals.size());
+		// allIntegrals makes sure the box profiles all have the same size. It is a roundabout way of padding the data.
+		Dataset allIntegrals = new DoubleDataset(longIntegrals.size(), maxLong);
 		for (int i = 0; i < longIntegrals.size(); i++) {
-			int offset = (maxLong - longIntegrals.get(i).getSize()); 
-			allIntegrals.setSlice(longIntegrals.get(i), new int[]{offset,i}, new int[]{maxLong-offset, i+1}, new int[]{1,1});
+			int offset = (maxLong - longIntegrals.get(i).getSize())/2; 
+			for (int j = 0; j < longIntegrals.get(i).getSize(); j++) {
+				allIntegrals.set(longIntegrals.get(i).getDouble(j), i, j+offset);
+			}
+		}
+		double[] angleSpacing = getFourierAngleSpacing(allIntegrals, idTheta, boxHalfLength);
+		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
+		
+		return new OperationData(alignedIntegral);
+	}
+	
+	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
+		double theta = Math.toRadians(angle);
+		Dataset thisBoxShape = new DoubleDataset(boxShape);
+		// Get the centre and possibly altered shape of the box at this angle.
+		Dataset newBoxCentre = fitInBounds(boxCentre, theta, bounds, thisBoxShape);
+		Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
+		// Create the ROI covering this box 
+		RectangularROI integralBox = new RectangularROI(newBoxOrigin.getDouble(0), newBoxOrigin.getDouble(1), thisBoxShape.getDouble(0), thisBoxShape.getDouble(1), theta);
+		//	System.out.println("ROI:" + newBoxOrigin.getDouble(0) + ", " + newBoxOrigin.getDouble(1) + ", " + thisBoxShape.getDouble(0) + ", " + thisBoxShape.getDouble(1) + ", " + (double) iTheta);
+		// box profiles from this ROI
+		Dataset[] boxes = ROIProfile.box(DatasetUtils.convertToDataset(input), DatasetUtils.convertToDataset(getFirstMask(input)), integralBox);
+		// Get only the ROI in the first dimension
+		return boxes[0];
+	}
+	
+	// Using Fourier transforms, get the angle of the grating pattern. An
+	// estimate of the spacing is also returned, but is not terribly accurate
+	private static double[] getFourierAngleSpacing(Dataset allIntegrals, double idTheta, double boxHalfLength) {
+		Dataset allFourier = new DoubleDataset(allIntegrals);
+		int nangles = allIntegrals.getShape()[0];
+		int nData = allIntegrals.getShape()[1];
+		for (int i = 0; i < nangles; i++) {
+			Dataset fft = Maths.abs(FFT.fft(allIntegrals.getSlice(new int[]{i,  0}, new int[] {i+1, nData}, new int[]{1,1})));
+			fft.squeeze();
+			for (int j = 0;  j < nData; j++){
+				allFourier.set(fft.getDouble(j), i, j);
+			}
 		}
 		
-//		return new OperationData(longIntegrals.get(13));
-		return new OperationData(allIntegrals);
+		Dataset firstACPeak = new DoubleDataset(nangles);
+		
+		// Take the first derivative of the first half of the FT'd data
+		for (int i = 0; i < nangles; i++) {
+			Dataset x = DoubleDataset.createRange(nData/2+1);
+			Dataset y =  allFourier.getSlice(new int[]{i, 0},  new int[]{i+1, nData/2+1}, new int[]{1, 1}).squeeze();
+			Dataset ftDerivative = Maths.derivative(x, y, 2);
+			// find the maxima and minima of the power spectrum.
+			List<Double> zeroes = NcdOperationUtils.findDatasetZeros(ftDerivative);
+			// Ignore the first zero if it is very small, corresponding to a zero found in the DC component
+			if (zeroes.get(0) < 2.0)
+				zeroes.remove(0);
+			// The first zero will be the minimum power after the DC. Look, therefore, for the second zero.
+			firstACPeak.set(zeroes.get(1), i);
+		}
+		// Determine if the minimum is too close to the zero
+		int mindex = firstACPeak.minPos()[0];
+		boolean doShiftData = (Math.abs(mindex - nangles/2) > nangles/4);
+		Dataset shiftedData = new DoubleDataset(firstACPeak);
+		if (doShiftData) {
+			for (int i = 0; i < nangles; i++)
+			shiftedData.set(firstACPeak.getDouble(i), (i+nangles/2) % nangles);
+		}
+		
+		mindex = shiftedData.minPos()[0];
+		Dataset parabolaX = DoubleDataset.createRange(mindex-1, mindex+2, 1);
+		Dataset parabolaY = shiftedData.getSlice(new int[]{mindex-1}, new int[]{mindex+2}, new int[]{1});
+		
+		AxesMetadataImpl parabolaAxes = new AxesMetadataImpl(1);
+		parabolaAxes.addAxis(0, parabolaX);
+		parabolaY.addMetadata(parabolaAxes);
+		
+		double[] params = Fitter.polyFit(new Dataset[]{parabolaX}, parabolaY, 1e-15, 2).getParameterValues();
+		double[] derivParams = Arrays.copyOf(params, 3);
+		for (int i = 0; i < params.length; i++)
+			derivParams[i] *= 2-i;
+		double xMin = -derivParams[1]/derivParams[0];
+
+		// The angle of best alignment of the grating
+		double alignmentAngle = xMin*idTheta;
+		alignmentAngle -= (doShiftData) ? nangles/2*idTheta : 0;
+		alignmentAngle %= 180.0;
+		
+		// The wavenumber of the grating in the image
+		double wavenumberGrating = params[2] - params[1]*params[1]/4/params[0];
+		wavenumberGrating -= 0.5;
+		double pixelSpacing = boxHalfLength/wavenumberGrating;
+		
+		System.out.println("Alignment = " + alignmentAngle + "°, fringe spacing = " + pixelSpacing + "px");
+		
+		return new double[] {alignmentAngle, pixelSpacing};
 	}
 	
 	// Fit a box of shape (length, breadth) centred at xo, at angle theta to
@@ -199,7 +278,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		double theta = Math.toRadians(thetad);
 		Dataset origin = originFromCentre(newCentre, newShape, theta);
 		Dataset originFullSize = originFromCentre(newCentre, oldShape, theta);
-		System.out.println("    <g transform=\"translate(" + origin.getInt(0) + " " + origin.getInt(1) + ") rotate(" + (int) thetad + ")\">");
+		System.out.println("    <g transform=\"translate(" + origin.getInt(0) + " )" + origin.getInt(1) + ") rotate(" + (int) thetad + ")\">");
 		System.out.println("      <rect x=\"0\" y=\"0\" width=\"" + newShape.getInt(0)+ "px\" height=\"" + newShape.getInt(1) + "px\"");
 		System.out.println("        fill=\"none\" stroke=\"black\" stroke-width=\"1px\" />");
 		System.out.println("    </g>");
