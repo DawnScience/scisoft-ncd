@@ -24,23 +24,11 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import org.apache.commons.lang.StringUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import ptolemy.data.ObjectToken;
-import ptolemy.kernel.CompositeEntity;
-import ptolemy.kernel.util.IllegalActionException;
-import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.IOTestUtils;
-import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 
 import com.isencia.passerelle.actor.ProcessingException;
 import com.isencia.passerelle.actor.Sink;
@@ -57,6 +45,17 @@ import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ptolemy.data.ObjectToken;
+import ptolemy.kernel.CompositeEntity;
+import ptolemy.kernel.util.IllegalActionException;
+import ptolemy.kernel.util.NameDuplicationException;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdDetectorResponseForkJoinTransformer;
 
 public class NcdDetectorResponseForkJoinTransformerTest {
 
@@ -171,7 +170,7 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 				}
 			}
 			
-			drData = new FloatDataset(data, new int[] { (int) imageShape[0], (int) imageShape[1] });
+			drData = DatasetFactory.createFromObject(data, new int[] { (int) imageShape[0], (int) imageShape[1] });
 					
 			long filespace_id = H5.H5Dget_space(data_id);
 			long type_id = H5.H5Dget_type(data_id);

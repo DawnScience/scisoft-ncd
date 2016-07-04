@@ -26,11 +26,20 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 
+import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.TerminationException;
+import com.isencia.passerelle.core.ErrorCode;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import hdf.hdf5lib.structs.H5L_info_t;
 import ptolemy.data.DoubleToken;
 import ptolemy.data.IntToken;
 import ptolemy.data.StringToken;
@@ -44,16 +53,6 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-
-import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.actor.TerminationException;
-import com.isencia.passerelle.core.ErrorCode;
-
-import hdf.hdf5lib.H5;
-import hdf.hdf5lib.HDF5Constants;
-import hdf.hdf5lib.exceptions.HDF5Exception;
-import hdf.hdf5lib.exceptions.HDF5LibraryException;
-import hdf.hdf5lib.structs.H5L_info_t;
 
 /**
  * Actor for normalising scattering data using scaler values
@@ -221,7 +220,7 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();
@@ -245,8 +244,8 @@ public class NcdNormalisationForkJoinTransformer extends NcdAbstractDataForkJoin
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				Dataset myres = new FloatDataset(mydata, dataShape);
-				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+				Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
+				myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, dataShape));
 
 				int selectID = -1;
 				int writeID = -1;

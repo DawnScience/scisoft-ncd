@@ -677,7 +677,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (context.isEnableMask()) {
 			BooleanDataset mask = context.getMask();
 			if (mask != null) {
-				processing.setMask(new BooleanDataset(mask));
+				processing.setMask(mask.clone());
 				processing.setEnableMask(true);
 			} else {
 				throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);

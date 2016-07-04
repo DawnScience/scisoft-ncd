@@ -16,9 +16,8 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.slf4j.Logger;
@@ -172,8 +171,8 @@ public class NormalisationOperation<T extends NormalisationModel> extends Abstra
 		float[] mydata = (float[]) normData[0];
 		double[] myerrors = (double[]) normData[1];
 
-		Dataset myres = new FloatDataset(mydata, slice.getShape());
-		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
+		Dataset myres = DatasetFactory.createFromObject(mydata, slice.getShape());
+		myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, slice.getShape()));
 		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;

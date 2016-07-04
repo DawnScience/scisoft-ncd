@@ -36,7 +36,6 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -120,7 +119,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		sliceDataset.setError(sliceErrors);
 		if (!sliceDataset.hasErrors()) {
 			// Use counting statistics if no input error estimates are available 
-			DoubleDataset inputErrorsBuffer = new DoubleDataset(sliceDataset);
+			DoubleDataset inputErrorsBuffer = sliceDataset.clone().cast(DoubleDataset.class);
 			sliceDataset.setErrorBuffer(inputErrorsBuffer);
 		}
 
@@ -175,9 +174,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			throw new OperationException(this, e);
 		}
 		OperationData toReturn = new OperationData();
-		Dataset myres = new FloatDataset(myraddata);
+		Dataset myres = myraddata.clone();
 		if (myraderrors != null) {
-			myres.setErrorBuffer(new DoubleDataset(myraderrors));
+			myres.setErrorBuffer(myraderrors.clone().cast(Dataset.FLOAT64));
 		}
 		if (qaxis != null) {
 			AxesMetadataImpl axes = new AxesMetadataImpl(1);

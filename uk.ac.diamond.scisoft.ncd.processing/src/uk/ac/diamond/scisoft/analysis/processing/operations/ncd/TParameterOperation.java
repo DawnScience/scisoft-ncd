@@ -21,6 +21,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
@@ -88,7 +89,7 @@ public class TParameterOperation extends
 		// Integration
 		// Is rectangle rule good for you?
 		Dataset integrand = Maths.multiply(Maths.square(qSlice), dataSlice);
-		Dataset indices = DoubleDataset.createRange(0.0, (double) iPorod - iKratky, 1.0);
+		Dataset indices = DatasetFactory.createRange(DoubleDataset.class, (double) iPorod - iKratky);
 		Dataset dq = Maths.derivative(indices, qSlice, 1);
 		jExp = (double) Maths.multiply(integrand, dq).sum();
 		// Add any bits between the pieces of the integral
@@ -100,7 +101,7 @@ public class TParameterOperation extends
 		double t = 4/(Math.PI * tP.getPorodConstant()) * j;
 		System.out.println("T = " + t);
 
-		DoubleDataset tset = new DoubleDataset(new double[] {t}, new int[] {1});
+		Dataset tset = DatasetFactory.createFromObject(new double[] {t});
 		tset.setName("Crystallite thickness");
 		tset.squeeze();
 		

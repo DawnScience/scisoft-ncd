@@ -18,8 +18,8 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
@@ -78,8 +78,8 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		float[] mydata = (float[]) detData[0];
 		double[] myerrors = (double[]) detData[1];
 
-		Dataset myres = new FloatDataset(mydata, slice.getShape());
-		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
+		Dataset myres = DatasetFactory.createFromObject(mydata, slice.getShape());
+		myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, slice.getShape()));
 		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;

@@ -18,9 +18,9 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 
@@ -115,8 +115,8 @@ public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractio
 		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), errorBuffer.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
 		float[] bgData = (float[])bgDataAndError[0];
 		double[] bgError = (double[])bgDataAndError[1];
-		Dataset bgDataset = new FloatDataset(bgData, data.getShape());
-		Dataset bgErrorDataset = new DoubleDataset(bgError, data.getShape());
+		Dataset bgDataset = DatasetFactory.createFromObject(bgData, data.getShape());
+		Dataset bgErrorDataset = DatasetFactory.createFromObject(bgError, data.getShape());
 		bgDataset.setErrorBuffer(bgErrorDataset);
 
 		OperationData toReturn = new OperationData();

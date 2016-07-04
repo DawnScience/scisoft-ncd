@@ -17,6 +17,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
@@ -63,7 +64,7 @@ public class PorodBackgroundOperation extends
 		} catch (DatasetException e) {
 			throw new OperationException(this, e);
 		}
-		Dataset fitQ = DoubleDataset.createRange(params.qMin, params.qMax, (params.qMax-params.qMin)/20);
+		Dataset fitQ = DatasetFactory.createRange(DoubleDataset.class, params.qMin, params.qMax, (params.qMax-params.qMin)/20);
 		Dataset porodCurve = Maths.add(params.gradient, Maths.divide(params.porodConstant, Maths.square(Maths.square(fitQ))));
 		AxesMetadataImpl porodAxes = new AxesMetadataImpl(1);
 		porodAxes.addAxis(0, fitQ);
@@ -79,7 +80,7 @@ public class PorodBackgroundOperation extends
 		tparam.setqPorodMin(params.qMin);
 		tparam.setPorodConstant(params.porodConstant);
 		
-		Dataset baselined = new DoubleDataset(dataInput);
+		Dataset baselined = dataInput.copy(DoubleDataset.class);
 		if (model.isSubtractBackground()) {
 			baselined.isubtract(params.gradient);
 			porodCurve.isubtract(params.gradient);

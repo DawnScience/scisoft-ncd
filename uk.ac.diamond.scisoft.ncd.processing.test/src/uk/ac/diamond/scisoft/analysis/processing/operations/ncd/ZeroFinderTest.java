@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
@@ -11,7 +12,7 @@ import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
 public class ZeroFinderTest {
 	
 	public static void main(String[] args) {
-		Dataset theta = DoubleDataset.createRange(0, 32, 0.016);
+		Dataset theta = DatasetFactory.createRange(DoubleDataset.class, 0, 32, 0.016);
 		Dataset degrees = Maths.toDegrees(theta);
 		Dataset sinTheta = Maths.cos(theta);
 		

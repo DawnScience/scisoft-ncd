@@ -199,7 +199,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						data.setError(inputErrors);
 					} else {
 						// Use counting statistics if no input error estimates are available
-						DoubleDataset inputErrorsBuffer = new DoubleDataset(data);
+						DoubleDataset inputErrorsBuffer = data.copy(DoubleDataset.class);
 						data.setErrorBuffer(inputErrorsBuffer);
 					}
 

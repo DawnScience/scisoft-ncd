@@ -351,7 +351,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();

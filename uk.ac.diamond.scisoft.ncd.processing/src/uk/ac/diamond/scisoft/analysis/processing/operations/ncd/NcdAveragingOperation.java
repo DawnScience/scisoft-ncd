@@ -25,8 +25,8 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.jscience.physics.amount.Amount;
@@ -100,9 +100,9 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 					saxsAnalysisStatParams.setSaxsFilteringCI(Double.valueOf(strSaxsFilteringCI));
 				}
 				
-				DoubleDataset rgDataset = new DoubleDataset(rG);
+				Dataset rgDataset = DatasetFactory.createFromObject(rG);
 				rgDataset.setName("Rg");
-				DoubleDataset rgErrorDataset = new DoubleDataset(rGError);
+				Dataset rgErrorDataset = DatasetFactory.createFromObject(rGError);
 				rgDataset.setError(rgErrorDataset);
 				Dataset removalFilter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams); //remove frame[i] if true
 				removalFilter.setName("Removal filter");

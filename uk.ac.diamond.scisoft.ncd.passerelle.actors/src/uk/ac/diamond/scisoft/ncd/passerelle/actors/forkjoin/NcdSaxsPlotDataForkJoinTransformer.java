@@ -278,7 +278,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();
@@ -324,14 +324,13 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							DataSliceIdentifiers rgDataIDs = new DataSliceIdentifiers();
 							rgDataIDs.setIDs(resultGroupID, rgDataID);
 							rgDataIDs.setSlice(currentSliceParams);
-							Dataset tmpDataset = new DoubleDataset(new double[] { Rg.getEstimatedValue() },
-									new int[] { 1 });
+							Dataset tmpDataset = DatasetFactory.createFromObject(new double[] { Rg.getEstimatedValue() });
 							writeResults(rgDataIDs, tmpDataset, rgDataShape, 1);
 
 							DataSliceIdentifiers rgErrorsIDs = new DataSliceIdentifiers();
 							rgErrorsIDs.setIDs(resultGroupID, rgErrorsID);
 							rgErrorsIDs.setSlice(currentSliceParams);
-							tmpDataset = new DoubleDataset(new double[] { Rg.getAbsoluteError() }, new int[] { 1 });
+							tmpDataset = DatasetFactory.createFromObject(new double[] { Rg.getAbsoluteError() });
 							writeResults(rgErrorsIDs, tmpDataset, rgDataShape, 1);
 							
 							double[] rgRange = new double[] {(double) params[2], (double) params[3]};
@@ -340,21 +339,20 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 							DataSliceIdentifiers rgRangeDataIDs = new DataSliceIdentifiers();
 							rgRangeDataIDs.setIDs(resultGroupID, rgRangeDataID);
 							rgRangeDataIDs.setSlice(currentSliceParams);
-							Dataset qRangeDataset = new DoubleDataset(rgRange, new int[] { 2 });
+							Dataset qRangeDataset = DatasetFactory.createFromObject(rgRange);
 							writeResults(rgRangeDataIDs, qRangeDataset, rgRangeDataShape, 1);
 
 							Amount<Dimensionless> I0 = (Amount<Dimensionless>) params[0];
 							DataSliceIdentifiers I0DataIDs = new DataSliceIdentifiers();
 							I0DataIDs.setIDs(resultGroupID, I0DataID);
 							I0DataIDs.setSlice(currentSliceParams);
-							tmpDataset = new DoubleDataset(new double[] { I0.getEstimatedValue() },
-									new int[] { 1 });
+							tmpDataset = DatasetFactory.createFromObject(new double[] { I0.getEstimatedValue() });
 							writeResults(I0DataIDs, tmpDataset, rgDataShape, 1);
 
 							DataSliceIdentifiers I0ErrorsIDs = new DataSliceIdentifiers();
 							I0ErrorsIDs.setIDs(resultGroupID, I0ErrorsID);
 							I0ErrorsIDs.setSlice(currentSliceParams);
-							tmpDataset = new DoubleDataset(new double[] { I0.getAbsoluteError() }, new int[] { 1 });
+							tmpDataset = DatasetFactory.createFromObject(new double[] { I0.getAbsoluteError() });
 							writeResults(I0ErrorsIDs, tmpDataset, rgDataShape, 1);
 							
 							//rgDataIDs = new DataSliceIdentifiers();

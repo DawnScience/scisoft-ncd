@@ -284,7 +284,7 @@ public class DataReductionHandler extends AbstractHandler {
 					}
 				}
 				if (mask != null) {
-					context.setMask(new BooleanDataset(mask));
+					context.setMask(mask.clone());
 				} else {
 					throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
 				}

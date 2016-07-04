@@ -21,8 +21,8 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 
 import uk.ac.diamond.scisoft.ncd.core.DegreeOfOrientation;
@@ -70,11 +70,11 @@ public class OrientationOperation extends AbstractOperation<EmptyModel, Operatio
 		float[] myangle = (float[]) myobj[1];
 		float[] myvector = (float[]) myobj[2];
 
-		Dataset resultData = new FloatDataset(mydata, new int[]{1});
+		Dataset resultData = DatasetFactory.createFromObject(mydata, 1);
 		resultData.setName("Data");
-		Dataset resultAngle = new FloatDataset(myangle, new int[]{1});
+		Dataset resultAngle = DatasetFactory.createFromObject(myangle, 1);
 		resultAngle.setName("Angle");
-		Dataset resultVector = new FloatDataset(myvector, new int[]{2});
+		Dataset resultVector = DatasetFactory.createFromObject(myvector, 1);
 		resultVector.setName("Vector");
 		return new OperationData(slice, new Serializable[]{resultData, resultAngle, resultVector});
 	}

@@ -87,7 +87,7 @@ public class GuinierPlotData extends SaxsPlotData {
 			double intercept = regression.getIntercept();
 			
 			// Test residual values for normality
-			//Dataset testData = new FloatDataset(new int[] {idxMax - idxMin});
+			//Dataset testData = DatasetFactory.zeros(FloatDataset.class, idxMax - idxMin);
 			//for (int i = idxMin; i < idxMax; i++) {
 			//	double dataVal = guinierData.getDouble(i);
 			//	double axisVal = guinierAxis.getDouble(i);

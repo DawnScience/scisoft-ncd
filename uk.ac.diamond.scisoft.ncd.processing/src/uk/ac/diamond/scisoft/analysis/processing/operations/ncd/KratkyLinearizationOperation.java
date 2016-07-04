@@ -18,6 +18,7 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
 import org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
@@ -60,7 +61,7 @@ public class KratkyLinearizationOperation extends
 		System.err.println("Kratky parameters: qmin = " + kPax.qMin + ", gradient = " + kPax.gradient + ", intercept = " + kPax.intercept);
 
 		// Create an additional output dataset of the linear fit
-		Dataset fitQ = DoubleDataset.createRange(Double.MIN_NORMAL, kPax.qMin, kPax.qMin/20);
+		Dataset fitQ = DatasetFactory.createRange(DoubleDataset.class, Double.MIN_NORMAL, kPax.qMin, kPax.qMin/20);
 		Dataset kratkyCurve = Maths.divide(Maths.add(Maths.multiply(kPax.gradient, fitQ), kPax.intercept), Maths.square(fitQ));
 		AxesMetadataImpl kratkyAxes = new AxesMetadataImpl(1);
 		kratkyAxes.addAxis(0, fitQ);

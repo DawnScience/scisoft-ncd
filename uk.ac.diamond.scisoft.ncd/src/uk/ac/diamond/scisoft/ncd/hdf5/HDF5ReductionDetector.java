@@ -61,7 +61,7 @@ public class HDF5ReductionDetector {
 	public void setData(Dataset ds) {
 		data = ds;
 		if (!ds.hasErrors()) {
-			data.setErrorBuffer(new DoubleDataset(ds));
+			data.setErrorBuffer(ds.copy(DoubleDataset.class));
 		}
 	}
 

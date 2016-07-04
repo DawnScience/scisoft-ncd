@@ -21,9 +21,8 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 
 import uk.ac.diamond.scisoft.ncd.core.Invariant;
@@ -89,8 +88,8 @@ public class NcdInvariantOperation extends AbstractOperation<NcdInvariantModel, 
 		float[] mydata = (float[]) myobj[0];
 		double[] myerrors = (double[]) myobj[1];
 
-		Dataset myres = new FloatDataset(mydata, new int[]{1});
-		myres.setErrorBuffer(new DoubleDataset(myerrors, new int[]{1}));
+		Dataset myres = DatasetFactory.createFromObject(mydata, 1);
+		myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, 1));
 		myres.setName("Invariant");
 
 		Dataset porodDataset = null;

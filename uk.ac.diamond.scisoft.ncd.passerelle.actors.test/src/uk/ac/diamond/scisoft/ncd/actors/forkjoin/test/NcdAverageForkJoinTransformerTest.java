@@ -28,6 +28,7 @@ import org.dawb.passerelle.common.message.MessageUtils;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
 import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -111,7 +112,7 @@ public class NcdAverageForkJoinTransformerTest {
 			}
 			
 			DataMessageComponent despatch = new DataMessageComponent();
-			despatch.addList("selection", new BooleanDataset());
+			despatch.addList("selection", DatasetFactory.zeros(BooleanDataset.class, null));
         
 			try {
 				ManagedMessage msg = MessageUtils.getDataMessage(despatch, null);

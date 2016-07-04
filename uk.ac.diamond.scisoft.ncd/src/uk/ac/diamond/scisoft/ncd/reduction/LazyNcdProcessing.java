@@ -566,7 +566,7 @@ public class LazyNcdProcessing {
 			frames_int = (int[]) ConvertUtils.convert(secFrames, int[].class);
 
 			sliceParams = new SliceSettings(frames, sliceDim, sliceSize);
-			IntegerDataset idx_dataset = new IntegerDataset(new int[] {sliceSize}, new int[] {1});
+			IntegerDataset idx_dataset = DatasetFactory.createFromObject(IntegerDataset.class, new int[] {sliceSize}, new int[] {1});
 			iter = idx_dataset.getSliceIterator(new int[] {0}, new int[] {1}, new int[] {1});
 			
 			input_ids.setIDs(lazySectorIntegration.sec_group_id, lazySectorIntegration.sec_data_id);

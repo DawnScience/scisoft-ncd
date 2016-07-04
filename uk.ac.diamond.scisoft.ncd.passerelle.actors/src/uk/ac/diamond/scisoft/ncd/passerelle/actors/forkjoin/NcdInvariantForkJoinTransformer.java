@@ -26,10 +26,16 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
 
+import com.isencia.passerelle.actor.InitializationException;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.kernel.CompositeEntity;
 import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
@@ -41,13 +47,6 @@ import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-
-import com.isencia.passerelle.actor.InitializationException;
-
-import hdf.hdf5lib.H5;
-import hdf.hdf5lib.HDF5Constants;
-import hdf.hdf5lib.exceptions.HDF5Exception;
-import hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 /**
  * Actor for calculating invariant value for input data
@@ -187,7 +186,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();
@@ -210,8 +209,8 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				Dataset myres = new FloatDataset(mydata, dataShape);
-				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+				Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
+				myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, dataShape));
 
 				long[] frames = getResultDataShape();
 				long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);

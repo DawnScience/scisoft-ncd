@@ -18,7 +18,7 @@ package uk.ac.diamond.scisoft.ncd.hdf5;
 
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,7 +69,7 @@ public class HDF5BackgroundSubtraction extends HDF5ReductionDetector {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerror = (double[]) myobj[1];
 					
-			Dataset myres = new FloatDataset(mydata, dataShape);
+			Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
 			myres.setErrorBuffer(myerror);
 			
 			try {
