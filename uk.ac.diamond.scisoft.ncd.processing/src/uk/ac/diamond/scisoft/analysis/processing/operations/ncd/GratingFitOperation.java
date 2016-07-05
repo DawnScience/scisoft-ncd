@@ -7,6 +7,7 @@ import java.util.List;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
@@ -21,11 +22,11 @@ import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.roi.RectangularROI;
 
-import uk.ac.diamond.scisoft.analysis.diffraction.FittingUtils;
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
-import uk.ac.diamond.scisoft.analysis.fitting.functions.Polynomial;
+import uk.ac.diamond.scisoft.analysis.fitting.Generic1DFitter;
+import uk.ac.diamond.scisoft.analysis.fitting.functions.PseudoVoigt;
+import uk.ac.diamond.scisoft.analysis.processing.operations.oned.InterpolateMissingDataOperation;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
-import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class GratingFitOperation extends AbstractOperation<GratingFitModel, OperationData> {
@@ -42,7 +43,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 	@Override
 	public OperationRank getOutputRank() {
-		return OperationRank.ONE;
+		return OperationRank.TWO;
 	}
 
 	@Override
@@ -82,7 +83,40 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
 		Dataset alignedLog = Maths.log10(alignedIntegral);
 		
-		return new OperationData(alignedLog);
+		alignedLog = InterpolateMissingDataOperation.interpolateMissingData(alignedLog, null);
+		
+		// Fit 10 pseudo-Voigt peaks, and eliminate any with a FWHM greater
+		// than 10 pixels, since these will not be diffraction fringes
+		List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedLog.getSize()), alignedLog, PseudoVoigt.class, 10);
+		
+		// List, then remove all peaks with FWHM > 10 pixels
+		List<IPeak> fatPeaks = new ArrayList<IPeak>();
+		for (IPeak peak : allPeaks)
+			if (peak.getFWHM() > 10)
+				fatPeaks.add(peak);
+		allPeaks.removeAll(fatPeaks);
+		
+		// Check there are at least 2 peaks, otherwise set the spacing to that
+		// determined from getFourierAngleSpacing()
+		double spacing = angleSpacing[1];
+		int minPeaks = 2;
+		if (allPeaks.size() >= minPeaks) {
+			// Get all the peak centres
+			double[] peakLocations = new double[allPeaks.size()];
+			for (int i = 0; i < allPeaks.size(); i++)
+				peakLocations[i] = allPeaks.get(i).getPosition();
+			
+			Dataset peakLocationData = new DoubleDataset(peakLocations, peakLocations.length);
+			
+			double span = ((double) peakLocationData.max() - (double) peakLocationData.min());
+			double fourierDerivedMultiple = span/spacing;
+			double roundedMultiple = Math.floor(fourierDerivedMultiple+0.5);
+			spacing = span/roundedMultiple;
+		}
+		
+		System.out.println("Grating fringe spacing on detector = " + spacing + " px");
+		
+		return new OperationData(input);
 	}
 	
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
@@ -162,7 +196,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		wavenumberGrating -= 0.5;
 		double pixelSpacing = boxHalfLength/wavenumberGrating;
 		
-		System.out.println("Alignment = " + alignmentAngle + "°, fringe spacing = " + pixelSpacing + "px");
+		//System.out.println("Alignment = " + alignmentAngle + "°, fringe spacing = " + pixelSpacing + "px");
 		
 		return new double[] {alignmentAngle, pixelSpacing};
 	}
