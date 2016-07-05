@@ -6,13 +6,13 @@ import org.eclipse.dawnsci.analysis.api.processing.model.OperationModelField;
 public class GratingFitModel extends AbstractOperationModel {
 
 	@OperationModelField(hint = "Enter the beam centre as a two comma separated values.", label = "Beam Centre")
-	private int[] beamCentre;
+	private double[] beamCentre;
 	
-	public int[] getBeamCentre() {
+	public double[] getBeamCentre() {
 		return this.beamCentre;
 	}
 	
-	public void setBeamCentre(int[] beamCentre) {
+	public void setBeamCentre(double[] beamCentre) {
 		firePropertyChange("beamCentre", this.beamCentre, this.beamCentre = beamCentre);
 	}
 	

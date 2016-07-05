@@ -49,7 +49,10 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	@Override
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 
-		int[] beamCentre = model.getBeamCentre();
+		double[] beamCentre = model.getBeamCentre();
+		if (beamCentre == null) {
+			beamCentre = estimateBeamCentre(input);
+		}
 		if (beamCentre != null) {
 		
 			int boxHalfWidth = 50;
@@ -119,6 +122,23 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		}
 		return new OperationData(input);
 	}
+	
+	// Estimate the beam centre by fitting peaks in each dimension to the entire dataset
+	private static double[] estimateBeamCentre(IDataset input) {
+		RectangularROI integralBox = new RectangularROI(input.getShape()[0], input.getShape()[1], 0.0);
+		Dataset[] profiles = ROIProfile.box(DatasetUtils.convertToDataset(input), DatasetUtils.convertToDataset(getFirstMask(input)), integralBox);
+		
+		int nDim = 2;
+		double[] centre = new double[nDim];
+		for (int i = 0; i < nDim; i++) {
+			Dataset profile = profiles[i];
+			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(profile.getSize()), profile, PseudoVoigt.class, 1);
+			centre[i] = allPeaks.get(0).getPosition();
+		}
+		
+		return centre;
+	}
+	
 	
 	// Perform a box integration at the specified angle
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
