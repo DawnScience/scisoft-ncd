@@ -80,8 +80,9 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		}
 		double[] angleSpacing = getFourierAngleSpacing(allIntegrals, idTheta, boxHalfLength);
 		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
+		Dataset alignedLog = Maths.log10(alignedIntegral);
 		
-		return new OperationData(alignedIntegral);
+		return new OperationData(alignedLog);
 	}
 	
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
