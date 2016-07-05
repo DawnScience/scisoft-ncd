@@ -50,72 +50,73 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 
 		int[] beamCentre = model.getBeamCentre();
+		if (beamCentre != null) {
 		
-		int boxHalfWidth = 50;
-		int boxHalfLength = Collections.max(Arrays.asList(ArrayUtils.toObject(input.getShape())))/4; // maximum dimension of the image
-		
-		// Make the parameters of the integration box
-		Dataset boxCentre = new DoubleDataset(new double[] {beamCentre[0], beamCentre[1]}, new int[] {2});
-		Dataset boxShape = new DoubleDataset(new double[] {boxHalfLength*2, boxHalfWidth*2}, new int[] {2});
-		double[] bounds = new double[] {input.getShape()[0], input.getShape()[1]};
+			int boxHalfWidth = 50;
+			int boxHalfLength = Collections.max(Arrays.asList(ArrayUtils.toObject(input.getShape())))/4; // maximum dimension of the image
 
-		// box profiles taken across the short edge, running along the long edge
-		List<Dataset> longIntegrals = new ArrayList<Dataset>();
-		
-		int idTheta = 10;
-		for (int iTheta = 0; iTheta < 180; iTheta += idTheta)
-			longIntegrals.add(boxIntegrationAtDegreeAngle(input, iTheta, boxShape, boxCentre, bounds));
-		
-		// Make longIntegrals into a Dataset, so that I can see it
-		int maxLong = 0;
-		for (Dataset longProfile : longIntegrals)
-			if (longProfile.getSize() > maxLong) maxLong  = longProfile.getSize();
-		
-		// allIntegrals makes sure the box profiles all have the same size. It is a roundabout way of padding the data.
-		Dataset allIntegrals = new DoubleDataset(longIntegrals.size(), maxLong);
-		for (int i = 0; i < longIntegrals.size(); i++) {
-			int offset = (maxLong - longIntegrals.get(i).getSize())/2; 
-			for (int j = 0; j < longIntegrals.get(i).getSize(); j++) {
-				allIntegrals.set(longIntegrals.get(i).getDouble(j), i, j+offset);
+			// Make the parameters of the integration box
+			Dataset boxCentre = new DoubleDataset(new double[] {beamCentre[0], beamCentre[1]}, new int[] {2});
+			Dataset boxShape = new DoubleDataset(new double[] {boxHalfLength*2, boxHalfWidth*2}, new int[] {2});
+			double[] bounds = new double[] {input.getShape()[0], input.getShape()[1]};
+
+			// box profiles taken across the short edge, running along the long edge
+			List<Dataset> longIntegrals = new ArrayList<Dataset>();
+
+			int idTheta = 10;
+			for (int iTheta = 0; iTheta < 180; iTheta += idTheta)
+				longIntegrals.add(boxIntegrationAtDegreeAngle(input, iTheta, boxShape, boxCentre, bounds));
+
+			// Make longIntegrals into a Dataset, so that I can see it
+			int maxLong = 0;
+			for (Dataset longProfile : longIntegrals)
+				if (longProfile.getSize() > maxLong) maxLong  = longProfile.getSize();
+
+			// allIntegrals makes sure the box profiles all have the same size. It is a roundabout way of padding the data.
+			Dataset allIntegrals = new DoubleDataset(longIntegrals.size(), maxLong);
+			for (int i = 0; i < longIntegrals.size(); i++) {
+				int offset = (maxLong - longIntegrals.get(i).getSize())/2; 
+				for (int j = 0; j < longIntegrals.get(i).getSize(); j++) {
+					allIntegrals.set(longIntegrals.get(i).getDouble(j), i, j+offset);
+				}
 			}
+			double[] angleSpacing = getFourierAngleSpacing(allIntegrals, idTheta, boxHalfLength);
+			Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
+			Dataset alignedLog = Maths.log10(alignedIntegral);
+
+			alignedLog = InterpolateMissingDataOperation.interpolateMissingData(alignedLog, null);
+
+			// Fit 10 pseudo-Voigt peaks, and eliminate any with a FWHM greater
+			// than 10 pixels, since these will not be diffraction fringes
+			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedLog.getSize()), alignedLog, PseudoVoigt.class, 10);
+
+			// List, then remove all peaks with FWHM > 10 pixels
+			List<IPeak> fatPeaks = new ArrayList<IPeak>();
+			for (IPeak peak : allPeaks)
+				if (peak.getFWHM() > 10)
+					fatPeaks.add(peak);
+			allPeaks.removeAll(fatPeaks);
+
+			// Check there are at least 2 peaks, otherwise set the spacing to that
+			// determined from getFourierAngleSpacing()
+			double spacing = angleSpacing[1];
+			int minPeaks = 2;
+			if (allPeaks.size() >= minPeaks) {
+				// Get all the peak centres
+				double[] peakLocations = new double[allPeaks.size()];
+				for (int i = 0; i < allPeaks.size(); i++)
+					peakLocations[i] = allPeaks.get(i).getPosition();
+
+				Dataset peakLocationData = new DoubleDataset(peakLocations, peakLocations.length);
+
+				double span = ((double) peakLocationData.max() - (double) peakLocationData.min());
+				double fourierDerivedMultiple = span/spacing;
+				double roundedMultiple = Math.floor(fourierDerivedMultiple+0.5);
+				spacing = span/roundedMultiple;
+			}
+
+			System.out.println("Grating fringe spacing on detector = " + spacing + " px");
 		}
-		double[] angleSpacing = getFourierAngleSpacing(allIntegrals, idTheta, boxHalfLength);
-		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
-		Dataset alignedLog = Maths.log10(alignedIntegral);
-		
-		alignedLog = InterpolateMissingDataOperation.interpolateMissingData(alignedLog, null);
-		
-		// Fit 10 pseudo-Voigt peaks, and eliminate any with a FWHM greater
-		// than 10 pixels, since these will not be diffraction fringes
-		List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedLog.getSize()), alignedLog, PseudoVoigt.class, 10);
-		
-		// List, then remove all peaks with FWHM > 10 pixels
-		List<IPeak> fatPeaks = new ArrayList<IPeak>();
-		for (IPeak peak : allPeaks)
-			if (peak.getFWHM() > 10)
-				fatPeaks.add(peak);
-		allPeaks.removeAll(fatPeaks);
-		
-		// Check there are at least 2 peaks, otherwise set the spacing to that
-		// determined from getFourierAngleSpacing()
-		double spacing = angleSpacing[1];
-		int minPeaks = 2;
-		if (allPeaks.size() >= minPeaks) {
-			// Get all the peak centres
-			double[] peakLocations = new double[allPeaks.size()];
-			for (int i = 0; i < allPeaks.size(); i++)
-				peakLocations[i] = allPeaks.get(i).getPosition();
-			
-			Dataset peakLocationData = new DoubleDataset(peakLocations, peakLocations.length);
-			
-			double span = ((double) peakLocationData.max() - (double) peakLocationData.min());
-			double fourierDerivedMultiple = span/spacing;
-			double roundedMultiple = Math.floor(fourierDerivedMultiple+0.5);
-			spacing = span/roundedMultiple;
-		}
-		
-		System.out.println("Grating fringe spacing on detector = " + spacing + " px");
-		
 		return new OperationData(input);
 	}
 	
