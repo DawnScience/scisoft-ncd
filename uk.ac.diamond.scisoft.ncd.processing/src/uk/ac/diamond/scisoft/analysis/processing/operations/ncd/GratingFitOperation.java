@@ -120,6 +120,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		return new OperationData(input);
 	}
 	
+	// Perform a box integration at the specified angle
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
 		double theta = Math.toRadians(angle);
 		Dataset thisBoxShape = new DoubleDataset(boxShape);
