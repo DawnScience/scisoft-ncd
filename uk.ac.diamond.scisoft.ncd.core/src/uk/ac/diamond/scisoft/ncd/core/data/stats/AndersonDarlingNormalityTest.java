@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.Set;
 
 import org.apache.commons.math3.distribution.NormalDistribution;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.january.dataset.Dataset;
 
 public class AndersonDarlingNormalityTest {
 	

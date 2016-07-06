@@ -16,8 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.passerelle.actors.service;
 
-import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.january.dataset.BooleanDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;

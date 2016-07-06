@@ -10,7 +10,7 @@
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
 import org.apache.commons.math3.util.Pair;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
+import org.eclipse.january.dataset.IDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 

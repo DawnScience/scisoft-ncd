@@ -16,7 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.stats;
 
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.january.dataset.Dataset;
 
 public abstract class SaxsStatsData {
 	

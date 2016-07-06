@@ -22,8 +22,8 @@ import java.util.List;
 import java.util.concurrent.RecursiveAction;
 
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetUtils;
 
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;

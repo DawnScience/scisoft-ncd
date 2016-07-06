@@ -19,9 +19,9 @@ package uk.ac.diamond.scisoft.ncd.hdf5;
 import java.util.Arrays;
 
 import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -24,11 +24,11 @@ import java.util.concurrent.RecursiveAction;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.PositionIterator;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
