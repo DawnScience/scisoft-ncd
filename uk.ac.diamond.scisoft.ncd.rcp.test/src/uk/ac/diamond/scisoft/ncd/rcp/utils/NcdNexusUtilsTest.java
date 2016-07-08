@@ -191,7 +191,7 @@ public class NcdNexusUtilsTest {
 		long[] count = new long[frames.length];
 		Arrays.fill(count, 1);
 		
-		int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
+		int dtype = HDF5Utils.getDType(ids.dataclass_id, ids.datasize_id);
 		Dataset data = DatasetFactory.zeros(block_int, dtype);
 		Dataset result = null;
 		

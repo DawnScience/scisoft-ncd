@@ -513,7 +513,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				int drDatasizeID = (int) H5.H5Tget_size(drDatatypeID);
 
 				int rank = H5.H5Sget_simple_extent_ndims(drDataspaceID);
-				int dtype = HDF5Utils.getDtype(drDataclassID, drDatasizeID);
+				int dtype = HDF5Utils.getDType(drDataclassID, drDatasizeID);
 
 				long[] drFrames = new long[rank];
 				H5.H5Sget_simple_extent_dims(drDataspaceID, drFrames, null);

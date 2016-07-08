@@ -76,7 +76,7 @@ public class LazySelection extends LazyDataReduction {
 		long[] count = new long[frames.length];
 		Arrays.fill(count, 1);
 		
-		int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
+		int dtype = HDF5Utils.getDType(ids.dataclass_id, ids.datasize_id);
 		Dataset data = DatasetFactory.zeros(block_int, dtype);
 		long output_data_id = NcdNexusUtils.makedata(output_group_id, "data", ids.datatype_id, framesTotal, true, "counts");
 		long output_dataspace_id = H5.H5Dget_space(output_data_id);

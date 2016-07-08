@@ -248,7 +248,7 @@ public class NcdImageStatsForkJoinTransformer extends NcdAbstractDataForkJoinTra
 							throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 						}
 						
-						int dtype = HDF5Utils.getDtype(dataclass, datasize);
+						int dtype = HDF5Utils.getDType(dataclass, datasize);
 						data = DatasetFactory.zeros(grid, dtype);
 						if ((dataspace_id > 0) && (memspace_id > 0)) {
 							int read_id = H5.H5Dread(

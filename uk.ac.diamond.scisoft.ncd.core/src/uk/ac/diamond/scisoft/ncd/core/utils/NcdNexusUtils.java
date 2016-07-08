@@ -322,7 +322,7 @@ public final class NcdNexusUtils {
 			}
 			
 			int rank = block_data.length;
-			int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
+			int dtype = HDF5Utils.getDType(ids.dataclass_id, ids.datasize_id);
 			int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
 			data = DatasetFactory.zeros(block_data_int, dtype);
 			memspace_id = H5.H5Screate_simple(rank, ids.block, null);

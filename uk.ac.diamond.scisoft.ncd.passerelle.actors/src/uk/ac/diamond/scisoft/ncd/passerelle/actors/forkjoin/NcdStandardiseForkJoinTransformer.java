@@ -124,7 +124,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 					}
 					
-					int dtype = HDF5Utils.getDtype(dataclass, datasize);
+					int dtype = HDF5Utils.getDType(dataclass, datasize);
 					data = DatasetFactory.zeros(grid, dtype);
 					if ((dataspace_id > 0) && (memspace_id > 0)) {
 						int read_id = H5.H5Dread(
@@ -153,7 +153,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 					}
 					
-					int errdtype = HDF5Utils.getDtype(errorclass, errorsize);
+					int errdtype = HDF5Utils.getDType(errorclass, errorsize);
 					errors = DatasetFactory.zeros(grid, errdtype);
 					if ((errorspace_id > 0) && (errormemspace_id > 0)) {
 						int read_id = H5.H5Dread(
