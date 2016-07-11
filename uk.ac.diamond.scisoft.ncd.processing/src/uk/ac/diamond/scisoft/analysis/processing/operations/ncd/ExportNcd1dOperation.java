@@ -28,7 +28,7 @@ import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.ILazyDataset;
 import org.eclipse.january.metadata.AxesMetadata;
-import org.eclipse.january.metadata.internal.AxesMetadataImpl;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
@@ -98,7 +98,7 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 				
 				//now set other metadata
 				ILazyDataset qAxis = sliceData.get(0).getMetadata(AxesMetadata.class).get(0).getAxis(0)[0];
-				AxesMetadataImpl axes = new AxesMetadataImpl(2);
+				AxesMetadata axes = MetadataFactory.createMetadata(AxesMetadata.class, 2);
 				axes.setAxis(1, qAxis);
 				ag.setMetadata(axes);
 			} catch (Exception e1) {

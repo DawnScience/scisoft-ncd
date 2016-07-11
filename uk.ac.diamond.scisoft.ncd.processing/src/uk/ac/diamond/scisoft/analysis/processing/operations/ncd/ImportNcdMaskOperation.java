@@ -20,11 +20,12 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.hdf.object.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
 import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.metadata.MaskMetadata;
-import org.eclipse.january.metadata.internal.MaskMetadataImpl;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel;
 import uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskOperation;
@@ -113,7 +114,12 @@ public class ImportNcdMaskOperation extends ImportMaskOperation<ImportMaskModel>
 	private OperationData getNcdMask(IDataset input) {
 		IDataset mask = ProcessingUtils.getDataset(this, model.getFilePath(), getDetectorFormattedPath());
 		mask = DatasetUtils.cast(mask, Dataset.BOOL);
-		MaskMetadata mm = new MaskMetadataImpl(mask);
+		MaskMetadata mm;
+		try {
+			mm = MetadataFactory.createMetadata(MaskMetadata.class, mask);
+		} catch (MetadataException e) {
+			throw new OperationException(this, e);
+		}
 		input.setMetadata(mm);
 		return new OperationData(input);
 	}

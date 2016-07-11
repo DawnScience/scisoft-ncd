@@ -8,9 +8,10 @@ import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.DatasetException;
 import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
 import org.eclipse.january.dataset.Dataset;
-import org.eclipse.january.dataset.DatasetException;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
@@ -18,7 +19,7 @@ import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.IndexIterator;
 import org.eclipse.january.dataset.Maths;
 import org.eclipse.january.metadata.AxesMetadata;
-import org.eclipse.january.metadata.internal.AxesMetadataImpl;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils.KratkyParameters;
@@ -143,7 +144,12 @@ public class KratkyInteractiveOperation extends
 		// Create an additional output dataset of the linear fit
 		Dataset fitQ = DatasetFactory.createRange(DoubleDataset.class, Double.MIN_NORMAL, parameters.qMin, parameters.qMin/20);
 		Dataset kratkyCurve = Maths.add(Maths.multiply(parameters.gradient, fitQ), parameters.intercept);
-		AxesMetadataImpl kratkyAxes = new AxesMetadataImpl(1);
+		AxesMetadata kratkyAxes;
+		try {
+			kratkyAxes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+		} catch (MetadataException e) {
+			throw new OperationException(this, e);
+		}
 		kratkyAxes.addAxis(0, fitQ);
 		kratkyCurve.addMetadata(kratkyAxes);
 		kratkyCurve.setName("Kratky fit");

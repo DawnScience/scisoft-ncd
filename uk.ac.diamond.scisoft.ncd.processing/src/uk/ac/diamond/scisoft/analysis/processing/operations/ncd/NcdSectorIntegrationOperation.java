@@ -24,6 +24,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
 
 import org.apache.commons.beanutils.ConvertUtils;
+import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
@@ -31,14 +32,15 @@ import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
 import org.eclipse.january.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
+import org.eclipse.january.metadata.AxesMetadata;
 import org.eclipse.january.metadata.MaskMetadata;
-import org.eclipse.january.metadata.internal.AxesMetadataImpl;
+import org.eclipse.january.metadata.MetadataFactory;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -179,7 +181,12 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 			myres.setErrorBuffer(myraderrors.clone().cast(Dataset.FLOAT64));
 		}
 		if (qaxis != null) {
-			AxesMetadataImpl axes = new AxesMetadataImpl(1);
+			AxesMetadata axes;
+			try {
+				axes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+			} catch (MetadataException e) {
+				throw new OperationException(this, e);
+			}
 			axes.setAxis(0, qaxis);
 			myres.setMetadata(axes);
 		}
