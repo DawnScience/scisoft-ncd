@@ -3,7 +3,9 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
@@ -31,6 +33,18 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
 public class GratingFitOperation extends AbstractOperation<GratingFitModel, OperationData> {
 
+	/**
+	 * Set of keys for the results of the fit.
+	 * @author Timothy Spain timothy.spain@diamond.ac.uk
+	 *
+	 */
+	public enum GratingFitKeys {
+		FRINGE_SPACING,
+		BEAM_CENTRE_X,
+		BEAM_CENTRE_Y,
+		PATTERN_ANGLE;
+	}
+	
 	@Override
 	public String getId() {
 		return "uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GratingFitOperation";
@@ -48,8 +62,21 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 	@Override
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
-
 		double[] beamCentre = model.getBeamCentre();
+		Map<GratingFitKeys, Double> fitResults = fitGrating(input, beamCentre);
+		
+		if (fitResults != null) {
+			System.out.println("Grating fringe spacing on detector = " + fitResults.get(GratingFitKeys.FRINGE_SPACING) + " px");
+			System.out.println("Beam centre: (" + fitResults.get(GratingFitKeys.BEAM_CENTRE_X) + ", " + fitResults.get(GratingFitKeys.BEAM_CENTRE_Y) + ")");
+			System.out.println("Diffraction pattern at " + fitResults.get(GratingFitKeys.PATTERN_ANGLE) + "°");
+		}
+		
+		return new OperationData(input);
+		
+	}
+	
+	public static Map<GratingFitKeys, Double> fitGrating(IDataset input, double[] beamCentre) {
+		Map<GratingFitKeys, Double> results = null;
 		if (beamCentre == null) {
 			beamCentre = estimateBeamCentre(input);
 		}
@@ -84,7 +111,9 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				}
 			}
 			double[] angleSpacing = getFourierAngleSpacing(allIntegrals, idTheta, boxHalfLength);
-			Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angleSpacing[0], boxShape, boxCentre, bounds);		
+			double optimumAngle = angleSpacing[0];
+			double firstFringeSpacing = angleSpacing[1];
+			Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, optimumAngle, boxShape, boxCentre, bounds);		
 			Dataset alignedLog = Maths.log10(alignedIntegral);
 
 			alignedLog = InterpolateMissingDataOperation.interpolateMissingData(alignedLog, null);
@@ -102,7 +131,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 			// Check there are at least 2 peaks, otherwise set the spacing to that
 			// determined from getFourierAngleSpacing()
-			double spacing = angleSpacing[1];
+			double fringeSpacing = firstFringeSpacing;
 			int minPeaks = 2;
 			if (allPeaks.size() >= minPeaks) {
 				// Get all the peak centres
@@ -113,14 +142,22 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				Dataset peakLocationData = new DoubleDataset(peakLocations, peakLocations.length);
 
 				double span = ((double) peakLocationData.max() - (double) peakLocationData.min());
-				double fourierDerivedMultiple = span/spacing;
+				double fourierDerivedMultiple = span/fringeSpacing;
 				double roundedMultiple = Math.floor(fourierDerivedMultiple+0.5);
-				spacing = span/roundedMultiple;
+				fringeSpacing = span/roundedMultiple;
 			}
 
-			System.out.println("Grating fringe spacing on detector = " + spacing + " px");
+//			beamCentre = refineBeamCentre(input, beamCentre, boxShape, optimumAngle);
+			
+			// Fill the map of the results
+			results = new HashMap<GratingFitKeys, Double>(4);
+			results.put(GratingFitKeys.FRINGE_SPACING, fringeSpacing);
+			results.put(GratingFitKeys.BEAM_CENTRE_X, beamCentre[0]);
+			results.put(GratingFitKeys.BEAM_CENTRE_Y, beamCentre[1]);
+			results.put(GratingFitKeys.PATTERN_ANGLE, optimumAngle);
+			
 		}
-		return new OperationData(input);
+		return results;
 	}
 	
 	// Estimate the beam centre by fitting peaks in each dimension to the entire dataset
@@ -139,6 +176,59 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		return centre;
 	}
 	
+	private static double[] refineBeamCentre(IDataset input, double[] beamCentre, Dataset boxShape, double angle) {
+		
+		double[] bounds = new double[] {input.getShape()[0], input.getShape()[1]};
+		// Move the centre by the full box width at 90° to the grating pattern. This is the ±y direction
+		Dataset rotationMatrix = rotationMatrix(Math.toRadians(angle));
+		Dataset yDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{0,1}, new int[]{2}));
+		Dataset xDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{1,0}, new int[]{2}));
+		
+		Dataset xCentre = Maths.subtract(new DoubleDataset(beamCentre, new int[]{2}), Maths.divide(new DoubleDataset(bounds, new int[]{2}), 2));
+		// Determine the direction to move by taking the dot product of the
+		// rotated y coordinate with the displacement vector of the box
+		// (centre) from the image centre. The sign of the displacement is the
+		// opposite of this sign. This moves the box towards the centre of the
+		// image.
+		Dataset rotateXCentre = LinearAlgebra.dotProduct(yDash.reshape(1,2), xCentre);
+		double shiftSign = -1*Math.signum(rotateXCentre.getDouble(0));
+		Dataset offAxisShiftVector = Maths.multiply(shiftSign, yDash);
+		Dataset offAxisShift = Maths.multiply(boxShape.getDouble(1), offAxisShiftVector);
+		Dataset boxCentre = Maths.add(new DoubleDataset(beamCentre, new int[]{2}), offAxisShift);
+		
+		// Get the fitted box parameters for our own use
+		double theta = Math.toRadians(angle);
+		Dataset thisBoxShape = new DoubleDataset(boxShape);
+		Dataset newBoxCentre = fitInBounds(boxCentre, theta, bounds, thisBoxShape);
+		Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
+
+		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angle, boxShape, boxCentre, bounds);		
+		// Fit a single peak to the data
+		List<IPeak> thePeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedIntegral.getSize()), alignedIntegral, PseudoVoigt.class, 1);
+		double peakLocation = thePeaks.get(0).getPosition();
+		// Shift the peak location to be relative to the new box origin, by
+		// shifting by along y'. Calculate the distance to shift by projection.
+		double offAxisShiftDistance = LinearAlgebra.dotProduct(Maths.subtract(new DoubleDataset(beamCentre,  new int[]{2}), newBoxOrigin).reshape(1,2), yDash).getDouble(0); 
+		double alongAxisShiftDistance = peakLocation;
+		
+		Dataset backOntoAxisShiftVector = Maths.negative(offAxisShiftVector);
+		// The newly calculated beam centre relative to the origin of the shifted box.
+		Dataset beamCentreShift = Maths.add(
+											Maths.add(
+													Maths.multiply(offAxisShiftDistance, backOntoAxisShiftVector),
+													Maths.multiply(alongAxisShiftDistance, xDash)
+													),
+											0//Maths.negative(offAxisShift)
+											);
+		// The absolute coordinates of the beam centre
+		Dataset newBeamCentreData = Maths.add(beamCentreShift, newBoxOrigin);
+		
+		// Copy across to the data
+		for (int i=0; i<2; i++)
+			beamCentre[i] = newBeamCentreData.getDouble(i);
+		
+		return beamCentre;
+	}
 	
 	// Perform a box integration at the specified angle
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
