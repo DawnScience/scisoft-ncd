@@ -74,9 +74,19 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		return new OperationData(input);
 		
 	}
+
+	/**
+	 * Fits the beam centre and fringe spacing given an I22 grating calibration dataset.
+	 * @param input
+	 * 				the dataset containing the grating integration
+	 * @return a map of the double result values, encapsulated in a map. The Map is keyed by the GratingFitKeys enum.
+	 */
+	public static Map<GratingFitKeys, Double> fitGrating(IDataset input) {
+		return fitGrating(input, null);
+	}
 	
 	/**
-	 * Fits the beam centre and fringe spacing given an I22 grating calibration dataset
+	 * Fits the beam centre and fringe spacing given an I22 grating calibration dataset.
 	 * @param input
 	 * 				the dataset containing the grating integration
 	 * @param beamCentre
