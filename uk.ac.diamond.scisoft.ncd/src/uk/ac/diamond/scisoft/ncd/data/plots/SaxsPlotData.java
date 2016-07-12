@@ -22,11 +22,11 @@ import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.hdf.object.Nexus;
-import org.eclipse.january.dataset.AbstractDataset;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.ShapeUtils;
 import org.eclipse.january.dataset.SliceIterator;
 import org.eclipse.january.dataset.SliceND;
 
@@ -62,7 +62,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Arrays.fill(step, 1);
 		step[step.length - 1] = frames_int[frames_int.length - 1];
 		SliceND slice = new SliceND(frames_int, null, frames_int, step);
-		IndexIterator iter = new SliceIterator(frames_int, AbstractDataset.calcSize(frames_int), slice);
+		IndexIterator iter = new SliceIterator(frames_int, ShapeUtils.calcSize(frames_int), slice);
 		int[] pos = iter.getPos();
 		while (iter.hasNext()) {
 			sliceSettings.setStart(pos);

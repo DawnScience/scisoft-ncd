@@ -42,9 +42,9 @@ import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
 import org.eclipse.dawnsci.plotting.api.PlottingFactory;
 import org.eclipse.dawnsci.plotting.api.region.IRegion;
 import org.eclipse.dawnsci.plotting.api.region.IRegion.RegionType;
-import org.eclipse.january.dataset.AbstractDataset;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.ShapeUtils;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.jface.viewers.ISelection;
@@ -115,7 +115,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					DataNode node = (DataNode) nodeLink.getDestination();
 					final int[] shape = node.getDataset().getShape();
 					
-					final int[] sqShape = AbstractDataset.squeezeShape(shape, true);
+					final int[] sqShape = ShapeUtils.squeezeShape(shape, true);
 					if (sqShape.length > 2) {
 						MessageDialog.openWarning(window.getShell(),"Multiple data frames detected","WARNING: This dataset contains several frames. By default, the first frame will be loaded for NCD calibration." +
 								" If you require different frame, please switch to NCD Data Reduction or DExplore perspectives, plot the required frame in Dataset Plot and return to continue NCD calibration process.");

@@ -21,11 +21,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.eclipse.january.dataset.AbstractDataset;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
 import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.ShapeUtils;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
@@ -79,7 +79,7 @@ public class HDF5ReductionDetector {
 	}
 
 	public int[] getDataDimensions() {
-		return AbstractDataset.squeezeShape(data.getShape(), false);
+		return ShapeUtils.squeezeShape(data.getShape(), false);
 	}
 	
 	public void setAttribute(String attributeName, Object value) {

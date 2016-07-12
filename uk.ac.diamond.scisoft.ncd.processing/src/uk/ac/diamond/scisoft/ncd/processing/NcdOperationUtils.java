@@ -16,7 +16,6 @@ import java.util.List;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
 import org.eclipse.january.DatasetException;
-import org.eclipse.january.dataset.AbstractDataset;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
@@ -24,6 +23,7 @@ import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.ILazyDataset;
 import org.eclipse.january.dataset.IndexIterator;
 import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.dataset.ShapeUtils;
 import org.eclipse.january.dataset.Slice;
 import org.eclipse.january.metadata.AxesMetadata;
 
@@ -123,7 +123,7 @@ public class NcdOperationUtils {
 		Dataset bgSlice;
 
 		//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-		if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(background.getShape(), false))) {
+		if (Arrays.equals(ShapeUtils.squeezeShape(slice.getShape(), false), ShapeUtils.squeezeShape(background.getShape(), false))) {
 			bgSlice = DatasetUtils.sliceAndConvertLazyDataset(background);
 		}
 		else {

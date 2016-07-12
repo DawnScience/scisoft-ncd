@@ -47,13 +47,13 @@ import org.eclipse.dawnsci.plotting.api.region.IRegion;
 import org.eclipse.dawnsci.plotting.api.region.IRegion.RegionType;
 import org.eclipse.dawnsci.plotting.api.trace.ILineTrace;
 import org.eclipse.draw2d.ColorConstants;
-import org.eclipse.january.dataset.AbstractDataset;
 import org.eclipse.january.dataset.BooleanDataset;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.ShapeUtils;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.eclipse.swt.events.SelectionAdapter;
 import org.eclipse.swt.events.SelectionEvent;
@@ -147,7 +147,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			DataNode node = (DataNode) nodeLink.getDestination();
 			final int[] shape = node.getDataset().getShape();
 
-			final int[] sqShape = AbstractDataset.squeezeShape(shape, true);
+			final int[] sqShape = ShapeUtils.squeezeShape(shape, true);
 			if (sqShape.length > 2) {
 				Status status = new Status(
 						IStatus.INFO,
