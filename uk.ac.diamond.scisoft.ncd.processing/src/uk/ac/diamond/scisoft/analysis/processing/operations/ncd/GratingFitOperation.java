@@ -95,9 +95,12 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	 */
 	public static Map<GratingFitKeys, Double> fitGrating(IDataset input, double[] beamCentre) {
 		Map<GratingFitKeys, Double> results = null;
-		if (beamCentre == null) {
+		
+		boolean calculateBeamCentre = (beamCentre == null);
+		if (calculateBeamCentre) {
 			beamCentre = estimateBeamCentre(input);
 		}
+		// only proceed if beamCentre has received a valid automatic estimate; it is not null.
 		if (beamCentre != null) {
 		
 			int boxHalfWidth = 50;
@@ -164,8 +167,9 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				double roundedMultiple = Math.floor(fourierDerivedMultiple+0.5);
 				fringeSpacing = span/roundedMultiple;
 			}
-
-			beamCentre = refineBeamCentre(input, beamCentre, boxShape, optimumAngle);
+			
+			if (calculateBeamCentre)
+				beamCentre = refineBeamCentre(input, beamCentre, boxShape, optimumAngle);
 			
 			// Fill the map of the results
 			results = new HashMap<GratingFitKeys, Double>(4);
