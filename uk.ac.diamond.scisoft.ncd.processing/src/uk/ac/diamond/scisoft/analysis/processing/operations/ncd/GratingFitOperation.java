@@ -75,6 +75,14 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		
 	}
 	
+	/**
+	 * Fits the beam centre and fringe spacing given an I22 grating calibration dataset
+	 * @param input
+	 * 				the dataset containing the grating integration
+	 * @param beamCentre
+	 * 					the manually assigned beam centre, if appropriate
+	 * @return a map of the double result values, encapsulated in a map. The Map is keyed by the GratingFitKeys enum.
+	 */
 	public static Map<GratingFitKeys, Double> fitGrating(IDataset input, double[] beamCentre) {
 		Map<GratingFitKeys, Double> results = null;
 		if (beamCentre == null) {
@@ -147,7 +155,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				fringeSpacing = span/roundedMultiple;
 			}
 
-//			beamCentre = refineBeamCentre(input, beamCentre, boxShape, optimumAngle);
+			beamCentre = refineBeamCentre(input, beamCentre, boxShape, optimumAngle);
 			
 			// Fill the map of the results
 			results = new HashMap<GratingFitKeys, Double>(4);
@@ -176,14 +184,17 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		return centre;
 	}
 	
+	// Corrects the position of the beam to account for the beam stop blocking the maximum intensity
 	private static double[] refineBeamCentre(IDataset input, double[] beamCentre, Dataset boxShape, double angle) {
 		
 		double[] bounds = new double[] {input.getShape()[0], input.getShape()[1]};
 		// Move the centre by the full box width at 90° to the grating pattern. This is the ±y direction
 		Dataset rotationMatrix = rotationMatrix(Math.toRadians(angle));
+		// Basis vectors of the box
 		Dataset yDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{0,1}, new int[]{2}));
 		Dataset xDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{1,0}, new int[]{2}));
 		
+		// vector from the centre of the image to the centre of the old box
 		Dataset xCentre = Maths.subtract(new DoubleDataset(beamCentre, new int[]{2}), Maths.divide(new DoubleDataset(bounds, new int[]{2}), 2));
 		// Determine the direction to move by taking the dot product of the
 		// rotated y coordinate with the displacement vector of the box
@@ -192,40 +203,34 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		// image.
 		Dataset rotateXCentre = LinearAlgebra.dotProduct(yDash.reshape(1,2), xCentre);
 		double shiftSign = -1*Math.signum(rotateXCentre.getDouble(0));
+		// direction vector in which to shift the box
 		Dataset offAxisShiftVector = Maths.multiply(shiftSign, yDash);
+		// displacement vector by which to shift the box
 		Dataset offAxisShift = Maths.multiply(boxShape.getDouble(1), offAxisShiftVector);
-		Dataset boxCentre = Maths.add(new DoubleDataset(beamCentre, new int[]{2}), offAxisShift);
+		// the old (incorrect) beam centre shifted by the box shift
+		Dataset shiftedBeamCentre = Maths.add(new DoubleDataset(beamCentre, new int[]{2}), offAxisShift);
 		
-		// Get the fitted box parameters for our own use
+		// Get the fitted box parameters of the shifted box for our own use
 		double theta = Math.toRadians(angle);
 		Dataset thisBoxShape = new DoubleDataset(boxShape);
-		Dataset newBoxCentre = fitInBounds(boxCentre, theta, bounds, thisBoxShape);
+		Dataset newBoxCentre = fitInBounds(shiftedBeamCentre, theta, bounds, thisBoxShape);
 		Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
 
-		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angle, boxShape, boxCentre, bounds);		
+		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angle, boxShape, shiftedBeamCentre, bounds);		
 		// Fit a single peak to the data
 		List<IPeak> thePeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedIntegral.getSize()), alignedIntegral, PseudoVoigt.class, 1);
+		// This is the distance from the new origin along the shifted box edge at which the peak occurs
 		double peakLocation = thePeaks.get(0).getPosition();
-		// Shift the peak location to be relative to the new box origin, by
-		// shifting by along y'. Calculate the distance to shift by projection.
-		double offAxisShiftDistance = LinearAlgebra.dotProduct(Maths.subtract(new DoubleDataset(beamCentre,  new int[]{2}), newBoxOrigin).reshape(1,2), yDash).getDouble(0); 
-		double alongAxisShiftDistance = peakLocation;
+
+		// Get the distance from the new origin along the shifted box at which the shifted unrefined beam centre occurs
+		double shiftedBeamLocation = LinearAlgebra.dotProduct(xDash.reshape(1,2), Maths.subtract(shiftedBeamCentre, newBoxOrigin)).getDouble(0);
+		// the distance by which the beam centre estimate has shifted
+		double centreShift = peakLocation - shiftedBeamLocation;
+		Dataset beamCentreShift = Maths.multiply(centreShift, xDash);
 		
-		Dataset backOntoAxisShiftVector = Maths.negative(offAxisShiftVector);
-		// The newly calculated beam centre relative to the origin of the shifted box.
-		Dataset beamCentreShift = Maths.add(
-											Maths.add(
-													Maths.multiply(offAxisShiftDistance, backOntoAxisShiftVector),
-													Maths.multiply(alongAxisShiftDistance, xDash)
-													),
-											0//Maths.negative(offAxisShift)
-											);
-		// The absolute coordinates of the beam centre
-		Dataset newBeamCentreData = Maths.add(beamCentreShift, newBoxOrigin);
-		
-		// Copy across to the data
+		// Shift the beam
 		for (int i=0; i<2; i++)
-			beamCentre[i] = newBeamCentreData.getDouble(i);
+			beamCentre[i] += beamCentreShift.getDouble(i);
 		
 		return beamCentre;
 	}
