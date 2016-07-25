@@ -39,14 +39,15 @@ import org.eclipse.dawnsci.analysis.api.tree.DataNode;
 import org.eclipse.dawnsci.analysis.api.tree.Node;
 import org.eclipse.dawnsci.analysis.api.tree.NodeLink;
 import org.eclipse.dawnsci.analysis.api.tree.Tree;
-import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf.object.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
 import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.dataset.BooleanDataset;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
 import org.eclipse.osgi.util.NLS;
 import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
@@ -450,7 +451,12 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (nodeLink != null) {
 			node = nodeLink.getDestination();
 			if (node instanceof DataNode) {
-				String text = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset()).getString(0);
+				String text;
+				try {
+					text = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset()).getString(0);
+				} catch (DatasetException e) {
+					throw new HDF5Exception("Could not get data from lazy dataset");
+				}
 				
 				long text_type = H5.H5Tcopy(HDF5Constants.H5T_C_S1);
 				H5.H5Tset_size(text_type, text.length());
@@ -671,7 +677,7 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		if (context.isEnableMask()) {
 			BooleanDataset mask = context.getMask();
 			if (mask != null) {
-				processing.setMask(new BooleanDataset(mask));
+				processing.setMask(mask.clone());
 				processing.setEnableMask(true);
 			} else {
 				throw new IllegalArgumentException(NcdMessages.NO_MASK_IMAGE);
@@ -793,9 +799,13 @@ public class DataReductionServiceImpl implements IDataReductionService {
 		}
 		NodeLink node = dataTree.findNodeLink("/entry1/sample/thickness");
 		if (node != null) {
-			org.eclipse.dawnsci.analysis.api.dataset.IDataset sampleThicknessSet = ((DataNode) node.getDestination()).getDataset().getSlice(new org.eclipse.dawnsci.analysis.api.dataset.Slice());
-			assert node.getDestination().getAttribute("units").getFirstElement().equals("mm"); //units of sample thickness must be mm
-			return sampleThicknessSet.getDouble(0);
+			try {
+				IDataset sampleThicknessSet = ((DataNode) node.getDestination()).getDataset().getSlice();
+				assert node.getDestination().getAttribute("units").getFirstElement().equals("mm"); //units of sample thickness must be mm
+				return sampleThicknessSet.getDouble(0);
+			} catch (DatasetException e) {
+				logger.error("Error reading thickness dataset", e);
+			}
 		}
 		return 1.0;
 	}

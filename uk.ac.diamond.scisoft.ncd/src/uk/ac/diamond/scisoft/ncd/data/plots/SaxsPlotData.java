@@ -21,15 +21,14 @@ import java.util.Arrays;
 import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
-import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
 import org.eclipse.dawnsci.hdf.object.Nexus;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.ShapeUtils;
+import org.eclipse.january.dataset.SliceIterator;
+import org.eclipse.january.dataset.SliceND;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -63,7 +62,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Arrays.fill(step, 1);
 		step[step.length - 1] = frames_int[frames_int.length - 1];
 		SliceND slice = new SliceND(frames_int, null, frames_int, step);
-		IndexIterator iter = new SliceIterator(frames_int, AbstractDataset.calcSize(frames_int), slice);
+		IndexIterator iter = new SliceIterator(frames_int, ShapeUtils.calcSize(frames_int), slice);
 		int[] pos = iter.getPos();
 		while (iter.hasNext()) {
 			sliceSettings.setStart(pos);
@@ -195,7 +194,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Dataset tmpData = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpErrors = null;
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			tmpErrors = DatasetFactory.zeros(data.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}
@@ -220,7 +219,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		Dataset tmpAxis = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 		boolean hasErrors = false;
 		Dataset tmpAxisErrors = null;
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			tmpAxisErrors = DatasetFactory.zeros(axis.getShape(), Dataset.FLOAT32);
 			hasErrors = true;
 		}

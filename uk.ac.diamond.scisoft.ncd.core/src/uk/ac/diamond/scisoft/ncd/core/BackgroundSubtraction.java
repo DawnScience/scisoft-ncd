@@ -20,9 +20,9 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.FloatDataset;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

@@ -38,16 +38,33 @@ import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
 import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
-import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
-import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.BooleanDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.FloatDataset;
+import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
 
+import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.actor.ProcessingException;
+import com.isencia.passerelle.actor.general.DevNullActor;
+import com.isencia.passerelle.actor.v5.ActorContext;
+import com.isencia.passerelle.actor.v5.ProcessRequest;
+import com.isencia.passerelle.actor.v5.ProcessResponse;
+import com.isencia.passerelle.core.ErrorCode;
+import com.isencia.passerelle.domain.et.ETDirector;
+import com.isencia.passerelle.message.ManagedMessage;
+import com.isencia.passerelle.model.Flow;
+import com.isencia.passerelle.model.FlowManager;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import hdf.hdf5lib.structs.H5L_info_t;
 import ptolemy.data.ObjectToken;
 import ptolemy.data.StringToken;
 import ptolemy.kernel.CompositeEntity;
@@ -77,24 +94,6 @@ import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSaxsPlotDataForkJ
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSectorIntegrationForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdSelectionForkJoinTransformer;
 import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdStandardiseForkJoinTransformer;
-
-import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.actor.ProcessingException;
-import com.isencia.passerelle.actor.general.DevNullActor;
-import com.isencia.passerelle.actor.v5.ActorContext;
-import com.isencia.passerelle.actor.v5.ProcessRequest;
-import com.isencia.passerelle.actor.v5.ProcessResponse;
-import com.isencia.passerelle.core.ErrorCode;
-import com.isencia.passerelle.domain.et.ETDirector;
-import com.isencia.passerelle.message.ManagedMessage;
-import com.isencia.passerelle.model.Flow;
-import com.isencia.passerelle.model.FlowManager;
-
-import hdf.hdf5lib.H5;
-import hdf.hdf5lib.HDF5Constants;
-import hdf.hdf5lib.exceptions.HDF5Exception;
-import hdf.hdf5lib.exceptions.HDF5LibraryException;
-import hdf.hdf5lib.structs.H5L_info_t;
 
 public class NcdProcessingModel implements IDataReductionProcess {
 
@@ -186,7 +185,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 			}
 			
 			DataMessageComponent despatch = new DataMessageComponent();
-			despatch.addList("selection", new BooleanDataset());
+			despatch.addList("selection", DatasetFactory.zeros(BooleanDataset.class, null));
         
 			try {
 				ManagedMessage msg = MessageUtils.getDataMessage(despatch, null);
@@ -221,8 +220,8 @@ public class NcdProcessingModel implements IDataReductionProcess {
 		intercept = null;
 		cameraLength = null;
 		energy = null;
-		mask = new BooleanDataset();
-		drData = new FloatDataset();
+		mask = DatasetFactory.zeros(BooleanDataset.class, null);
+		drData = DatasetFactory.zeros(FloatDataset.class, null);
 		firstFrame = null;
 		lastFrame = null;
 		frameSelection = null;
@@ -514,7 +513,7 @@ public class NcdProcessingModel implements IDataReductionProcess {
 				int drDatasizeID = (int) H5.H5Tget_size(drDatatypeID);
 
 				int rank = H5.H5Sget_simple_extent_ndims(drDataspaceID);
-				int dtype = HDF5Utils.getDtype(drDataclassID, drDatasizeID);
+				int dtype = HDF5Utils.getDType(drDataclassID, drDatasizeID);
 
 				long[] drFrames = new long[rank];
 				H5.H5Sget_simple_extent_dims(drDataspaceID, drFrames, null);

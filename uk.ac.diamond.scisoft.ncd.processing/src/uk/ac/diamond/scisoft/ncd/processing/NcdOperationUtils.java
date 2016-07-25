@@ -13,18 +13,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
 import org.eclipse.dawnsci.analysis.api.processing.IOperation;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.ILazyDataset;
+import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.dataset.ShapeUtils;
+import org.eclipse.january.dataset.Slice;
+import org.eclipse.january.metadata.AxesMetadata;
 
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -122,7 +123,7 @@ public class NcdOperationUtils {
 		Dataset bgSlice;
 
 		//if the background image is the same shape as the sliced image, then do simple subtraction on the background
-		if (Arrays.equals(AbstractDataset.squeezeShape(slice.getShape(), false), AbstractDataset.squeezeShape(background.getShape(), false))) {
+		if (Arrays.equals(ShapeUtils.squeezeShape(slice.getShape(), false), ShapeUtils.squeezeShape(background.getShape(), false))) {
 			bgSlice = DatasetUtils.sliceAndConvertLazyDataset(background);
 		}
 		else {
@@ -211,7 +212,7 @@ public class NcdOperationUtils {
 				throw new Exception("all component datasets must be the same size");
 			}
 		}
-		Dataset newDataset = DatasetFactory.zeros(new int[] {ag.size(), first.getSize()}, first.getDtype());
+		Dataset newDataset = DatasetFactory.zeros(new int[] {ag.size(), first.getSize()}, first.getDType());
 		for (int i=0; i < ag.size(); ++i) {
 			Dataset dataset = ag.get(i);
 			for (int j=0; j < dataset.getSize(); ++j) {
@@ -235,7 +236,7 @@ public class NcdOperationUtils {
 		public Dataset cubicData;
 	}
 	
-	public static PorodParameters fitPorodConstant(Dataset intensity) {
+	public static PorodParameters fitPorodConstant(Dataset intensity) throws DatasetException {
 		PorodParameters params = new PorodParameters();
 		
 		Dataset q = DatasetUtils.convertToDataset(intensity.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
@@ -285,7 +286,7 @@ public class NcdOperationUtils {
 		return params;
 	}
 
-	public static KratkyParameters fitKratkyLine(Dataset intensity) {
+	public static KratkyParameters fitKratkyLine(Dataset intensity) throws DatasetException {
 		KratkyParameters parameters = new KratkyParameters();
 
 		Dataset q = DatasetUtils.convertToDataset(intensity.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());

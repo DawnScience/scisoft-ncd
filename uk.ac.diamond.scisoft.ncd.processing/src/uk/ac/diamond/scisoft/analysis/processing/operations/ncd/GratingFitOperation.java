@@ -8,21 +8,24 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.lang.ArrayUtils;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.impl.FFT;
-import org.eclipse.dawnsci.analysis.dataset.impl.LinearAlgebra;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
-import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.roi.RectangularROI;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.LinearAlgebra;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.metadata.AxesMetadata;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.Generic1DFitter;
@@ -107,8 +110,8 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 			int boxHalfLength = Collections.max(Arrays.asList(ArrayUtils.toObject(input.getShape())))/4; // maximum dimension of the image
 
 			// Make the parameters of the integration box
-			Dataset boxCentre = new DoubleDataset(new double[] {beamCentre[0], beamCentre[1]}, new int[] {2});
-			Dataset boxShape = new DoubleDataset(new double[] {boxHalfLength*2, boxHalfWidth*2}, new int[] {2});
+			Dataset boxCentre = DatasetFactory.createFromObject(new double[] {beamCentre[0], beamCentre[1]});
+			Dataset boxShape = DatasetFactory.createFromObject(new double[] {boxHalfLength*2, boxHalfWidth*2});
 			double[] bounds = new double[] {input.getShape()[0], input.getShape()[1]};
 
 			// box profiles taken across the short edge, running along the long edge
@@ -124,7 +127,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				if (longProfile.getSize() > maxLong) maxLong  = longProfile.getSize();
 
 			// allIntegrals makes sure the box profiles all have the same size. It is a roundabout way of padding the data.
-			Dataset allIntegrals = new DoubleDataset(longIntegrals.size(), maxLong);
+			Dataset allIntegrals = DatasetFactory.zeros(DoubleDataset.class, longIntegrals.size(), maxLong);
 			for (int i = 0; i < longIntegrals.size(); i++) {
 				int offset = (maxLong - longIntegrals.get(i).getSize())/2; 
 				for (int j = 0; j < longIntegrals.get(i).getSize(); j++) {
@@ -160,7 +163,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 				for (int i = 0; i < allPeaks.size(); i++)
 					peakLocations[i] = allPeaks.get(i).getPosition();
 
-				Dataset peakLocationData = new DoubleDataset(peakLocations, peakLocations.length);
+				Dataset peakLocationData = DatasetFactory.createFromObject(peakLocations);
 
 				double span = ((double) peakLocationData.max() - (double) peakLocationData.min());
 				double fourierDerivedMultiple = span/fringeSpacing;
@@ -191,7 +194,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		double[] centre = new double[nDim];
 		for (int i = 0; i < nDim; i++) {
 			Dataset profile = profiles[i];
-			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(profile.getSize()), profile, PseudoVoigt.class, 1);
+			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DatasetFactory.createRange(profile.getSize()), profile, PseudoVoigt.class, 1);
 			centre[i] = allPeaks.get(0).getPosition();
 		}
 		
@@ -205,11 +208,11 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		// Move the centre by the full box width at 90° to the grating pattern. This is the ±y direction
 		Dataset rotationMatrix = rotationMatrix(Math.toRadians(angle));
 		// Basis vectors of the box
-		Dataset yDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{0,1}, new int[]{2}));
-		Dataset xDash = LinearAlgebra.dotProduct(rotationMatrix, new DoubleDataset(new double[]{1,0}, new int[]{2}));
+		Dataset yDash = LinearAlgebra.dotProduct(rotationMatrix, DatasetFactory.createFromObject(new double[]{0,1}));
+		Dataset xDash = LinearAlgebra.dotProduct(rotationMatrix, DatasetFactory.createFromObject(new double[]{1,0}));
 		
 		// vector from the centre of the image to the centre of the old box
-		Dataset xCentre = Maths.subtract(new DoubleDataset(beamCentre, new int[]{2}), Maths.divide(new DoubleDataset(bounds, new int[]{2}), 2));
+		Dataset xCentre = Maths.subtract(DatasetFactory.createFromObject(beamCentre), Maths.divide(DatasetFactory.createFromObject(bounds), 2));
 		// Determine the direction to move by taking the dot product of the
 		// rotated y coordinate with the displacement vector of the box
 		// (centre) from the image centre. The sign of the displacement is the
@@ -222,11 +225,11 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		// displacement vector by which to shift the box
 		Dataset offAxisShift = Maths.multiply(boxShape.getDouble(1), offAxisShiftVector);
 		// the old (incorrect) beam centre shifted by the box shift
-		Dataset shiftedBeamCentre = Maths.add(new DoubleDataset(beamCentre, new int[]{2}), offAxisShift);
+		Dataset shiftedBeamCentre = Maths.add(DatasetFactory.createFromObject(beamCentre), offAxisShift);
 		
 		// Get the fitted box parameters of the shifted box for our own use
 		double theta = Math.toRadians(angle);
-		Dataset thisBoxShape = new DoubleDataset(boxShape);
+		Dataset thisBoxShape = boxShape.copy(DoubleDataset.class);
 		Dataset newBoxCentre = fitInBounds(shiftedBeamCentre, theta, bounds, thisBoxShape);
 		Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
 
@@ -252,7 +255,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	// Perform a box integration at the specified angle
 	private static Dataset boxIntegrationAtDegreeAngle(IDataset input, double angle, Dataset boxShape, Dataset boxCentre, double[] bounds) {
 		double theta = Math.toRadians(angle);
-		Dataset thisBoxShape = new DoubleDataset(boxShape);
+		Dataset thisBoxShape = boxShape.copy(DoubleDataset.class);
 		// Get the centre and possibly altered shape of the box at this angle.
 		Dataset newBoxCentre = fitInBounds(boxCentre, theta, bounds, thisBoxShape);
 		Dataset newBoxOrigin = originFromCentre(newBoxCentre, thisBoxShape, theta);
@@ -268,7 +271,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	// Using Fourier transforms, get the angle of the grating pattern. An
 	// estimate of the spacing is also returned, but is not terribly accurate
 	private static double[] getFourierAngleSpacing(Dataset allIntegrals, double idTheta, double boxHalfLength) {
-		Dataset allFourier = new DoubleDataset(allIntegrals);
+		Dataset allFourier = allIntegrals.copy(DoubleDataset.class);
 		int nangles = allIntegrals.getShape()[0];
 		int nData = allIntegrals.getShape()[1];
 		for (int i = 0; i < nangles; i++) {
@@ -279,7 +282,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 			}
 		}
 		
-		Dataset firstACPeak = new DoubleDataset(nangles);
+		Dataset firstACPeak = DatasetFactory.zeros(DoubleDataset.class, nangles);
 		
 		// Take the first derivative of the first half of the FT'd data
 		for (int i = 0; i < nangles; i++) {
@@ -297,19 +300,24 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		// Determine if the minimum is too close to the zero
 		int mindex = firstACPeak.minPos()[0];
 		boolean doShiftData = (Math.abs(mindex - nangles/2) > nangles/4);
-		Dataset shiftedData = new DoubleDataset(firstACPeak);
+		Dataset shiftedData = firstACPeak.clone();
 		if (doShiftData) {
 			for (int i = 0; i < nangles; i++)
 			shiftedData.set(firstACPeak.getDouble(i), (i+nangles/2) % nangles);
 		}
 		
 		mindex = shiftedData.minPos()[0];
-		Dataset parabolaX = DoubleDataset.createRange(mindex-1, mindex+2, 1);
+		Dataset parabolaX = DatasetFactory.createRange(mindex-1, mindex+2, 1);
 		Dataset parabolaY = shiftedData.getSlice(new int[]{mindex-1}, new int[]{mindex+2}, new int[]{1});
 		
-		AxesMetadataImpl parabolaAxes = new AxesMetadataImpl(1);
-		parabolaAxes.addAxis(0, parabolaX);
-		parabolaY.addMetadata(parabolaAxes);
+		AxesMetadata parabolaAxes;
+		try {
+			parabolaAxes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+			parabolaAxes.addAxis(0, parabolaX);
+			parabolaY.addMetadata(parabolaAxes);
+		} catch (MetadataException e) {
+			throw new OperationException(null,  e);
+		}
 		
 		double[] params = Fitter.polyFit(new Dataset[]{parabolaX}, parabolaY, 1e-15, 2).getParameterValues();
 		double[] derivParams = Arrays.copyOf(params, 3);
@@ -343,12 +351,12 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		Dataset rotation = rotationMatrix(theta);
 		
 		// The vector of the shift
-		Dataset u = new DoubleDataset(new double[]{1, 0}, new int[] {2});
+		Dataset u = DatasetFactory.createFromObject(new double[]{1, 0});
 		u = LinearAlgebra.dotProduct(rotation, u);
 		// Iterate over corners, by the signs of the translation
 		for (double cornerX : signs) {
 			for (double cornerY : signs) {
-				Dataset cornerSigns = new DoubleDataset(new double[] {cornerX, cornerY}, new int[] {2});
+				Dataset cornerSigns = DatasetFactory.createFromObject(new double[] {cornerX, cornerY});
 				Dataset offset = Maths.multiply(0.5, Maths.multiply(shape, cornerSigns));
 				offset = LinearAlgebra.dotProduct(rotation, offset);
 				Dataset xc = Maths.add(xo, offset);
@@ -385,7 +393,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	
 	private static Dataset rotationMatrix(double theta) {
 		double cTheta = Math.cos(theta), sTheta = Math.sin(theta);
-		return new DoubleDataset(new double[] {cTheta,  -sTheta, sTheta, cTheta}, new int[] {2,2});
+		return DatasetFactory.createFromObject(new double[] {cTheta,  -sTheta, sTheta, cTheta}, 2, 2);
 	}
 
 	private static Dataset originFromCentre(Dataset centre, Dataset shape, double theta) {
@@ -399,10 +407,10 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	
 	public static void main(String[] args) {
 		double[] xyLimits = new double[] {640, 480};
-		Dataset shape = new DoubleDataset(new double[]{320, 50}, new int[]{2});
+		Dataset shape = DatasetFactory.createFromObject(new double[]{320, 50});
 		
-		rotateBoxInBounds(new DoubleDataset(new double[]{320, 100}, new int[]{2}), shape, xyLimits);
-		rotateBoxInBounds(new DoubleDataset(new double[]{30, 100}, new int[]{2}), shape, xyLimits);
+		rotateBoxInBounds(DatasetFactory.createFromObject(new double[]{320, 100}), shape, xyLimits);
+		rotateBoxInBounds(DatasetFactory.createFromObject(new double[]{30, 100}), shape, xyLimits);
 	}
 	
 	private static void rotateBoxInBounds(Dataset boxCentre, Dataset boxShape, double[] bounds) {
@@ -410,7 +418,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		svgBB(bounds);
 		svgCentre(boxCentre);
 		for (double theta = 0; theta < 360.0; theta += 30) {
-			Dataset shapeI = new DoubleDataset(boxShape);
+			Dataset shapeI = boxShape.copy(DoubleDataset.class);
 			Dataset xoS = fitInBounds(boxCentre, Math.toRadians(theta), bounds, shapeI);
 			System.out.println("<!-- theta = " + theta + "("  + xoS.getDouble(0) + "," + xoS.getDouble(1) + ") -->");
 			svgRotateyBox(xoS, boxShape, shapeI, theta);

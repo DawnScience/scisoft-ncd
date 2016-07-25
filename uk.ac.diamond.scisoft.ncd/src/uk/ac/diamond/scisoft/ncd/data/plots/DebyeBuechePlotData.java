@@ -17,8 +17,7 @@
 package uk.ac.diamond.scisoft.ncd.data.plots;
 
 import org.apache.commons.math3.util.Pair;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
+import org.eclipse.january.dataset.IDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
@@ -44,9 +43,9 @@ public class DebyeBuechePlotData extends SaxsPlotData {
 
 	@Override
 	public double getDataError(int idx, IDataset axis, IDataset data) {
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError(idx);
+			double err = data.getError(idx);
 			return Math.pow(val, -1.5) * err / 2.0;
 		}
 		return Double.NaN;
@@ -54,9 +53,9 @@ public class DebyeBuechePlotData extends SaxsPlotData {
 
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError(idx);
+			double err = axis.getError(idx);
 			return 2.0 * val * err;
 		}
 		return Double.NaN;

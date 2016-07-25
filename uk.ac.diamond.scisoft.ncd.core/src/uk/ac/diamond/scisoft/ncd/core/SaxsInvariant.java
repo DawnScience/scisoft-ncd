@@ -30,9 +30,8 @@ import org.apache.commons.math3.analysis.interpolation.UnivariateInterpolator;
 import org.apache.commons.math3.exception.MaxCountExceededException;
 import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.IDataset;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -76,8 +75,8 @@ public class SaxsInvariant {
 		try {
 			float result = (float) integrator.integrate(INTEGRATION_POINTS, function, 0.0, myaxis[myaxis.length - 1]);
 
-			IDataset data = new FloatDataset(parentdata, dimensions);
-			IDataset qaxis = new DoubleDataset(parentaxis, dimensions);
+			IDataset data = DatasetFactory.createFromObject(parentdata, dimensions);
+			IDataset qaxis = DatasetFactory.createFromObject(parentaxis, dimensions);
 			PorodPlotData porodPlotData = (PorodPlotData) SaxsAnalysisPlotType.POROD_PLOT.getSaxsPlotDataObject();
 			SimpleRegression regression = porodPlotData.getPorodPlotParameters(data.squeeze(), qaxis.squeeze());
 			Amount<Dimensionless> c4 = porodPlotData.getC4(regression);

@@ -1,17 +1,19 @@
 package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
-import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.metadata.AxesMetadata;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.ncd.processing.TParameterMetadata;
 
@@ -38,7 +40,12 @@ public class KratkyFromPorodBackgroundOperation extends
 			throws OperationException {
 
 		// The axis is the fourth power of q
-		Dataset q4 = DatasetUtils.convertToDataset(porodInput.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q4;
+		try {
+			q4 = DatasetUtils.convertToDataset(porodInput.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		Dataset porodData = DatasetUtils.convertToDataset(porodInput);
 
 		// Porod: (q^4, I q^4), Kratky (q, I q^2)
@@ -47,7 +54,12 @@ public class KratkyFromPorodBackgroundOperation extends
 		Dataset kratkyData = Maths.divide(porodData, q2);
 		
 		// Create the new axes
-		AxesMetadataImpl kratkyAxes = new AxesMetadataImpl(1);
+		AxesMetadata kratkyAxes;
+		try {
+			kratkyAxes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+		} catch (MetadataException e) {
+			throw new OperationException(this, e);
+		}
 		kratkyAxes.addAxis(0, q);
 		kratkyData.addMetadata(kratkyAxes);
 

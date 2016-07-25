@@ -13,20 +13,19 @@ import java.util.ArrayList;
 import java.util.Arrays;
 
 import org.apache.commons.lang.StringUtils;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.ILazyDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.dataset.AggregateDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.ILazyDataset;
+import org.eclipse.january.dataset.Slice;
 
 import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
@@ -112,8 +111,8 @@ public class NcdBackgroundSubtractionFromDataOperation<T extends NcdBackgroundSu
 		Object[] bgDataAndError = bgSubtraction.process(data.cast(Dataset.FLOAT32).getBuffer(), errorBuffer.cast(Dataset.FLOAT64).getBuffer(), data.getShape());
 		float[] bgData = (float[])bgDataAndError[0];
 		double[] bgError = (double[])bgDataAndError[1];
-		Dataset bgDataset = new FloatDataset(bgData, data.getShape());
-		Dataset bgErrorDataset = new DoubleDataset(bgError, data.getShape());
+		Dataset bgDataset = DatasetFactory.createFromObject(bgData, data.getShape());
+		Dataset bgErrorDataset = DatasetFactory.createFromObject(bgError, data.getShape());
 		bgDataset.setErrorBuffer(bgErrorDataset);
 
 		OperationData toReturn = new OperationData();

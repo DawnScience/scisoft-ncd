@@ -25,10 +25,10 @@ import org.apache.commons.math3.ml.clustering.Cluster;
 import org.apache.commons.math3.ml.clustering.DBSCANClusterer;
 import org.apache.commons.math3.ml.clustering.DoublePoint;
 import org.apache.commons.math3.stat.StatUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.ShapeUtils;
 
 public class ClusterOutlierRemoval extends SaxsStatsData {
 
@@ -49,7 +49,7 @@ public class ClusterOutlierRemoval extends SaxsStatsData {
 			Map<DoublePoint, Integer> clusterInputMap = new HashMap<DoublePoint, Integer>();
 			while (itr.hasNext()) {
 				int[] pos = itr.getPos();
-				int idx = AbstractDataset.getFlat1DIndex(shape, pos);
+				int idx = ShapeUtils.getFlat1DIndex(shape, pos);
 				double val = referenceData.getDouble(pos); 
 				clusterInputMap.put(new DoublePoint(new double[] {val}), idx);
 			}
@@ -83,7 +83,7 @@ public class ClusterOutlierRemoval extends SaxsStatsData {
 				Cluster<DoublePoint> selectCluster = clusterResults.get(selectIndex);
 				for (DoublePoint point : selectCluster.getPoints()) {
 					Integer idx = clusterInputMap.get(point);
-					result.set(selectIndex, AbstractDataset.getNDPositionFromShape(idx, shape));
+					result.set(selectIndex, ShapeUtils.getNDPositionFromShape(idx, shape));
 				}
 			}
 			return result; 

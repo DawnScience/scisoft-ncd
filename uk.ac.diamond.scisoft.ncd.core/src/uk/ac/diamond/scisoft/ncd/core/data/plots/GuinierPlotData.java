@@ -34,11 +34,10 @@ import org.apache.commons.math3.optim.nonlinear.scalar.noderiv.CMAESOptimizer;
 import org.apache.commons.math3.random.RandomDataGenerator;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.apache.commons.math3.util.Pair;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.IErrorDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
@@ -88,7 +87,7 @@ public class GuinierPlotData extends SaxsPlotData {
 			double intercept = regression.getIntercept();
 			
 			// Test residual values for normality
-			//Dataset testData = new FloatDataset(new int[] {idxMax - idxMin});
+			//Dataset testData = DatasetFactory.zeros(FloatDataset.class, idxMax - idxMin);
 			//for (int i = idxMin; i < idxMax; i++) {
 			//	double dataVal = guinierData.getDouble(i);
 			//	double axisVal = guinierAxis.getDouble(i);
@@ -145,9 +144,9 @@ public class GuinierPlotData extends SaxsPlotData {
 
 	@Override
 	public double getDataError(int idx, IDataset axis, IDataset data) {
-		if (data instanceof IErrorDataset && ((IErrorDataset) data).hasErrors()) {
+		if (data.hasErrors()) {
 			double val = data.getDouble(idx);
-			double err = ((IErrorDataset) data).getError(idx);
+			double err = data.getError(idx);
 			return err / val;
 		}
 		return Double.NaN;
@@ -155,9 +154,9 @@ public class GuinierPlotData extends SaxsPlotData {
 
 	@Override
 	public double getAxisError(int idx, IDataset axis) {
-		if (axis instanceof IErrorDataset && ((IErrorDataset) axis).hasErrors()) {
+		if (axis.hasErrors()) {
 			double val = axis.getDouble(idx);
-			double err = ((IErrorDataset) axis).getError(idx);
+			double err = axis.getError(idx);
 			return 2.0 * val * err;
 		}
 		return Double.NaN;

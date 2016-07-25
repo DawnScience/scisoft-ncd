@@ -22,10 +22,9 @@ import java.util.Arrays;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.hdf.object.Nexus;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -126,8 +125,8 @@ public class LazyNormalisation extends LazyDataReduction {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			Dataset myres = new FloatDataset(mydata, dataShape);
-			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+			Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
+			myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, dataShape));
 
 			long filespace_id = -1;
 			long type_id = -1;

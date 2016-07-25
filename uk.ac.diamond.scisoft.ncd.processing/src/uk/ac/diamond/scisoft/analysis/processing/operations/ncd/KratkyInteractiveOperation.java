@@ -3,20 +3,23 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
-import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.metadata.AxesMetadata;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils.KratkyParameters;
@@ -46,7 +49,12 @@ public class KratkyInteractiveOperation extends
 	protected OperationData process(IDataset input, IMonitor monitor)
 			throws OperationException {
 
-		Dataset q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q;
+		try {
+			q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 	
 		Dataset x = q;
 		Dataset y = DatasetUtils.convertToDataset(input);
@@ -134,9 +142,14 @@ public class KratkyInteractiveOperation extends
 		System.err.println("Kratky parameters: qmin = " + parameters.qMin + ", gradient = " + parameters.gradient + ", intercept = " + parameters.intercept);
 
 		// Create an additional output dataset of the linear fit
-		Dataset fitQ = DoubleDataset.createRange(Double.MIN_NORMAL, parameters.qMin, parameters.qMin/20);
+		Dataset fitQ = DatasetFactory.createRange(DoubleDataset.class, Double.MIN_NORMAL, parameters.qMin, parameters.qMin/20);
 		Dataset kratkyCurve = Maths.add(Maths.multiply(parameters.gradient, fitQ), parameters.intercept);
-		AxesMetadataImpl kratkyAxes = new AxesMetadataImpl(1);
+		AxesMetadata kratkyAxes;
+		try {
+			kratkyAxes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+		} catch (MetadataException e) {
+			throw new OperationException(this, e);
+		}
 		kratkyAxes.addAxis(0, fitQ);
 		kratkyCurve.addMetadata(kratkyAxes);
 		kratkyCurve.setName("Kratky fit");

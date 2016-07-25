@@ -26,25 +26,13 @@ import org.apache.commons.lang.StringUtils;
 import org.dawb.passerelle.common.actors.AbstractDataMessageSource;
 import org.dawb.passerelle.common.message.MessageUtils;
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
-import org.eclipse.dawnsci.analysis.dataset.impl.BooleanDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.BooleanDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
-
-import ptolemy.data.ObjectToken;
-import ptolemy.kernel.CompositeEntity;
-import ptolemy.kernel.util.IllegalActionException;
-import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.analysis.IOTestUtils;
-import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.ProcessingException;
@@ -62,6 +50,18 @@ import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ptolemy.data.ObjectToken;
+import ptolemy.kernel.CompositeEntity;
+import ptolemy.kernel.util.IllegalActionException;
+import ptolemy.kernel.util.NameDuplicationException;
+import uk.ac.diamond.scisoft.analysis.IOTestUtils;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdMessageSource;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdAverageForkJoinTransformer;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.forkjoin.NcdBackgroundSubtractionForkJoinTransformer;
 
 public class NcdBackgroundSubtractionForkJoinTransformerTest {
 
@@ -115,7 +115,7 @@ public class NcdBackgroundSubtractionForkJoinTransformerTest {
 			}
 			
 			DataMessageComponent despatch = new DataMessageComponent();
-			despatch.addList("selection", new BooleanDataset());
+			despatch.addList("selection", DatasetFactory.zeros(BooleanDataset.class, null));
         
 			try {
 				ManagedMessage msg = MessageUtils.getDataMessage(despatch, null);

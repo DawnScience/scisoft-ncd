@@ -2,20 +2,23 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.List;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.PlotAdditionalData;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
-import org.eclipse.dawnsci.analysis.dataset.metadata.AxesMetadataImpl;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.MetadataException;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.dataset.Slice;
+import org.eclipse.january.metadata.AxesMetadata;
+import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
@@ -49,7 +52,12 @@ public class PorodInteractiveOperation extends
 		PorodParameters params = new PorodParameters();
 
 		// The axis is the fourth power of q
-		Dataset q4 = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q4;
+		try {
+			q4 = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e1) {
+			throw new OperationException(this, e1);
+		}
 		Dataset dInput = DatasetUtils.convertToDataset(input);
 		
 		// Get limits of the fit, either automatically, or from the user
@@ -103,10 +111,15 @@ public class PorodInteractiveOperation extends
 		}
 
 		// Porod fit
-		Dataset fitQ = DoubleDataset.createRange(params.qMin, params.qMax, (params.qMax-params.qMin)/20);
+		Dataset fitQ = DatasetFactory.createRange(DoubleDataset.class, params.qMin, params.qMax, (params.qMax-params.qMin)/20);
 		Dataset fitQ4 = Maths.square(Maths.square(fitQ));
 		Dataset porodCurve = Maths.add(params.porodConstant, Maths.multiply(params.gradient, fitQ4));
-		AxesMetadataImpl porodAxes = new AxesMetadataImpl(1);
+		AxesMetadata porodAxes;
+		try {
+			porodAxes = MetadataFactory.createMetadata(AxesMetadata.class, 1);
+		} catch (MetadataException e) {
+			throw new OperationException(this, e);
+		}
 		porodAxes.addAxis(0, fitQ4);
 		porodCurve.addMetadata(porodAxes);
 		porodCurve.setName("Porod fit");
@@ -121,7 +134,7 @@ public class PorodInteractiveOperation extends
 		tparam.setqPorodMin(params.qMin);
 		tparam.setPorodConstant(params.porodConstant);
 		
-		Dataset baselined = new DoubleDataset(dInput);
+		Dataset baselined = dInput.copy(DoubleDataset.class);
 		if (model.isSubtractBackground()) {
 			baselined.isubtract(Maths.multiply(params.gradient, q4));
 			porodCurve.isubtract(Maths.multiply(params.gradient, fitQ4));

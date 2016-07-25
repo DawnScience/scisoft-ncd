@@ -25,9 +25,10 @@ import org.apache.commons.math3.analysis.UnivariateFunction;
 import org.apache.commons.math3.analysis.interpolation.SplineInterpolator;
 import org.apache.commons.math3.analysis.interpolation.UnivariateInterpolator;
 import org.apache.commons.math3.stat.descriptive.SummaryStatistics;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -55,7 +56,7 @@ public class NCDAbsoluteCalibration {
 	}
 
 	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, Dataset absI, Unit<ScatteringVector> unit) {
-		absQ = new DoubleDataset(lstAbsQ.size());
+		absQ = DatasetFactory.zeros(DoubleDataset.class, lstAbsQ.size());
 		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
 			Amount<ScatteringVector> vec = lstAbsQ.get(idx);
 			absQ.set(vec.doubleValue(unit), idx);
@@ -68,7 +69,7 @@ public class NCDAbsoluteCalibration {
 	}
 	
 	public void setData(List<Amount<ScatteringVector>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<ScatteringVector> unit) {
-		dataQ = new DoubleDataset(lstDataQ.size());
+		dataQ = DatasetFactory.zeros(DoubleDataset.class, lstDataQ.size());
 		for (int idx = 0; idx < lstDataQ.size(); idx++) {
 			Amount<ScatteringVector> vec = lstDataQ.get(idx);
 			dataQ.set(vec.doubleValue(unit), idx);

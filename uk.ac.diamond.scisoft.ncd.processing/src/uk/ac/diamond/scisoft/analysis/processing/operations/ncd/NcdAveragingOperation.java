@@ -16,18 +16,19 @@ import java.util.List;
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.AggregateDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
 import org.eclipse.dawnsci.analysis.dataset.slicer.SliceFromSeriesMetadata;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.dataset.AggregateDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IDataset;
 import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
@@ -99,9 +100,9 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 					saxsAnalysisStatParams.setSaxsFilteringCI(Double.valueOf(strSaxsFilteringCI));
 				}
 				
-				DoubleDataset rgDataset = new DoubleDataset(rG);
+				Dataset rgDataset = DatasetFactory.createFromObject(rG);
 				rgDataset.setName("Rg");
-				DoubleDataset rgErrorDataset = new DoubleDataset(rGError);
+				Dataset rgErrorDataset = DatasetFactory.createFromObject(rGError);
 				rgDataset.setError(rgErrorDataset);
 				Dataset removalFilter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams); //remove frame[i] if true
 				removalFilter.setName("Removal filter");
@@ -133,10 +134,19 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			Dataset errorSum = null;
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
-				errorSum = aggregateErrors.getSlice().sum(false, 0);
+				try {
+					errorSum = aggregateErrors.getSlice().sum(false, 0);
+				} catch (DatasetException e) {
+					throw new OperationException(this, e);
+				}
 			}
 
-			Dataset out = aggregate.getSlice().mean(false, 0);
+			Dataset out;
+			try {
+				out = aggregate.getSlice().mean(false, 0);
+			} catch (DatasetException e) {
+				throw new OperationException(this, e);
+			}
 			copyMetadata(input, out);
 			SliceFromSeriesMetadata outsmm = ssm.clone();
 			for (int i = 0; i < ssm.getParent().getRank(); i++) {

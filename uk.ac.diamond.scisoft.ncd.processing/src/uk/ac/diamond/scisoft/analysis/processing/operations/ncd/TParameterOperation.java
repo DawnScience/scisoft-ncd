@@ -11,19 +11,21 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.io.Serializable;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.dataset.Slice;
-import org.eclipse.dawnsci.analysis.api.metadata.AxesMetadata;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
 import org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.DatasetException;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.Maths;
+import org.eclipse.january.dataset.Slice;
+import org.eclipse.january.metadata.AxesMetadata;
 
 import uk.ac.diamond.scisoft.ncd.processing.TParameterMetadata;
 
@@ -67,7 +69,12 @@ public class TParameterOperation extends
 		double jKratky = tP.getKratkyIntegral();
 		// Experimental integral
 		double jExp;
-		Dataset q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		Dataset q;
+		try {
+			q = DatasetUtils.convertToDataset(input.getFirstMetadata(AxesMetadata.class).getAxis(0)[0].getSlice());
+		} catch (DatasetException e) {
+			throw new OperationException(this, e);
+		}
 		
 		// First index greater than the limit
 		int iPorod = DatasetUtils.findIndexGreaterThan(q, tP.getqPorodMin());
@@ -82,7 +89,7 @@ public class TParameterOperation extends
 		// Integration
 		// Is rectangle rule good for you?
 		Dataset integrand = Maths.multiply(Maths.square(qSlice), dataSlice);
-		Dataset indices = DoubleDataset.createRange(0.0, (double) iPorod - iKratky, 1.0);
+		Dataset indices = DatasetFactory.createRange(DoubleDataset.class, (double) iPorod - iKratky);
 		Dataset dq = Maths.derivative(indices, qSlice, 1);
 		jExp = (double) Maths.multiply(integrand, dq).sum();
 		// Add any bits between the pieces of the integral
@@ -94,7 +101,7 @@ public class TParameterOperation extends
 		double t = 4/(Math.PI * tP.getPorodConstant()) * j;
 		System.out.println("T = " + t);
 
-		DoubleDataset tset = new DoubleDataset(new double[] {t}, new int[] {1});
+		Dataset tset = DatasetFactory.createFromObject(new double[] {t});
 		tset.setName("Crystallite thickness");
 		tset.squeeze();
 		

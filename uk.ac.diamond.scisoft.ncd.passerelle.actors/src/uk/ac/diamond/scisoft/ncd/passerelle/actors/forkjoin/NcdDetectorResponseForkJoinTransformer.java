@@ -24,11 +24,18 @@ import java.util.concurrent.RecursiveAction;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.PositionIterator;
 
+import com.isencia.passerelle.actor.InitializationException;
+import com.isencia.passerelle.core.ErrorCode;
+
+import hdf.hdf5lib.H5;
+import hdf.hdf5lib.HDF5Constants;
+import hdf.hdf5lib.exceptions.HDF5Exception;
+import hdf.hdf5lib.exceptions.HDF5LibraryException;
 import ptolemy.data.ObjectToken;
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
@@ -39,14 +46,6 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-
-import com.isencia.passerelle.actor.InitializationException;
-import com.isencia.passerelle.core.ErrorCode;
-
-import hdf.hdf5lib.H5;
-import hdf.hdf5lib.HDF5Constants;
-import hdf.hdf5lib.exceptions.HDF5Exception;
-import hdf.hdf5lib.exceptions.HDF5LibraryException;
 
 /**
  * Actor for correcting input data for detector response
@@ -156,7 +155,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();
@@ -178,8 +177,8 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 				float[] mydata = (float[]) myobj[0];
 				double[] myerrors = (double[]) myobj[1];
 
-				Dataset myres = new FloatDataset(mydata, dataShape);
-				myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+				Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
+				myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, dataShape));
 
 				long[] frames = sliceData.getFrames();
 				long[] start_pos = (long[]) ConvertUtils.convert(sliceData.getStart(), long[].class);

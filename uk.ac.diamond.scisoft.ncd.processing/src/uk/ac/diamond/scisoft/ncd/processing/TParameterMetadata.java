@@ -9,7 +9,7 @@
 
 package uk.ac.diamond.scisoft.ncd.processing;
 
-import org.eclipse.dawnsci.analysis.api.metadata.MetadataType;
+import org.eclipse.january.metadata.MetadataType;
 
 /**
  * Metadata to carry the fitted parameters through the NCD/SAXS processing chain 

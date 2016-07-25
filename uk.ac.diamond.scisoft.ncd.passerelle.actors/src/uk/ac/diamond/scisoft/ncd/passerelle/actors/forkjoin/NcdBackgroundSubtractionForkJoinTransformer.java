@@ -24,23 +24,11 @@ import java.util.concurrent.RecursiveAction;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.PositionIterator;
-
-import ptolemy.data.DoubleToken;
-import ptolemy.data.expr.Parameter;
-import ptolemy.kernel.CompositeEntity;
-import ptolemy.kernel.util.IllegalActionException;
-import ptolemy.kernel.util.NameDuplicationException;
-import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
-import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
-import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
-import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
-import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.PositionIterator;
 
 import com.isencia.passerelle.actor.InitializationException;
 import com.isencia.passerelle.actor.v5.ProcessRequest;
@@ -55,6 +43,17 @@ import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import hdf.hdf5lib.exceptions.HDF5LibraryException;
+import ptolemy.data.DoubleToken;
+import ptolemy.data.expr.Parameter;
+import ptolemy.kernel.CompositeEntity;
+import ptolemy.kernel.util.IllegalActionException;
+import ptolemy.kernel.util.NameDuplicationException;
+import uk.ac.diamond.scisoft.ncd.core.BackgroundSubtraction;
+import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
+import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdDataUtils;
+import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
+import uk.ac.diamond.scisoft.ncd.passerelle.actors.core.NcdProcessingObject;
 
 /**
  * Actor for subtracting background from input data
@@ -234,7 +233,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					inputData.setError(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
-					DoubleDataset inputErrorsBuffer = new DoubleDataset(inputData);
+					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
 					inputData.setErrorBuffer(inputErrorsBuffer);
 				}
 				lock.unlock();
@@ -292,7 +291,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 				float[] mydata = (float[]) myobj[0];
 				double[] myerror = (double[]) myobj[1];
 
-				Dataset myres = new FloatDataset(mydata, inputData.getShape());
+				Dataset myres = DatasetFactory.createFromObject(mydata, inputData.getShape());
 				myres.setErrorBuffer(myerror);
 
 

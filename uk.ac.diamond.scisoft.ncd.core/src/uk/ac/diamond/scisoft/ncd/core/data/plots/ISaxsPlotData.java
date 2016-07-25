@@ -16,8 +16,8 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.IDataset;
 
 public interface ISaxsPlotData {
 	

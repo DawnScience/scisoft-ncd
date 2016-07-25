@@ -16,11 +16,11 @@
 
 package uk.ac.diamond.scisoft.ncd.core;
 
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Maths;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.Maths;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -102,7 +102,7 @@ public class SectorIntegration {
 				int radrange = radset.getShape()[0];
 				radset.resize(new int[] { 1, radrange });
 				if (myraddata  == null) {
-					myraddata  = DatasetFactory.zeros(new int[] { frames, radrange }, radset.getDtype());
+					myraddata  = DatasetFactory.zeros(new int[] { frames, radrange }, radset.getDType());
 				}
 				myraddata.setSlice(radset, new int[] { i, 0 }, new int[] { i + 1, radrange }, null);
 				
@@ -127,7 +127,7 @@ public class SectorIntegration {
 				int azrange = azset.getShape()[0];
 				azset.resize(new int[] { 1, azrange });
 				if (myazdata == null) {
-					myazdata   = DatasetFactory.zeros(new int[] { frames, azrange }, azset.getDtype());
+					myazdata   = DatasetFactory.zeros(new int[] { frames, azrange }, azset.getDType());
 				}
 				myazdata.setSlice(azset, new int[] { i, 0 }, new int[] { i + 1, azrange }, null);
 				if (doErrors) {

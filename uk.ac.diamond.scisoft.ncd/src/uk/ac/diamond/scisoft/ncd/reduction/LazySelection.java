@@ -25,10 +25,10 @@ import org.apache.commons.math3.util.MultidimensionalCounter;
 import org.apache.commons.math3.util.MultidimensionalCounter.Iterator;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -76,7 +76,7 @@ public class LazySelection extends LazyDataReduction {
 		long[] count = new long[frames.length];
 		Arrays.fill(count, 1);
 		
-		int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
+		int dtype = HDF5Utils.getDType(ids.dataclass_id, ids.datasize_id);
 		Dataset data = DatasetFactory.zeros(block_int, dtype);
 		long output_data_id = NcdNexusUtils.makedata(output_group_id, "data", ids.datatype_id, framesTotal, true, "counts");
 		long output_dataspace_id = H5.H5Dget_space(output_data_id);

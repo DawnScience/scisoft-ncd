@@ -24,13 +24,13 @@ import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.IProgressMonitor;
 import org.eclipse.core.runtime.NullProgressMonitor;
-import org.eclipse.dawnsci.analysis.api.dataset.SliceND;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
-import org.eclipse.dawnsci.analysis.dataset.impl.SliceIterator;
 import org.eclipse.dawnsci.hdf.object.Nexus;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.IndexIterator;
+import org.eclipse.january.dataset.ShapeUtils;
+import org.eclipse.january.dataset.SliceIterator;
+import org.eclipse.january.dataset.SliceND;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -119,7 +119,7 @@ public class LazyAverage extends LazyDataReduction {
 		int[] step = Arrays.copyOf(framesAve_int, framesAve_int.length);
 		Arrays.fill(step, 0, framesAve_int.length - dim, 1);
 		SliceND slice = new SliceND(iter_array, null, iter_array, step);
-		IndexIterator iter = new SliceIterator(iter_array, AbstractDataset.calcSize(iter_array), slice);
+		IndexIterator iter = new SliceIterator(iter_array, ShapeUtils.calcSize(iter_array), slice);
 		
 		// This loop iterates over the output averaged dataset image by image
 		while (iter.hasNext()) {
@@ -157,7 +157,7 @@ public class LazyAverage extends LazyDataReduction {
 			}
 			
 			slice = new SliceND(data_stop, data_start, data_stop, data_step);
-			IndexIterator data_iter = new SliceIterator(data_stop, AbstractDataset.calcSize(data_stop), slice);
+			IndexIterator data_iter = new SliceIterator(data_stop, ShapeUtils.calcSize(data_stop), slice);
 			
 			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
 			Dataset ave_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);

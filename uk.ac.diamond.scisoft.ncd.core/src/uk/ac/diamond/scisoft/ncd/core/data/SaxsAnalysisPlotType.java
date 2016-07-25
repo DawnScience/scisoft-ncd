@@ -20,10 +20,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 
 import org.apache.commons.math3.util.Pair;
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IndexIterator;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.IndexIterator;
 
 import uk.ac.diamond.scisoft.ncd.core.data.plots.DebyeBuechePlotData;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.GuinierPlotData;

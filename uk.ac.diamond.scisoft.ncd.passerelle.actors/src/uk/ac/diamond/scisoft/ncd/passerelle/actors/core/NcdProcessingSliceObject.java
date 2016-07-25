@@ -19,7 +19,7 @@ package uk.ac.diamond.scisoft.ncd.passerelle.actors.core;
 import java.util.concurrent.locks.ReentrantLock;
 
 import org.eclipse.dawnsci.analysis.api.message.DataMessageComponent;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
+import org.eclipse.january.dataset.Dataset;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 

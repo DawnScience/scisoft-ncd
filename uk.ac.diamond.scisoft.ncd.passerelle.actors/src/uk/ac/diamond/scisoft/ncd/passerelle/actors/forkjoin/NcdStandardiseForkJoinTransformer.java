@@ -24,10 +24,10 @@ import java.util.concurrent.RecursiveAction;
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.lang.ArrayUtils;
 import org.eclipse.core.runtime.OperationCanceledException;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
 
 import ptolemy.data.expr.Parameter;
 import ptolemy.kernel.CompositeEntity;
@@ -124,7 +124,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 					}
 					
-					int dtype = HDF5Utils.getDtype(dataclass, datasize);
+					int dtype = HDF5Utils.getDType(dataclass, datasize);
 					data = DatasetFactory.zeros(grid, dtype);
 					if ((dataspace_id > 0) && (memspace_id > 0)) {
 						int read_id = H5.H5Dread(
@@ -153,7 +153,7 @@ public class NcdStandardiseForkJoinTransformer extends NcdAbstractDataForkJoinTr
 						throw new HDF5Exception("H5 select hyperslab error: can't allocate memory to read data");
 					}
 					
-					int errdtype = HDF5Utils.getDtype(errorclass, errorsize);
+					int errdtype = HDF5Utils.getDType(errorclass, errorsize);
 					errors = DatasetFactory.zeros(grid, errdtype);
 					if ((errorspace_id > 0) && (errormemspace_id > 0)) {
 						int read_id = H5.H5Dread(

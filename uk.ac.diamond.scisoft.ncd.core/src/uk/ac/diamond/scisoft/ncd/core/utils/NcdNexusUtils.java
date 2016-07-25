@@ -22,9 +22,9 @@ import java.util.Iterator;
 import java.util.List;
 
 import org.apache.commons.beanutils.ConvertUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -322,7 +322,7 @@ public final class NcdNexusUtils {
 			}
 			
 			int rank = block_data.length;
-			int dtype = HDF5Utils.getDtype(ids.dataclass_id, ids.datasize_id);
+			int dtype = HDF5Utils.getDType(ids.dataclass_id, ids.datasize_id);
 			int[] block_data_int = (int[]) ConvertUtils.convert(ids.block, int[].class);
 			data = DatasetFactory.zeros(block_data_int, dtype);
 			memspace_id = H5.H5Screate_simple(rank, ids.block, null);

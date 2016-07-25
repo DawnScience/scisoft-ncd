@@ -11,18 +11,17 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.util.ArrayList;
 
-import org.eclipse.dawnsci.analysis.api.dataset.IDataset;
-import org.eclipse.dawnsci.analysis.api.monitor.IMonitor;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
 import org.eclipse.dawnsci.analysis.api.processing.OperationException;
 import org.eclipse.dawnsci.analysis.api.processing.OperationRank;
-import org.eclipse.dawnsci.analysis.dataset.impl.AbstractDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
 import org.eclipse.dawnsci.analysis.dataset.operations.AbstractOperation;
+import org.eclipse.january.IMonitor;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.FloatDataset;
+import org.eclipse.january.dataset.IDataset;
+import org.eclipse.january.dataset.IntegerDataset;
 
 import uk.ac.diamond.scisoft.ncd.core.DetectorResponse;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
@@ -69,7 +68,7 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 			errors = (FloatDataset) slice.getError();
 		}
 		else {
-			errors = (FloatDataset) data.cast(AbstractDataset.FLOAT32);
+			errors = data.cast(FloatDataset.class);
 		}
 		int[] flatShape = data.getShape();
 
@@ -78,8 +77,8 @@ public class NcdDetectorResponseOperation extends AbstractOperation<NcdDetectorR
 		float[] mydata = (float[]) detData[0];
 		double[] myerrors = (double[]) detData[1];
 
-		Dataset myres = new FloatDataset(mydata, slice.getShape());
-		myres.setErrorBuffer(new DoubleDataset(myerrors, slice.getShape()));
+		Dataset myres = DatasetFactory.createFromObject(mydata, slice.getShape());
+		myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, slice.getShape()));
 		copyMetadata(slice, myres);
 		toReturn.setData(myres);
 		return toReturn;

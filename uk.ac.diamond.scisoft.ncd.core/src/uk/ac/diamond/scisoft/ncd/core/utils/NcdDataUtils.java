@@ -22,9 +22,10 @@ import java.util.Collections;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.validator.routines.IntegerValidator;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetUtils;
-import org.eclipse.dawnsci.analysis.dataset.impl.IntegerDataset;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
+import org.eclipse.january.dataset.DatasetUtils;
+import org.eclipse.january.dataset.IntegerDataset;
 
 /**
  * This class contains utility methods for manipulating data for NCD data reduction
@@ -96,7 +97,7 @@ public class NcdDataUtils {
 			String tmpFormat = dimFormat[i];
 			
 			if (tmpFormat.equals("")) {
-				tmpList.add(IntegerDataset.createRange(frames[i]).getData());
+				tmpList.add(DatasetFactory.createRange(IntegerDataset.class, frames[i]).getData());
 				continue;
 			}
 			
@@ -121,12 +122,12 @@ public class NcdDataUtils {
 				if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
 					sliceEnd = Math.min(frames[i],Integer.valueOf(lastValue) + 1);
 				
-				int[] slice = IntegerDataset.createRange(sliceStart, sliceEnd, 1).getData();
+				int[] slice = DatasetFactory.createRange(IntegerDataset.class, sliceStart, sliceEnd, 1).getData();
 				for (int l = 0; l < slice.length; l++)
 					tmpSel.add(slice[l]);
 			}
 			if (tmpSel.isEmpty())
-				tmpList.add(IntegerDataset.createRange(frames[i]).getData());
+				tmpList.add(DatasetFactory.createRange(IntegerDataset.class, frames[i]).getData());
 			else
 				tmpList.add(ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {})));
 		}
@@ -168,12 +169,12 @@ public class NcdDataUtils {
 			if (!(lastValue.isEmpty()) && integerValidator.isValid(lastValue))
 				sliceEnd = Math.min(axes,Integer.valueOf(lastValue) + 1);
 			
-			int[] slice = IntegerDataset.createRange(sliceStart, sliceEnd, 1).getData();
+			int[] slice = DatasetFactory.createRange(IntegerDataset.class, sliceStart, sliceEnd, 1).getData();
 			for (int l = 0; l < slice.length; l++)
 				tmpSel.add(slice[l]);
 		}
 		if (tmpSel.isEmpty())
-			return IntegerDataset.createRange(1, axes, 1).getData();
+			return DatasetFactory.createRange(IntegerDataset.class, 1, axes, 1).getData();
 
 		return ArrayUtils.toPrimitive(tmpSel.toArray(new Integer[] {}));
 	}
@@ -213,11 +214,11 @@ public class NcdDataUtils {
 		bgData = DatasetUtils.transpose(bgData, ArrayUtils.toPrimitive(nomatchBgDims.toArray(new Integer[] {})));
 		
 		// Calculate permutations to restore original data shapes after processing
-		IntegerDataset revPermData = new IntegerDataset(nomatchDataDims.size());
+		IntegerDataset revPermData = DatasetFactory.zeros(IntegerDataset.class, nomatchDataDims.size());
 		for(int i = 0; i < nomatchDataDims.size(); i++) {
 			revPermData.set(nomatchDataDims.indexOf(i), i);
 		}
-		IntegerDataset revPermBg = new IntegerDataset(nomatchBgDims.size());
+		IntegerDataset revPermBg = DatasetFactory.zeros(IntegerDataset.class, nomatchBgDims.size());
 		for(int i = 0; i < nomatchBgDims.size(); i++) {
 			revPermBg.set(nomatchBgDims.indexOf(i), i);
 		}

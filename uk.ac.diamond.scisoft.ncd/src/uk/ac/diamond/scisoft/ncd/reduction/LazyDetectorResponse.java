@@ -22,12 +22,10 @@ import java.util.List;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
-import org.eclipse.dawnsci.analysis.dataset.impl.Dataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.DatasetFactory;
-import org.eclipse.dawnsci.analysis.dataset.impl.DoubleDataset;
-import org.eclipse.dawnsci.analysis.dataset.impl.FloatDataset;
 import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
+import org.eclipse.january.dataset.Dataset;
+import org.eclipse.january.dataset.DatasetFactory;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -81,7 +79,7 @@ public class LazyDetectorResponse extends LazyDataReduction {
 		int input_datasize_id = (int) H5.H5Tget_size(input_datatype_id);
 		
 		int rank = H5.H5Sget_simple_extent_ndims(input_dataspace_id);
-		int dtype = HDF5Utils.getDtype(input_dataclass_id, input_datasize_id);
+		int dtype = HDF5Utils.getDType(input_dataclass_id, input_datasize_id);
 		
 		long[] drFrames = new long[rank];
 		H5.H5Sget_simple_extent_dims(input_dataspace_id, drFrames, null);
@@ -126,8 +124,8 @@ public class LazyDetectorResponse extends LazyDataReduction {
 			float[] mydata = (float[]) myobj[0];
 			double[] myerrors = (double[]) myobj[1];
 			
-			Dataset myres = new FloatDataset(mydata, dataShape);
-			myres.setErrorBuffer(new DoubleDataset(myerrors, dataShape));
+			Dataset myres = DatasetFactory.createFromObject(mydata, dataShape);
+			myres.setErrorBuffer(DatasetFactory.createFromObject(myerrors, dataShape));
 			
 			try {
 				lock.acquire();
