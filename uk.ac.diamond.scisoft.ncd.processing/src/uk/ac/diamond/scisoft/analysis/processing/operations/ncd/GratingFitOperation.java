@@ -144,7 +144,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 			// Fit 10 pseudo-Voigt peaks, and eliminate any with a FWHM greater
 			// than 10 pixels, since these will not be diffraction fringes
-			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedLog.getSize()), alignedLog, PseudoVoigt.class, 10);
+			List<IPeak> allPeaks = Generic1DFitter.fitPeaks(DatasetFactory.createRange(alignedLog.getSize()), alignedLog, PseudoVoigt.class, 10);
 
 			// List, then remove all peaks with FWHM > 10 pixels
 			List<IPeak> fatPeaks = new ArrayList<IPeak>();
@@ -235,7 +235,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 
 		Dataset alignedIntegral = boxIntegrationAtDegreeAngle(input, angle, boxShape, shiftedBeamCentre, bounds);		
 		// Fit a single peak to the data
-		List<IPeak> thePeaks = Generic1DFitter.fitPeaks(DoubleDataset.createRange(alignedIntegral.getSize()), alignedIntegral, PseudoVoigt.class, 1);
+		List<IPeak> thePeaks = Generic1DFitter.fitPeaks(DatasetFactory.createRange(alignedIntegral.getSize()), alignedIntegral, PseudoVoigt.class, 1);
 		// This is the distance from the new origin along the shifted box edge at which the peak occurs
 		double peakLocation = thePeaks.get(0).getPosition();
 
@@ -286,7 +286,7 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		
 		// Take the first derivative of the first half of the FT'd data
 		for (int i = 0; i < nangles; i++) {
-			Dataset x = DoubleDataset.createRange(nData/2+1);
+			Dataset x = DatasetFactory.createRange(nData/2+1);
 			Dataset y =  allFourier.getSlice(new int[]{i, 0},  new int[]{i+1, nData/2+1}, new int[]{1, 1}).squeeze();
 			Dataset ftDerivative = Maths.derivative(x, y, 2);
 			// find the maxima and minima of the power spectrum.
