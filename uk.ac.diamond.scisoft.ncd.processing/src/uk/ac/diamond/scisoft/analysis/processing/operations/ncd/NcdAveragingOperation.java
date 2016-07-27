@@ -135,7 +135,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
 				try {
-					errorSum = aggregateErrors.getSlice().sum(false, 0);
+					errorSum = aggregateErrors.getSlice().sum(0, false);
 				} catch (DatasetException e) {
 					throw new OperationException(this, e);
 				}
@@ -143,7 +143,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 
 			Dataset out;
 			try {
-				out = aggregate.getSlice().mean(false, 0);
+				out = aggregate.getSlice().mean(0, false);
 			} catch (DatasetException e) {
 				throw new OperationException(this, e);
 			}
