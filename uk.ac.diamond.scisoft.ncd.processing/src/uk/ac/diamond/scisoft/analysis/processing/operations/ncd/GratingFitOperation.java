@@ -66,12 +66,22 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 	@Override
 	protected OperationData process(IDataset input, IMonitor monitor) throws OperationException {
 		double[] beamCentre = model.getBeamCentre();
+
 		Map<GratingFitKeys, Double> fitResults = fitGrating(input, beamCentre);
+
+		double gratingSpacing = model.getSpacing();
+		double beamEnergy = model.getEnergy();
+		double pixelPitch = model.getPixelPitch();
+		
+		final double hc = 1.2398419738620932; // keV nm 
+		
+		double detectorDistance = fitResults.get(GratingFitKeys.FRINGE_SPACING) * pixelPitch * gratingSpacing * beamEnergy/hc;
 		
 		if (fitResults != null) {
 			System.out.println("Grating fringe spacing on detector = " + fitResults.get(GratingFitKeys.FRINGE_SPACING) + " px");
 			System.out.println("Beam centre: (" + fitResults.get(GratingFitKeys.BEAM_CENTRE_X) + ", " + fitResults.get(GratingFitKeys.BEAM_CENTRE_Y) + ")");
 			System.out.println("Diffraction pattern at " + fitResults.get(GratingFitKeys.PATTERN_ANGLE) + "°");
+			System.out.println("Detector distance " + detectorDistance + " m");
 		}
 		
 		return new OperationData(input);
@@ -307,7 +317,8 @@ public class GratingFitOperation extends AbstractOperation<GratingFitModel, Oper
 		}
 		
 		mindex = shiftedData.minPos()[0];
-		Dataset parabolaX = DatasetFactory.createRange(mindex-1, mindex+2, 1);
+//		Dataset parabolaX = DatasetFactory.createRange(mindex-1, mindex+2, 1);
+		Dataset parabolaX = DatasetFactory.createRange(mindex-1., mindex+2., 1.0, Dataset.FLOAT64);
 		Dataset parabolaY = shiftedData.getSlice(new int[]{mindex-1}, new int[]{mindex+2}, new int[]{1});
 		
 		AxesMetadata parabolaAxes;
