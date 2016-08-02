@@ -31,6 +31,7 @@ public class SurfaceQ {
 
 	private static final int nDim = 3;
 	private static final double hBarC = 1.9732697879296464; // keV Å 
+	@SuppressWarnings("unused") // surfaceLook is not yet used
 	private DoubleDataset surfaceNormal, surfaceLook;
 
 	/**
