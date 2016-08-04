@@ -35,6 +35,13 @@ public class SurfaceQ {
 	private DoubleDataset surfaceNormal, surfaceLook;
 
 	/**
+	 * Direction of the grazing incidence relative to the sample.
+	 */
+	public enum GrazingDirection {
+		XPOSITIVE, XNEGATIVE, YPOSITIVE, YNEGATIVE
+	}
+	
+	/**
 	 * Constructs an empty object
 	 */
 	public SurfaceQ() {
@@ -104,7 +111,76 @@ public class SurfaceQ {
 	public DoubleDataset qParallel(DiffractionMetadata dm) {
 		return qPerpPara(dm, false);
 	}
+	
+	/**
+	 * Calculates the minimum and maximum perpendicular momentum transfer.
+	 * <p>
+	 * Given a {@link DiffractionMetadata} object, return the minimum (0) and
+	 * maximum (1) values of the momentum transfer perpendicular to the
+	 * scattering surface.
+	 * @param dm
+	 * 			The diffraction metadata object
+	 * @return an array of {@link Dataset}s containing minimum and maximum of
+	 * 			the momentum transfer perpendicular to the scattering surface.
+	 */
+	public DoubleDataset[] qPerpendicularMinMax(DiffractionMetadata dm) {
+		return qPerpParaMinMax(dm, true);
+	}
 
+	/**
+	 * Calculates the minimum and maximum perpendicular momentum transfer.
+	 * <p>
+	 * Given a {@link DiffractionMetadata} object, return the minimum (0) and
+	 * maximum (1) magnitudes of the momentum transfer parallel to the
+	 * scattering surface.
+	 * @param dm
+	 * 			The diffraction metadata object
+	 * @return an array of {@link Dataset}s containing minimum and maximum of
+	 * 			the magnitude of the momentum transfer parallel to the
+	 * 			scattering surface.
+	 */
+	public DoubleDataset[] qParallelMinMax(DiffractionMetadata dm) {
+		return qPerpParaMinMax(dm, false);
+	}
+
+	/**
+	 * Calculates the surface normal, given a direction and an angle of the
+	 * surface.
+	 * @param direction
+	 * 					An enum specifying the direction in which the
+	 * 					surface scattering is occurring.
+	 * @param alpha
+	 * 				The angle of the surface to the incident beam.
+	 * @return The {@link Dataset} describing the unit surface normal in the
+	 * 			lab frame.
+	 */
+	public static DoubleDataset normalFromDirectionAndAngle(GrazingDirection direction, double alpha) {
+		DoubleDataset normal;
+		
+		switch (direction) {
+		case XPOSITIVE:
+			normal = DatasetFactory.createFromList(DoubleDataset.class, Arrays.asList(new Double[] {1.0, 0.0, 0.0}));
+			break;
+		case XNEGATIVE:
+			normal = DatasetFactory.createFromList(DoubleDataset.class, Arrays.asList(new Double[] {-1.0, 0.0, 0.0}));
+			break;
+		case YPOSITIVE:
+			normal = DatasetFactory.createFromList(DoubleDataset.class, Arrays.asList(new Double[] {0.0, 1.0, 0.0}));
+			break;
+		case YNEGATIVE:
+		default:
+			normal = DatasetFactory.createFromList(DoubleDataset.class, Arrays.asList(new Double[] {0.0, -1.0, 0.0}));
+			break;
+		}	
+		normal.imultiply(Math.cos(alpha));
+
+		// z component is always -sin(alpha)
+		normal.setItem(Math.sin(alpha), 2);
+		
+		return normal;
+	}
+	
+	
 	// Extract out all the common boilerplate for looping over the pixels in the detector
 	private DoubleDataset qPerpPara(DiffractionMetadata dm, boolean isPerpendicular) {
 		// For diffraction metadata, we can assume that the beam is on the +ve z-axis
@@ -127,7 +203,41 @@ public class SurfaceQ {
 		return qPerpPara;
 	}
 	
-	
+	// Extract all the common boilerplate for getting the min and max values of the coordinate out of a pixel
+	private DoubleDataset[] qPerpParaMinMax(DiffractionMetadata dm, boolean isPerpendicular) {
+		// For diffraction metadata, we can assume that the beam is on the +ve z-axis
+		DoubleDataset incidentBeam = (DoubleDataset) DatasetFactory.createFromList(Dataset.FLOAT64, Arrays.asList(0.0, 0.0, 1.0));
+		DetectorProperties dp = dm.getDetector2DProperties();
+		double beamEnergy = 2*Math.PI*hBarC/dm.getDiffractionCrystalEnvironment().getWavelength();
+
+		DoubleDataset qMin = DatasetFactory.zeros(dp.getPx(), dp.getPy());
+		DoubleDataset qMax = DatasetFactory.zeros(dp.getPx(), dp.getPy());
+
+		// Get the detector size in each direction
+		for (int ix = dp.getPx(); ix >= 0; ix--){
+			for (int jy = dp.getPy(); jy >= 0; jy--) {
+				// Initialize the min and max values to the opposite extrema
+				double qMinScalar = Double.MAX_VALUE,
+						qMaxScalar = -Double.MAX_VALUE;
+				// Loop over corner coordinates
+				for (int cx = 0; cx <= 1; cx++) {
+					for (int cy = 0; cy <=1 ; cy++) {
+						DoubleDataset pixelPosition = datasetFromVector3d(dp.pixelPosition(ix+cx, jy+cy));
+
+						double qPerpPara = (isPerpendicular) ? 
+								qPerpendicular(pixelPosition, incidentBeam, beamEnergy) :
+								qParallel(pixelPosition, incidentBeam, beamEnergy);
+						qMinScalar = Math.min(qMinScalar, qPerpPara);
+						qMaxScalar = Math.max(qMaxScalar, qPerpPara);
+					}
+				}
+				qMin.set(qMinScalar, ix, jy);
+				qMax.set(qMaxScalar, ix, jy);
+			}
+		}
+		
+		return new DoubleDataset[] {qMin, qMax};
+	}
 	
 	// Static functions
 	
