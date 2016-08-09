@@ -142,13 +142,6 @@
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyInteractiveModel"
              name="Kratky Fitting (Interactive)">
        </operation>
-       <operation
-             class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GratingFitOperation"
-             icon="icons/unchanged.png"
-             id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GratingFitOperation"
-             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.GratingFitModel"
-             name="Grating Fit">
-       </operation>
    </extension>
 
 </plugin>
