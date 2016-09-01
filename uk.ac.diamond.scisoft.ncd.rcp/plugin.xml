@@ -569,13 +569,6 @@
       </plotting_tool_page>
    </extension>
    <extension
-         point="org.eclipse.ui.intro.configExtension">
-      <configExtension
-            configId="org.dawnsci.intro.universalConfig"
-            content="intro/introContribution.xml">
-      </configExtension>
-   </extension>
-   <extension
          point="org.dawnsci.webintro.item">
       <introAction
             class="uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch"
