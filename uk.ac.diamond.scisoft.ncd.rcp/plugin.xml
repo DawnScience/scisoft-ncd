@@ -588,6 +588,15 @@
             ordering="2"
             parent_id="science_ncd">
       </introAction>
+      <introCategory
+            category_id="science_ncd"
+            description="(Non-Crystalline Diffraction)"
+            icon="intro/graphics/ncd_intro.png"
+            id="org.dawnsci.webintro.category.NCD"
+            name="NCD"
+            ordering="3"
+            parent_id="science">
+      </introCategory>
    </extension>
 
 </plugin>
