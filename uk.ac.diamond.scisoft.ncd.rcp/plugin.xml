@@ -571,15 +571,6 @@
    <extension
          point="org.dawnsci.webintro.item">
       <introAction
-            class="uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch"
-            description="Opens the perspective for non-crystalline diffraction data processing"
-            icon="intro/graphics/ncd_intro52.png"
-            id="uk.ac.diamond.scisoft.ncd.rcp.NcdPerspectiveLaunch"
-            name="NCD Data Reduction"
-            ordering="1"
-            parent_id="science_ncd">
-      </introAction>
-      <introAction
             class="uk.ac.diamond.scisoft.ncd.rcp.NcdCalibrationPerspectiveLaunch"
             description="Opens the perspective for calibration of non-crystalline diffraction data"
             icon="intro/graphics/ncd_calibration_intro52.png"
@@ -588,15 +579,6 @@
             ordering="2"
             parent_id="science_ncd">
       </introAction>
-      <introCategory
-            category_id="science_ncd"
-            description="(Non-Crystalline Diffraction)"
-            icon="intro/graphics/ncd_intro.png"
-            id="org.dawnsci.webintro.category.NCD"
-            name="NCD"
-            ordering="3"
-            parent_id="science">
-      </introCategory>
    </extension>
 
 </plugin>
