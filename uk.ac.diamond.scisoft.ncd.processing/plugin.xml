@@ -77,7 +77,7 @@
              description="Invariant Calculation"
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Invariant"
-             model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdInvariantModel"
              name="NCD Invariant">
        </operation>
        <operation
