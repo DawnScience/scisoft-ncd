@@ -70,11 +70,11 @@ public class OrientationOperation extends AbstractOperation<EmptyModel, Operatio
 		float[] myangle = (float[]) myobj[1];
 		float[] myvector = (float[]) myobj[2];
 
-		Dataset resultData = DatasetFactory.createFromObject(mydata, 1);
+		Dataset resultData = DatasetFactory.createFromObject(mydata, mydata.length);
 		resultData.setName("Data");
-		Dataset resultAngle = DatasetFactory.createFromObject(myangle, 1);
+		Dataset resultAngle = DatasetFactory.createFromObject(myangle, myangle.length);
 		resultAngle.setName("Angle");
-		Dataset resultVector = DatasetFactory.createFromObject(myvector, 1);
+		Dataset resultVector = DatasetFactory.createFromObject(myvector, myvector.length);
 		resultVector.setName("Vector");
 		return new OperationData(slice, new Serializable[]{resultData, resultAngle, resultVector});
 	}
