@@ -36,7 +36,7 @@ public class DegreeOfOrientation {
 
 	private static final int INTEGRATION_POINTS = 1000000;
 
-	public Object[] process(Serializable buffer, Serializable axis, final int[] dimensions) {
+	public Object[] process(Serializable buffer, Serializable axis, final int[] dimensions, final int symmetryFolds) {
 		
 		double[] parentaxis = (double[]) ConvertUtils.convert(axis, double[].class);
 		float[] parentdata = (float[]) ConvertUtils.convert(buffer, float[].class);
@@ -49,7 +49,7 @@ public class DegreeOfOrientation {
 		double[] sincosdata = new double[size];
 		
 		for (int i = 0; i < parentaxis.length; i++) {
-			myaxis[i] = Math.toRadians(parentaxis[i]);
+			myaxis[i] = Math.toRadians(parentaxis[i]) * symmetryFolds;
 			mydata[i] = parentdata[i];
 			float cos2alpha = (float) Math.cos(2.0*myaxis[i]);
 			float sin2alpha = (float) Math.sin(2.0*myaxis[i]);

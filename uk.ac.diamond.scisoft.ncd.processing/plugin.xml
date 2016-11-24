@@ -83,10 +83,10 @@
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
              class="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.OrientationOperation"
-             description="Degree of Orientation"
+             description="Perform a Cinader and Burghardt degree of orientation calculation"
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Orientation"
-             model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
+             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.OrientationModel"
              name="Degree of Orientation">
        </operation>
        <operation
