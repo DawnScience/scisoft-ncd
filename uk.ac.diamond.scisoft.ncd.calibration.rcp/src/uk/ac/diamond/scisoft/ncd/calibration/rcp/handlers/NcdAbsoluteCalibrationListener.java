@@ -246,7 +246,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		}
 		
 		CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
-		if (crb == null || !crb.containsKey(detectorSaxs)) {
+		if (crb == null) {
 			Status status = new Status(IStatus.ERROR, ID, "Couldn't find SAXS detector calibration data.");
 			StatusManager.getManager().handle(status, StatusManager.SHOW);
 			return;
