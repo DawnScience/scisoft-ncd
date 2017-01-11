@@ -99,7 +99,7 @@ public class NcdBackgroundSubtractionFromDataOperation<T extends NcdBackgroundSu
 		Dataset data = DatasetUtils.convertToDataset(slice);
 		Dataset errorBuffer = data.getErrorBuffer();
 		if (errorBuffer == null) {
-			Dataset error = data.getError();
+			Dataset error = data.getErrors();
 			if (error == null) {
 				errorBuffer = data.getSlice();
 			}

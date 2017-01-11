@@ -266,7 +266,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
         estPoints.setPointStyle(PointStyle.CIRCLE);
         estPoints.setPointSize(5);
         Dataset qDataset = DatasetFactory.createFromList(qEst);
-        qDataset.setError(DatasetFactory.createFromList(qEstError));
+        qDataset.setErrors(DatasetFactory.createFromList(qEstError));
         estPoints.setData(DatasetFactory.createFromList(peakPos), qDataset);
         plottingSystem.addTrace(estPoints);
         

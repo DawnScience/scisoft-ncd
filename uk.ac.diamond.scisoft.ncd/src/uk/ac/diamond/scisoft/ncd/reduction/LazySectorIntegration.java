@@ -216,13 +216,13 @@ public class LazySectorIntegration extends LazyDataReduction {
 				if (calculateAzimuthal && myazdata != null) {
 					writeResults(azimuth_id, myazdata, dataShape, dim);
 					if (myazdata.hasErrors()) {
-						writeResults(err_azimuth_id, myazdata.getError(), dataShape, dim);
+						writeResults(err_azimuth_id, myazdata.getErrors(), dataShape, dim);
 					}
 				}
 				if(calculateRadial && myraddata != null) {
 					writeResults(sector_id, myraddata, dataShape, dim);
 					if (myraddata.hasErrors()) {
-						writeResults(err_sector_id, myraddata.getError(), dataShape, dim);
+						writeResults(err_sector_id, myraddata.getErrors(), dataShape, dim);
 					}
 				}
 			} catch (Exception e) {

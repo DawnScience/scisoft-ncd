@@ -91,10 +91,10 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 				//copy errors from input datasets
 				List<Dataset> errorDatasets = new ArrayList<Dataset>(ssm.getTotalSlices());
 				for (int i=0; i < ssm.getTotalSlices(); ++i) {
-					errorDatasets.add(i, sliceData.get(i).getError());
+					errorDatasets.add(i, sliceData.get(i).getErrors());
 				}
 				Dataset errorDataset = NcdOperationUtils.convertListOfDatasetsToDataset(errorDatasets);
-				ag.setError(errorDataset);
+				ag.setErrors(errorDataset);
 				
 				//now set other metadata
 				ILazyDataset qAxis = sliceData.get(0).getMetadata(AxesMetadata.class).get(0).getAxis(0)[0];

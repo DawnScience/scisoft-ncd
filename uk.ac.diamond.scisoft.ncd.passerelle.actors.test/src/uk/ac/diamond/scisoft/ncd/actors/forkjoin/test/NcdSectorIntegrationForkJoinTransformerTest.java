@@ -201,7 +201,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
-		data.setError(error);
+		data.setErrors(error);
 	}
 
 	private class NcdMessageSink extends Sink {
@@ -339,7 +339,7 @@ public class NcdSectorIntegrationForkJoinTransformerTest {
 						Dataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axis_error_ids);
 						lock.unlock();
 						
-						axisData.setError(axisErrors);
+						axisData.setErrors(axisErrors);
 						
 						for (int h = 0; h < shape[0]; h++)
 						  for (int g = 0; g < shape[1]; g++)

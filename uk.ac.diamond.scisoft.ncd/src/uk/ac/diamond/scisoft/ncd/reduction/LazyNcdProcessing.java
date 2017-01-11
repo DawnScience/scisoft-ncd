@@ -485,7 +485,7 @@ public class LazyNcdProcessing {
 								if (tmp_errors_ids != null) { 
 									if(tmp_errors_ids.dataset_id >= 0) {
 										Dataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-										data.setError(errors);
+										data.setErrors(errors);
 									} else {
 										tmp_errors_ids.setSlice(currentSliceParams);
 									}
@@ -593,7 +593,7 @@ public class LazyNcdProcessing {
 							if (tmp_errors_ids != null) { 
 								if(tmp_errors_ids.dataset_id >= 0) {
 									Dataset errors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-									data.setError(errors);
+									data.setErrors(errors);
 								} else {
 									tmp_errors_ids.setSlice(currentSliceParams);
 								}
@@ -630,22 +630,22 @@ public class LazyNcdProcessing {
 							if(tmp_errors_bgIds != null) {
 								if (tmp_errors_bgIds.dataset_id >= 0) {
 									Dataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceParams, tmp_errors_bgIds);
-									bgData.setError(bgErrors);
+									bgData.setErrors(bgErrors);
 								} else {
 									tmp_errors_bgIds.setSlice(bgSliceParams);
 								}
 							}
 							Dataset[] remapData = NcdDataUtils.matchDataDimensions(data, bgData);
-							Dataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getError(), bgData.getError());
-							remapData[0].setError(remapErrors[0]);
-							remapData[1].setError(remapErrors[1]);
+							Dataset[] remapErrors = NcdDataUtils.matchDataDimensions(data.getErrors(), bgData.getErrors());
+							remapData[0].setErrors(remapErrors[0]);
+							remapData[1].setErrors(remapErrors[1]);
 							Dataset res = lazyBackgroundSubtraction.execute(dim, remapData[0], remapData[1], currentSliceParams, lock);
 							remapData[0] = res;
-							remapErrors[0] = res.getError();
+							remapErrors[0] = res.getErrors();
 
 							// restore original axis order in output dataset
 							data = DatasetUtils.transpose(remapData[0], (int[]) remapData[2].getBuffer());
-							data.setError(DatasetUtils.transpose(remapErrors[0], (int[]) remapErrors[2].getBuffer()));
+							data.setErrors(DatasetUtils.transpose(remapErrors[0], (int[]) remapErrors[2].getBuffer()));
 						}
 
 						if (flags.isEnableInvariant()) {
@@ -913,7 +913,7 @@ public class LazyNcdProcessing {
 				}
 			}
 			if (hasErrors) {
-				qaxis.setError(qaxisErr);
+				qaxis.setErrors(qaxisErr);
 			}
 		}
 		

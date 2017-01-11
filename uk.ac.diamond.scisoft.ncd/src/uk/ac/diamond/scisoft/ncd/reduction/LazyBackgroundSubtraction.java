@@ -216,7 +216,7 @@ public class LazyBackgroundSubtraction extends LazyDataReduction {
 				long err_type_id = H5.H5Dget_type(bg_errors_id);
 				long err_memspace_id = H5.H5Screate_simple(block.length, block, null);
 				H5.H5Sselect_hyperslab(err_filespace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
-				H5.H5Dwrite(bg_errors_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+				H5.H5Dwrite(bg_errors_id, err_type_id, err_memspace_id, err_filespace_id, HDF5Constants.H5P_DEFAULT, myres.getErrors().getBuffer());
 				
 			} finally {
 				lock.release();

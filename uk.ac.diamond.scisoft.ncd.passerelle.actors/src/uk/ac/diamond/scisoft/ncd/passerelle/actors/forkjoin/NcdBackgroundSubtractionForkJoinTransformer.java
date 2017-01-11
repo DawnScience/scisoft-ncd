@@ -230,7 +230,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
 					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
@@ -263,7 +263,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					DataSliceIdentifiers bgErrorsIDs = new DataSliceIdentifiers();
 					bgErrorsIDs.setIDs(bgDetectorGroupID, bgErrorsID);
 					Dataset bgErrors = NcdNexusUtils.sliceInputData(bgSliceData, bgErrorsIDs);
-					bgData.setError(bgErrors);
+					bgData.setErrors(bgErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
 					DoubleDataset bgErrors = (DoubleDataset) DatasetUtils.cast(bgData.clone(), Dataset.FLOAT64);
@@ -335,7 +335,7 @@ public class NcdBackgroundSubtractionForkJoinTransformer extends NcdAbstractData
 					throw new HDF5Exception("Failed to allocate space for writing BackgroundSubtraction error data");
 				}
 				writeID = H5.H5Dwrite(resultErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT,
-						myres.getError().getBuffer());
+						myres.getErrors().getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write BackgroundSubtraction error data into the results file");
 				}

@@ -205,7 +205,7 @@ public class NcdDetectorResponseForkJoinTransformerTest {
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
-		data.setError(error);
+		data.setErrors(error);
 	}
 
 	private class NcdMessageSink extends Sink {

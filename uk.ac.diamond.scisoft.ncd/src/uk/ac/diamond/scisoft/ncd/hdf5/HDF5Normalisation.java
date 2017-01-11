@@ -106,7 +106,7 @@ public class HDF5Normalisation extends HDF5ReductionDetector {
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET,
 						errIds.start, errIds.stride, errIds.count, errIds.block);
 				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id,
-						HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+						HDF5Constants.H5P_DEFAULT, myres.getErrors().getBuffer());
 				
 			} catch (Exception e) {
 				throw e;

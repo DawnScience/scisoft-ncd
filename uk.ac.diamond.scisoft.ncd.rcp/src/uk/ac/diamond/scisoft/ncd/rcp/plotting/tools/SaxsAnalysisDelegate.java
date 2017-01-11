@@ -150,19 +150,19 @@ class SaxsAnalysisDelegate {
 				IDataset xErrors = null;
 				IDataset yErrors = null;
 				if (xData.hasErrors()) {
-					xErrors = xData.getError().clone();
+					xErrors = xData.getErrors().clone();
 				}
 				if (yData.hasErrors()) {
-					yErrors = yData.getError().clone();
+					yErrors = yData.getErrors().clone();
 				}
 				
 				Dataset xTraceData = DatasetUtils.convertToDataset(xData.clone());
 				if (xErrors != null) {
-					xTraceData.setError(xErrors);
+					xTraceData.setErrors(xErrors);
 				}
 				Dataset yTraceData = DatasetUtils.convertToDataset(yData.clone());
 				if (yErrors != null) {
-					yTraceData.setError(yErrors);
+					yTraceData.setErrors(yErrors);
 				}
 
 				try {

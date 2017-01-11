@@ -110,12 +110,12 @@ public class LazySelection extends LazyDataReduction {
 				H5.H5Sselect_hyperslab(error_ids.dataspace_id, HDF5Constants.H5S_SELECT_SET, start, block, count, block);
 				H5.H5Dread(error_ids.dataset_id, error_ids.datatype_id, errors_memspace_id, error_ids.dataspace_id, HDF5Constants.H5P_DEFAULT,
 						errors.getBuffer());
-				data.setError(errors);
+				data.setErrors(errors);
 			} else {
 				Object obj = DatasetUtils.createJavaArray(data);
 				Dataset error = DatasetFactory.createFromObject(obj);
 				error.ipower(0.5);
-				data.setError(error);
+				data.setErrors(error);
 			}
 
 			H5.H5Sselect_hyperslab(output_dataspace_id, HDF5Constants.H5S_SELECT_SET, writePosition, block, count,
@@ -126,7 +126,7 @@ public class LazySelection extends LazyDataReduction {
 			H5.H5Sselect_hyperslab(errors_dataspace_id, HDF5Constants.H5S_SELECT_SET, writePosition, block, count,
 					block);
 			H5.H5Dwrite(errors_data_id, errors_datatype_id, errors_memspace_id, errors_dataspace_id, HDF5Constants.H5P_DEFAULT,
-					data.getError().getBuffer());
+					data.getErrors().getBuffer());
 			
 			if (monitor.isCanceled()) {
 				return null;
