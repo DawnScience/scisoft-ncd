@@ -10,7 +10,8 @@
             icon="icons/ncdnorm.png"
             id="uk.ac.diamond.scisoft.analysis.processing.Normalisation"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NormalisationModel"
-            name="Normalisation for NCD">
+            name="Normalisation for NCD"
+            visible="false">
       </operation>
       <operation
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -19,7 +20,8 @@
             icon="icons/ncddetresp.png"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdDetectorResponse"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdDetectorResponseModel"
-            name="NCD Detector Response">
+            name="NCD Detector Response"
+            visible="false">
       </operation>
       <operation
             category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -27,7 +29,8 @@
             icon="icons/ncdsectInt.png"
             id="uk.ac.diamond.scisoft.analysis.processing.NcdSectorIntegration"
             model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdSectorIntegrationModel"
-            name="NCD Sector Integration">
+            name="NCD Sector Integration"
+            visible="false">
       </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -35,7 +38,8 @@
              icon="icons/ncdmask.png"
              id="uk.ac.diamond.scisoft.analysis.processing.ImportNcdMask"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.mask.ImportMaskModel"
-             name="Import NCD Mask from File">
+             name="Import NCD Mask from File"
+             visible="false">
       </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -43,7 +47,8 @@
              icon="icons/ncdsubtract.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtraction"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionModel"
-             name="NCD Background Subtraction">
+             name="NCD Background Subtraction"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -51,7 +56,8 @@
              icon="icons/ncdsubtract.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdBackgroundSubtractionFromData"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdBackgroundSubtractionFromDataModel"
-             name="NCD Background Subtraction From Current Data">
+             name="NCD Background Subtraction From Current Data"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -87,7 +93,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Orientation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.OrientationModel"
-             name="Degree of Orientation">
+             name="Degree of Orientation"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
