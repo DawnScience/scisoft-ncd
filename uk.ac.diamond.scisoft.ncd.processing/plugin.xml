@@ -84,7 +84,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Invariant"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdInvariantModel"
-             name="NCD Invariant">
+             name="NCD Invariant"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
