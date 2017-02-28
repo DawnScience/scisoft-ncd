@@ -66,7 +66,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.Guinier"
              model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
-             name="Guinier calculation">
+             name="Guinier calculation"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -75,7 +76,8 @@
              icon="icons/meanfilt.png"
              id="uk.ac.diamond.scisoft.analysis.processing.NcdAveraging"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.NcdAveragingModel"
-             name="NCD Averaging">
+             name="NCD Averaging"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -104,7 +106,8 @@
              icon="icons/exptext.png"
              id="uk.ac.diamond.scisoft.analysis.processing.ExportNcd1d"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.ExportNcd1dModel"
-             name="Export NCD 1-D Data">
+             name="Export NCD 1-D Data"
+             visible="false">
        </operation>
        <category
              id="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -116,7 +119,8 @@
              icon="icons/saxs_tool.png"
              id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotOperation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.SaxsPlotModel"
-             name="SAXS Tools">
+             name="SAXS Tools"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
