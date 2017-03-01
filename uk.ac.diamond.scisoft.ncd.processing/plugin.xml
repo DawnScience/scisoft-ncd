@@ -128,7 +128,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.TParameterOperation"
              model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
-             name="T parameter calculation">
+             name="T parameter calculation"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -136,7 +137,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.ncd.processing.PorodInteractiveOperation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.PorodInteractiveModel"
-             name="Porod Operation (Interactive)">
+             name="Porod Operation (Interactive)"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -144,7 +146,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.ncd.processing.KratkyFromPorodBackgroundOperation"
              model="org.eclipse.dawnsci.analysis.api.processing.model.EmptyModel"
-             name="Kratky From Porod Background">
+             name="Kratky From Porod Background"
+             visible="false">
        </operation>
        <operation
              category="uk.ac.diamond.scisoft.ncd.processing.ncdCategory"
@@ -152,7 +155,8 @@
              icon="icons/unchanged.png"
              id="uk.ac.diamond.scisoft.ncd.processing.KratkyInteractiveOperation"
              model="uk.ac.diamond.scisoft.analysis.processing.operations.ncd.KratkyInteractiveModel"
-             name="Kratky Fitting (Interactive)">
+             name="Kratky Fitting (Interactive)"
+             visible="false">
        </operation>
    </extension>
 
