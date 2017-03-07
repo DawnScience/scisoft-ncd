@@ -723,7 +723,10 @@ public class LazyNcdProcessing {
 		
 		if(flags.isEnableAverage()) {
 			monitor.beginTask(monitorFile + " : Averaging  datasets", IProgressMonitor.UNKNOWN);
-			int[] averageIndices = new int[] {frames.length - dim};
+			int[] averageIndices = new int[frames.length - dim];
+			for (int i = 0; i < averageIndices.length; i++) {
+				averageIndices[i] = i+1;
+			}
 			if (gridAverage != null) {
 				averageIndices = NcdDataUtils.createGridAxesList(gridAverage, frames.length - dim + 1);
 			}

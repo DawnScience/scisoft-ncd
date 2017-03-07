@@ -164,8 +164,8 @@ public class LazySectorIntegration extends LazyDataReduction {
 		err_azimuth_id.setIDs(sec_group_id, az_errors_id);
 		err_azimuth_id.setSlice(currentSliceParams);
 		
-			Dataset myazdata = null, myazerrors = null;
-			Dataset myraddata = null, myraderrors = null;
+		Dataset myazdata = null;
+		Dataset myraddata = null;
 
 			SectorIntegration sec = new SectorIntegration();
 			sec.setROI(intSector);
@@ -180,35 +180,21 @@ public class LazySectorIntegration extends LazyDataReduction {
 			Dataset[] mydata = sec.process(data, data.getShape()[0], mask);
 			int resLength =  dataShape.length - dim + 1;
 			if (calculateAzimuthal) {
-				myazdata = DatasetUtils.cast(mydata[0], Dataset.FLOAT32);
+				myazdata = mydata[0];
 				if (myazdata != null) {
-					if (myazdata.hasErrors()) {
-						myazerrors = mydata[0].getErrorBuffer();
-					}
-					
+					myazdata = DatasetUtils.cast(myazdata, Dataset.FLOAT32);
 					int[] resAzShape = Arrays.copyOf(dataShape, resLength);
 					resAzShape[resLength - 1] = myazdata.getShape()[myazdata.getRank() - 1];
 					myazdata = myazdata.reshape(resAzShape);
-					
-					if (myazerrors != null) {
-						myazerrors = myazerrors.reshape(resAzShape);
-						myazdata.setErrorBuffer(myazerrors);
-					}
 				}
 			}
 			if (calculateRadial) {
-				myraddata =  DatasetUtils.cast(mydata[1], Dataset.FLOAT32);
+				myraddata = mydata[1];
 				if (myraddata != null) {
-					if (myraddata.hasErrors()) {
-						myraderrors =  mydata[1].getErrorBuffer();
-					}
+					myraddata = DatasetUtils.cast(myraddata, Dataset.FLOAT32);
 					int[] resRadShape = Arrays.copyOf(dataShape, resLength);
 					resRadShape[resLength - 1] = myraddata.getShape()[myraddata.getRank() - 1];
 					myraddata = myraddata.reshape(resRadShape);
-					if (myraderrors != null) {
-						myraderrors = myraderrors.reshape(resRadShape);
-						myraddata.setErrorBuffer(myraderrors);
-					}
 				}
 			}
 			try {
