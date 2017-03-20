@@ -286,7 +286,7 @@ public class NcdLazyDataReductionTest {
 	    dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
-		data.setError(error);
+		data.setErrors(error);
 	}
 	
 	@Test
@@ -305,7 +305,7 @@ public class NcdLazyDataReductionTest {
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyNormalisation.configure(dim, shape, entry_id, processing_group_id);
 		Dataset outData = lazyNormalisation.execute(dim, data, slice, lock);
-		Dataset outErrors = outData.getError();
+		Dataset outErrors = outData.getErrors();
 		
 		for (int h = 0; h < shape[0]; h++) {
 		  for (int g = 0; g < shape[1]; g++) {
@@ -360,7 +360,7 @@ public class NcdLazyDataReductionTest {
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyBackgroundSubtraction.configure(dim, shape, processing_group_id);
 		Dataset outData = lazyBackgroundSubtraction.execute(dim, data, bgData, slice, lock);
-		Dataset outErrors = outData.getError();
+		Dataset outErrors = outData.getErrors();
 			
 		for (int h = 0; h < shape[0]; h++)
 		  for (int g = 0; g < shape[1]; g++)
@@ -392,7 +392,7 @@ public class NcdLazyDataReductionTest {
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		lazyDetectorResponse.configure(dim, shape, entry_id, processing_group_id);
 		Dataset outData = lazyDetectorResponse.execute(dim, data, slice, lock);
-		Dataset outErrors = outData.getError(); 
+		Dataset outErrors = outData.getErrors(); 
 		
 		for (int h = 0; h < shape[0]; h++)
  		  for (int g = 0; g < shape[1]; g++)
@@ -422,7 +422,7 @@ public class NcdLazyDataReductionTest {
 		slice.setStart(new int[] {0, 0, 0});
 		lazyInvariant.configure(dim, shape, entry_id, processing_group_id);
 		Dataset outData = lazyInvariant.execute(dim, data, slice, lock);
-		Dataset outErrors = outData.getError();
+		Dataset outErrors = outData.getErrors();
 		for (int h = 0; h < invShape[0]; h++) {
 		  for (int g = 0; g < invShape[1]; g++) {
 			for (int k = 0; k < invShape[2]; k++) {
@@ -469,7 +469,7 @@ public class NcdLazyDataReductionTest {
 		SliceSettings slice = new SliceSettings(shape, 0, (int) shape[0]);
 		slice.setStart(new int[] {0, 0, 0, 0, 0});
 		Dataset[] outDataset = lazySectorIntegration.execute(dim, data, slice, lock);
-		Dataset[] outErrors = new Dataset[] {outDataset[0].getError(), outDataset[1].getError()};
+		Dataset[] outErrors = new Dataset[] {outDataset[0].getErrors(), outDataset[1].getErrors()};
 			
 		intSector.setAverageArea(true);
 		for (int h = 0; h < shape[0]; h++)

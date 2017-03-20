@@ -103,7 +103,7 @@ public class FilterData extends SaxsStatsData {
 		Dataset result = DatasetFactory.ones(new int[] { datasize }, Dataset.INT);
 		if (referenceData != null) {
 			result.imultiply(getStatsData(referenceData));
-			result.imultiply(getStatsData(referenceData.getError()));
+			result.imultiply(getStatsData(referenceData.getErrors()));
 		}
 		return result;
 	}

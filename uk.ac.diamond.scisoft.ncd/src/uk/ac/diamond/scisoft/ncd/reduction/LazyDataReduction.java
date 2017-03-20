@@ -83,7 +83,7 @@ public abstract class LazyDataReduction {
 			type_id = H5.H5Dget_type(qaxis_error_id);
 			memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShapeError, null);
 			H5.H5Sselect_all(filespace_id);
-			H5.H5Dwrite(qaxis_error_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getError().getBuffer());
+			H5.H5Dwrite(qaxis_error_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getErrors().getBuffer());
 		
 			H5.H5Sclose(filespace_id);
 			H5.H5Sclose(memspace_id);

@@ -85,7 +85,7 @@ public class HDF5DetectorResponse extends HDF5ReductionDetector {
 				memspace_id = H5.H5Screate_simple(errIds.block.length, errIds.block, null);
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, errIds.start, errIds.stride, errIds.count,
 						errIds.block);
-				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+				H5.H5Dwrite(errIds.dataset_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, myres.getErrors().getBuffer());
 			} catch (Exception e) {
 				throw e;
 			} finally {

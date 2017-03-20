@@ -196,7 +196,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 						tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 						Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
-						data.setError(inputErrors);
+						data.setErrors(inputErrors);
 					} else {
 						// Use counting statistics if no input error estimates are available
 						DoubleDataset inputErrorsBuffer = data.copy(DoubleDataset.class);
@@ -229,7 +229,7 @@ public class NcdSelectionForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						throw new HDF5Exception("Failed to allocate space fro reading selected error data");
 					}
 					writeID = H5.H5Dwrite(resultErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT,
-							data.getError().getBuffer());
+							data.getErrors().getBuffer());
 					if (writeID < 0) {
 						throw new HDF5Exception("Failed to write selected error data into the results file");
 					}

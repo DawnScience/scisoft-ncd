@@ -234,7 +234,7 @@ public class NcdNormalisationTransformer extends NcdAbstractDataTransformer {
 				throw new HDF5Exception("Failed to allocate space for writing Normalisation error data");
 			}
 			writeID = H5.H5Dwrite(normErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
-					.getError().getBuffer());
+					.getErrors().getBuffer());
 			if (writeID < 0) {
 				throw new HDF5Exception("Failed to write Normalisation error data into the results file");
 			}

@@ -59,7 +59,7 @@ public class BackgroundSubtraction2dTest {
 		int datasetLength = 1000;
 		randomDataset = Random.rand(0.0, 1000.0, datasetNumFrames, datasetLength, datasetLength);
 		randomDataset.setName("random");
-		randomDataset.setError(randomDataset.clone());
+		randomDataset.setErrors(randomDataset.clone());
 		//set this correctly for this file because Jun's background subtraction uses it
 		File newFolder = folder.newFolder();
 		IHierarchicalDataFile writer = HierarchicalDataFactory.getWriter(newFolder.getAbsolutePath() + "/random.nxs");
@@ -67,7 +67,7 @@ public class BackgroundSubtraction2dTest {
 		String group1   = writer.group("/entry");
 		String group   = writer.group("/entry/result");
 		writer.createDataset("data", (IDataset) randomDataset, group);
-		writer.createDataset("errors", (IDataset) randomDataset.getError(), group);
+		writer.createDataset("errors", (IDataset) randomDataset.getErrors(), group);
 		writer.close();
 		SourceInformation si = new SourceInformation(writer.getPath(), randomDataset.getName(), randomDataset);
 		randomDataset.setMetadata(new SliceFromSeriesMetadata(si));
@@ -147,7 +147,7 @@ public class BackgroundSubtraction2dTest {
 		if (!Comparisons.allCloseTo(junResultDataset.getSliceView(), jakeResultDataset.getSliceView(), 0.0001, 0.1)) {
 			throw new Exception("the values of the two datasets are not close to one another");
 		}
-		if (!Comparisons.allCloseTo(junResultDataset.getError(), jakeResultDataset.getError(), 0.0001, 0.1)) {
+		if (!Comparisons.allCloseTo(junResultDataset.getErrors(), jakeResultDataset.getErrors(), 0.0001, 0.1)) {
 			throw new Exception("the values of the errors of the two datasets are not close to one another");
 		}
 	}

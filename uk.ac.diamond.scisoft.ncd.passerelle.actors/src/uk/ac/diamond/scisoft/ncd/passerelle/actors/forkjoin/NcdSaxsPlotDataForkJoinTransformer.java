@@ -156,7 +156,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 			axisErrorsIDs.setSlice(axisSliceParams);
 			Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
-			inputAxis.setError(inputAxisErrors);
+			inputAxis.setErrors(inputAxisErrors);
 		}
 		
 		long attrID = H5.H5Aopen(inputAxisDataID, "units", HDF5Constants.H5P_DEFAULT);
@@ -275,7 +275,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
 					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
@@ -311,7 +311,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				if (saxsPlotData != null) {
 					writeResults(dataIDs, saxsPlotData, dataShape, dimension);
 					if (saxsPlotData.hasErrors()) {
-						writeResults(errorIDs, saxsPlotData.getError(), dataShape, dimension);
+						writeResults(errorIDs, saxsPlotData.getErrors(), dataShape, dimension);
 					}
 
 					if (plotData instanceof GuinierPlotData) {
@@ -518,7 +518,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 			type_id = H5.H5Dget_type(resultAxisErrorsID);
 			memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
 			H5.H5Sselect_all(filespace_id);
-			H5.H5Dwrite(resultAxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, axisNew.getError().getBuffer());
+			H5.H5Dwrite(resultAxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, axisNew.getErrors().getBuffer());
 		
 			H5.H5Sclose(filespace_id);
 			H5.H5Sclose(memspace_id);
@@ -571,7 +571,7 @@ public class NcdSaxsPlotDataForkJoinTransformer extends NcdAbstractDataForkJoinT
 				type_id = H5.H5Dget_type(q4AxisErrorsID);
 				memspace_id = H5.H5Screate_simple(axisNew.getRank(), axisShape, null);
 				H5.H5Sselect_all(filespace_id);
-				H5.H5Dwrite(q4AxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, q4Axis.getError().getBuffer());
+				H5.H5Dwrite(q4AxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, q4Axis.getErrors().getBuffer());
 			
 				H5.H5Sclose(filespace_id);
 				H5.H5Sclose(memspace_id);

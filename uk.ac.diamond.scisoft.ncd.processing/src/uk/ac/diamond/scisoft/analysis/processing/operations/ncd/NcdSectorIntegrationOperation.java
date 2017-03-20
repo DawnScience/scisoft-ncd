@@ -116,9 +116,9 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		Dataset sliceDataset = DatasetUtils.convertToDataset(slice.getSliceView());
 		
 		sliceDataset.resize(NcdOperationUtils.addDimension(sliceDataset.getShape()));
-		Dataset sliceErrors = sliceDataset.getError();
+		Dataset sliceErrors = sliceDataset.getErrors();
 		sliceDataset.clearMetadata(null);
-		sliceDataset.setError(sliceErrors);
+		sliceDataset.setErrors(sliceErrors);
 		if (!sliceDataset.hasErrors()) {
 			// Use counting statistics if no input error estimates are available 
 			DoubleDataset inputErrorsBuffer = sliceDataset.clone().cast(DoubleDataset.class);
@@ -247,7 +247,7 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 				qaxis.set(amountQaxis.getEstimatedValue(), i);
 				qaxisErr.set(amountQaxis.getAbsoluteError(), i);
 			}
-			qaxis.setError(qaxisErr);
+			qaxis.setErrors(qaxisErr);
 			qaxis.setName("q");
 			return qaxis;
 		}

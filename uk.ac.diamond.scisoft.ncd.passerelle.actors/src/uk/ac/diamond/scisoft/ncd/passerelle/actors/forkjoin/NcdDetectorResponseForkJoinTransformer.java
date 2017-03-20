@@ -152,7 +152,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
 					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
@@ -218,7 +218,7 @@ public class NcdDetectorResponseForkJoinTransformer extends NcdAbstractDataForkJ
 					throw new HDF5Exception("Failed to allocate space fro writing DetectorResponse error data");
 				}
 				writeID = H5.H5Dwrite(resultErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
-						myres.getError().getBuffer());
+						myres.getErrors().getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write DetectorResponse error data into the results file");
 				}

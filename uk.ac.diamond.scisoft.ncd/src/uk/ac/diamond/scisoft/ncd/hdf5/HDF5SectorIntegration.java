@@ -165,13 +165,13 @@ public class HDF5SectorIntegration extends HDF5ReductionDetector {
 				if (calculateAzimuthal && myazdata != null) {
 					writeResults(azimuthalIds, myazdata, dataShape, dim);
 					if (myazdata.hasErrors()) {
-						writeResults(azimuthalErrorsIds, myazdata.getError(), dataShape, dim);
+						writeResults(azimuthalErrorsIds, myazdata.getErrors(), dataShape, dim);
 					}
 				}
 				if(calculateRadial && myraddata != null) {
 					writeResults(ids, myraddata, dataShape, dim);
 					if (myraddata.hasErrors()) {
-						writeResults(errIds, myraddata.getError(), dataShape, dim);
+						writeResults(errIds, myraddata.getErrors(), dataShape, dim);
 					}
 				}
 			} catch (Exception e) {

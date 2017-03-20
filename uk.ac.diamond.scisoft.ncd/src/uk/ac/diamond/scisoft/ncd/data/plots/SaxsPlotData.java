@@ -68,7 +68,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 			sliceSettings.setStart(pos);
 			Dataset data_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_ids).squeeze();
 			Dataset errors_slice = NcdNexusUtils.sliceInputData(sliceSettings, input_errors_ids).squeeze();
-			data_slice.setError(errors_slice);
+			data_slice.setErrors(errors_slice);
 			Dataset tmpFrame = getSaxsPlotDataset(data_slice, qaxis);
 			
 			long filespace_id = H5.H5Dget_space(data_id);
@@ -95,7 +95,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 				H5.H5Sselect_hyperslab(filespace_id, HDF5Constants.H5S_SELECT_SET, ave_start, ave_step, ave_count_data,
 						ave_step);
 				H5.H5Dwrite(errors_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT,
-						tmpFrame.getError().getBuffer());
+						tmpFrame.getErrors().getBuffer());
 			
 				H5.H5Sclose(filespace_id);
 				H5.H5Sclose(memspace_id);
@@ -179,7 +179,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 			type_id = H5.H5Dget_type(qaxis_error_id);
 			memspace_id = H5.H5Screate_simple(qaxisNew.getRank(), axisShape, null);
 			H5.H5Sselect_all(filespace_id);
-			H5.H5Dwrite(qaxis_error_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxisNew.getError().getBuffer());
+			H5.H5Dwrite(qaxis_error_id, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxisNew.getErrors().getBuffer());
 		
 			H5.H5Sclose(filespace_id);
 			H5.H5Sclose(memspace_id);
@@ -209,7 +209,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 			}
 		}
 		if (tmpErrors != null) {
-			tmpData.setError(tmpErrors);
+			tmpData.setErrors(tmpErrors);
 		}
 		return tmpData;
 	}
@@ -234,7 +234,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 			}
 		}
 		if (tmpAxisErrors != null) {
-			tmpAxis.setError(tmpAxisErrors);
+			tmpAxis.setErrors(tmpAxisErrors);
 		}
 		return tmpAxis;
 	}

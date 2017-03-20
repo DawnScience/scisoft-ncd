@@ -121,7 +121,7 @@ public class NcdOrientationForkJoinTransformer extends NcdAbstractDataForkJoinTr
 				axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 				axisErrorsIDs.setSlice(axisSliceParams);
 				Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
-				inputAxis.setError(inputAxisErrors);
+				inputAxis.setErrors(inputAxisErrors);
 			}
 		}
 	}

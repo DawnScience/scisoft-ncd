@@ -208,7 +208,7 @@ public class PorodPlotData extends SaxsPlotData {
 			result.set(res.getEstimatedValue(), i);
 			errors.set(res.getAbsoluteError(), i);
 		}
-		result.setError(errors);
+		result.setErrors(errors);
 		return result;
 	}
 	

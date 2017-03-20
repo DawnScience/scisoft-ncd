@@ -85,8 +85,8 @@ public class LazyAverage extends LazyDataReduction {
 		
 		framesAve_int = (int[]) ConvertUtils.convert(framesAve, int[].class);
 		
-	    ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
-	    long type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
+		ave_group_id = NcdNexusUtils.makegroup(processing_group_id, LazyAverage.name, Nexus.DETECT);
+		long type = H5.H5Tcopy(HDF5Constants.H5T_NATIVE_FLOAT);
 		ave_data_id = NcdNexusUtils.makedata(ave_group_id, "data", type, framesAve, true, "counts");
 		ave_errors_id = NcdNexusUtils.makedata(ave_group_id, "errors", type, framesAve, true, "counts");
 		H5.H5Tclose(type);
@@ -95,7 +95,7 @@ public class LazyAverage extends LazyDataReduction {
 		sliceSize = frames_int[0];
 
 		// We will slice only 2D data. 1D data is loaded into memory completely
-		if (averageIndices.length > 0 || dim == 2) {
+		if (averageIndices.length > 0 && dim == 2) {
 			// Find dimension that needs to be sliced
 			int dimCounter = 1;
 			for (int idx = (frames.length - 1 - dim); idx >= 0; idx--) {
@@ -159,13 +159,13 @@ public class LazyAverage extends LazyDataReduction {
 			slice = new SliceND(data_stop, data_start, data_stop, data_step);
 			IndexIterator data_iter = new SliceIterator(data_stop, ShapeUtils.calcSize(data_stop), slice);
 			
-			int[] aveShape = Arrays.copyOfRange(framesAve_int, framesAve_int.length - dim, framesAve_int.length);
+			int[] aveShape = Arrays.copyOfRange(framesAve_int, sliceDim + 1, framesAve_int.length);
 			Dataset ave_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
 			Dataset ave_errors_frame = DatasetFactory.zeros(aveShape, Dataset.FLOAT32);
 			
 			// This loop iterates over chunks of data that need to be averaged for the current output image
 			int totalFrames = 0;
-	    	SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
+			SliceSettings sliceSettings = new SliceSettings(data_iter_array, sliceDim, sliceSize);
 			while (data_iter.hasNext()) {
 				
 				if (monitor.isCanceled()) {

@@ -289,7 +289,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 				qaxis.set(amountQaxis.getEstimatedValue(), i);
 				qaxisErr.set(amountQaxis.getAbsoluteError(), i);
 			}
-			qaxis.setError(qaxisErr);
+			qaxis.setErrors(qaxisErr);
 			return qaxis;
 		}
 		qaxis = DatasetUtils.cast(DatasetUtils.indices(numPoints).squeeze(), Dataset.FLOAT32);
@@ -348,7 +348,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available 
 					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
@@ -418,7 +418,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					
 					writeResults(azimuth_id, myazdata, dataShape, dimension);
 					if (myazdata.hasErrors()) {
-						writeResults(err_azimuth_id, myazdata.getError(), dataShape, dimension);
+						writeResults(err_azimuth_id, myazdata.getErrors(), dataShape, dimension);
 					}
 				}
 				if (doRadial && myraddata != null) {
@@ -431,7 +431,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 					
 					writeResults(sector_id, myraddata, dataShape, dimension);
 					if (myraddata.hasErrors()) {
-						writeResults(err_sector_id, myraddata.getError(), dataShape, dimension);
+						writeResults(err_sector_id, myraddata.getErrors(), dataShape, dimension);
 					}
 				}
 			} catch (HDF5LibraryException e) {
@@ -530,7 +530,7 @@ public class NcdSectorIntegrationForkJoinTransformer extends NcdAbstractDataFork
 			type_id = H5.H5Dget_type(resultAxisErrorsID);
 			memspace_id = H5.H5Screate_simple(qaxis.getRank(), qaxisShapeError, null);
 			H5.H5Sselect_all(filespace_id);
-			H5.H5Dwrite(resultAxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getError().getBuffer());
+			H5.H5Dwrite(resultAxisErrorsID, type_id, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, qaxis.getErrors().getBuffer());
 		
 			H5.H5Sclose(filespace_id);
 			H5.H5Sclose(memspace_id);

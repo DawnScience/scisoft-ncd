@@ -178,7 +178,7 @@ public class LazyNormalisation extends LazyDataReduction {
 					throw new HDF5Exception("Failed to allocate space for writing Normalisation error data");
 				}
 				write_id = H5.H5Dwrite(norm_errors_id, type_id, memspace_id, filespace_id,
-						HDF5Constants.H5P_DEFAULT, myres.getError().getBuffer());
+						HDF5Constants.H5P_DEFAULT, myres.getErrors().getBuffer());
 				if (write_id < 0) {
 					throw new HDF5Exception("Failed to write Normalisation error data into the results file");
 				}

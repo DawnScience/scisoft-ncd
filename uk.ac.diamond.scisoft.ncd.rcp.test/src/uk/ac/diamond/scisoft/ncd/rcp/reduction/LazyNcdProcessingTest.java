@@ -248,7 +248,7 @@ public class LazyNcdProcessingTest {
 		    dataSlice.setStart(start);
 			Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
 			Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
-			data.setError(dataErrors);
+			data.setErrors(dataErrors);
 			
 			intSector.setAverageArea(true);
 			Dataset[] intResult = ROIProfile.sector(data, null, intSector, true, true, false, null, null, true);

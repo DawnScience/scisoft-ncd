@@ -152,7 +152,7 @@ public class NcdSaxsDataStatsForkJoinTransformer extends NcdAbstractDataForkJoin
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					tmp_errors_ids.setSlice(currentSliceParams);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(currentSliceParams, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				}
 				lock.unlock();
 

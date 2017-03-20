@@ -57,7 +57,7 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 			}
 		}
 		if (tmpErrors != null) {
-			tmpData.setError(tmpErrors);
+			tmpData.setErrors(tmpErrors);
 		}
 		return tmpData;
 	}
@@ -82,7 +82,7 @@ public abstract class SaxsPlotData implements ISaxsPlotData {
 			}
 		}
 		if (tmpAxisErrors != null) {
-			tmpAxis.setError(tmpAxisErrors);
+			tmpAxis.setErrors(tmpAxisErrors);
 		}
 		return tmpAxis;
 	}

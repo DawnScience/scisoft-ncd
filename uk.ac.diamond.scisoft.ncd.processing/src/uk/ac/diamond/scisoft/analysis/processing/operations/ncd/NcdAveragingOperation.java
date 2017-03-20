@@ -103,7 +103,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 				Dataset rgDataset = DatasetFactory.createFromObject(rG);
 				rgDataset.setName("Rg");
 				Dataset rgErrorDataset = DatasetFactory.createFromObject(rGError);
-				rgDataset.setError(rgErrorDataset);
+				rgDataset.setErrors(rgErrorDataset);
 				Dataset removalFilter = NcdOperationUtils.getSaxsAnalysisStats(rgDataset, saxsAnalysisStatParams); //remove frame[i] if true
 				removalFilter.setName("Removal filter");
 				
@@ -135,7 +135,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			if (hasError) {
 				AggregateDataset aggregateErrors = new AggregateDataset(true, errorData);
 				try {
-					errorSum = aggregateErrors.getSlice().sum(false, 0);
+					errorSum = aggregateErrors.getSlice().sum(0, false);
 				} catch (DatasetException e) {
 					throw new OperationException(this, e);
 				}
@@ -143,7 +143,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 
 			Dataset out;
 			try {
-				out = aggregate.getSlice().mean(false, 0);
+				out = aggregate.getSlice().mean(0, false);
 			} catch (DatasetException e) {
 				throw new OperationException(this, e);
 			}
@@ -156,7 +156,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 			}
 			out.setMetadata(outsmm);
 			if (hasError) {
-				out.setError(errorSum.ipower(0.5).idivide(numImages));
+				out.setErrors(errorSum.ipower(0.5).idivide(numImages));
 			}
 			sliceData = null;
 			counter = 0;

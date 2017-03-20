@@ -273,7 +273,7 @@ public class NcdProcessingModelTest {
 		    dataSlice.setStart(start);
 			Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
 			Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
-			data.setError(dataErrors);
+			data.setErrors(dataErrors);
 			
 			intSector.setAverageArea(true);
 			Dataset[] intResult = ROIProfile.sector(data, null, intSector, true, true, false, null, null, true);
@@ -528,7 +528,7 @@ public class NcdProcessingModelTest {
 	    SliceSettings dataSlice = new SliceSettings(framesAve, 1, 1);
 		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id).squeeze();
 		Dataset dataErrors = NcdNexusUtils.sliceInputData(dataSlice, input_errors_id).squeeze();
-		data.setError(dataErrors);
+		data.setErrors(dataErrors);
 	    
 	    DataSliceIdentifiers[] array_id = readResultsIds(filename, detectorOut, plotType.getGroupName());
 	    DataSliceIdentifiers result_id = array_id[0];
@@ -547,7 +547,7 @@ public class NcdProcessingModelTest {
 	    SliceSettings axisSlice = new SliceSettings(new long[] {framesAve[framesAve.length - 1]}, 0, (int) framesAve[framesAve.length - 1]);
 		Dataset axis = NcdNexusUtils.sliceInputData(axisSlice, axisIDs);
 		Dataset axisErrors = NcdNexusUtils.sliceInputData(axisSlice, axisErrorIDs);
-		axis.setError(axisErrors);
+		axis.setErrors(axisErrors);
 		
 		for (int i = 0; i < intPoints; i++) {
 			double valResult = result.getDouble(i);

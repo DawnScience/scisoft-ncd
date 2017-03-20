@@ -191,7 +191,7 @@ public class NcdNormalisationTransformerTest {
 		dataSlice.setStart(start);
 		data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 		Dataset error = NcdNexusUtils.sliceInputData(dataSlice, errors_id);
-		data.setError(error);
+		data.setErrors(error);
 	}
 
 	private class NcdMessageSource extends Source {
@@ -247,7 +247,7 @@ public class NcdNormalisationTransformerTest {
 					if (obj instanceof NcdProcessingSliceObject) {
 						content = (NcdProcessingSliceObject) obj;
 						Dataset outData = content.getData();
-						Dataset outErrors = outData.getError();
+						Dataset outErrors = outData.getErrors();
 						for (int h = 0; h < shape[0]; h++) {
 							for (int g = 0; g < shape[1]; g++) {
 								for (int k = 0; k < shape[2]; k++) {

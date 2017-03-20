@@ -107,7 +107,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 				axisErrorsIDs.setIDs(inputGroupID, inputAxisErrorsID);
 				axisErrorsIDs.setSlice(axisSliceParams);
 				Dataset inputAxisErrors = NcdNexusUtils.sliceInputData(axisSliceParams, axisErrorsIDs);
-				inputAxis.setError(inputAxisErrors);
+				inputAxis.setErrors(inputAxisErrors);
 			}
 
 			long type = HDF5Constants.H5T_NATIVE_FLOAT;
@@ -183,7 +183,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					DataSliceIdentifiers tmp_errors_ids = new DataSliceIdentifiers();
 					tmp_errors_ids.setIDs(inputGroupID, inputErrorsID);
 					Dataset inputErrors = NcdNexusUtils.sliceInputData(sliceData, tmp_errors_ids);
-					inputData.setError(inputErrors);
+					inputData.setErrors(inputErrors);
 				} else {
 					// Use counting statistics if no input error estimates are available
 					DoubleDataset inputErrorsBuffer = inputData.copy(DoubleDataset.class);
@@ -249,7 +249,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 					throw new HDF5Exception("Failed to allocate space fro writing Invariant error data");
 				}
 				writeID = H5.H5Dwrite(resultErrorsID, typeID, memspaceID, filespaceID, HDF5Constants.H5P_DEFAULT, myres
-						.getError().getBuffer());
+						.getErrors().getBuffer());
 				if (writeID < 0) {
 					throw new HDF5Exception("Failed to write Invariant error data into the results file");
 				}
@@ -271,7 +271,7 @@ public class NcdInvariantForkJoinTransformer extends NcdAbstractDataForkJoinTran
 						DataSliceIdentifiers porodErrorsIDs = new DataSliceIdentifiers();
 						porodErrorsIDs.setIDs(resultGroupID, porodErrorsID);
 						porodErrorsIDs.setSlice(sliceData);
-						writeResults(porodErrorsIDs, tmpPorodDataset.getError(), rgDataShape, 1);
+						writeResults(porodErrorsIDs, tmpPorodDataset.getErrors(), rgDataShape, 1);
 					}
 				}
 			} catch (HDF5LibraryException e) {
