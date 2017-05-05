@@ -259,10 +259,8 @@ public final class NcdNexusUtils {
 		if (inputDataset > 0) {
 			final long type = H5.H5Iget_type(inputDataset);
 			if (type != HDF5Constants.H5I_BADID) {
-				String[] name = new String[] {""};
-				final long nameSize = H5.H5Iget_name(inputDataset, name, 1L) + 1;
-				H5.H5Iget_name(inputDataset, name, nameSize);
-				String[] nameTree = name[0].split("/");
+				String name = H5.H5Iget_name(inputDataset);
+				String[] nameTree = name.split("/");
 				String inputFileName = H5.H5Fget_name(inputDataset); 
 				String resultFileName = H5.H5Fget_name(resultGroup);
 				if (inputFileName.equals(resultFileName)) {
@@ -276,7 +274,7 @@ public final class NcdNexusUtils {
 				} else {
 					H5.H5Lcreate_external(
 							inputFileName,
-							name[0],
+							name,
 							resultGroup,
 							nameTree[nameTree.length -1],
 							HDF5Constants.H5P_DEFAULT,
