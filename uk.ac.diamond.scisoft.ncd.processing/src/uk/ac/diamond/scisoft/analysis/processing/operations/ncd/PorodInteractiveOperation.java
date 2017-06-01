@@ -22,6 +22,8 @@ import org.eclipse.january.metadata.MetadataFactory;
 
 import uk.ac.diamond.scisoft.analysis.fitting.Fitter;
 import uk.ac.diamond.scisoft.analysis.fitting.functions.StraightLine;
+import uk.ac.diamond.scisoft.analysis.optimize.ApacheOptimizer;
+import uk.ac.diamond.scisoft.analysis.optimize.ApacheOptimizer.Optimizer;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils.PorodParameters;
 import uk.ac.diamond.scisoft.ncd.processing.TParameterMetadata;
@@ -103,7 +105,9 @@ public class PorodInteractiveOperation extends
 		// Perform a linear fit over the region of interest slice
 		StraightLine porodFit = new StraightLine();
 		try {
-			Fitter.llsqFit(new Dataset[] {q4.getSlice(linearRegion)}, dInput.getSlice(linearRegion), porodFit);
+			ApacheOptimizer opt = new ApacheOptimizer(Optimizer.LEVENBERG_MARQUARDT);
+			opt.optimize(new Dataset[] {q4.getSlice(linearRegion)}, dInput.getSlice(linearRegion), porodFit);
+
 			params.gradient = porodFit.getParameterValue(0);
 			params.porodConstant = porodFit.getParameterValue(1);
 		} catch (Exception e) {
