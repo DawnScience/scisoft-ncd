@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Diamond Light Source Ltd.
+ * Copyright 2013, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,8 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 import java.util.HashMap;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
+
+import si.uom.SI;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.swt.SWT;

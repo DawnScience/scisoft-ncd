@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,10 +22,8 @@ import java.util.List;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
-import javax.measure.unit.UnitFormat;
+import javax.measure.Unit;
+import javax.measure.format.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
@@ -34,6 +32,8 @@ import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.jscience.physics.amount.Amount;
+
+import si.uom.SI;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,11 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
-import javax.measure.unit.UnitFormat;
+import javax.measure.Unit;
+import javax.measure.format.UnitFormat;
+
+import si.uom.SI;
+import si.uom.NonSI;
 
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.commands.AbstractHandler;

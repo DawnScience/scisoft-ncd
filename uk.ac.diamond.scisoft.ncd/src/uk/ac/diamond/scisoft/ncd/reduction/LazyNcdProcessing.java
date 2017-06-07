@@ -22,9 +22,7 @@ import java.util.List;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -52,6 +50,9 @@ import org.eclipse.january.dataset.SliceIterator;
 import org.eclipse.january.dataset.SliceND;
 import org.jscience.physics.amount.Amount;
 import org.jscience.physics.amount.Constants;
+
+import si.uom.SI;
+import si.uom.NonSI;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;

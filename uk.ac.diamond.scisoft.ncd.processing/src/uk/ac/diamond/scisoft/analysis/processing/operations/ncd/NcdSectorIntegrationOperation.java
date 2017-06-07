@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Diamond Light Source Ltd.
+ * Copyright (c) 2014, 2017 Diamond Light Source Ltd.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,11 +17,12 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+import javax.measure.Unit;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
+
+import si.uom.SI;
+import si.uom.NonSI;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;

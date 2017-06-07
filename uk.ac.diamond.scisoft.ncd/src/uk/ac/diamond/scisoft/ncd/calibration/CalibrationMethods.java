@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Diamond Light Source Ltd.
+ * Copyright 2012, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,10 +21,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map.Entry;
 
+import javax.measure.Unit;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.math3.stat.StatUtils;
@@ -35,6 +34,9 @@ import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
+
+import si.uom.SI;
+import si.uom.NonSI;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;

@@ -22,7 +22,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
+
+import si.uom.SI;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
