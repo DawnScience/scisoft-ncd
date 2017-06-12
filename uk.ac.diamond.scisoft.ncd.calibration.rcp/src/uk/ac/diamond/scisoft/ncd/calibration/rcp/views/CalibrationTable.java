@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package uk.ac.diamond.scisoft.ncd.calibration.rcp.views;
 
 import java.util.List;
 
+import javax.measure.Unit;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.Unit;
 
 import org.eclipse.jface.viewers.ArrayContentProvider;
 import org.eclipse.jface.viewers.ILabelProviderListener;
@@ -34,6 +33,7 @@ import org.eclipse.swt.widgets.Composite;
 import org.eclipse.swt.widgets.Table;
 import org.eclipse.swt.widgets.TableColumn;
 
+import si.uom.NonSI;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 
 public class CalibrationTable {
@@ -125,11 +125,11 @@ class CalibrationLabelProvider implements ITableLabelProvider {
 				msg = String.format("%.2f",cal.getPeakPos());
 				break;
 			case 1:
-				msg = String.format("%.2f",cal.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
+				msg = String.format("%.2f",cal.getTwoTheta().to(NonSI.DEGREE_ANGLE).getValue().doubleValue());
 				break;
 			case 2:
 				Unit<Length> unit = cal.getDSpacing().getUnit();
-				msg = String.format("%.2f",cal.getDSpacing().doubleValue(unit));
+				msg = String.format("%.2f",cal.getDSpacing().to(unit).getValue().doubleValue());
 				break;
 			case 3:
 				msg = cal.getReflection().toString();

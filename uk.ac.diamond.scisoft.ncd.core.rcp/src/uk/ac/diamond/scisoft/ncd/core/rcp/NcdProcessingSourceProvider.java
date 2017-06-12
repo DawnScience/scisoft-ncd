@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.core.rcp;
 import java.util.HashMap;
 import java.util.Map;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Energy;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -27,8 +28,8 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
-import org.jscience.physics.amount.Amount;
 
+import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceInput;
 import uk.ac.diamond.scisoft.ncd.data.xml.EnergyXmlAdapter;
 
@@ -93,7 +94,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 
     @XmlElement
     @XmlJavaTypeAdapter(EnergyXmlAdapter.class)
-	private Amount<Energy> energy;
+	private Quantity<Energy> energy;
 
 	public NcdProcessingSourceProvider() {
 	}
@@ -246,8 +247,8 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, WAXSDETECTOR_STATE, this.waxsDetector);
 	}
 	
-	public void setEnergy(Amount<Energy> energy) {
-		this.energy = (energy != null) ? energy.copy() : null;
+	public void setEnergy(Quantity<Energy> energy) {
+		this.energy = (energy != null) ? Quantities.getQuantity(energy.getValue(), energy.getUnit()) : null;
 		fireSourceChanged(ISources.WORKBENCH, ENERGY_STATE, this.energy);
 	}
 
@@ -431,7 +432,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		return useFormSampleThickness;
 	}
 	
-	public Amount<Energy> getEnergy() {
+	public Quantity<Energy> getEnergy() {
 		return energy;
 	}
 	
@@ -454,7 +455,7 @@ public class NcdProcessingSourceProvider extends AbstractSourceProvider {
 		scaler                 = (String) sourceState.get(SCALER_STATE);               
 		saxsDetector           = (String) sourceState.get(SAXSDETECTOR_STATE);         
 		waxsDetector           = (String) sourceState.get(WAXSDETECTOR_STATE);         
-		energy                 = (Amount<Energy>) sourceState.get(ENERGY_STATE);               
+		energy                 = (Quantity<Energy>) sourceState.get(ENERGY_STATE);               
 		dataSlice              = (SliceInput) sourceState.get(DATASLICE_STATE);            
 		bkgSlice               = (SliceInput) sourceState.get(BKGSLICE_STATE);             
 		maskFile               = (String) sourceState.get(MASKFILE_STATE);

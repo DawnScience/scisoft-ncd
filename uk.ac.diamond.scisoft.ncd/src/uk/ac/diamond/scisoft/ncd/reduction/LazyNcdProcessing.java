@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import java.util.List;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import org.apache.commons.beanutils.ConvertUtils;
@@ -48,10 +49,11 @@ import org.eclipse.january.dataset.IntegerDataset;
 import org.eclipse.january.dataset.ShapeUtils;
 import org.eclipse.january.dataset.SliceIterator;
 import org.eclipse.january.dataset.SliceND;
-import org.jscience.physics.amount.Amount;
-import org.jscience.physics.amount.Constants;
 
 import si.uom.SI;
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 import si.uom.NonSI;
 
 import hdf.hdf5lib.H5;
@@ -77,7 +79,10 @@ import uk.ac.diamond.scisoft.ncd.data.plots.PorodPlotData;
 import uk.ac.diamond.scisoft.ncd.data.plots.SaxsPlotData;
 import uk.ac.diamond.scisoft.ncd.data.plots.ZimmPlotData;
 
-public class LazyNcdProcessing {
+public class LazyNcdProcessing <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> {
+
+	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
+	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
 
 	private boolean enableMask;
 	private int normChannel;
@@ -85,11 +90,11 @@ public class LazyNcdProcessing {
 	private Double bgScaling;
 	private String bgFile, drFile, calibration;
 	private SectorROI intSector;
-	private Amount<ScatteringVectorOverDistance> slope;
-	private Amount<ScatteringVector> intercept;
-	private Amount<Length> cameraLength;
-	private Amount<Energy> energy;
-	private Unit<ScatteringVector> qaxisUnit;
+	private Quantity<D> slope;
+	private Quantity<?> intercept;
+	private Quantity<Length> cameraLength;
+	private Quantity<Energy> energy;
+	private Unit<V> qaxisUnit;
 	private BooleanDataset mask;
 
 	private String detector;
@@ -266,19 +271,19 @@ public class LazyNcdProcessing {
 		this.gridAverage = gridAverage;
 	}
 
-	public void setSlope(Amount<ScatteringVectorOverDistance> slope) {
+	public void setSlope(Quantity<D> slope) {
 		this.slope = slope;
 	}
 
-	public void setIntercept(Amount<ScatteringVector> intercept) {
+	public void setIntercept(Quantity<V> intercept) {
 		this.intercept = intercept;
 	}
 
-	public void setCameraLength(Amount<Length> cameraLength) {
+	public void setCameraLength(Quantity<Length> cameraLength) {
 		this.cameraLength = cameraLength;
 	}
 
-	public void setEnergy(Amount<Energy> energy) {
+	public void setEnergy(Quantity<Energy> energy) {
 		this.energy = energy;
 	}
 
@@ -880,11 +885,11 @@ public class LazyNcdProcessing {
 			DiffractionCrystalEnvironment crystalEnvironment = dm.getDiffractionCrystalEnvironment();
 			qaxisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
 			Unit<Length> pxUnit = ncdDetectors.getPxSaxs().getUnit();
-			cameraLength = Amount.valueOf(detectorProperties.getBeamCentreDistance(), SI.MILLIMETRE);
-			Amount<Length> wv = Amount.valueOf(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
-			energy = Constants.ℎ.times(Constants.c).divide(wv).to(SI.KILO(NonSI.ELECTRON_VOLT));
-			slope = wv.inverse().times(2.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
-			intercept = Amount.valueOf(0.0, qaxisUnit);
+			cameraLength = Quantities.getQuantity(detectorProperties.getBeamCentreDistance(), MILLIMETRE);
+			Quantity<Length> wv = Quantities.getQuantity(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
+			energy = Constants.ℎ.times(Constants.c).divide(wv).to(KILO_ELECTRON_VOLT);
+			slope = (Quantity<D>) wv.inverse().multiply(2.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
+			intercept = Quantities.getQuantity(0.0, qaxisUnit);
 			
 			// Diffraction metadata currently doesn't include error estimates
 			hasErrors = false;
@@ -895,9 +900,9 @@ public class LazyNcdProcessing {
 			qaxis = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			if (dim == 1) {
-				Amount<Length> pxWaxs = ncdDetectors.getPxWaxs();
+				Quantity<Length> pxWaxs = ncdDetectors.getPxWaxs();
 				for (int i = 0; i < numPoints; i++) {
-					Amount<ScatteringVector> amountQaxis = slope.times(i).times(pxWaxs).plus(intercept).to(qaxisUnit); 
+					Quantity<V> amountQaxis = slope.multiply(i).multiply(pxWaxs).add(intercept).to(qaxisUnit); 
 					qaxis.set(amountQaxis.getEstimatedValue(), i);
 					if (hasErrors) {
 						qaxisErr.set(amountQaxis.getAbsoluteError(), i);
@@ -906,9 +911,9 @@ public class LazyNcdProcessing {
 			} else {
 				if (dim > 1 && flags.isEnableSector()) {
 					double d2bs = intSector.getRadii()[0];
-					Amount<Length> pxSaxs = ncdDetectors.getPxSaxs();
+					Quantity<Length> pxSaxs = ncdDetectors.getPxSaxs();
 					for (int i = 0; i < numPoints; i++) {
-						Amount<ScatteringVector> amountQaxis = slope.times(i + d2bs).times(pxSaxs).plus(intercept).to(qaxisUnit);
+						Quantity<V> amountQaxis = slope.multiply(i + d2bs).multiply(pxSaxs).add(intercept).to(qaxisUnit);
 						qaxis.set(amountQaxis.getEstimatedValue(), i);
 						if (hasErrors) {
 							qaxisErr.set(amountQaxis.getAbsoluteError(), i);

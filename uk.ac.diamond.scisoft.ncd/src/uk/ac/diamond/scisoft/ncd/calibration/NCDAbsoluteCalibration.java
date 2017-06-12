@@ -18,6 +18,7 @@ package uk.ac.diamond.scisoft.ncd.calibration;
 
 import java.util.List;
 
+import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import org.apache.commons.lang.StringUtils;
@@ -29,11 +30,10 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 
-public class NCDAbsoluteCalibration {
+public class NCDAbsoluteCalibration <V extends ScatteringVector<V>>{
 	
 	private double absScale;
 	private double absScaleStdDev;
@@ -55,11 +55,11 @@ public class NCDAbsoluteCalibration {
 		return absScaleStdDev;
 	}
 
-	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, Dataset absI, Unit<ScatteringVector> unit) {
+	public void setAbsoluteData(List<Quantity<V>> lstAbsQ, Dataset absI, Unit<V> unit) {
 		absQ = DatasetFactory.zeros(DoubleDataset.class, lstAbsQ.size());
 		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
-			Amount<ScatteringVector> vec = lstAbsQ.get(idx);
-			absQ.set(vec.doubleValue(unit), idx);
+			Quantity<V> vec = lstAbsQ.get(idx);
+			absQ.set(vec.to(unit).getValue().doubleValue(), idx);
 			
 		}
 		this.absI = absI.clone();
@@ -68,11 +68,11 @@ public class NCDAbsoluteCalibration {
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
 	}
 	
-	public void setData(List<Amount<ScatteringVector>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<ScatteringVector> unit) {
+	public void setData(List<Quantity<V>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<V> unit) {
 		dataQ = DatasetFactory.zeros(DoubleDataset.class, lstDataQ.size());
 		for (int idx = 0; idx < lstDataQ.size(); idx++) {
-			Amount<ScatteringVector> vec = lstDataQ.get(idx);
-			dataQ.set(vec.doubleValue(unit), idx);
+			Quantity<V> vec = lstDataQ.get(idx);
+			dataQ.set(vec.to(unit).getValue().doubleValue(), idx);
 			
 		}
 		this.dataI = dataI.clone();

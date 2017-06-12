@@ -23,9 +23,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import javax.measure.Quantity;
 import javax.measure.Unit;
 
 import si.uom.SI;
+import tec.units.ri.quantity.Quantities;
 import si.uom.NonSI;
 
 import org.dawnsci.plotting.tools.masking.MaskingTool;
@@ -64,7 +66,6 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.diffraction.QSpace;
@@ -80,7 +81,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 
-public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
+public class NcdAbsoluteCalibrationListener <V extends ScatteringVector<V>> extends SelectionAdapter {
 
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.handlers.NcdAbsoluteCalibrationListener";
 
@@ -121,7 +122,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 		try {
 			Tree dataTree = new HDF5Loader(fileName).loadTree();
 			NodeLink nodeLink = dataTree.findNodeLink("/entry1/" + scaler + "/data");
-			NcdDetectorSettings scalerData = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+			NcdDetectorSettings scalerData = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
 			Double norm = null;
 			if (nodeLink != null) {
 				Integer channel = scalerData.getNormChannel();
@@ -189,7 +190,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 	public void widgetSelected(SelectionEvent e) {
 		
 		final Dataset glassyCarbonI;
-		final List<Amount<ScatteringVector>> dataQ, absQ;
+		final List<Quantity<V>> dataQ, absQ;
 		
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
 		final ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
@@ -207,11 +208,11 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			DataHolder data = dataLoader.loadFile();
 			
 			Dataset absQDataset = data.getDataset(0);
-			absQ = new ArrayList<Amount<ScatteringVector>>();
+			absQ = new ArrayList<Quantity<V>>();
 			final IndexIterator it = absQDataset.getIterator();
 			while (it.hasNext()) {
 				double val = absQDataset.getDouble(it.index);
-				absQ.add(Amount.valueOf(val, NonSI.ANGSTROM.inverse().asType(ScatteringVector.class)));
+				absQ.add(Quantities.getQuantity(val, NonSI.ANGSTROM.inverse().asType(ScatteringVector.class)));
 			}
 			glassyCarbonI = data.getDataset(1);
 		} catch (IOException er) {
@@ -254,9 +255,9 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 			return;
 		}
 		
-		final Unit<ScatteringVector> unit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+		final Unit<V> unit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
 		
-		dataQ = new ArrayList<Amount<ScatteringVector>>();
+		dataQ = new ArrayList<Quantity<V>>();
 		
 		final SectorROI sroi;
 		Collection<IRegion> regions = plottingSystemRef.getRegions(RegionType.SECTOR);
@@ -308,7 +309,7 @@ public class NcdAbsoluteCalibrationListener extends SelectionAdapter {
 				monitor.subTask("Calculating calibration parameters...");
 				for (int idx = 0; idx < dataQDataset.getSize(); idx++) {
 					double val = dataQDataset.getDouble(idx);
-					dataQ.add(Amount.valueOf(val, unit));
+					dataQ.add(Quantities.getQuantity(val, unit));
 				}
 				
 				final NCDAbsoluteCalibration ncdAbsoluteCalibration = new NCDAbsoluteCalibration();

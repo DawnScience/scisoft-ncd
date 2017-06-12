@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Diamond Light Source Ltd.
+ * Copyright (c) 2014, 2017 Diamond Light Source Ltd.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -11,6 +11,7 @@ package uk.ac.diamond.scisoft.analysis.processing.operations.ncd;
 
 import java.io.Serializable;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Dimensionless;
 
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -22,7 +23,6 @@ import org.eclipse.january.IMonitor;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.IDataset;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
@@ -53,11 +53,11 @@ public class GuinierOperation extends AbstractOperation<EmptyModel, OperationDat
 		}
 
 		@SuppressWarnings("unchecked")
-		Dataset i0 = DatasetFactory.createFromObject(new double[]{((Amount<Dimensionless>)params[0]).getEstimatedValue()});
+		Dataset i0 = DatasetFactory.createFromObject(new double[]{((Quantity<Dimensionless>)params[0]).getValue().doubleValue()});
 		i0.setName("I0");
 		i0.squeeze();
 		@SuppressWarnings("unchecked")
-		Dataset rG = DatasetFactory.createFromObject(new double[]{((Amount<Dimensionless>)params[1]).getEstimatedValue()});
+		Dataset rG = DatasetFactory.createFromObject(new double[]{((Quantity<Dimensionless>)params[1]).getValue().doubleValue()});
 		rG.setName("Rg");
 		rG.squeeze();
 		Dataset rGLow = DatasetFactory.createFromObject(new double[]{(double) params[2]}, new int[]{1});

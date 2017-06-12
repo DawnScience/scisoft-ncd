@@ -16,7 +16,10 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
+import javax.measure.spi.ServiceProvider;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -38,8 +41,8 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
-import org.jscience.physics.amount.Amount;
 
+import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 
 public class PorodPlotData extends SaxsPlotData {
@@ -48,7 +51,9 @@ public class PorodPlotData extends SaxsPlotData {
 	private int cmaesMaxIterations = 100000;
 	private int cmaesCheckFeasableCount = 100;
 	private ConvergenceChecker<PointValuePair> cmaesChecker = new SimplePointChecker<PointValuePair>(1e-6, 1e-8);
-	
+
+	private static final Unit<Dimensionless> DIMENSIONLESS_UNIT = ServiceProvider.current().getQuantityFactory(Dimensionless.class).getSystemUnit();
+
 	private class PorodLineFitFunction implements MultivariateFunction {
 
 		private Dataset porodData;
@@ -169,7 +174,7 @@ public class PorodPlotData extends SaxsPlotData {
 			
 			function.value(res.getPoint());
 			double slope = function.regression.getSlope();
-			Amount<Dimensionless> c4 = getC4(function.regression);
+			Quantity<Dimensionless> c4 = getC4(function.regression);
 			
 			System.out.println("Final Result");
 			String msg = StringUtils.join(new String[] {
@@ -193,9 +198,9 @@ public class PorodPlotData extends SaxsPlotData {
 		return function.regression;
 	}
 	
-	public Amount<Dimensionless> getC4(SimpleRegression regression) {
-		Amount<Dimensionless> c4 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
-		return c4.copy();
+	public Quantity<Dimensionless> getC4(SimpleRegression regression) {
+		Quantity<Dimensionless> c4 = Quantities.getQuantity(regression.getIntercept(), DIMENSIONLESS_UNIT);
+		return Quantities.getQuantity(c4.getValue(), c4.getUnit());
 	}
 
 	public Dataset getFitData(Dataset axis, SimpleRegression regression) {
@@ -203,9 +208,10 @@ public class PorodPlotData extends SaxsPlotData {
 		Dataset result = DatasetFactory.zeros(porodAxis.getShape(), Dataset.FLOAT32);
 		Dataset errors = DatasetFactory.zeros(porodAxis.getShape(), Dataset.FLOAT64);
 		for (int i = 0; i < porodAxis.getSize(); i++) {
-			Amount<Dimensionless> q = Amount.valueOf(axis.getDouble(i), axis.getError(i), Dimensionless.UNIT); 
-			Amount<Dimensionless> res = getC4(regression).divide(q.pow(4)).to(Dimensionless.UNIT);
-			result.set(res.getEstimatedValue(), i);
+			Quantity<Dimensionless> q = Quantities.getQuantity(axis.getDouble(i), DIMENSIONLESS_UNIT); 
+			Quantity<Dimensionless> tmp = Quantities.getQuantity(Math.pow(q.getValue().doubleValue(), 4), DIMENSIONLESS_UNIT);
+			Quantity<Dimensionless> res = (Quantity<Dimensionless>) getC4(regression).divide(tmp);
+			result.set(res.getValue(), i);
 			errors.set(res.getAbsoluteError(), i);
 		}
 		result.setErrors(errors);

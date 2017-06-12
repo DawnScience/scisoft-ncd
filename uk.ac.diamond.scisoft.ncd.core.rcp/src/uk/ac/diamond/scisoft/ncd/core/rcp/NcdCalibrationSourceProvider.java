@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 
 import javax.measure.quantity.Length;
+import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
@@ -29,7 +30,6 @@ import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
 import org.eclipse.ui.AbstractSourceProvider;
 import org.eclipse.ui.ISources;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
@@ -40,7 +40,8 @@ import uk.ac.diamond.scisoft.ncd.data.xml.CalibrationResultsXmlAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)
 
-public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
+public class NcdCalibrationSourceProvider<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
+		extends AbstractSourceProvider {
 
 	public final static String CALIBRATION_STATE = "uk.ac.diamond.scisoft.ncd.rcp.calibrationBean";
 	public final static String NCDDETECTORS_STATE = "uk.ac.diamond.scisoft.ncd.rcp.ncdDetectors";
@@ -80,10 +81,10 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 
 	public void putCalibrationResult(CalibrationResultsBean crb) {
 		for (String experiment : crb.keySet()) {
-			Amount<ScatteringVectorOverDistance> gradient = crb.getGradient(experiment);
-			Amount<ScatteringVector> intercept = crb.getIntercept(experiment);
+			Quantity<D> gradient = crb.getGradient(experiment);
+			Quantity<V> intercept = crb.getIntercept(experiment);
 			List<CalibrationPeak> peaks = crb.getPeakList(experiment);
-			Amount<Length> meanCameraLength = crb.getMeanCameraLength(experiment);
+			Quantity<Length> meanCameraLength = crb.getMeanCameraLength(experiment);
 			Unit<Length> unit = crb.getUnit(experiment);
 			calibrationResults.putCalibrationResult(experiment, gradient, intercept, peaks, meanCameraLength, unit);
 		}
@@ -91,15 +92,15 @@ public class NcdCalibrationSourceProvider extends AbstractSourceProvider {
 		fireSourceChanged(ISources.WORKBENCH, CALIBRATION_STATE, crb);
 	}
 	
-	public Amount<ScatteringVectorOverDistance> getGradient(String experiment) {
+	public Quantity<D> getGradient(String experiment) {
 		return calibrationResults.getGradient(experiment);
 	}
 
-	public Amount<ScatteringVector> getIntercept(String experiment) {
+	public Quantity<V> getIntercept(String experiment) {
 		return calibrationResults.getIntercept(experiment);
 	}
 
-	public Amount<Length> getMeanCameraLength(String experiment) {
+	public Quantity<Length> getMeanCameraLength(String experiment) {
 		return calibrationResults.getMeanCameraLength(experiment);
 	}
 	

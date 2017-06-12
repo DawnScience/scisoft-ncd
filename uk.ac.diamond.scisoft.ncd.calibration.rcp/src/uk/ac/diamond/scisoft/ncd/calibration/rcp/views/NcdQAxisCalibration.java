@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,13 +21,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map.Entry;
 
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.NonSI;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
-import javax.measure.unit.UnitFormat;
+import javax.measure.spi.ServiceProvider;
 
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
@@ -52,11 +51,14 @@ import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
-import org.jscience.physics.amount.Amount;
-import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import si.uom.NonSI;
+import tec.units.ri.format.SimpleUnitFormat;
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
@@ -65,7 +67,7 @@ import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.CalibrationPreferences;
 
-public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISourceProviderListener{
+public class NcdQAxisCalibration <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> extends QAxisCalibrationBase implements ISourceProviderListener{
 	
 	private IMemento memento;
 	
@@ -73,6 +75,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 	
 	protected IPlottingSystem<Composite> plottingSystem;
 	public static final  String SECTOR_NAME = "Calibration";
+
+	private static final Unit<Length> NANOMETRE = MetricPrefix.NANO(Units.METRE);
+	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
+	private static final Unit<Length> LENGTH_UNIT = ServiceProvider.current().getQuantityFactory(Length.class).getSystemUnit();
 
 	private static final Logger logger = LoggerFactory.getLogger(NcdQAxisCalibration.class);
 	
@@ -129,7 +135,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			
 			memento.putInteger(CalibrationPreferences.QAXIS_STANDARD, standard.getSelectionIndex());
 			
-			Unit<Length> selUnit = SI.NANO(SI.METRE);
+			Unit<Length> selUnit = NANOMETRE;
 			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getValue().getSelection()) {
 					selUnit = unitBtn.getKey();
@@ -137,9 +143,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					break;
 				}
 			
-			Amount<Energy> energy = getEnergy();
+			Quantity<Energy> energy = getEnergy();
 			if (energy != null) {
-				memento.putFloat(CalibrationPreferences.QAXIS_ENERGY, new Float(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))));
+				memento.putFloat(CalibrationPreferences.QAXIS_ENERGY, new Float(energy.to(KILO_ELECTRON_VOLT).getValue().doubleValue()));
 			}
 			
 			if (!(calibrationPeakList.isEmpty())) {
@@ -147,8 +153,8 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				for (CalibrationPeak peak: calibrationPeakList) {
 					IMemento calibrationPeakMemento = calibrationPeaksMemento.createChild(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS, (float) peak.getPeakPos());
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
-					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().doubleValue(selUnit));
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA, (float) peak.getTwoTheta().to(NonSI.DEGREE_ANGLE).getValue().doubleValue());
+					calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING, (float) peak.getDSpacing().to(selUnit).getValue().doubleValue());
 					HKL idx = peak.getReflection();
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
 					calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
@@ -171,9 +177,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					String unitIntercept = UnitFormat.getUCUMInstance().format(crb.getIntercept(key).getUnit());
 					crbDataMemento.putString(CalibrationPreferences.QAXIS_INTERCEPT_UNIT, unitIntercept);
 
-					Amount<Length> mcl = crb.getMeanCameraLength(key);
+					Quantity<Length> mcl = crb.getMeanCameraLength(key);
 					if (mcl != null) {
-						crbDataMemento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.to(SI.METRE).toString());
+						crbDataMemento.putString(CalibrationPreferences.QAXIS_CAMERALENGTH, mcl.to(Units.METRE).toString());
 					}
 					ArrayList<CalibrationPeak> calPeaks = crb.getPeakList(key);
 					if (calPeaks != null) {
@@ -183,9 +189,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_PEAKPOS,
 									(float) peak.getPeakPos());
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_TWOTHETA,
-									(float) peak.getTwoTheta().doubleValue(NonSI.DEGREE_ANGLE));
+									(float) peak.getTwoTheta().to(NonSI.DEGREE_ANGLE).getValue().doubleValue());
 							calibrationPeakMemento.putFloat(CalibrationPreferences.QAXIS_DSPACING,
-									(float) peak.getDSpacing().doubleValue(selUnit));
+									(float) peak.getDSpacing().to(selUnit).getValue().doubleValue());
 							HKL idx = peak.getReflection();
 							calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_H, idx.getH());
 							calibrationPeakMemento.putInteger(CalibrationPreferences.QAXIS_K, idx.getK());
@@ -250,10 +256,10 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				standard.select(val);
 			}
 			
-			Unit<Length> selUnit = SI.NANO(SI.METRE);
+			Unit<Length> selUnit = NANOMETRE;
 			String units = this.memento.getString(CalibrationPreferences.QAXIS_UNITS);
 			if (units != null) { 
-				selUnit = Unit.valueOf(units).asType(Length.class);
+				selUnit = SimpleUnitFormat.getInstance().parse(units).asType(Length.class);
 			}
 			for (Entry<Unit<Length>, Button> unitBtn : unitSel.entrySet())
 				if (unitBtn.getKey().equals(selUnit)) {
@@ -264,7 +270,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 			flt = memento.getFloat(CalibrationPreferences.QAXIS_ENERGY);
 			if (flt != null) {
 				energy.setText(flt.toString());
-				ncdEnergySourceProvider.setEnergy(Amount.valueOf(flt, SI.KILO(NonSI.ELECTRON_VOLT)));
+				ncdEnergySourceProvider.setEnergy(Quantities.getQuantity(flt, KILO_ELECTRON_VOLT));
 			}
 			
 			IMemento calibrationPeaksMemento = this.memento.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -273,12 +279,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 				calibrationPeakList = new ArrayList<CalibrationPeak>();
 				for (IMemento peak: peaks) {
 					float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
-					Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
+					Quantity<Angle> tTheta = Quantities.getQuantity(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
 					float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 					int h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 					int k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 					int l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-					HKL hkl = new HKL(h, k, l, Amount.valueOf(dSpacing, selUnit));
+					HKL hkl = new HKL(h, k, l, Quantities.getQuantity(dSpacing, selUnit));
 					calibrationPeakList.add(new CalibrationPeak(peakPos, tTheta, hkl));
 				}
 			}
@@ -299,19 +305,19 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 					Float amountGradient = data.getFloat(CalibrationPreferences.QAXIS_GRADIENT);
 					Float errorGradient = data.getFloat(CalibrationPreferences.QAXIS_GRADIENT_ERROR);
 					String unitStrGradient = data.getString(CalibrationPreferences.QAXIS_GRADIENT_UNIT);
-					Unit<ScatteringVectorOverDistance> unitGradient = UnitFormat.getUCUMInstance().parseObject(unitStrGradient, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
-					Amount<ScatteringVectorOverDistance> valGradient = Amount.valueOf(amountGradient, errorGradient, unitGradient);
+					Unit<D> unitGradient = UnitFormat.getUCUMInstance().parseObject(unitStrGradient, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+					Quantity<D> valGradient = Quantities.getQuantity(amountGradient, unitGradient);
 					Float amountIntercept = data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT);
 					Float errorIntercept = data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT_ERROR);
 					String unitStrIntercept = data.getString(CalibrationPreferences.QAXIS_INTERCEPT_UNIT);
-					Unit<ScatteringVector> unitIntercept = UnitFormat.getUCUMInstance().parseObject(unitStrIntercept, new ParsePosition(0)).asType(ScatteringVector.class);
-					Amount<ScatteringVector> valIntercept = Amount.valueOf(amountIntercept, errorIntercept, unitIntercept);
+					Unit<V> unitIntercept = UnitFormat.getUCUMInstance().parseObject(unitStrIntercept, new ParsePosition(0)).asType(ScatteringVector.class);
+					Quantity<V> valIntercept = Quantities.getQuantity(amountIntercept, unitIntercept);
 					tmp = data.getString(CalibrationPreferences.QAXIS_CAMERALENGTH);
-					Amount<Length> meanCameraLength = null;
+					Quantity<Length> meanCameraLength = null;
 					if (tmp != null) {
 						// JScience can't parse brackets
 						tmp = tmp.replace("(", "").replace(")", "");
-						meanCameraLength = Amount.valueOf(tmp).to(SI.METRE);
+						meanCameraLength = Quantities.getQuantity(Double.valueOf(tmp), Units.METRE);
 					}
 					
 					IMemento dataPeaksMemento = data.getChild(CalibrationPreferences.QAXIS_ARRAYCALIBRATIONPEAK);
@@ -320,12 +326,12 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 						IMemento peaks[] = dataPeaksMemento.getChildren(CalibrationPreferences.QAXIS_CALIBRATIONPEAK);
 						for (IMemento peak: peaks) {
 							float peakPos = peak.getFloat(CalibrationPreferences.QAXIS_PEAKPOS);
-							Amount<Angle> tTheta = Amount.valueOf(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
+							Quantity<Angle> tTheta = Quantities.getQuantity(peak.getFloat(CalibrationPreferences.QAXIS_TWOTHETA), NonSI.DEGREE_ANGLE);
 							float dSpacing = peak.getFloat(CalibrationPreferences.QAXIS_DSPACING);
 							int h = peak.getInteger(CalibrationPreferences.QAXIS_H);
 							int k = peak.getInteger(CalibrationPreferences.QAXIS_K);
 							int l = peak.getInteger(CalibrationPreferences.QAXIS_L);
-							HKL hkl = new HKL(h, k, l, Amount.valueOf(dSpacing, selUnit));
+							HKL hkl = new HKL(h, k, l, Quantities.getQuantity(dSpacing, selUnit));
 							dataPeakList.add(new CalibrationPeak(peakPos, tTheta, hkl));
 						}
 					}
@@ -366,9 +372,9 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		}
 	}
 
-	protected Amount<Length> getLambda() {
-		Amount<Length> lambdaDim = Constants.ℎ.times(Constants.c)
-				.divide(getEnergy().to(SI.KILO(NonSI.ELECTRON_VOLT))).to(Length.UNIT);
+	protected Quantity<Length> getLambda() {
+		Quantity<Length> lambdaDim = Constants.ℎ.times(Constants.c)
+				.divide(getEnergy().to(KILO_ELECTRON_VOLT)).to(LENGTH_UNIT);
 		return lambdaDim;
 	}
 
@@ -381,7 +387,7 @@ public class NcdQAxisCalibration extends QAxisCalibrationBase implements ISource
 		updateCalibrationResults(getDetectorName());
 	}
 	
-	protected Amount<Length> getPixel() {
+	protected Quantity<Length> getPixel() {
 		return null;
 	}
 	

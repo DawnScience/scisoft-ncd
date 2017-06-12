@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 Diamond Light Source Ltd.
+ * Copyright (c) 2014, 2017 Diamond Light Source Ltd.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -13,6 +13,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.lang.math.NumberUtils;
@@ -29,7 +30,6 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
@@ -76,7 +76,7 @@ public class NcdAveragingOperation extends AbstractOperation<NcdAveragingModel, 
 				for (int i=0; i < counter; ++i) {
 					try {
 						Object[] guinierParams = NcdOperationUtils.getGuinierPlotParameters(sliceData[i]);
-						Amount<Dimensionless> rGAmount = (Amount<Dimensionless>)guinierParams[1];
+						Quantity<Dimensionless> rGAmount = (Quantity<Dimensionless>)guinierParams[1];
 						rG[i] = rGAmount.getEstimatedValue();
 						rGError[i] = rGAmount.getAbsoluteError();
 					} catch (Exception e) {

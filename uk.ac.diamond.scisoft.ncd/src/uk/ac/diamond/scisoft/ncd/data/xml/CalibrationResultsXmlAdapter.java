@@ -1,5 +1,5 @@
 /*
- * Copyright 2013 Diamond Light Source Ltd.
+ * Copyright 2013, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,18 +21,22 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.Unit;
-import javax.measure.unit.UnitFormat;
+import javax.measure.spi.ServiceProvider;
+import javax.measure.Quantity;
+import javax.measure.Unit;
+import javax.measure.format.UnitFormat;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import org.jscience.physics.amount.Amount;
-
+import tec.units.ri.format.SimpleUnitFormat;
+import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 
-public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsXmlAdapter.CalibrationDataList, CalibrationResultsBean> {
-	
+public class CalibrationResultsXmlAdapter <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> extends XmlAdapter<CalibrationResultsXmlAdapter.CalibrationDataList, CalibrationResultsBean> {
+
+	private static final Unit<Length> LENGTH_UNIT = ServiceProvider.current().getQuantityFactory(Length.class).getSystemUnit();
+
 	public static class CalibrationDataList {
 		
 		public List<CalibrationData> entry = new ArrayList<CalibrationData>();
@@ -55,17 +59,17 @@ public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsX
     	CalibrationResultsBean crb = new CalibrationResultsBean();
     	for (CalibrationData data : value.entry) {
     		String detector = data.detector;
-			Unit<ScatteringVectorOverDistance> unitGradient = UnitFormat.getUCUMInstance().parseObject(data.gradientUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
-    		Amount<ScatteringVectorOverDistance> gradient = Amount.valueOf(data.gradient, data.gradientError, unitGradient);
-			Unit<ScatteringVector> unitIntercept = UnitFormat.getUCUMInstance().parseObject(data.interceptUnit, new ParsePosition(0)).asType(ScatteringVector.class);
-    		Amount<ScatteringVector> intercept = Amount.valueOf(data.intercept, data.interceptError, unitIntercept);
+			Unit<D> unitGradient = UnitFormat.getUCUMInstance().parseObject(data.gradientUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+    		Quantity<D> gradient = Quantity.valueOf(data.gradient, data.gradientError, unitGradient);
+			Unit<V> unitIntercept = UnitFormat.getUCUMInstance().parseObject(data.interceptUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+			Quantity<V> intercept = Quantity.valueOf(data.intercept, data.interceptError, unitIntercept);
     		
     		String tmp = data.meanCameraLength;
 			// JScience can't parse brackets
 			tmp = tmp.replace("(", "").replace(")", "");
-    		Amount<Length> meanCameraLength = Amount.valueOf(tmp).to(Length.UNIT);
+			Quantity<Length> meanCameraLength = Quantities.getQuantity(Double.valueOf(tmp), LENGTH_UNIT);
     		
-    		Unit<Length> unit = Unit.valueOf(data.unit).asType(Length.class);
+    		Unit<Length> unit = SimpleUnitFormat.getInstance().parse(data.unit).asType(Length.class);
     		crb.putCalibrationResult(detector, gradient, intercept, null, meanCameraLength, unit);
     	}
         return crb;
@@ -77,11 +81,11 @@ public class CalibrationResultsXmlAdapter extends XmlAdapter<CalibrationResultsX
     	for (String key : crb.keySet()) {
     		CalibrationData data = new CalibrationData();
     		data.detector = key;
-    		Amount<ScatteringVectorOverDistance> grad = crb.getGradient(key);
+    		Quantity<D> grad = crb.getGradient(key);
     		data.gradient = grad.getEstimatedValue();
     		data.gradientError = grad.getAbsoluteError();
     		data.gradientUnit = UnitFormat.getUCUMInstance().format(grad.getUnit());
-    		Amount<ScatteringVector> inter = crb.getIntercept(key);
+    		Quantity<V> inter = crb.getIntercept(key);
     		data.intercept = inter.getEstimatedValue();
     		data.interceptError = inter.getAbsoluteError();
     		data.interceptUnit = UnitFormat.getUCUMInstance().format(inter.getUnit());

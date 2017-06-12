@@ -20,7 +20,11 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collection;
 
-import si.uom.SI;
+import javax.measure.Unit;
+import javax.measure.quantity.Energy;
+
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
 import si.uom.NonSI;
 
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
@@ -51,11 +55,9 @@ import org.eclipse.jface.viewers.ISelection;
 import org.eclipse.jface.viewers.IStructuredSelection;
 import org.eclipse.osgi.util.NLS;
 import org.eclipse.ui.IWorkbenchWindow;
-import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
-import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -71,11 +73,13 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 	private static final String PLOT_NAME = "Dataset Plot";
 	private static final String ENERGY_NODE = "/entry1/instrument/monochromator/energy";
 
+	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
+
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
 
 		IWorkbenchWindow window = HandlerUtil.getActiveWorkbenchWindow(event);
-		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
+		ISourceProviderService service = window.getService(ISourceProviderService.class);
 		NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
 
@@ -101,7 +105,7 @@ public class SectorIntegrationFileHandler extends AbstractHandler {
 					Double energy = null;   // energy value in keV
 					if (nodeLink != null) {
 	    				energy = ((DataNode) nodeLink.getDestination()).getDataset().getSlice().getDouble(0);
-	    				ncdEnergySourceProvider.setEnergy(Amount.valueOf(energy, SI.KILO(NonSI.ELECTRON_VOLT)));
+	    				ncdEnergySourceProvider.setEnergy(Quantities.getQuantity(energy, KILO_ELECTRON_VOLT));
 	    				logger.info("Energy value : {}", energy);
 					} else {
 						logger.info(NLS.bind(NcdMessages.NO_ENERGY_DATA, dataFileName));

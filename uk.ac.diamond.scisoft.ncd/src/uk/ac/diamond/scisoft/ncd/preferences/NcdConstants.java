@@ -1,5 +1,5 @@
 /*
- * Copyright 2012 Diamond Light Source Ltd.
+ * Copyright 2012, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,11 +17,14 @@
 package uk.ac.diamond.scisoft.ncd.preferences;
 
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
-import javax.measure.unit.Unit;
+
+import tec.units.ri.unit.Units;
+import tec.units.ri.unit.MetricPrefix;
+
+import javax.measure.Unit;
 
 public class NcdConstants {
 	
 	public static String[] dimChoices = new String[] { "1D", "2D" };
-	public static Unit<Length> DEFAULT_UNIT = SI.NANO(SI.METRE);
+	public static Unit<Length> DEFAULT_UNIT = MetricPrefix.NANO(Units.METRE);
 }

@@ -32,10 +32,10 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
-public abstract class LazyDataReduction {
+public abstract class LazyDataReduction<V extends ScatteringVector<V>> {
 
 	protected Dataset qaxis;
-	protected Unit<ScatteringVector> qaxisUnit;
+	protected Unit<V> qaxisUnit;
 	protected String detector;
 	protected Dataset mask;
 
@@ -46,7 +46,7 @@ public abstract class LazyDataReduction {
 		this.detector = detector;
 	}
 
-	public void setQaxis(Dataset qaxis, Unit<ScatteringVector> unit) {
+	public void setQaxis(Dataset qaxis, Unit<V> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}

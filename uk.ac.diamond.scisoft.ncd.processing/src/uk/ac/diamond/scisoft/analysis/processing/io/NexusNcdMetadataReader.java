@@ -15,10 +15,13 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
+import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.swing.tree.TreeNode;
 
-import si.uom.SI;
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 import si.uom.NonSI;
 
 import org.dawb.common.services.ServiceManager;
@@ -31,7 +34,6 @@ import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf.object.HierarchicalDataFactory;
 import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
 import org.eclipse.january.dataset.IDataset;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
@@ -41,8 +43,8 @@ import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
  * Read available information from NCD data reduction files - initially ROI and mask
  */
 @SuppressWarnings("deprecation")
-public class NexusNcdMetadataReader {
-	
+public class NexusNcdMetadataReader <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> {
+
 	public static final String BASE_NEXUS_INSTRUMENT_PATH = "/entry1/%s_processing";
 	public static final String BASE_NEXUS_PATH = BASE_NEXUS_INSTRUMENT_PATH + "/SectorIntegration";
 	public static final String MASK_NEXUS_PATH = BASE_NEXUS_PATH + "/mask";
@@ -227,8 +229,8 @@ public class NexusNcdMetadataReader {
 		String interceptErrorsUnitsString = hiFile.getAttributeValue(getFormattedUnitPath(QAXIS_INTERCEPT_ERRORS_NEXUS_PATH));
 
 		QAxisCalibration cal = new QAxisCalibration();
-		Unit<ScatteringVectorOverDistance> gradientUnits = (Unit<ScatteringVectorOverDistance>) Unit.ONE.divide(NonSI.ANGSTROM.times(SI.MILLIMETER));
-		Unit<ScatteringVector> interceptUnits = (Unit<ScatteringVector>) Unit.ONE.divide(NonSI.ANGSTROM);
+		Unit<D> gradientUnits = (Unit<D>) NonSI.ANGSTROM.inverse().multiply(MetricPrefix.MILLI(Units.METRE).inverse());
+		Unit<V> interceptUnits = (Unit<V>) NonSI.ANGSTROM.inverse();
 		Map<String, String> unitsMap = new HashMap<String, String>();
 		unitsMap.put(gradientUnits.toString(), "[Angstrom^-1*mm^-1]");
 		unitsMap.put(interceptUnits.toString(), "[Angstrom^-1]");
@@ -236,10 +238,10 @@ public class NexusNcdMetadataReader {
 				!unitsMap.get(gradientUnits.toString()).equals(gradientErrorsUnitsString) || !unitsMap.get(interceptUnits.toString()).equals(interceptErrorsUnitsString)) {
 			throw new Exception("Units are not the expected ones");
 		}
-		cal.setGradient((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradient.getSlice().getDouble(), gradientUnits));
-		cal.setGradientErrors((Amount<ScatteringVectorOverDistance>) Amount.valueOf(gradientErrors.getDouble(), gradientUnits));
-		cal.setIntercept((Amount<ScatteringVector>) Amount.valueOf(intercept.getDouble(), interceptUnits));
-		cal.setInterceptErrors((Amount<ScatteringVector>) Amount.valueOf(interceptErrors.getDouble(), interceptUnits));
+		cal.setGradient((Quantity<D>) Quantities.getQuantity(gradient.getSlice().getDouble(), gradientUnits));
+		cal.setGradientErrors((Quantity<D>) Quantities.getQuantity(gradientErrors.getDouble(), gradientUnits));
+		cal.setIntercept((Quantity<V>) Quantities.getQuantity(intercept.getDouble(), interceptUnits));
+		cal.setInterceptErrors((Quantity<V>) Quantities.getQuantity(interceptErrors.getDouble(), interceptUnits));
 		return cal;
 	}
 }

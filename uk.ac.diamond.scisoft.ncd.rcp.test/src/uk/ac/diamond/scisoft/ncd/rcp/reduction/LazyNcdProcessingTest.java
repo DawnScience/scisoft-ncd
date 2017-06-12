@@ -21,9 +21,13 @@ import static org.junit.Assert.assertEquals;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Length;
 
 import si.uom.SI;
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 
 import org.apache.commons.io.IOUtils;
 import org.eclipse.core.runtime.NullProgressMonitor;
@@ -32,7 +36,6 @@ import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf5.HDF5Utils;
 import org.eclipse.january.dataset.BooleanDataset;
 import org.eclipse.january.dataset.Dataset;
-import org.jscience.physics.amount.Amount;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.Test;
@@ -76,7 +79,7 @@ public class LazyNcdProcessingTest {
 	private static String detectorOut = "Rapid2D_processing";
 	private static String detectorBg = "Rapid2D_result";
 	private static String calibration = "Scalers";
-	private static Amount<Length> pxSaxs = Amount.valueOf(0.1, SI.MILLIMETER);
+	private static Quantity<Length> pxSaxs = Quantities.getQuantity(0.1, MetricPrefix.MILLI(Units.METRE));
 	private static int dim = 2;
 	private static String filename, bgFilename;
 	private static String testScratchDirectoryName;

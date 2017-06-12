@@ -16,28 +16,28 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.xml;
 
+import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.quantity.Length;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import si.uom.SI;
-import si.uom.NonSI;
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 
-import org.jscience.physics.amount.Amount;
-
-public class PxSizeXmlAdapter extends XmlAdapter<String, Amount<Length>> {
+public class PxSizeXmlAdapter extends XmlAdapter<String, Quantity<Length>> {
 	
-	private Unit<Length> unit = SI.MILLIMETER;
+	private Unit<Length> unit = MetricPrefix.MILLI(Units.METRE);
 	
     @Override
-    public Amount<Length> unmarshal( String value ){
+    public Quantity<Length> unmarshal( String value ){
 		// JScience can't parse brackets
 		value = value.replace("(", "").replace(")", "");
-        return Amount.valueOf(value).to(unit);
+        return Quantities.getQuantity(Double.valueOf(value), unit);
     } 
 
     @Override
-    public String marshal( Amount<Length> pxSize ){
+    public String marshal( Quantity<Length> pxSize ){
         return pxSize.to(unit).toString();
     }
 }

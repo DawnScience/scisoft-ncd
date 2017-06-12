@@ -18,22 +18,22 @@ package uk.ac.diamond.scisoft.ncd.core.data;
 
 import java.io.Serializable;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Length;
 
-import org.jscience.physics.amount.Amount;
-
+import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 
 public class CalibrationPeak implements Serializable {
 	private double peakPos;
-	private Amount<Angle> twoTheta;
+	private Quantity<Angle> twoTheta;
 	private HKL reflection;
 
-	public CalibrationPeak(double peakPos, Amount<Angle> angle, HKL reflection) {
+	public CalibrationPeak(double peakPos, Quantity<Angle> angle, HKL reflection) {
 		super();
 		this.peakPos = peakPos;
-		this.twoTheta = angle.copy();
+		this.twoTheta = Quantities.getQuantity(angle.getValue(), angle.getUnit());
 		this.reflection = reflection.clone();
 	}
 
@@ -41,11 +41,11 @@ public class CalibrationPeak implements Serializable {
 		return peakPos;
 	}
 
-	public Amount<Angle> getTwoTheta() {
-		return twoTheta.copy();
+	public Quantity<Angle> getTwoTheta() {
+		return Quantities.getQuantity(twoTheta.getValue(), twoTheta.getUnit());
 	}
 
-	public Amount<Length> getDSpacing() {
+	public Quantity<Length> getDSpacing() {
 		return reflection.getD();
 	}
 

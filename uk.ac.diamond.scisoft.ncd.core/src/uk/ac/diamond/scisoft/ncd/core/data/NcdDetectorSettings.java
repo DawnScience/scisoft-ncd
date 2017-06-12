@@ -16,14 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Length;
 import javax.xml.bind.annotation.XmlAccessorType;
 import javax.xml.bind.annotation.XmlAccessType;
 import javax.xml.bind.annotation.XmlElement;
 import javax.xml.bind.annotation.adapters.XmlJavaTypeAdapter;
 
-import org.jscience.physics.amount.Amount;
-
+import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.ncd.core.data.xml.PxSizeXmlAdapter;
 
 @XmlAccessorType(XmlAccessType.FIELD)
@@ -35,7 +35,7 @@ public class NcdDetectorSettings {
 	private String name;				// Detector Name
     @XmlElement
     @XmlJavaTypeAdapter(PxSizeXmlAdapter.class)
-	private Amount<Length> pxSize;		// Detector pixel size
+	private Quantity<Length> pxSize;		// Detector pixel size
 	private Integer normChannel;        // Selected scaler channel
 	private Integer maxChannel;			// Number of recorded scaler channels
 
@@ -54,9 +54,9 @@ public class NcdDetectorSettings {
 		this.type = ncdDetector.getType();
 		this.dim = ncdDetector.getDimension();
 		this.name = ncdDetector.getName();
-		Amount<Length> tmpPxSize = ncdDetector.getPxSize();
+		Quantity<Length> tmpPxSize = ncdDetector.getPxSize();
 		if (tmpPxSize != null) {
-			this.pxSize = tmpPxSize.copy();
+			this.pxSize = Quantities.getQuantity(tmpPxSize.getValue(), tmpPxSize.getUnit());
 		}
 		setNormChannel(ncdDetector.getNormChannel());
 		setMaxChannel(ncdDetector.getMaxChannel());
@@ -95,12 +95,12 @@ public class NcdDetectorSettings {
 		this.name = name;
 	}
 	
-	public Amount<Length> getPxSize() {
+	public Quantity<Length> getPxSize() {
 		return pxSize;
 	}
 	
-	public void setPxSize(Amount<Length> pxSize) {
-		this.pxSize = pxSize.copy();
+	public void setPxSize(Quantity<Length> pxSize) {
+		this.pxSize = Quantities.getQuantity(pxSize.getValue(), pxSize.getUnit());
 	}
 	
 	public Integer getNormChannel() {

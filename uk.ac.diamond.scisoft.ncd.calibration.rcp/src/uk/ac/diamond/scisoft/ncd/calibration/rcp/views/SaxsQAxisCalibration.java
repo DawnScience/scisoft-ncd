@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Diamond Light Source Ltd.
+ * Copyright 2011, 2017 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
+import javax.measure.Quantity;
+import javax.measure.Unit;
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.unit.SI;
 
 import org.apache.commons.math3.optim.PointValuePair;
 import org.apache.commons.math3.optim.SimplePointChecker;
@@ -59,11 +60,12 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.progress.UIJob;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
-import org.jscience.physics.amount.Amount;
-import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import tec.units.ri.quantity.Quantities;
+import tec.units.ri.unit.MetricPrefix;
+import tec.units.ri.unit.Units;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -78,14 +80,17 @@ import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 
-public class SaxsQAxisCalibration extends NcdQAxisCalibration {
+public class SaxsQAxisCalibration<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
+		extends NcdQAxisCalibration {
 	
 	public static final String ID = "uk.ac.diamond.scisoft.ncd.rcp.views.SaxsQAxisCalibration";
 	private MultivariateFunctionSourceProvider beamxySourceProvider, peaksSourceProvider;
 	private ISourceProviderService service;
 	
 	private static final Logger logger = LoggerFactory.getLogger(SaxsQAxisCalibration.class);
-	
+
+	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
+
 	@Override
 	public void createPartControl(Composite parent) {
 		GUI_PLOT_NAME = "Dataset Plot";
@@ -111,17 +116,17 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 				case 0: 
 					CalibrationResultsBean crb = ncdCalibrationSourceProvider.getCalibrationResults();
 					String det = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					Amount<ScatteringVectorOverDistance> gradient = getGradient();
-					Amount<ScatteringVector> intercept = getIntercept();
+					Quantity<D> gradient = getGradient();
+					Quantity<V> intercept = getIntercept();
 					if (gradient == null || intercept == null) {
 						if (crb.containsKey(det))
 							crb.clearData(det);
 							plottingSystem.clear();
 					} else {
-						Amount<Length> meanCameraLength = null;
-						Amount<Energy> amountEnergy = getEnergy();
+						Quantity<Length> meanCameraLength = null;
+						Quantity<Energy> amountEnergy = getEnergy();
 						if (amountEnergy != null) {
-							Amount<Length> wv = Constants.ℎ.times(Constants.c).divide(amountEnergy).to(Length.UNIT);
+							Quantity<Length> wv = Constants.ℎ.times(Constants.c).divide(amountEnergy).to(Length.UNIT);
 							meanCameraLength = Constants.two_π.divide(gradient).divide(wv).to(Length.UNIT);
 						}
 						crb.putCalibrationResult(det, gradient, intercept, null, meanCameraLength, getUnit());
@@ -144,16 +149,16 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 	}
 
 	@Override
-	protected Amount<Length> getPixel() {
-		NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
+	protected Quantity<Length> getPixel() {
+		NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
 		if (detSettings == null) {
 			throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
 		}
-		Amount<Length> pxSize = detSettings.getPxSize();
+		Quantity<Length> pxSize = detSettings.getPxSize();
 		if (pxSize == null) {
 			throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
 		}
-		return pxSize.copy().to(SI.MILLIMETRE);
+		return Quantities.getQuantity(pxSize.getValue(), pxSize.getUnit()).to(MILLIMETRE);
 	}
 	
 	@Override
@@ -164,11 +169,11 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 			if (saxsDet == null) {
 				throw new IllegalArgumentException(NcdMessages.NO_SAXS_DETECTOR);
 			}
-			Amount<Energy> energy = getEnergy();
+			Quantity<Energy> energy = getEnergy();
 			if (energy == null) {
 				throw new IllegalArgumentException(NLS.bind(NcdMessages.NO_ENERGY_DATA, "calibration settings"));
 			}
-			Amount<Length> pxSize = getPixel();
+			Quantity<Length> pxSize = getPixel();
 			if (pxSize == null) {
 				throw new IllegalArgumentException(NcdMessages.NO_SAXS_PIXEL);
 			}
@@ -223,7 +228,7 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 
 	}
 
-	private void plotCalibrationResults(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> list) {
+	private void plotCalibrationResults(Quantity<D> gradient, Quantity<V> intercept, List<CalibrationPeak> list) {
 		
 		StraightLine calibrationFunction = new StraightLine(new Parameter[] {
 				new Parameter(gradient.getEstimatedValue()),
@@ -231,11 +236,11 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		
 		plottingSystem.clear();
 		
-		Amount<Length> px = getPixel();
+		Quantity<Length> px = getPixel();
 		IPlottingSystem<Composite> plotSystem = PlottingFactory.getPlottingSystem(GUI_PLOT_NAME);
 		final SectorROI sroi = (SectorROI) plotSystem.getRegions(RegionType.SECTOR).iterator().next().getROI();
 		Dataset xAxis = DatasetFactory.createRange(sroi.getIntRadius(1), Dataset.FLOAT32);
-		xAxis.imultiply(px.getEstimatedValue());
+		xAxis.imultiply(px.getValue());
 		Dataset qvalues = calibrationFunction.calculateValues(xAxis);
 		
         ILineTrace calibrationLine = plottingSystem.createLineTrace("Fitting line");
@@ -251,11 +256,11 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 		ArrayList<Double> qEstError = new ArrayList<Double>();
 		
 		for (CalibrationPeak peak : list) {
-			Amount<Length> pxPos = px.times(peak.getPeakPos()); 
-			peakPos.add(pxPos.getEstimatedValue());
-			qData.add(2.0 * Math.PI / peak.getDSpacing().doubleValue(getUnitScale()));
-			Amount<ScatteringVector> q = gradient.times(pxPos).plus(intercept).to(intercept.getUnit());
-			qEst.add(q.getEstimatedValue());
+			Quantity<Length> pxPos = px.multiply(peak.getPeakPos()); 
+			peakPos.add(pxPos.getValue().doubleValue());
+			qData.add(2.0 * Math.PI / peak.getDSpacing().to(getUnitScale()).getValue().doubleValue());
+			Quantity<V> q = gradient.multiply(pxPos).plus(intercept).to(intercept.getUnit());
+			qEst.add(q.getValue().doubleValue());
 			qEstError.add(q.getAbsoluteError());
 		}
 		
@@ -365,9 +370,9 @@ public class SaxsQAxisCalibration extends NcdQAxisCalibration {
 
 						CalibrationResultsBean crb = new CalibrationResultsBean();
 						
-						Amount<ScatteringVectorOverDistance> gradient = calibrationMethod.getGradient();
-						Amount<ScatteringVector> intercept = calibrationMethod.getIntercept();
-						Amount<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(SI.METRE);
+						Quantity<D> gradient = calibrationMethod.getGradient();
+						Quantity<V> intercept = calibrationMethod.getIntercept();
+						Quantity<Length> meanCameraLength = calibrationMethod.getMeanCameraLength().to(Units.METRE);
 						cameralength.setText(meanCameraLength.toString());
 
 						crb.putCalibrationResult(getDetectorName(), gradient, intercept, calibrationMethod.getIndexedPeakList(),

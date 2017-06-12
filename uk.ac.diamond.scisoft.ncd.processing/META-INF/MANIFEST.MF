@@ -26,7 +26,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.dawnsci.conversion,
  javax.measure.unit-api;bundle-version="1.0.0",
  si.uom.si-units;bundle-version="0.6.6",
- tec.units.unit-ri;bundle-version="1.0.2"
+ tec.units.unit-ri;bundle-version="1.0.2",
+ tec.uom.lib.uom-lib-common;bundle-version="1.0.2"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.analysis.processing.io

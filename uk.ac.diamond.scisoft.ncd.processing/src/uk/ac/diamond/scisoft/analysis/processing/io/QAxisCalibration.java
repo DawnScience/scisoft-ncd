@@ -8,40 +8,40 @@
  */
 package uk.ac.diamond.scisoft.analysis.processing.io;
 
-import org.jscience.physics.amount.Amount;
+import javax.measure.Quantity;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
-public class QAxisCalibration {
+public class QAxisCalibration <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> {
 
-	public Amount<ScatteringVectorOverDistance> gradient;
-	public Amount<ScatteringVectorOverDistance> gradient_errors;
-	public Amount<ScatteringVector> intercept;
-	public Amount<ScatteringVector> intercept_errors;
-	public Amount<ScatteringVectorOverDistance> getGradient() {
+	public Quantity<D> gradient;
+	public Quantity<D> gradient_errors;
+	public Quantity<V> intercept;
+	public Quantity<V> intercept_errors;
+	public Quantity<D> getGradient() {
 		return gradient;
 	}
-	public void setGradient(Amount<ScatteringVectorOverDistance> gradient) {
+	public void setGradient(Quantity<D> gradient) {
 		this.gradient = gradient;
 	}
-	public Amount<ScatteringVectorOverDistance> getGradientErrors() {
+	public Quantity<D> getGradientErrors() {
 		return gradient_errors;
 	}
 	public void setGradientErrors(
-			Amount<ScatteringVectorOverDistance> gradient_errors) {
+			Quantity<D> gradient_errors) {
 		this.gradient_errors = gradient_errors;
 	}
-	public Amount<ScatteringVector> getIntercept() {
+	public Quantity<V> getIntercept() {
 		return intercept;
 	}
-	public void setIntercept(Amount<ScatteringVector> intercept) {
+	public void setIntercept(Quantity<V> intercept) {
 		this.intercept = intercept;
 	}
-	public Amount<ScatteringVector> getInterceptErrors() {
+	public Quantity<V> getInterceptErrors() {
 		return intercept_errors;
 	}
-	public void setInterceptErrors(Amount<ScatteringVector> intercept_errors) {
+	public void setInterceptErrors(Quantity<V> intercept_errors) {
 		this.intercept_errors = intercept_errors;
 	}
 

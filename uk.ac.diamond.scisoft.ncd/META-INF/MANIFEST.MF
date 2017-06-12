@@ -25,7 +25,8 @@ Require-Bundle: org.eclipse.core.runtime;bundle-version="3.8.0",
  uk.ac.diamond.scisoft.ncd.core;bundle-version="[3.0.0,3.1.0)",
  javax.measure.unit-api;bundle-version="1.0.0",
  si.uom.si-units;bundle-version="0.6.6",
- tec.units.unit-ri;bundle-version="1.0.2"
+ tec.units.unit-ri;bundle-version="1.0.2",
+ tec.uom.lib.uom-lib-common;bundle-version="1.0.2"
 Import-Package: org.slf4j;version="[1.7.2,2.0.0)"
 Bundle-Vendor: Diamond Light Source
 Bundle-ClassPath: .

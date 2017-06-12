@@ -18,6 +18,7 @@ package uk.ac.diamond.scisoft.ncd.core;
 
 import java.io.Serializable;
 
+import javax.measure.Quantity;
 import javax.measure.quantity.Dimensionless;
 
 import org.apache.commons.beanutils.ConvertUtils;
@@ -32,7 +33,6 @@ import org.apache.commons.math3.exception.TooManyEvaluationsException;
 import org.apache.commons.math3.stat.regression.SimpleRegression;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.IDataset;
-import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.plots.PorodPlotData;
@@ -79,7 +79,7 @@ public class SaxsInvariant {
 			IDataset qaxis = DatasetFactory.createFromObject(parentaxis, dimensions);
 			PorodPlotData porodPlotData = (PorodPlotData) SaxsAnalysisPlotType.POROD_PLOT.getSaxsPlotDataObject();
 			SimpleRegression regression = porodPlotData.getPorodPlotParameters(data.squeeze(), qaxis.squeeze());
-			Amount<Dimensionless> c4 = porodPlotData.getC4(regression);
+			Quantity<Dimensionless> c4 = porodPlotData.getC4(regression);
 
 			result += (float) (c4.getEstimatedValue() / myaxis[myaxis.length - 1]);
 			
