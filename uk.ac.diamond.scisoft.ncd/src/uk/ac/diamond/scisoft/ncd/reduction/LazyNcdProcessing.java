@@ -34,6 +34,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.Status;
 import org.eclipse.core.runtime.jobs.ILock;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dawnsci.analysis.api.Constants;
 import org.eclipse.dawnsci.analysis.api.diffraction.DetectorProperties;
 import org.eclipse.dawnsci.analysis.api.diffraction.DiffractionCrystalEnvironment;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
@@ -887,7 +888,7 @@ public class LazyNcdProcessing <V extends ScatteringVector<V>, D extends Scatter
 			Unit<Length> pxUnit = ncdDetectors.getPxSaxs().getUnit();
 			cameraLength = Quantities.getQuantity(detectorProperties.getBeamCentreDistance(), MILLIMETRE);
 			Quantity<Length> wv = Quantities.getQuantity(crystalEnvironment.getWavelength(), NonSI.ANGSTROM);
-			energy = Constants.ℎ.times(Constants.c).divide(wv).to(KILO_ELECTRON_VOLT);
+			energy = Quantities.getQuantity(Constants.ℎ.multiply(Constants.c).divide(wv).getValue().doubleValue(), KILO_ELECTRON_VOLT);
 			slope = (Quantity<D>) wv.inverse().multiply(2.0*Math.PI).divide(cameraLength).to(qaxisUnit.divide(pxUnit).asType(ScatteringVectorOverDistance.class));
 			intercept = Quantities.getQuantity(0.0, qaxisUnit);
 			

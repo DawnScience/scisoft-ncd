@@ -33,6 +33,7 @@ import org.eclipse.core.runtime.IStatus;
 import org.eclipse.core.runtime.NullProgressMonitor;
 import org.eclipse.core.runtime.OperationCanceledException;
 import org.eclipse.core.runtime.Status;
+import org.eclipse.dawnsci.analysis.api.Constants;
 import org.eclipse.dawnsci.analysis.api.fitting.functions.IPeak;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
@@ -126,8 +127,8 @@ public class SaxsQAxisCalibration<V extends ScatteringVector<V>, D extends Scatt
 						Quantity<Length> meanCameraLength = null;
 						Quantity<Energy> amountEnergy = getEnergy();
 						if (amountEnergy != null) {
-							Quantity<Length> wv = Constants.ℎ.times(Constants.c).divide(amountEnergy).to(Length.UNIT);
-							meanCameraLength = Constants.two_π.divide(gradient).divide(wv).to(Length.UNIT);
+							Quantity<Length> wv = Quantities.getQuantity(Constants.ℎ.multiply(Constants.c).divide(amountEnergy).getValue().doubleValue(), Units.METRE);
+							meanCameraLength = Quantities.getQuantity(2 * Math.PI /(gradient).divide(wv).getValue().doubleValue(), Units.METRE);
 						}
 						crb.putCalibrationResult(det, gradient, intercept, null, meanCameraLength, getUnit());
 					}

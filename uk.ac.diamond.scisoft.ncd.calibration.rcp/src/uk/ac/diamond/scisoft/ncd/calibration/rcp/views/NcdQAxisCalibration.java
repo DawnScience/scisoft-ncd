@@ -30,6 +30,7 @@ import javax.measure.spi.ServiceProvider;
 
 import org.eclipse.core.runtime.jobs.IJobManager;
 import org.eclipse.core.runtime.jobs.Job;
+import org.eclipse.dawnsci.analysis.api.Constants;
 import org.eclipse.dawnsci.analysis.api.roi.IROI;
 import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.plotting.api.IPlottingSystem;
@@ -373,8 +374,8 @@ public class NcdQAxisCalibration <V extends ScatteringVector<V>, D extends Scatt
 	}
 
 	protected Quantity<Length> getLambda() {
-		Quantity<Length> lambdaDim = Constants.ℎ.times(Constants.c)
-				.divide(getEnergy().to(KILO_ELECTRON_VOLT)).to(LENGTH_UNIT);
+		Quantity<Length> lambdaDim = Quantities.getQuantity(Constants.ℎ.multiply(Constants.c)
+				.divide(getEnergy()).getValue().doubleValue(), LENGTH_UNIT);
 		return lambdaDim;
 	}
 
