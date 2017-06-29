@@ -59,9 +59,10 @@ public class CalibrationResultsXmlAdapter <V extends ScatteringVector<V>, D exte
     	CalibrationResultsBean crb = new CalibrationResultsBean();
     	for (CalibrationData data : value.entry) {
     		String detector = data.detector;
-			Unit<D> unitGradient = UnitFormat.getUCUMInstance().parseObject(data.gradientUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+    		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
+			Unit<D> unitGradient = unitFormat.parseObject(data.gradientUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
     		Quantity<D> gradient = Quantity.valueOf(data.gradient, data.gradientError, unitGradient);
-			Unit<V> unitIntercept = UnitFormat.getUCUMInstance().parseObject(data.interceptUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+			Unit<V> unitIntercept = unitFormat.parseObject(data.interceptUnit, new ParsePosition(0)).asType(ScatteringVector.class);
 			Quantity<V> intercept = Quantity.valueOf(data.intercept, data.interceptError, unitIntercept);
     		
     		String tmp = data.meanCameraLength;
@@ -81,14 +82,15 @@ public class CalibrationResultsXmlAdapter <V extends ScatteringVector<V>, D exte
     	for (String key : crb.keySet()) {
     		CalibrationData data = new CalibrationData();
     		data.detector = key;
+    		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
     		Quantity<D> grad = crb.getGradient(key);
     		data.gradient = grad.getEstimatedValue();
     		data.gradientError = grad.getAbsoluteError();
-    		data.gradientUnit = UnitFormat.getUCUMInstance().format(grad.getUnit());
+    		data.gradientUnit = unitFormat.format(grad.getUnit());
     		Quantity<V> inter = crb.getIntercept(key);
     		data.intercept = inter.getEstimatedValue();
     		data.interceptError = inter.getAbsoluteError();
-    		data.interceptUnit = UnitFormat.getUCUMInstance().format(inter.getUnit());
+    		data.interceptUnit = unitFormat.format(inter.getUnit());
     		data.meanCameraLength = crb.getMeanCameraLength(key).toString();
     		data.unit = crb.getUnit(key).toString();
     		

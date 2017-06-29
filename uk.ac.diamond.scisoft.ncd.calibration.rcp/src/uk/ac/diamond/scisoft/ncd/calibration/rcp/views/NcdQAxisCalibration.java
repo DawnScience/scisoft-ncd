@@ -23,6 +23,7 @@ import java.util.Map.Entry;
 
 import javax.measure.Quantity;
 import javax.measure.Unit;
+import javax.measure.format.UnitFormat;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
@@ -168,14 +169,14 @@ public class NcdQAxisCalibration <V extends ScatteringVector<V>, D extends Scatt
 				IMemento crbMemento = memento.createChild(CalibrationPreferences.QAXIS_CRB);
 				for (String key : crb.keySet()) {
 					IMemento crbDataMemento = crbMemento.createChild(CalibrationPreferences.QAXIS_CRBDATA, key);
-
+					UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT, (float) crb.getGradient(key).getEstimatedValue());
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_GRADIENT_ERROR, (float) crb.getGradient(key).getAbsoluteError());
-					String unitGradient = UnitFormat.getUCUMInstance().format(crb.getGradient(key).getUnit());
+					String unitGradient = unitFormat.format(crb.getGradient(key).getUnit());
 					crbDataMemento.putString(CalibrationPreferences.QAXIS_GRADIENT_UNIT, unitGradient);
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT, (float) crb.getIntercept(key).getEstimatedValue());
 					crbDataMemento.putFloat(CalibrationPreferences.QAXIS_INTERCEPT_ERROR, (float) crb.getIntercept(key).getAbsoluteError());
-					String unitIntercept = UnitFormat.getUCUMInstance().format(crb.getIntercept(key).getUnit());
+					String unitIntercept = unitFormat.format(crb.getIntercept(key).getUnit());
 					crbDataMemento.putString(CalibrationPreferences.QAXIS_INTERCEPT_UNIT, unitIntercept);
 
 					Quantity<Length> mcl = crb.getMeanCameraLength(key);
@@ -302,16 +303,16 @@ public class NcdQAxisCalibration <V extends ScatteringVector<V>, D extends Scatt
 				for (IMemento data: crbDataMemento) {
 					
 					String key = data.getID();
-					
+					UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
 					Float amountGradient = data.getFloat(CalibrationPreferences.QAXIS_GRADIENT);
 					Float errorGradient = data.getFloat(CalibrationPreferences.QAXIS_GRADIENT_ERROR);
 					String unitStrGradient = data.getString(CalibrationPreferences.QAXIS_GRADIENT_UNIT);
-					Unit<D> unitGradient = UnitFormat.getUCUMInstance().parseObject(unitStrGradient, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+					Unit<D> unitGradient = unitFormat.parse(unitStrGradient).asType(ScatteringVectorOverDistance.class);
 					Quantity<D> valGradient = Quantities.getQuantity(amountGradient, unitGradient);
 					Float amountIntercept = data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT);
 					Float errorIntercept = data.getFloat(CalibrationPreferences.QAXIS_INTERCEPT_ERROR);
 					String unitStrIntercept = data.getString(CalibrationPreferences.QAXIS_INTERCEPT_UNIT);
-					Unit<V> unitIntercept = UnitFormat.getUCUMInstance().parseObject(unitStrIntercept, new ParsePosition(0)).asType(ScatteringVector.class);
+					Unit<V> unitIntercept = unitFormat.parse(unitStrIntercept).asType(ScatteringVector.class);
 					Quantity<V> valIntercept = Quantities.getQuantity(amountIntercept, unitIntercept);
 					tmp = data.getString(CalibrationPreferences.QAXIS_CAMERALENGTH);
 					Quantity<Length> meanCameraLength = null;

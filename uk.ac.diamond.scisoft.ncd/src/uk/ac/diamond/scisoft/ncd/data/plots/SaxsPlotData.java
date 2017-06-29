@@ -19,6 +19,7 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 import java.util.Arrays;
 
 import javax.measure.format.UnitFormat;
+import javax.measure.spi.ServiceProvider;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.hdf.object.Nexus;
@@ -136,7 +137,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		
 		Dataset qaxisNew = getSaxsPlotAxis(qaxis);
 		
-		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
 		String units = unitFormat.format(qaxisUnit); 
 		long qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);

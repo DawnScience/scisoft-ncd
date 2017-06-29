@@ -20,6 +20,7 @@ import java.util.Arrays;
 
 import javax.measure.Unit;
 import javax.measure.format.UnitFormat;
+import javax.measure.spi.ServiceProvider;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.january.dataset.Dataset;
@@ -58,7 +59,7 @@ public abstract class LazyDataReduction<V extends ScatteringVector<V>> {
 	public void writeQaxisData(int dim, long datagroup_id) throws HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
-		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
+		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
 		String units = unitFormat.format(qaxisUnit); 
 		long qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, new int[] { dim },
 				1, units);

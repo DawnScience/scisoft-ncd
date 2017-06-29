@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
+import javax.measure.spi.ServiceProvider;
 import javax.measure.Quantity;
 import javax.measure.Unit;
 import javax.measure.format.UnitFormat;
@@ -160,18 +161,16 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 							+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
 					Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
-					
+					UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
 					double gradient = ((DataNode) gradientData).getDataset().getSlice().getDouble(0);
 					double errgradient = ((DataNode) gradientError).getDataset().getSlice().getDouble(0);
 					String strUnit = gradientData.getAttribute("units").getFirstElement();
-					Unit<D> gradientUnit = UnitFormat.getUCUMInstance()
-							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
+					Unit<D> gradientUnit = unitFormat.parse(strUnit).asType(ScatteringVectorOverDistance.class);
 					
 					double intercept = ((DataNode) interceptData).getDataset().getSlice().getDouble(0);
 					double erritercept = ((DataNode) interceptError).getDataset().getSlice().getDouble(0);
 					strUnit = interceptData.getAttribute("units").getFirstElement();
-					unit = UnitFormat.getUCUMInstance()
-							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
+					unit = unitFormat.parse(strUnit).asType(ScatteringVector.class);
 					
 					amountGradient = Quantities.getQuantity(gradient, errgradient, gradientUnit);
 					amountIntercept = Quantities.getQuantity(intercept,  erritercept, unit);
