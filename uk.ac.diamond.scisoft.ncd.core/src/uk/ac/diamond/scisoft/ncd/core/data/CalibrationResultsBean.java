@@ -31,7 +31,7 @@ import javax.xml.bind.annotation.XmlAnyAttribute;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
-public class CalibrationResultsBean<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
+public class CalibrationResultsBean<V extends ScatteringVector<?>, D extends ScatteringVectorOverDistance<D>>
 		implements Serializable {
 	
 	@XmlAnyAttribute
@@ -41,12 +41,12 @@ public class CalibrationResultsBean<V extends ScatteringVector<V>, D extends Sca
 		results = new HashMap<String, CalibrationResultsData>();
 	}
 	
-	public CalibrationResultsBean(String detector, Quantity<D> gradient, Quantity<V> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
+	public CalibrationResultsBean(String detector, Quantity<D> gradient, Quantity<?> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
 		results = new HashMap<String, CalibrationResultsData>();
 		putCalibrationResult(detector, gradient, intercept, peaks, meanCameraLength, unit); 
 	}
 	
-	public void putCalibrationResult(String detector, Quantity<D> gradient, Quantity<V> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
+	public void putCalibrationResult(String detector, Quantity<D> gradient, Quantity<?> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
 		CalibrationResultsData newData = new CalibrationResultsData(gradient, intercept, peaks, meanCameraLength, unit);	
 		results.put(detector, newData);
 	}
@@ -65,7 +65,7 @@ public class CalibrationResultsBean<V extends ScatteringVector<V>, D extends Sca
 		return null;
 	}
 	
-	public Quantity<V> getIntercept(String detector) {
+	public Quantity<?> getIntercept(String detector) {
 		if (results.containsKey(detector)) {
 			return results.get(detector).getIntercept();
 		}

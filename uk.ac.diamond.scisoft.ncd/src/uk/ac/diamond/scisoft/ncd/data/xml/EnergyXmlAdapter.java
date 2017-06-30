@@ -33,7 +33,7 @@ public class EnergyXmlAdapter extends XmlAdapter<String, Quantity<Energy>> {
     public Quantity<Energy> unmarshal( String value ){
 		// JScience can't parse brackets
 		value = value.replace("(", "").replace(")", "");
-        return Quantities.getQuantity(value).to(unit);
+        return Quantities.getQuantity(Quantities.getQuantity(value).getValue().doubleValue(), unit);
     } 
 
     @Override
