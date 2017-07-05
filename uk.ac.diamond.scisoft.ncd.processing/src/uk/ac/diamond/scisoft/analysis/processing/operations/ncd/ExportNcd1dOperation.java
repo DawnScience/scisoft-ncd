@@ -13,8 +13,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.dawb.common.services.ServiceManager;
+import org.dawnsci.conversion.schemes.CustomNCDConverterScheme;
 import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext;
-import org.eclipse.dawnsci.analysis.api.conversion.IConversionContext.ConversionScheme;
 import org.eclipse.dawnsci.analysis.api.conversion.IConversionService;
 import org.eclipse.dawnsci.analysis.api.processing.IExportOperation;
 import org.eclipse.dawnsci.analysis.api.processing.OperationData;
@@ -107,7 +107,7 @@ public class ExportNcd1dOperation extends AbstractOperation<ExportNcd1dModel, Op
 			
 			context.setLazyDataset(ag);
 			context.setOutputPath(model.getOutputDirectoryPath());
-			context.setConversionScheme(ConversionScheme.CUSTOM_NCD);
+			context.setConversionScheme(new CustomNCDConverterScheme());
 			context.setUserObject(model.getExportFormat());
 			String filePath = ssm.getFilePath();
 			filePath = filePath.replace('\\', '/');
