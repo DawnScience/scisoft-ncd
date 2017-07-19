@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,15 +16,14 @@
 
 package uk.ac.diamond.scisoft.ncd.core.preferences;
 
-import javax.measure.Quantity;
 import javax.measure.quantity.Length;
 
-import tec.units.ri.quantity.Quantities;
+import org.jscience.physics.amount.Amount;
 
 public class NcdDetectors {
 
 	private String detectorWaxs, detectorSaxs;
-	private Quantity<Length> pxWaxs, pxSaxs;
+	private Amount<Length> pxWaxs, pxSaxs;
 	private Integer dimWaxs, dimSaxs;
 	
 	public NcdDetectors() {
@@ -65,20 +64,20 @@ public class NcdDetectors {
 		this.detectorSaxs = detectorSaxs;
 	}
 
-	public Quantity<Length> getPxWaxs() {
-		return (pxWaxs == null) ? null : Quantities.getQuantity(pxWaxs.getValue(), pxWaxs.getUnit());
+	public Amount<Length> getPxWaxs() {
+		return (pxWaxs == null) ? null : pxWaxs.copy();
 	}
 
-	public void setPxWaxs(Quantity<Length> pxWaxs) {
-		this.pxWaxs = (pxWaxs == null) ? null : Quantities.getQuantity(pxWaxs.getValue(), pxWaxs.getUnit());
+	public void setPxWaxs(Amount<Length> pxWaxs) {
+		this.pxWaxs = (pxWaxs == null) ? null : pxWaxs.copy();
 	}
 
-	public Quantity<Length> getPxSaxs() {
-		return (pxSaxs == null) ? null : Quantities.getQuantity(pxSaxs.getValue(), pxSaxs.getUnit());
+	public Amount<Length> getPxSaxs() {
+		return (pxSaxs == null) ? null : pxSaxs.copy();
 	}
 
-	public void setPxSaxs(Quantity<Length> pxSaxs) {
-		this.pxSaxs = (pxSaxs == null) ? null : Quantities.getQuantity(pxSaxs.getValue(), pxSaxs.getUnit());
+	public void setPxSaxs(Amount<Length> pxSaxs) {
+		this.pxSaxs = (pxSaxs == null) ? null : pxSaxs.copy();
 	}
 	
 	public Integer getDimWaxs() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2017 Diamond Light Source Ltd.
+ * Copyright 2012 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,34 +21,31 @@ import java.util.ArrayList;
 import java.util.List;
 
 import javax.measure.quantity.Length;
+import javax.measure.unit.Unit;
 
-import tec.units.ri.quantity.Quantities;
-
-import javax.measure.Quantity;
-import javax.measure.Unit;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
-class CalibrationResultsData<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
-		implements Serializable {
+class CalibrationResultsData implements Serializable {
 	private ArrayList<CalibrationPeak> peakList;
-	private Quantity<V> intercept;
-	private Quantity<D> gradient;
-	private Quantity<Length> meanCameraLength;
+	private Amount<ScatteringVector> intercept;
+	private Amount<ScatteringVectorOverDistance> gradient;
+	private Amount<Length> meanCameraLength;
 	private Unit<Length> unit;
 	
-	public CalibrationResultsData(Quantity<D> gradient, Quantity<V> intercept, Unit<Length> unit) {
+	public CalibrationResultsData(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, Unit<Length> unit) {
 		super();
-		this.gradient= Quantities.getQuantity(gradient.getValue(), gradient.getUnit());
-		this.intercept= Quantities.getQuantity(intercept.getValue(), intercept.getUnit());
+		this.gradient= gradient.copy();
+		this.intercept= intercept.copy();
 		this.unit = unit;
 	}
 
-	CalibrationResultsData(Quantity<D> gradient, Quantity<V> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
+	CalibrationResultsData(Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		super();
-		this.gradient= Quantities.getQuantity(gradient.getValue(), gradient.getUnit());
-		this.intercept= Quantities.getQuantity(intercept.getValue(), intercept.getUnit());
+		this.gradient= gradient.copy();
+		this.intercept= intercept.copy();
 		
 		if (peaks != null) {
 			this.peakList = new ArrayList<CalibrationPeak>();
@@ -58,18 +55,18 @@ class CalibrationResultsData<V extends ScatteringVector<V>, D extends Scattering
 			this.peakList = null;
 		
 		if (meanCameraLength != null)
-			this.meanCameraLength = Quantities.getQuantity(meanCameraLength.getValue(), meanCameraLength.getUnit());
+			this.meanCameraLength = meanCameraLength.copy();
 		else 
 			this.meanCameraLength = null;
 		
 		this.unit = unit;
 	}
 	
-	public Quantity<V> getIntercept() {
+	public Amount<ScatteringVector> getIntercept() {
 		return intercept;
 	}
 
-	public Quantity<D> getGradient() {
+	public Amount<ScatteringVectorOverDistance> getGradient() {
 		return gradient;
 	}
 
@@ -77,7 +74,7 @@ class CalibrationResultsData<V extends ScatteringVector<V>, D extends Scattering
 		return peakList;
 	}
 
-	public Quantity<Length> getMeanCameraLength() {
+	public Amount<Length> getMeanCameraLength() {
 		return meanCameraLength;
 	}
 	

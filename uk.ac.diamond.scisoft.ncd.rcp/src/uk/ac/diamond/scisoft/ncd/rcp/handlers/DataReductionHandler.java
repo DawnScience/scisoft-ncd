@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,9 @@ import java.util.Collection;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.Quantity;
-import javax.measure.Unit;
-
-import tec.units.ri.unit.MetricPrefix;
-import si.uom.NonSI;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.dawnsci.plotting.tools.masking.MaskingTool;
@@ -60,6 +58,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.navigator.resources.ProjectExplorer;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -67,7 +66,6 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.rcp.views.PlotView;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
-import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStats;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
@@ -80,16 +78,13 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdPreferences;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 import uk.ac.diamond.scisoft.ncd.rcp.ServiceHolder;
 
-public class DataReductionHandler<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
-		extends AbstractHandler {
+public class DataReductionHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DataReductionHandler.class);
 		
 	private IDataReductionService service;
 	private Object[] selObjects;
 	private IDataReductionContext context;
-
-	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
 	
 	private class NcdDataReductionJob implements IRunnableWithProgress {
 
@@ -402,18 +397,18 @@ public class DataReductionHandler<V extends ScatteringVector<V>, D extends Scatt
 		context.setBgScaling(ncdBgScaleSourceProvider.getBgScaling());
 		
 		NcdCalibrationSourceProvider ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
-		context.setDetWaxsInfo((NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(context.getWaxsDetectorName()));
-		context.setDetSaxsInfo((NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(context.getSaxsDetectorName()));
-		context.setScalerData((NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(context.getCalibrationName()));
+		context.setDetWaxsInfo(ncdDetectorSourceProvider.getNcdDetectors().get(context.getWaxsDetectorName()));
+		context.setDetSaxsInfo(ncdDetectorSourceProvider.getNcdDetectors().get(context.getSaxsDetectorName()));
+		context.setScalerData(ncdDetectorSourceProvider.getNcdDetectors().get(context.getCalibrationName()));
 		
 		NcdCalibrationSourceProvider ncdCalibrationSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		CalibrationResultsBean crb = (CalibrationResultsBean) ncdCalibrationSourceProvider.getCurrentState().get(NcdCalibrationSourceProvider.CALIBRATION_STATE);
 		context.setCalibrationResults(crb);
 		
 		NcdProcessingSourceProvider ncdEnergySourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.ENERGY_STATE);
-		Quantity<Energy> energy = ncdEnergySourceProvider.getEnergy();
+		Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
 		if (energy != null) {
-			context.setEnergy(energy.to(KILO_ELECTRON_VOLT).getValue().doubleValue());
+			context.setEnergy(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 		}
 		
 		String saxsSelectionAlgorithm = uk.ac.diamond.scisoft.ncd.core.rcp.Activator.getDefault().getPreferenceStore()
@@ -443,8 +438,8 @@ public class DataReductionHandler<V extends ScatteringVector<V>, D extends Scatt
 		if (crb != null) {
 			if (crb.containsKey(context.getSaxsDetectorName())) {
 				Unit<Length> qaxisUnit = crb.getUnit(context.getSaxsDetectorName());
-				Quantity<D> slope = crb.getGradient(context.getSaxsDetectorName());
-				Quantity<V> intercept = crb.getIntercept(context.getSaxsDetectorName());
+				Amount<ScatteringVectorOverDistance> slope = crb.getGradient(context.getSaxsDetectorName());
+				Amount<ScatteringVector> intercept = crb.getIntercept(context.getSaxsDetectorName());
 				if (slope != null && intercept != null && qaxisUnit != null) {
 					return true;
 				}

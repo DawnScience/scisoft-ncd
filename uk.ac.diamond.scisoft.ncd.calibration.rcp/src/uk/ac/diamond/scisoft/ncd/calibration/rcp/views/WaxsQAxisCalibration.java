@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,14 +16,12 @@
 
 package uk.ac.diamond.scisoft.ncd.calibration.rcp.views;
 
-import javax.measure.Quantity;
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
 
 import org.eclipse.swt.widgets.Composite;
+import org.jscience.physics.amount.Amount;
 
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 
@@ -45,15 +43,15 @@ public class WaxsQAxisCalibration extends NcdQAxisCalibration {
 	}
 
 	@Override
-	protected Quantity<Length> getPixel() {
-		NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
+	protected Amount<Length> getPixel() {
+		NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(getDetectorName()); 
 		if (detSettings == null) {
 			throw new IllegalArgumentException(NcdMessages.NO_WAXS_DETECTOR);
 		}
-		Quantity<Length> pxSize = detSettings.getPxSize();
+		Amount<Length> pxSize = detSettings.getPxSize();
 		if (pxSize == null) {
 			throw new IllegalArgumentException(NcdMessages.NO_WAXS_PIXEL);
 		}
-		return Quantities.getQuantity(pxSize.getValue(), pxSize.getUnit()).to(MetricPrefix.MILLI(Units.METRE));
+		return pxSize.copy().to(SI.MILLIMETRE);
 	}
 }

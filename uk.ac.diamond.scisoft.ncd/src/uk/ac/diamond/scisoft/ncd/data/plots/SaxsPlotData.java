@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2017 Diamond Light Source Ltd.
+ * Copyright 2013 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package uk.ac.diamond.scisoft.ncd.data.plots;
 
 import java.util.Arrays;
 
-import javax.measure.format.UnitFormat;
-import javax.measure.spi.ServiceProvider;
+import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.hdf.object.Nexus;
@@ -137,7 +136,7 @@ public abstract class SaxsPlotData extends LazyDataReduction implements ISaxsPlo
 		
 		Dataset qaxisNew = getSaxsPlotAxis(qaxis);
 		
-		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
+		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
 		long qaxis_id = NcdNexusUtils.makeaxis(group_id, "variable", HDF5Constants.H5T_NATIVE_FLOAT, axisShape,
 				new int[] { qaxisNew.getRank() }, 1, units);

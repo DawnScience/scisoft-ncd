@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2017 Diamond Light Source Ltd.
+ * Copyright 2013 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,28 +16,26 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.xml;
 
-import javax.measure.Quantity;
-import javax.measure.Unit;
 import javax.measure.quantity.Length;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import javax.xml.bind.annotation.adapters.XmlAdapter;
 
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
+import org.jscience.physics.amount.Amount;
 
-public class PxSizeXmlAdapter extends XmlAdapter<String, Quantity<Length>> {
+public class PxSizeXmlAdapter extends XmlAdapter<String, Amount<Length>> {
 	
-	private Unit<Length> unit = MetricPrefix.MILLI(Units.METRE);
+	private Unit<Length> unit = SI.MILLIMETER;
 	
     @Override
-    public Quantity<Length> unmarshal( String value ){
+    public Amount<Length> unmarshal( String value ){
 		// JScience can't parse brackets
 		value = value.replace("(", "").replace(")", "");
-        return Quantities.getQuantity(Double.valueOf(value), unit);
+        return Amount.valueOf(value).to(unit);
     } 
 
     @Override
-    public String marshal( Quantity<Length> pxSize ){
+    public String marshal( Amount<Length> pxSize ){
         return pxSize.to(unit).toString();
     }
 }

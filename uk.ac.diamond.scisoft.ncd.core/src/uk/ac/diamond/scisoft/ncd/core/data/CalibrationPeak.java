@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,22 +18,22 @@ package uk.ac.diamond.scisoft.ncd.core.data;
 
 import java.io.Serializable;
 
-import javax.measure.Quantity;
 import javax.measure.quantity.Angle;
 import javax.measure.quantity.Length;
 
-import tec.units.ri.quantity.Quantities;
+import org.jscience.physics.amount.Amount;
+
 import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
 
 public class CalibrationPeak implements Serializable {
 	private double peakPos;
-	private Quantity<Angle> twoTheta;
+	private Amount<Angle> twoTheta;
 	private HKL reflection;
 
-	public CalibrationPeak(double peakPos, Quantity<Angle> angle, HKL reflection) {
+	public CalibrationPeak(double peakPos, Amount<Angle> angle, HKL reflection) {
 		super();
 		this.peakPos = peakPos;
-		this.twoTheta = Quantities.getQuantity(angle.getValue(), angle.getUnit());
+		this.twoTheta = angle.copy();
 		this.reflection = reflection.clone();
 	}
 
@@ -41,11 +41,11 @@ public class CalibrationPeak implements Serializable {
 		return peakPos;
 	}
 
-	public Quantity<Angle> getTwoTheta() {
-		return Quantities.getQuantity(twoTheta.getValue(), twoTheta.getUnit());
+	public Amount<Angle> getTwoTheta() {
+		return twoTheta.copy();
 	}
 
-	public Quantity<Length> getDSpacing() {
+	public Amount<Length> getDSpacing() {
 		return reflection.getD();
 	}
 

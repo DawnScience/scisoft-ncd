@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2017 Diamond Light Source Ltd.
+ * Copyright 2013 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,7 @@
 
 package uk.ac.diamond.scisoft.ncd.core.data.plots;
 
-import javax.measure.Quantity;
-import javax.measure.Unit;
 import javax.measure.quantity.Dimensionless;
-import javax.measure.spi.ServiceProvider;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.StringUtils;
@@ -41,8 +38,8 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.IDataset;
+import org.jscience.physics.amount.Amount;
 
-import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.AndersonDarlingNormalityTest;
 
@@ -53,9 +50,7 @@ public class GuinierPlotData extends SaxsPlotData {
 	private int cmaesCheckFeasableCount = 100;
 	
 	private AndersonDarlingNormalityTest test;
-
-	private static final Unit<Dimensionless> DIMENSIONLESS_UNIT = ServiceProvider.current().getQuantityFactory(Dimensionless.class).getSystemUnit();
-
+	
 	private class GuinierLineFitFunction implements MultivariateFunction {
 
 		private Dataset guinierData;
@@ -256,9 +251,8 @@ public class GuinierPlotData extends SaxsPlotData {
 				cmaesChecker);
 		GuinierLineFitFunction function = new GuinierLineFitFunction(guinierData, guinierAxis);
 
-		Quantity<Dimensionless> I0 = ServiceProvider.current().getQuantityFactory(Dimensionless.class).create(Double.NaN, DIMENSIONLESS_UNIT);
-		Quantity<Dimensionless> Rg = ServiceProvider.current().getQuantityFactory(Dimensionless.class).create(Double.NaN, DIMENSIONLESS_UNIT);
-
+		Amount<Dimensionless> I0 = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
+		Amount<Dimensionless> Rg = Amount.valueOf(Double.NaN, Double.NaN, Dimensionless.UNIT);
 		double[] qvals = new double[] {Double.NaN, Double.NaN};
 		
 		double q0 = guinierAxis.getDouble(0);
@@ -368,16 +362,15 @@ public class GuinierPlotData extends SaxsPlotData {
 		return new Object[] {I0, Rg, qvals[0], qvals[1]};
 	}
 
-	private Quantity<Dimensionless> getI0(SimpleRegression regression) {
-		Quantity<Dimensionless> I0 = ServiceProvider.current().getQuantityFactory(Dimensionless.class).create(regression.getIntercept(), DIMENSIONLESS_UNIT);
-		return Quantities.getQuantity(I0.getValue(), I0.getUnit());
+	private Amount<Dimensionless> getI0(SimpleRegression regression) {
+		Amount<Dimensionless> I0 = Amount.valueOf(regression.getIntercept(), regression.getInterceptStdErr(), Dimensionless.UNIT);
+		return I0.copy();
 	}
 
-	private Quantity<Dimensionless> getRg(SimpleRegression regression) {
-		Quantity<Dimensionless> slope = ServiceProvider.current().getQuantityFactory(Dimensionless.class).create(regression.getSlope(), DIMENSIONLESS_UNIT);
-		Quantities.getQuantity(Math.sqrt(slope.multiply(-3.0).getValue().doubleValue()), DIMENSIONLESS_UNIT);
-		Quantity<Dimensionless> Rg = 		Quantities.getQuantity(Math.sqrt(slope.multiply(-3.0).getValue().doubleValue()), DIMENSIONLESS_UNIT);
-		return Quantities.getQuantity(Rg.getValue(), Rg.getUnit());
+	private Amount<Dimensionless> getRg(SimpleRegression regression) {
+		Amount<Dimensionless> slope = Amount.valueOf(regression.getSlope(), regression.getSlopeStdErr(), Dimensionless.UNIT);
+		Amount<Dimensionless> Rg = slope.times(-3.0).sqrt().to(Dimensionless.UNIT);
+		return Rg.copy();
 	}
 	
 	public Dataset getFitData(SimpleRegression regression, IDataset axis) {

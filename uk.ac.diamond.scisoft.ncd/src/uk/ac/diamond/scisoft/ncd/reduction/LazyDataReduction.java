@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,8 @@ package uk.ac.diamond.scisoft.ncd.reduction;
 
 import java.util.Arrays;
 
-import javax.measure.Unit;
-import javax.measure.format.UnitFormat;
-import javax.measure.spi.ServiceProvider;
+import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.january.dataset.Dataset;
@@ -33,10 +32,10 @@ import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
-public abstract class LazyDataReduction<V extends ScatteringVector<V>> {
+public abstract class LazyDataReduction {
 
 	protected Dataset qaxis;
-	protected Unit<V> qaxisUnit;
+	protected Unit<ScatteringVector> qaxisUnit;
 	protected String detector;
 	protected Dataset mask;
 
@@ -47,7 +46,7 @@ public abstract class LazyDataReduction<V extends ScatteringVector<V>> {
 		this.detector = detector;
 	}
 
-	public void setQaxis(Dataset qaxis, Unit<V> unit) {
+	public void setQaxis(Dataset qaxis, Unit<ScatteringVector> unit) {
 		this.qaxis = qaxis;
 		this.qaxisUnit = unit;
 	}
@@ -59,7 +58,7 @@ public abstract class LazyDataReduction<V extends ScatteringVector<V>> {
 	public void writeQaxisData(int dim, long datagroup_id) throws HDF5Exception {
 		long[] qaxisShape = (long[]) ConvertUtils.convert(qaxis.getShape(), long[].class);
 		
-		UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
+		UnitFormat unitFormat = UnitFormat.getUCUMInstance();
 		String units = unitFormat.format(qaxisUnit); 
 		long qaxis_id = NcdNexusUtils.makeaxis(datagroup_id, "q", HDF5Constants.H5T_NATIVE_FLOAT, qaxisShape, new int[] { dim },
 				1, units);

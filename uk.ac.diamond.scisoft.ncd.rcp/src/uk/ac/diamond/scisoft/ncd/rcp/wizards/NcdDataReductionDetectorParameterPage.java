@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2017 Diamond Light Source Ltd.
+ * Copyright 2013 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,13 +18,8 @@ package uk.ac.diamond.scisoft.ncd.rcp.wizards;
 
 import java.util.HashMap;
 
-import javax.measure.Quantity;
-import javax.measure.Unit;
 import javax.measure.quantity.Length;
-
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
+import javax.measure.unit.SI;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.eclipse.swt.SWT;
@@ -46,6 +41,7 @@ import org.eclipse.swt.widgets.Text;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
@@ -56,9 +52,6 @@ import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReductionPage {
 
 	protected static final int PAGENUMBER = 0;
-
-	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
-
 	private Button detTypeWaxs;
 	private Combo detListWaxs;
 	private Button[] dimWaxs;
@@ -71,7 +64,7 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 	private NcdProcessingSourceProvider ncdSaxsSourceProvider;
 	private NcdProcessingSourceProvider ncdSaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdWaxsDetectorSourceProvider;
-	private NcdCalibrationSourceProvider<?, ?> ncdDetectorSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdScalerSourceProvider;
 	private Label pxSaxsLabel;
 	private Label pxWaxsLabel;
@@ -90,7 +83,7 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 	@Override
 	public void createControl(Composite parent) {
 		IWorkbenchWindow window = PlatformUI.getWorkbench().getActiveWorkbenchWindow();
-		ISourceProviderService service = window.getService(ISourceProviderService.class);
+		ISourceProviderService service = (ISourceProviderService) window.getService(ISourceProviderService.class);
 		
 		ncdWaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXS_STATE);
 		ncdSaxsSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXS_STATE);
@@ -98,7 +91,7 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 		ncdWaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.WAXSDETECTOR_STATE);
 		ncdSaxsDetectorSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SAXSDETECTOR_STATE);
 		
-		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider<?, ?>) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
+		ncdDetectorSourceProvider = (NcdCalibrationSourceProvider) service.getSourceProvider(NcdCalibrationSourceProvider.NCDDETECTORS_STATE);
 		ncdScalerSourceProvider = (NcdProcessingSourceProvider) service.getSourceProvider(NcdProcessingSourceProvider.SCALER_STATE);
 
 		Composite container = new Composite(parent, SWT.NONE);
@@ -187,9 +180,9 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 				for (Button btn : dimWaxs) btn.setSelection(false);
 				dimWaxs[idxDim].setSelection(true);
 			}
-			Quantity<Length> pxSize = detSettings.getPxSize();
+			Amount<Length> pxSize = detSettings.getPxSize();
 			if (pxSize != null && pxWaxs != null && !(pxWaxs.isDisposed())) {
-				String pxText = String.format("%.3f", pxSize.to(MILLIMETRE).getValue().doubleValue());
+				String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 				if (!(pxText.equals(pxWaxs.getText()))) {
 					pxWaxs.setText(pxText);
 				}
@@ -204,7 +197,7 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 					if (detSettings != null) {
 						Double waxsPixel = getWaxsPixel();
 						if (waxsPixel != null) {
-							detSettings.setPxSize(Quantities.getQuantity(waxsPixel, MILLIMETRE));
+							detSettings.setPxSize(Amount.valueOf(waxsPixel, SI.MILLIMETRE));
 							ncdDetectorSourceProvider.updateNcdDetectors();
 						}
 					}
@@ -297,9 +290,9 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 				for (Button btn : dimSaxs) btn.setSelection(false);
 				dimSaxs[idxDim].setSelection(true);
 			}
-			Quantity<Length> pxSize = detSettings.getPxSize();
+			Amount<Length> pxSize = detSettings.getPxSize();
 			if (pxSize != null && pxSaxs != null && !(pxSaxs.isDisposed())) {
-				String pxText = String.format("%.3f", pxSize.to(MILLIMETRE).getValue().doubleValue());
+				String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 				if (!(pxText.equals(pxSaxs.getText()))) {
 					pxSaxs.setText(pxText);
 				}
@@ -315,7 +308,7 @@ public class NcdDataReductionDetectorParameterPage extends AbstractNcdDataReduct
 					if (detSettings != null) {
 						Double saxsPixel = getSaxsPixel();
 						if (saxsPixel != null) {
-							detSettings.setPxSize(Quantities.getQuantity(saxsPixel, MILLIMETRE));
+							detSettings.setPxSize(Amount.valueOf(saxsPixel, SI.MILLIMETRE));
 							ncdDetectorSourceProvider.updateNcdDetectors();
 						}
 					}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2013, 2017 Diamond Light Source Ltd.
+ * Copyright 2013 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,7 @@ package uk.ac.diamond.scisoft.ncd.calibration;
 
 import java.util.List;
 
-import javax.measure.Quantity;
-import javax.measure.Unit;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.math3.analysis.UnivariateFunction;
@@ -30,10 +29,11 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 
-public class NCDAbsoluteCalibration <V extends ScatteringVector<V>>{
+public class NCDAbsoluteCalibration {
 	
 	private double absScale;
 	private double absScaleStdDev;
@@ -55,11 +55,11 @@ public class NCDAbsoluteCalibration <V extends ScatteringVector<V>>{
 		return absScaleStdDev;
 	}
 
-	public void setAbsoluteData(List<Quantity<V>> lstAbsQ, Dataset absI, Unit<V> unit) {
+	public void setAbsoluteData(List<Amount<ScatteringVector>> lstAbsQ, Dataset absI, Unit<ScatteringVector> unit) {
 		absQ = DatasetFactory.zeros(DoubleDataset.class, lstAbsQ.size());
 		for (int idx = 0; idx < lstAbsQ.size(); idx++) {
-			Quantity<V> vec = lstAbsQ.get(idx);
-			absQ.set(vec.to(unit).getValue().doubleValue(), idx);
+			Amount<ScatteringVector> vec = lstAbsQ.get(idx);
+			absQ.set(vec.doubleValue(unit), idx);
 			
 		}
 		this.absI = absI.clone();
@@ -68,11 +68,11 @@ public class NCDAbsoluteCalibration <V extends ScatteringVector<V>>{
 		absInterpolate = interpolator.interpolate((double[])absQ.getBuffer(),(double[])absI.getBuffer());
 	}
 	
-	public void setData(List<Quantity<V>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<V> unit) {
+	public void setData(List<Amount<ScatteringVector>> lstDataQ, Dataset dataI, Dataset emptyI, Unit<ScatteringVector> unit) {
 		dataQ = DatasetFactory.zeros(DoubleDataset.class, lstDataQ.size());
 		for (int idx = 0; idx < lstDataQ.size(); idx++) {
-			Quantity<V> vec = lstDataQ.get(idx);
-			dataQ.set(vec.to(unit).getValue().doubleValue(), idx);
+			Amount<ScatteringVector> vec = lstDataQ.get(idx);
+			dataQ.set(vec.doubleValue(unit), idx);
 			
 		}
 		this.dataI = dataI.clone();

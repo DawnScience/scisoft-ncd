@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017 Diamond Light Source Ltd.
+ * Copyright (c) 2014 Diamond Light Source Ltd.
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -17,16 +17,11 @@ import java.util.HashMap;
 import java.util.List;
 
 import javax.measure.quantity.Length;
-import javax.measure.Quantity;
-import javax.measure.Unit;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 import javax.xml.bind.JAXBContext;
 import javax.xml.bind.Unmarshaller;
-
-import si.uom.SI;
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
-import si.uom.NonSI;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.dawnsci.analysis.api.metadata.IDiffractionMetadata;
@@ -46,6 +41,7 @@ import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.metadata.AxesMetadata;
 import org.eclipse.january.metadata.MaskMetadata;
 import org.eclipse.january.metadata.MetadataFactory;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
@@ -58,8 +54,7 @@ import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdSourceProviderAdapter;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
-public class NcdSectorIntegrationOperation<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
-		extends AbstractOperation<NcdSectorIntegrationModel, OperationData> {
+public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIntegrationModel, OperationData> {
 
 	@Override
 	public String getId() {
@@ -211,10 +206,10 @@ public class NcdSectorIntegrationOperation<V extends ScatteringVector<V>, D exte
 		if (dif == null) {
 			throw new OperationException(this, new Exception("No diffraction metadata available"));
 		}
-		Quantity<D> gradient = null;
-		Quantity<V> intercept = null;
-		Quantity<Length> pxSize = Quantities.getQuantity(dif.getOriginalDetector2DProperties().getHPxSize(), MetricPrefix.MILLI(Units.METRE));
-		Unit<V> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
+		Amount<ScatteringVectorOverDistance> gradient = null;
+		Amount<ScatteringVector> intercept = null;
+		Amount<Length> pxSize = Amount.valueOf(dif.getOriginalDetector2DProperties().getHPxSize(), SI.MILLIMETER);
+		Unit<ScatteringVector> axisUnit = NonSI.ANGSTROM.inverse().asType(ScatteringVector.class);
 
 		if (cal == null) {
 			NcdCalibrationSourceProvider ncdCalibrationSourceProvider;
@@ -247,7 +242,7 @@ public class NcdSectorIntegrationOperation<V extends ScatteringVector<V>, D exte
 			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
 			double d2bs = intSector.getRadii()[0];
 			for (int i = 0; i < numPoints; i++) {
-				Quantity<V> amountQaxis = gradient.multiply(i + d2bs).multiply(pxSize).add(intercept)
+				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
 						.to(axisUnit);
 				qaxis.set(amountQaxis.getEstimatedValue(), i);
 				qaxisErr.set(amountQaxis.getAbsoluteError(), i);

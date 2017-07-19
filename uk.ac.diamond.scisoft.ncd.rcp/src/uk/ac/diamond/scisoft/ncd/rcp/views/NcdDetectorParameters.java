@@ -1,5 +1,5 @@
 /*
- * Copyright 2012, 2017 Diamond Light Source Ltd.
+ * Copyright 2012 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,13 +20,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 
-import javax.measure.Quantity;
-import javax.measure.Unit;
 import javax.measure.quantity.Length;
-
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
+import javax.measure.unit.SI;
 
 import org.apache.commons.lang.ArrayUtils;
 import org.apache.commons.lang.math.NumberUtils;
@@ -58,6 +53,7 @@ import org.eclipse.ui.PartInitException;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
@@ -76,7 +72,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private NcdProcessingSourceProvider ncdSaxsSourceProvider, ncdSaxsDetectorSourceProvider;
 	private NcdProcessingSourceProvider ncdScalerSourceProvider;
 	
-	private NcdCalibrationSourceProvider<?, ?> ncdDetectorSourceProvider;
+	private NcdCalibrationSourceProvider ncdDetectorSourceProvider;
 	
 	
 	private static Button[] dimWaxs, dimSaxs;
@@ -89,9 +85,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 	private static Combo calList;
 	private Label calListLabel, normChanLabel;
 	private static Spinner normChan;
-
-	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
-
+	
 	private Double getSaxsPixel() {
 		String input = pxSaxs.getText();
 		if (NumberUtils.isNumber(input)) {
@@ -175,18 +169,18 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			for (Entry<String, NcdDetectorSettings> tmpDet : detList.entrySet()) {
 				if (tmpDet.getValue().getType().equals(DetectorTypes.WAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_WAXS_DETECTOR, tmpDet.getKey());
-					Quantity<Length> pixels = tmpDet.getValue().getPxSize();
+					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null) {
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.to(MILLIMETRE).getValue().doubleValue());
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
 				}
 				if (tmpDet.getValue().getType().equals(DetectorTypes.SAXS_DETECTOR)) {
 					IMemento detMemento = memento.createChild(NcdPreferences.NCD_SAXS_DETECTOR, tmpDet.getKey());
-					Quantity<Length> pixels = tmpDet.getValue().getPxSize();
+					Amount<Length> pixels = tmpDet.getValue().getPxSize();
 					if (pixels != null) {
-						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.to(MILLIMETRE).getValue().doubleValue());
+						detMemento.putFloat(NcdPreferences.NCD_PIXEL, (float) pixels.doubleValue(SI.MILLIMETRE));
 					}
 					int detDim = tmpDet.getValue().getDimension();
 					detMemento.putInteger(NcdPreferences.NCD_DIM, detDim);
@@ -216,7 +210,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.WAXS_DETECTOR, 1);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						ncdDetector.setPxSize(Quantities.getQuantity(px.doubleValue(), MILLIMETRE));
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETRE));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
 						ncdDetector.setDimension(dim.intValue());
@@ -238,7 +232,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					NcdDetectorSettings ncdDetector = new NcdDetectorSettings(det.getID(), DetectorTypes.SAXS_DETECTOR, 2);
 					Float px = det.getFloat(NcdPreferences.NCD_PIXEL);
 					if (px != null)
-						ncdDetector.setPxSize(Quantities.getQuantity(px.doubleValue(), MILLIMETRE));
+						ncdDetector.setPxSize(Amount.valueOf(px.doubleValue(), SI.MILLIMETRE));
 					Integer dim = det.getInteger(NcdPreferences.NCD_DIM);
 					if (dim != null)
 						ncdDetector.setDimension(dim.intValue());
@@ -335,7 +329,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					String waxsDetector = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-					NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
 					if (detSettings != null) {
 						for (int i = 0; i < dimWaxs.length; i++) {
 							if (dimWaxs[i].getSelection()) {
@@ -360,11 +354,11 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			public void modifyText(ModifyEvent e) {
 				if (detTypeWaxs.isEnabled()) {
 					String waxsDetector = ncdWaxsDetectorSourceProvider.getWaxsDetector();
-					NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(waxsDetector);
 					if (detSettings != null) {
 						Double waxsPixel = getWaxsPixel();
 						if (waxsPixel != null)
-							detSettings.setPxSize(Quantities.getQuantity(waxsPixel, MILLIMETRE));
+							detSettings.setPxSize(Amount.valueOf(waxsPixel, SI.MILLIMETRE));
 					}
 				}
 			}
@@ -416,7 +410,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
 					if (detSettings != null) {
 						for (int i = 0; i < dimSaxs.length; i++) {
 							if (dimSaxs[i].getSelection()) {
@@ -442,11 +436,11 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			public void modifyText(ModifyEvent e) {
 				if (detTypeSaxs.isEnabled()) {
 					String saxsDetector = ncdSaxsDetectorSourceProvider.getSaxsDetector();
-					NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(saxsDetector);
 					if (detSettings != null) {
 						Double saxsPixel = getSaxsPixel();
 						if (saxsPixel != null)
-							detSettings.setPxSize(Quantities.getQuantity(saxsPixel, MILLIMETRE));
+							detSettings.setPxSize(Amount.valueOf(saxsPixel, SI.MILLIMETRE));
 					}
 				}
 			}
@@ -480,7 +474,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 						String detName = calList.getItem(idx);
 						ncdScalerSourceProvider.setScaler(detName);
 						
-						NcdDetectorSettings calDet = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(detName);
+						NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(detName);
 						normChan.setMinimum(0);
 						normChan.setMaximum(calDet.getMaxChannel());
 						if (calDet.getMaxChannel() < 1) {
@@ -505,7 +499,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 			normChan.setToolTipText("Select the channel number with calibration data");
 			normChan.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, false, false));
 			String scaler = ncdScalerSourceProvider.getScaler();
-			NcdDetectorSettings calDet = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+			NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
 			if (calDet != null) {
 				normChan.setSelection(calDet.getNormChannel());
 			}
@@ -513,7 +507,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 				@Override
 				public void widgetSelected(SelectionEvent e) {
 					String scaler = ncdScalerSourceProvider.getScaler();
-					NcdDetectorSettings calDet = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
+					NcdDetectorSettings calDet = ncdDetectorSourceProvider.getNcdDetectors().get(scaler);
 					if (calDet != null) {
 						calDet.setNormChannel(normChan.getSelection());
 						ncdDetectorSourceProvider.addNcdDetector(calDet);
@@ -656,17 +650,17 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 
 		if (sourceName.equals(NcdProcessingSourceProvider.SAXSDETECTOR_STATE)) {
 			if (sourceValue instanceof String) {
-				NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 				if (detSettings != null) {
 					int idxDim = detSettings.getDimension() - 1;
 					if (dimSaxs != null && !(dimSaxs[idxDim].isDisposed())) {
 						for (Button btn : dimSaxs) btn.setSelection(false);
 						dimSaxs[idxDim].setSelection(true);
 					}
-					Quantity<Length> pxSize = detSettings.getPxSize();
+					Amount<Length> pxSize = detSettings.getPxSize();
 					if (pxSaxs != null && !(pxSaxs.isDisposed())) {
 						if (pxSize != null) {
-							String pxText = String.format("%.3f", pxSize.to(MILLIMETRE).getValue().doubleValue());
+							String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 							if (!(pxText.equals(pxSaxs.getText()))) {
 								pxSaxs.setText(pxText);
 							}
@@ -680,17 +674,17 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 		
 		if (sourceName.equals(NcdProcessingSourceProvider.WAXSDETECTOR_STATE)) {
 			if (sourceValue instanceof String) {
-				NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+				NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 				if (detSettings != null) {
 					int idxDim = detSettings.getDimension() - 1;
 					if (dimWaxs != null && !(dimWaxs[idxDim].isDisposed())) {
 						for (Button btn : dimWaxs) btn.setSelection(false);
 						dimWaxs[idxDim].setSelection(true);
 					}
-					Quantity<Length> pxSize = detSettings.getPxSize();
+					Amount<Length> pxSize = detSettings.getPxSize();
 					if (pxWaxs != null && !(pxWaxs.isDisposed())) {
 						if (pxSize != null) {
-							String pxText = String.format("%.3f", pxSize.to(MILLIMETRE).getValue().doubleValue());
+							String pxText = String.format("%.3f", pxSize.doubleValue(SI.MILLIMETRE));
 							if (!(pxText.equals(pxWaxs.getText()))) {
 								pxWaxs.setText(pxText);
 							}
@@ -742,7 +736,7 @@ public class NcdDetectorParameters extends ViewPart implements ISourceProviderLi
 					}
 				}
 				if ((normChan != null) && !(normChan.isDisposed())) {
-					NcdDetectorSettings detSettings = (NcdDetectorSettings) ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
+					NcdDetectorSettings detSettings = ncdDetectorSourceProvider.getNcdDetectors().get(sourceValue);
 					if (detSettings != null) {
 						int max = detSettings.getMaxChannel();
 						normChan.setMaximum(max);

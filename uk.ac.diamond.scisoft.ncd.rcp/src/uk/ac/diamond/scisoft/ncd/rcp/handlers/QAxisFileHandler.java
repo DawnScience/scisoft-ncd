@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,17 +23,10 @@ import java.util.Arrays;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.spi.ServiceProvider;
-import javax.measure.Quantity;
-import javax.measure.Unit;
-import javax.measure.format.UnitFormat;
-
-import si.uom.SI;
-import tec.units.ri.format.SimpleUnitFormat;
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
-import si.uom.NonSI;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
 import org.eclipse.core.commands.AbstractHandler;
@@ -70,6 +63,7 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.handlers.HandlerUtil;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -85,13 +79,9 @@ import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdMessages;
 import uk.ac.diamond.scisoft.ncd.rcp.Activator;
 
-public class QAxisFileHandler <V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> extends AbstractHandler {
+public class QAxisFileHandler extends AbstractHandler {
 
 	private static final Logger logger = LoggerFactory.getLogger(DetectorMaskFileHandler.class);
-
-	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
-	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
-	private static final Unit<Length> NANOMETRE = MetricPrefix.NANO(Units.METRE);
 
 	@Override
 	public Object execute(ExecutionEvent event) throws ExecutionException {
@@ -130,12 +120,12 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 					return errorDialog(NLS.bind(NcdMessages.NO_QAXIS_DATA, qaxisFilename), null);
 				}
 				
-				Quantity<D> amountGradient = null;
-				Quantity<V> amountIntercept = null;
-				Unit<V> unit = NANOMETRE.inverse().asType(ScatteringVector.class);
-				Quantity<Length> cameraLength = null;
-				Unit<Length> cameraLengthUnit = MILLIMETRE;   // The default unit used for saving camera length value
-				Quantity<Energy> energy = null;
+				Amount<ScatteringVectorOverDistance> amountGradient = null;
+				Amount<ScatteringVector> amountIntercept = null;
+				Unit<ScatteringVector> unit = SI.NANO(SI.METRE).inverse().asType(ScatteringVector.class);
+				Amount<Length> cameraLength = null;
+				Unit<Length> cameraLengthUnit = SI.MILLIMETRE;   // The default unit used for saving camera length value
+				Amount<Energy> energy = null;
 				Node node = nodeLink.getDestination();
 				if (node instanceof DataNode) {
 					Dataset qaxis = DatasetUtils.sliceAndConvertLazyDataset(((DataNode) node).getDataset());
@@ -149,8 +139,8 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 						String unitString = unitsAttr.getFirstElement();
 						unit = unitFormat.parseProductUnit(unitString, new ParsePosition(0)).asType(ScatteringVector.class);
 					}
-					amountGradient = Quantities.getQuantity(gradient, unit.divide(MILLIMETRE).asType(ScatteringVectorOverDistance.class));
-					amountIntercept = Quantities.getQuantity(intercept,  unit);
+					amountGradient = Amount.valueOf(gradient, unit.divide(SI.MILLIMETER).asType(ScatteringVectorOverDistance.class));
+					amountIntercept = Amount.valueOf(intercept,  unit);
 					
 				} else if (node instanceof GroupNode) {
 					Node gradientData = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
@@ -161,19 +151,21 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 							+ "_processing/SectorIntegration/qaxis calibration/intercept").getDestination();
 					Node interceptError = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 							+ "_processing/SectorIntegration/qaxis calibration/intercept_errors").getDestination();
-					UnitFormat unitFormat = ServiceProvider.current().getUnitFormatService().getUnitFormat();
+					
 					double gradient = ((DataNode) gradientData).getDataset().getSlice().getDouble(0);
 					double errgradient = ((DataNode) gradientError).getDataset().getSlice().getDouble(0);
 					String strUnit = gradientData.getAttribute("units").getFirstElement();
-					Unit<D> gradientUnit = unitFormat.parse(strUnit).asType(ScatteringVectorOverDistance.class);
+					Unit<ScatteringVectorOverDistance> gradientUnit = UnitFormat.getUCUMInstance()
+							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVectorOverDistance.class);
 					
 					double intercept = ((DataNode) interceptData).getDataset().getSlice().getDouble(0);
 					double erritercept = ((DataNode) interceptError).getDataset().getSlice().getDouble(0);
 					strUnit = interceptData.getAttribute("units").getFirstElement();
-					unit = unitFormat.parse(strUnit).asType(ScatteringVector.class);
+					unit = UnitFormat.getUCUMInstance()
+							.parseObject(strUnit, new ParsePosition(0)).asType(ScatteringVector.class);
 					
-					amountGradient = Quantities.getQuantity(gradient, errgradient, gradientUnit);
-					amountIntercept = Quantities.getQuantity(intercept,  erritercept, unit);
+					amountGradient = Amount.valueOf(gradient, errgradient, gradientUnit);
+					amountIntercept = Amount.valueOf(intercept,  erritercept, unit);
 				}
 				
 				if (amountGradient != null && amountIntercept != null) {
@@ -184,10 +176,10 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 						if (node instanceof DataNode) {
 							double dataVal = ((DataNode) node).getDataset().getSlice().getDouble(0); 
 							if (node.containsAttribute("units")) {
-								cameraLengthUnit = SimpleUnitFormat.getInstance().parse(node.getAttribute("units").getFirstElement())
+								cameraLengthUnit = Unit.valueOf(node.getAttribute("units").getFirstElement())
 										.asType(Length.class);
 							}
-							cameraLength = Quantities.getQuantity(dataVal, cameraLengthUnit);
+							cameraLength = Amount.valueOf(dataVal, cameraLengthUnit);
 						} else if (node instanceof GroupNode) {
 							Node data = qaxisFile.findNodeLink("/entry1/" + detectorSaxs
 									+ "_processing/SectorIntegration/camera length/data").getDestination();
@@ -196,9 +188,9 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 							
 							double dataVal = ((DataNode) data).getDataset().getSlice().getDouble(0); 
 							double errorVal = ((DataNode) error).getDataset().getSlice().getDouble(0); 
-							cameraLengthUnit = SimpleUnitFormat.getInstance().parse(data.getAttribute("units").getFirstElement())
+							cameraLengthUnit = Unit.valueOf(data.getAttribute("units").getFirstElement())
 										.asType(Length.class);
-							cameraLength = Quantities.getQuantity(dataVal, errorVal, cameraLengthUnit);
+							cameraLength = Amount.valueOf(dataVal, errorVal, cameraLengthUnit);
 						}
 					}
 					
@@ -210,8 +202,8 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 					if (nodeLink != null) {
 						node = nodeLink.getDestination();
 						if (node instanceof DataNode) {
-							energy = Quantities.getQuantity(
-									((DataNode) node).getDataset().getSlice().getDouble(0), KILO_ELECTRON_VOLT);
+							energy = Amount.valueOf(
+									((DataNode) node).getDataset().getSlice().getDouble(0), SI.KILO(NonSI.ELECTRON_VOLT));
 						}
 					}
 					ncdEnergySourceProvider.setEnergy(energy);
@@ -293,10 +285,10 @@ public class QAxisFileHandler <V extends ScatteringVector<V>, D extends Scatteri
 				DetectorProperties detectorProperties = loaderService.getLockedDiffractionMetaData().getDetector2DProperties();
 				DiffractionCrystalEnvironment crystalEnvironment = loaderService.getLockedDiffractionMetaData().getDiffractionCrystalEnvironment();
 				if (energy != null) {
-					crystalEnvironment.setWavelengthFromEnergykeV(energy.to(KILO_ELECTRON_VOLT).getValue().doubleValue());
+					crystalEnvironment.setWavelengthFromEnergykeV(energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT)));
 				}
 				if (cameraLength != null) {
-					detectorProperties.setDetectorDistance(cameraLength.to(MILLIMETRE).getValue().doubleValue());
+					detectorProperties.setDetectorDistance(cameraLength.doubleValue(SI.MILLIMETRE));
 				}
 				double[] cp = roiData.getPoint();
 				if (cp != null) {

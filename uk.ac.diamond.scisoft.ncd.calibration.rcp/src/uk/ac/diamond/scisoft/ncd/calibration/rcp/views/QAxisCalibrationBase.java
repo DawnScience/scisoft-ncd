@@ -20,8 +20,9 @@ import java.util.Map.Entry;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.Quantity;
-import javax.measure.Unit;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.lang.math.NumberUtils;
 import org.dawnsci.plotting.tools.diffraction.DiffractionDefaultMetadata;
@@ -60,14 +61,11 @@ import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.part.ViewPart;
 import org.eclipse.ui.services.ISourceProviderService;
 import org.eclipse.ui.statushandlers.StatusManager;
+import org.jscience.mathematics.number.Real;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import si.uom.NonSI;
-import si.uom.SI;
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
-import tec.units.ri.unit.Units;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationFactory;
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrationStandards;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
@@ -79,8 +77,7 @@ import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdProcessingSourceProvider;
 import uk.ac.diamond.scisoft.ncd.preferences.NcdConstants;
 
-public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>>
-		extends ViewPart implements ISourceProviderListener {
+public class QAxisCalibrationBase extends ViewPart implements ISourceProviderListener {
 
 	private static final Logger logger = LoggerFactory.getLogger(QAxisCalibrationBase.class);
 
@@ -109,21 +106,6 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 
 	protected static HashMap<Unit<Length>, Button> unitSel;
 
-	/**
-	 * kev unit
-	 */
-	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(SI.ELECTRON_VOLT);
-
-	/**
-	 * Nanometre unit
-	 */
-	private static final Unit<Length> NANOMETRE = MetricPrefix.NANO(Units.METRE);
-
-	/**
-	 * Millimetre unit
-	 */
-	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
-
 	private static class Compare implements Comparator<IPeak> {
 
 		@Override
@@ -138,35 +120,35 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 		}
 	}
 
-	protected Quantity<Energy> getEnergy() {
+	protected Amount<Energy> getEnergy() {
 		String input = energy.getText();
 		if (NumberUtils.isNumber(input)) {
 			Double val = Double.valueOf(input);
-			return Quantities.getQuantity(val, KILO_ELECTRON_VOLT);
+			return Amount.valueOf(val, SI.KILO(NonSI.ELECTRON_VOLT));
 		}
 		return null;
 	}
 
-	protected Quantity<D> getGradient() {
+	protected Amount<ScatteringVectorOverDistance> getGradient() {
 		// Ignoring units for now because of bugs in JScience unit parser
 		String input = gradient.getText();
 		try {
 			Real realVal = Real.valueOf(input);
-			Unit<D> unit = getUnit().inverse().divide(MILLIMETRE)
+			Unit<ScatteringVectorOverDistance> unit = getUnit().inverse().divide(SI.MILLIMETRE)
 					.asType(ScatteringVectorOverDistance.class);
-			return Quantity.valueOf(realVal.doubleValue(), unit);
+			return Amount.valueOf(realVal.doubleValue(), unit);
 		} catch (Exception e) {
 			return null;
 		}
 	}
 
-	protected Quantity<V> getIntercept() {
+	protected Amount<ScatteringVector> getIntercept() {
 		// Ignoring units for now because of bugs in JScience unit parser
 		String input = intercept.getText();
 		try {
 			Real realVal = Real.valueOf(input);
-			Unit<V> unit = getUnit().inverse().asType(ScatteringVector.class);
-			return Quantity.valueOf(realVal.doubleValue(), unit);
+			Unit<ScatteringVector> unit = getUnit().inverse().asType(ScatteringVector.class);
+			return Amount.valueOf(realVal.doubleValue(), unit);
 		} catch (Exception e) {
 			return null;
 		}
@@ -293,8 +275,8 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 
 			@Override
 			public void focusLost(FocusEvent e) {
-				Quantity<Energy> tmpEnergy = getEnergy();
-				Quantity<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
+				Amount<Energy> tmpEnergy = getEnergy();
+				Amount<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
 				if (tmpEnergy != null) {
 					if (savedEnergy != null && tmpEnergy.equals(savedEnergy)) {
 						return;
@@ -309,7 +291,7 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 
 			@Override
 			public void focusGained(FocusEvent e) {
-				Quantity<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
+				Amount<Energy> savedEnergy = ncdEnergySourceProvider.getEnergy();
 				if (savedEnergy != null) {
 					ncdEnergySourceProvider.setEnergy(savedEnergy);
 				}
@@ -329,10 +311,10 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 		unitSel.put(NonSI.ANGSTROM, unitButton);
 
 		unitButton = new Button(unitGrp, SWT.RADIO);
-		unitButton.setText(NANOMETRE.toString());
+		unitButton.setText(SI.NANO(SI.METRE).toString());
 		unitButton.setToolTipText("calibrate q-axis in nanometers");
 		unitButton.setLayoutData(new GridData(SWT.FILL, SWT.CENTER, true, true));
-		unitSel.put(NANOMETRE, unitButton);
+		unitSel.put(SI.NANO(SI.METRE), unitButton);
 
 		inputQAxis = new Button(group, SWT.NONE);
 		inputQAxis.setText("Override");
@@ -444,19 +426,19 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 		}
 
 		final Unit<Length> units = ncdCalibrationSourceProvider.getUnit(currentDetector);
-		final Quantity<D> QuantityGrad = ncdCalibrationSourceProvider
+		final Amount<ScatteringVectorOverDistance> amountGrad = ncdCalibrationSourceProvider
 				.getGradient(currentDetector);
-		final Quantity<V> QuantityIntercept = ncdCalibrationSourceProvider.getIntercept(currentDetector);
-		if (QuantityGrad != null && QuantityIntercept != null) {
+		final Amount<ScatteringVector> amountIntercept = ncdCalibrationSourceProvider.getIntercept(currentDetector);
+		if (amountGrad != null && amountIntercept != null) {
 
 			PlatformUI.getWorkbench().getDisplay().asyncExec(new Runnable() {
 				@Override
 				public void run() {
-					gradient.setText(QuantityGrad.toString());
-					intercept.setText(QuantityIntercept.toString());
-					Quantity<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
+					gradient.setText(amountGrad.toString());
+					intercept.setText(amountIntercept.toString());
+					Amount<Length> mcl = ncdCalibrationSourceProvider.getMeanCameraLength(currentDetector);
 					if (mcl != null) {
-						cameralength.setText(mcl.to(Units.METRE).toString());
+						cameralength.setText(mcl.to(SI.METRE).toString());
 					}
 					for (Button unitBtn : unitSel.values()) {
 						unitBtn.setSelection(false);
@@ -496,17 +478,18 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 							detectorProperties.setBeamCentreCoords(cp);
 						}
 
-						Quantity<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector)
+						Amount<Length> pxSize = ncdCalibrationSourceProvider.getNcdDetectors().get(currentDetector)
 								.getPxSize();
-						detectorProperties.setHPxSize(pxSize.to(MILLIMETRE).getValue().doubleValue());
-						detectorProperties.setVPxSize(pxSize.to(MILLIMETRE).getValue().doubleValue());
+						detectorProperties.setHPxSize(pxSize.doubleValue(SI.MILLIMETRE));
+						detectorProperties.setVPxSize(pxSize.doubleValue(SI.MILLIMETRE));
 
-						Quantity<Energy> energy = ncdEnergySourceProvider.getEnergy();
+						Amount<Energy> energy = ncdEnergySourceProvider.getEnergy();
 						if (energy != null) {
-							crystalProperties.setWavelengthFromEnergykeV(energy.to(MetricPrefix.KILO(NonSI.ELECTRON_VOLT)).getValue().doubleValue());
+							crystalProperties.setWavelengthFromEnergykeV(energy.doubleValue(SI
+									.KILO(NonSI.ELECTRON_VOLT)));
 						}
 						if (mcl != null) {
-							detectorProperties.setDetectorDistance(mcl.to(MILLIMETRE).getValue().doubleValue());
+							detectorProperties.setDetectorDistance(mcl.doubleValue(SI.MILLIMETRE));
 						}
 					} catch (Exception e) {
 						logger.info("caught exception updating IDiffractionMetadata on " + GUI_PLOT_NAME
@@ -547,8 +530,8 @@ public class QAxisCalibrationBase<V extends ScatteringVector<V>, D extends Scatt
 		}
 
 		if (sourceName.equals(NcdProcessingSourceProvider.ENERGY_STATE)) {
-			if (sourceValue instanceof Quantity<?>) {
-				Double val = ((Quantity<Energy>) sourceValue).to(KILO_ELECTRON_VOLT).getValue().doubleValue();
+			if (sourceValue instanceof Amount<?>) {
+				Double val = ((Amount<Energy>) sourceValue).doubleValue(SI.KILO(NonSI.ELECTRON_VOLT));
 				energy.setText(val.toString());
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,9 +22,10 @@ import java.util.List;
 
 import javax.measure.quantity.Energy;
 import javax.measure.quantity.Length;
-import javax.measure.Quantity;
-import javax.measure.Unit;
-import javax.measure.format.UnitFormat;
+import javax.measure.unit.NonSI;
+import javax.measure.unit.SI;
+import javax.measure.unit.Unit;
+import javax.measure.unit.UnitFormat;
 
 import org.apache.commons.beanutils.ConvertUtils;
 import org.eclipse.core.runtime.jobs.ILock;
@@ -32,12 +33,7 @@ import org.eclipse.dawnsci.analysis.dataset.roi.SectorROI;
 import org.eclipse.dawnsci.hdf.object.Nexus;
 import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetUtils;
-
-import si.uom.NonSI;
-import si.uom.SI;
-import tec.units.ri.unit.Units;
-import tec.units.ri.quantity.Quantities;
-import tec.units.ri.unit.MetricPrefix;
+import org.jscience.physics.amount.Amount;
 
 import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
@@ -51,17 +47,14 @@ import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 
-public class LazySectorIntegration<V extends ScatteringVector<V>, D extends ScatteringVectorOverDistance<D>> extends LazyDataReduction {
+public class LazySectorIntegration extends LazyDataReduction {
 
 	private SectorROI intSector;
 	private Dataset[] areaData;
-	private Quantity<D> gradient;
-	private Quantity<V> intercept;
-	private Quantity<Length> cameraLength;
-	private Quantity<Energy> energy;
-
-	private static final Unit<Length> MILLIMETRE = MetricPrefix.MILLI(Units.METRE);
-	private static final Unit<Energy> KILO_ELECTRON_VOLT = MetricPrefix.KILO(NonSI.ELECTRON_VOLT);
+	private Amount<ScatteringVectorOverDistance> gradient;
+	private Amount<ScatteringVector> intercept;
+	private Amount<Length> cameraLength;
+	private Amount<Energy> energy;
 	
 	private boolean calculateRadial = true;
 	private boolean calculateAzimuthal = true;
@@ -98,34 +91,29 @@ public class LazySectorIntegration<V extends ScatteringVector<V>, D extends Scat
 	
 	public Object[] getCalibrationData() {
 		if (gradient != null && intercept != null) {
-			
-			return new Object[] { 
-					Quantities.getQuantity(gradient.getValue(), gradient.getUnit()),
-					Quantities.getQuantity(intercept.getValue(), intercept.getUnit()) };
+			return new Object[] {gradient.copy(), intercept.copy()};
 		}
 		return null;
 	}
 
-	public void setCalibrationData(Quantity<D> slope, Quantity<V> intercept) {
+	public void setCalibrationData(Amount<ScatteringVectorOverDistance> slope, Amount<ScatteringVector> intercept) {
 		if (slope != null) {
-			this.gradient = Quantities.getQuantity(slope.getValue(), slope.getUnit());
-
+			this.gradient = slope.copy();
 		}
 		if (intercept != null) {
-			this.intercept = Quantities.getQuantity(intercept.getValue(), intercept.getUnit());
-
+			this.intercept =  intercept.copy();
 		}
 	}
 
-	public void setCameraLength(Quantity<Length> cameraLength) {
+	public void setCameraLength(Amount<Length> cameraLength) {
 		if (cameraLength != null) {
-			this.cameraLength = Quantities.getQuantity(cameraLength.getValue(), cameraLength.getUnit());
+			this.cameraLength = cameraLength.copy();
 		}
 	}
 
-	public void setEnergy(Quantity<Energy> energy) {
+	public void setEnergy(Amount<Energy> energy) {
 		if (energy != null) {
-			this.energy = Quantities.getQuantity(energy.getValue(), energy.getUnit());
+			this.energy = energy.copy();
 		}
 	}
 
@@ -299,7 +287,7 @@ public class LazySectorIntegration<V extends ScatteringVector<V>, D extends Scat
 		long type = H5.H5Dget_type(cameralength_data_id);
 		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(cameralength_data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(MILLIMETRE).getEstimatedValue()});
+		H5.H5Dwrite(cameralength_data_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getEstimatedValue()});
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);
@@ -309,7 +297,7 @@ public class LazySectorIntegration<V extends ScatteringVector<V>, D extends Scat
 		type = H5.H5Dget_type(cameralength_error_id);
 		memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(cameralength_error_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(MILLIMETRE).getAbsoluteError()});
+		H5.H5Dwrite(cameralength_error_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {cameraLength.to(SI.MILLIMETRE).getAbsoluteError()});
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);
 		H5.H5Tclose(type);
@@ -323,7 +311,7 @@ public class LazySectorIntegration<V extends ScatteringVector<V>, D extends Scat
 		long type = H5.H5Dget_type(energy_id);
 		long memspace_id = H5.H5Screate_simple(1, new long[] {1}, null);
 		H5.H5Sselect_all(filespace_id);
-		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.to(KILO_ELECTRON_VOLT).getValue().doubleValue()});
+		H5.H5Dwrite(energy_id, type, memspace_id, filespace_id, HDF5Constants.H5P_DEFAULT, new double[] {energy.doubleValue(SI.KILO(NonSI.ELECTRON_VOLT))});
 		
 		H5.H5Sclose(filespace_id);
 		H5.H5Sclose(memspace_id);

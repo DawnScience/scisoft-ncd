@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import javax.measure.quantity.Length;
-import javax.measure.Unit;
+import javax.measure.unit.Unit;
 
 import org.apache.commons.io.FilenameUtils;
 import org.eclipse.core.commands.AbstractHandler;
@@ -45,11 +45,10 @@ import org.eclipse.ui.IWorkbenchPart;
 import org.eclipse.ui.IWorkbenchWindow;
 import org.eclipse.ui.PlatformUI;
 import org.eclipse.ui.services.ISourceProviderService;
+import org.jscience.physics.amount.Amount;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import tec.units.ri.format.SimpleUnitFormat;
-import tec.units.ri.quantity.Quantities;
 import uk.ac.diamond.scisoft.analysis.io.HDF5Loader;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
@@ -195,8 +194,8 @@ public class DetectorInformationHandler extends AbstractHandler {
 		    	        	DataNode pxSizeDataset = (DataNode) pixelData.getDestination();
 		    				double pxSize = pxSizeDataset.getDataset().getSlice().getDouble(0);
 		    				if (pxSizeDataset.containsAttribute("units")) {
-								Unit<Length> pxSizeUnit = SimpleUnitFormat.getInstance().parse(pxSizeDataset.getAttribute("units").getFirstElement()).asType(Length.class);
-			    				tmpDet.setPxSize(Quantities.getQuantity(pxSize, pxSizeUnit));
+								Unit<Length> pxSizeUnit = Unit.valueOf(pxSizeDataset.getAttribute("units").getFirstElement()).asType(Length.class);
+			    				tmpDet.setPxSize(Amount.valueOf(pxSize, pxSizeUnit));
 		    				}
 		    	        }
 		    	        ncdDetectorSourceProvider.addNcdDetector(tmpDet);

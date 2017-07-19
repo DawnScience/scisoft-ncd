@@ -1,5 +1,5 @@
 /*
- * Copyright 2011, 2017 Diamond Light Source Ltd.
+ * Copyright 2011 Diamond Light Source Ltd.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,16 +23,15 @@ import java.util.List;
 import java.util.Set;
 
 import javax.measure.quantity.Length;
-import javax.measure.Quantity;
-import javax.measure.Unit;
+import javax.measure.unit.Unit;
 import javax.xml.bind.annotation.XmlAnyAttribute;
 
+import org.jscience.physics.amount.Amount;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 
-public class CalibrationResultsBean<V extends ScatteringVector<?>, D extends ScatteringVectorOverDistance<D>>
-		implements Serializable {
+public class CalibrationResultsBean implements Serializable {
 	
 	@XmlAnyAttribute
 	private HashMap<String, CalibrationResultsData> results;
@@ -41,12 +40,12 @@ public class CalibrationResultsBean<V extends ScatteringVector<?>, D extends Sca
 		results = new HashMap<String, CalibrationResultsData>();
 	}
 	
-	public CalibrationResultsBean(String detector, Quantity<D> gradient, Quantity<?> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
+	public CalibrationResultsBean(String detector, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		results = new HashMap<String, CalibrationResultsData>();
 		putCalibrationResult(detector, gradient, intercept, peaks, meanCameraLength, unit); 
 	}
 	
-	public void putCalibrationResult(String detector, Quantity<D> gradient, Quantity<?> intercept, List<CalibrationPeak> peaks, Quantity<Length> meanCameraLength, Unit<Length> unit) {
+	public void putCalibrationResult(String detector, Amount<ScatteringVectorOverDistance> gradient, Amount<ScatteringVector> intercept, List<CalibrationPeak> peaks, Amount<Length> meanCameraLength, Unit<Length> unit) {
 		CalibrationResultsData newData = new CalibrationResultsData(gradient, intercept, peaks, meanCameraLength, unit);	
 		results.put(detector, newData);
 	}
@@ -58,21 +57,21 @@ public class CalibrationResultsBean<V extends ScatteringVector<?>, D extends Sca
 		return null;
 	}
 
-	public Quantity<D> getGradient(String detector) {
+	public Amount<ScatteringVectorOverDistance> getGradient(String detector) {
 		if (results.containsKey(detector)) {
 			return results.get(detector).getGradient();
 		}
 		return null;
 	}
 	
-	public Quantity<?> getIntercept(String detector) {
+	public Amount<ScatteringVector> getIntercept(String detector) {
 		if (results.containsKey(detector)) {
 			return results.get(detector).getIntercept();
 		}
 		return null;
 	}
 	
-	public Quantity<Length> getMeanCameraLength(String detector) {
+	public Amount<Length> getMeanCameraLength(String detector) {
 		if (results.containsKey(detector)) {
 			return results.get(detector).getMeanCameraLength();
 		}
