@@ -10,8 +10,8 @@ package uk.ac.diamond.scisoft.analysis.processing.io;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 
 public class QAxisCalibration {
 

@@ -28,7 +28,7 @@ import hdf.hdf5lib.H5;
 import hdf.hdf5lib.HDF5Constants;
 import hdf.hdf5lib.exceptions.HDF5Exception;
 import hdf.hdf5lib.exceptions.HDF5LibraryException;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.ncd.core.data.DetectorTypes;
 import uk.ac.diamond.scisoft.ncd.core.utils.NcdNexusUtils;
 

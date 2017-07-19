@@ -43,12 +43,12 @@ import org.eclipse.january.metadata.MaskMetadata;
 import org.eclipse.january.metadata.MetadataFactory;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.processing.io.NexusNcdMetadataReader;
 import uk.ac.diamond.scisoft.analysis.processing.io.QAxisCalibration;
 import uk.ac.diamond.scisoft.analysis.roi.ROIProfile;
 import uk.ac.diamond.scisoft.ncd.core.SectorIntegration;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.ncd.core.data.NcdDetectorSettings;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdSourceProviderAdapter;

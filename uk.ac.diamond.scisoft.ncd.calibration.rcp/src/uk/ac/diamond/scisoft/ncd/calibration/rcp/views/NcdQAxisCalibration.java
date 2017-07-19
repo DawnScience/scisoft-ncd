@@ -57,9 +57,9 @@ import org.jscience.physics.amount.Constants;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.HKL;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.rcp.NcdCalibrationSourceProvider;

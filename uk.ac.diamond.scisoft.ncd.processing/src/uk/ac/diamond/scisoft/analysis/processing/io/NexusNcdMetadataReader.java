@@ -32,9 +32,9 @@ import org.eclipse.dawnsci.hdf.object.IHierarchicalDataFile;
 import org.eclipse.january.dataset.IDataset;
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.analysis.io.LoaderFactory;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 
 /**
  * Read available information from NCD data reduction files - initially ROI and mask

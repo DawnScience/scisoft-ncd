@@ -28,8 +28,8 @@ import javax.xml.bind.annotation.XmlAnyAttribute;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 
 public class CalibrationResultsBean implements Serializable {
 	

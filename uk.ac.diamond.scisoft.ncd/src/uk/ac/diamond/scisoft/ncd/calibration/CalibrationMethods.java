@@ -37,9 +37,10 @@ import org.slf4j.LoggerFactory;
 import org.uncommons.maths.combinatorics.CombinationGenerator;
 
 import uk.ac.diamond.scisoft.analysis.crystallography.CalibrantSpacing;
-import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
-import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
+import uk.ac.diamond.scisoft.analysis.crystallography.IHKL;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.HKL;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVector;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.ScatteringVectorOverDistance;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationPeak;
 
 public class CalibrationMethods {
@@ -101,12 +102,12 @@ public class CalibrationMethods {
 	 */
 	private LinkedHashMap<HKL, Amount<Angle>> twoThetaAngles() {
 		LinkedHashMap<HKL, Amount<Angle>> twoTheta = new LinkedHashMap<HKL, Amount<Angle>>();
-		for (HKL idx : spacing.getHKLs()) {
-			Amount<Length> d = idx.getD();
+		for (IHKL idx : spacing.getHKLs()) {
+			Amount<Length> d = ((HKL)idx).getD();
 			double x = wavelength.doubleValue(unit) / (2.0 * d.doubleValue(unit));
 			if (x > 1)
 				continue; // can't scatter beyond pi/2
-			twoTheta.put(idx, Amount.valueOf(2.0 * Math.asin(x), SI.RADIAN));
+			twoTheta.put((HKL) idx, Amount.valueOf(2.0 * Math.asin(x), SI.RADIAN));
 	    }
 	    return twoTheta;
 	}

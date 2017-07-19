@@ -23,7 +23,7 @@ import javax.measure.quantity.Length;
 
 import org.jscience.physics.amount.Amount;
 
-import uk.ac.diamond.scisoft.analysis.crystallography.HKL;
+import uk.ac.diamond.scisoft.ncd.core.crystallography.HKL;
 
 public class CalibrationPeak implements Serializable {
 	private double peakPos;
