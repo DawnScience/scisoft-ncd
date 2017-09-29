@@ -24,7 +24,8 @@ Require-Bundle: org.eclipse.core.runtime,
  org.eclipse.ui.workbench,
  org.apache.commons.math3;bundle-version="[3.2.0,4.0.0)",
  slf4j.api;bundle-version="[1.7.2,2.0.0)",
- org.dawnsci.conversion
+ org.dawnsci.conversion,
+ org.eclipse.dawnsci.hdf.object;bundle-version="1.3.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Bundle-ActivationPolicy: lazy
 Export-Package: uk.ac.diamond.scisoft.analysis.processing.io
