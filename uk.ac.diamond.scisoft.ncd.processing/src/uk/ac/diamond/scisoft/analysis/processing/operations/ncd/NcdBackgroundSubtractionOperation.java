@@ -32,7 +32,7 @@ import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
  * @author rbv51579
  *
  */
-public class NcdBackgroundSubtractionOperation<T extends NcdBackgroundSubtractionModel> extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
+public class NcdBackgroundSubtractionOperation extends AbstractOperation<NcdBackgroundSubtractionModel, OperationData> {
 	
 	public ILazyDataset background;
 	

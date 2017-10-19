@@ -27,7 +27,7 @@ import uk.ac.diamond.scisoft.analysis.processing.operations.utils.ProcessingUtil
 import uk.ac.diamond.scisoft.ncd.core.Normalisation;
 import uk.ac.diamond.scisoft.ncd.processing.NcdOperationUtils;
 
-public class NormalisationOperation<T extends NormalisationModel> extends AbstractOperation<NormalisationModel, OperationData> {
+public class NormalisationOperation extends AbstractOperation<NormalisationModel, OperationData> {
 
 	public static final String ENTRY1_SAMPLE_THICKNESS = "/entry1/sample/thickness";
 	public static final String ENTRY1_IT_DATA = "/entry1/It/data";

@@ -37,6 +37,7 @@ import org.eclipse.january.dataset.Dataset;
 import org.eclipse.january.dataset.DatasetFactory;
 import org.eclipse.january.dataset.DatasetUtils;
 import org.eclipse.january.dataset.DoubleDataset;
+import org.eclipse.january.dataset.FloatDataset;
 import org.eclipse.january.dataset.IDataset;
 import org.eclipse.january.metadata.AxesMetadata;
 import org.eclipse.january.metadata.MaskMetadata;
@@ -238,8 +239,8 @@ public class NcdSectorIntegrationOperation extends AbstractOperation<NcdSectorIn
 		int[] secFrames = datasetShape;
 		int numPoints = (int) secFrames[secFrames.length - 1];
 		if (gradient != null &&	intercept != null && pxSize != null &&	axisUnit != null) {
-			qaxis = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
-			qaxisErr = DatasetFactory.zeros(new int[] { numPoints }, Dataset.FLOAT32);
+			qaxis = DatasetFactory.zeros(FloatDataset.class, numPoints);
+			qaxisErr = DatasetFactory.zeros(FloatDataset.class, numPoints);
 			double d2bs = intSector.getRadii()[0];
 			for (int i = 0; i < numPoints; i++) {
 				Amount<ScatteringVector> amountQaxis = gradient.times(i + d2bs).times(pxSize).plus(intercept)
