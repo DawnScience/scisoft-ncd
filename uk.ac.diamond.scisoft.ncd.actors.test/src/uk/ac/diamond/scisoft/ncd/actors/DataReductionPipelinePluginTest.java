@@ -165,7 +165,7 @@ public class DataReductionPipelinePluginTest {
 		dataSlice.setStart(start);
 		Dataset data = NcdNexusUtils.sliceInputData(dataSlice, data_id);
 
-		double sum = (Double) data.sum();
+		double sum = ((Number) data.sum()).doubleValue();
 		double mean = (Double) data.mean();
 		Assert.assertEquals(expectedMean, mean, toleranceMean);
 		Assert.assertEquals(expectedSum, sum, toleranceSum);

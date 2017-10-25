@@ -91,7 +91,7 @@ public class TParameterOperation extends
 		Dataset integrand = Maths.multiply(Maths.square(qSlice), dataSlice);
 		Dataset indices = DatasetFactory.createRange(DoubleDataset.class, (double) iPorod - iKratky);
 		Dataset dq = Maths.derivative(indices, qSlice, 1);
-		jExp = (double) Maths.multiply(integrand, dq).sum();
+		jExp = ((Number) Maths.multiply(integrand, dq).sum()).doubleValue();
 		// Add any bits between the pieces of the integral
 		jExp = (q.getDouble(iKratky) - tP.getqKratkyMin()) * dataInput.getDouble(iKratky) + 
 				jExp + 
