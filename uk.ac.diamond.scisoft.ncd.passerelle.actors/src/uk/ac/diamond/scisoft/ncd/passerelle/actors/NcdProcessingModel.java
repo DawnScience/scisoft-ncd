@@ -72,7 +72,7 @@ import ptolemy.kernel.util.IllegalActionException;
 import ptolemy.kernel.util.NameDuplicationException;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
+import uk.ac.diamond.scisoft.ncd.core.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.SaxsAnalysisPlotType;
 import uk.ac.diamond.scisoft.ncd.core.data.stats.SaxsAnalysisStatsParameters;
