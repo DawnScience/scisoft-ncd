@@ -60,7 +60,7 @@ import hdf.hdf5lib.exceptions.HDF5LibraryException;
 import hdf.hdf5lib.structs.H5L_info_t;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVector;
 import uk.ac.diamond.scisoft.analysis.crystallography.ScatteringVectorOverDistance;
-import uk.ac.diamond.scisoft.analysis.io.NexusDiffractionMetaReader;
+import uk.ac.diamond.scisoft.ncd.core.NexusDiffractionMetaReader;
 import uk.ac.diamond.scisoft.ncd.core.data.CalibrationResultsBean;
 import uk.ac.diamond.scisoft.ncd.core.data.DataSliceIdentifiers;
 import uk.ac.diamond.scisoft.ncd.core.data.SliceSettings;
