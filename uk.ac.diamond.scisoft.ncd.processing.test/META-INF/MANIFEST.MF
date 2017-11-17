@@ -7,4 +7,5 @@ Bundle-Vendor: Diamond Light Source
 Fragment-Host: uk.ac.diamond.scisoft.ncd.processing;bundle-version="1.0.0"
 Bundle-RequiredExecutionEnvironment: JavaSE-1.7
 Require-Bundle: org.junit;bundle-version="[4.10.0,5.0.0)"
-Import-Package: org.dawb.common.util.test
+Import-Package: org.dawb.common.util.test,
+ uk.ac.diamond.scisoft.analysis.osgi
